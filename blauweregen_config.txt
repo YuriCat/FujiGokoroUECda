@@ -1,0 +1,3 @@
+../../../uecda/1477754606/param/
+../../../uecda/param/params_out/
+/Users/ohto/Documents/data/uecda/log/
