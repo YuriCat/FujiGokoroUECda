@@ -367,6 +367,7 @@ namespace UECda{
 				const Cards opsCards = opsHand.getCards();
 
 				const Board bd = tfield.getBoard();
+                CERR << bd << endl;
 				
 				// サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
 				if(bd.domInevitably()){ return MOVE_PASS; }

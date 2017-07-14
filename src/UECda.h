@@ -172,11 +172,15 @@ namespace UECda{
     // カード集合変換(chara == true の場合は性質カードに変換)
     Cards TableToCards(const int table[8][15], bool chara = false){
         Cards r = CARDS_NULL;
+        bool jk = false;
         for(int h = 0; h < 4; ++h){
             for(int w = 1; w < 14; ++w){
                 if(table[h][w]){
-                    if(table[h][w] == 1 || chara){
-                        addCards(&r, IntCardToCards(HWtoIC(h, w)));
+                    if(table[h][w] == 1){
+                        addIntCard(&r, HWtoIC(h, w));
+                    }else if(chara){
+                        jk = true;
+                        addIntCard(&r, HWtoIC(h, w));
                     }else{
                         addJOKER(&r);
                     }
@@ -185,20 +189,16 @@ namespace UECda{
         }
         // 通常のカード位置以外にあればジョーカー
         for(int h = 0; h < 4; ++h){
-            if(table[h][0]){
-                addJOKER(&r);
-            }
+            if(table[h][0])addJOKER(&r);
         }
         for(int h = 0; h < 4; ++h){
-            if(table[h][14]){
-                addJOKER(&r);
-            }
+            if(table[h][14])addJOKER(&r);
         }
         for(int w = 1; w < 14; ++w){
-            if(table[4][w]){
-                addJOKER(&r);
-            }
+            if(table[4][w])addJOKER(&r);
         }
+        // ジョーカー1枚使用の場合には chara もジョーカーに変更
+        if(jk && countCards(r) == 1)r = CARDS_JOKER;
         return r;
     }
     
