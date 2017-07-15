@@ -1,11 +1,13 @@
 time=`date '+%s'`
 echo ${time}
 
-# linux server
+# 設定
 auto_dir=
 learn_record_dir=
 opponent_dir=
 current_dir=
+
+cd ..
 
 # 保存ディレクトリ作成
 save_dir=${auto_dir}${time}/
@@ -44,3 +46,5 @@ sleep 0.5
 cd ${current_dir}
 
 # モンテカルロでの対戦実験
+
+cd scripts
