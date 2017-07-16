@@ -39,7 +39,7 @@ namespace LearningSettings{
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;
-    double attenuatingRate = 0.000000001; // 局面数あたり
+    double attenuatingRate = 0.0000000002; // 局面数あたり
     double L1Rate = 0;
     double L2Rate = 0.0000001;
     int batchSize = 1 << 14;
@@ -287,7 +287,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                                                     flag, &mLogs, true));
             }
             for(auto& t : threadPool)t.join();
-            for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
+            for(int th = 1; th < threads; ++th)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
             changeTrials += masterChangeLearner.trials(0);
             changeTrials += masterChangeLearner.trials(1);
             changePolicy.fout(outDirName + "change_policy_param.dat");
@@ -305,7 +305,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                                                     flag, &mLogs, false));
             }
             for(auto& t : threadPool)t.join();
-            for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
+            for(int th = 1; th < threads; ++th)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
             playTrials += masterPlayLearner.trials();
             playPolicy.fout(outDirName + "play_policy_param.dat");
             foutComment(playPolicy, outDirName + "play_policy_comment.txt");
@@ -324,7 +324,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                                                         flag, &mLogs, true));
                 }
                 for(auto& t : threadPool)t.join();
-                for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
+                for(int th = 1; th < threads; ++th)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
                 for(int ph = 0; ph < 2; ++ph){
                     cerr << "Change Test     : " << masterChangeLearner.toObjValueString(ph) << endl;
                 }
@@ -338,7 +338,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                                                         flag, &mLogs, false));
                 }
                 for(auto& t : threadPool)t.join();
-                for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
+                for(int th = 1; th < threads; ++th)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
                 cerr << "Play   Test     : " << masterPlayLearner.toObjValueString() << endl;
             }
         }
