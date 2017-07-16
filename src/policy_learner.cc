@@ -39,11 +39,12 @@ namespace LearningSettings{
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;
-    double attenuatingRate = 0.05;
+    double attenuatingRate = 0.0000005; // 局面数あたり
     double L1Rate = 0;
     double L2Rate = 0.0000001;
-    int batchSize = 8192;
+    int batchSize = 1 << 14;
     int iterations = 200;
+    double testRate = 0.77;
 }
 
 class LearningSpace{
@@ -95,8 +96,8 @@ void analyzeThread(int threadIndex, int st, int ed, BitSet32 flag,
         thls.playLearner().initFeatureValue();
     }
     iterateGameRandomly(*pmLogs, st, ed,
-                        [flag, ptools, &thls](const auto& gLog, const auto& mLog)->void{
-                            PolicyGradient::learnChangeParamsGame(gLog, flag, &thls, ptools); // 特徴解析
+                        [flag, ptools, change, &thls](const auto& gLog, const auto& mLog)->void{
+                            PolicyGradient::learnParamsGame(gLog, flag, &thls, ptools, change); // 特徴解析
                         });
     if(change){
         thls.changeLearner().closeFeatureValue();
@@ -109,8 +110,6 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     
     using namespace UECda::Fuji;
     
-    double testRate = (mode & MODE_FLAG_TEST) ? 0.77 : 0;
-    
     XorShift64 dice((uint32_t)time(NULL));
     std::mt19937 mt((uint32_t)time(NULL));
     
@@ -118,9 +117,13 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         outDirName = DIRECTORY_PARAMS_OUT;
     }
     
-    // 学習クラスをスレッド数分確保
+    // 学習クラスとスレッドツールをスレッド数分確保
     const int threads = LearningSettings::threads;
-    for(int th = 0; th < threads; ++th)ls.emplace_back(LearningSpace(&changePolicy, &playPolicy));
+    ls.clear();
+    for(int th = 0; th < threads; ++th){
+        ls.emplace_back(LearningSpace(&changePolicy, &playPolicy));
+        threadTools.emplace_back(ThreadTools());
+    }
     
     // 0番スレッドの学習クラスをマスターとする
     auto& masterChangeLearner = ls.at(0).changeLearner();
@@ -139,9 +142,8 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     const int64_t games = mLogs.games();
     
     // トレーニングとテストの試合数を決める
-    const double learnGameRate = games / (games + pow((double)games, testRate));
-    
-    const int64_t learnGames = min((int64_t)(games * learnGameRate), games);
+    const double learnGameRate = games / (games + pow((double)games, LearningSettings::testRate));
+    const int64_t learnGames = (mode & MODE_FLAG_TEST) ? min((int64_t)(games * learnGameRate), games) : games;
     const int64_t testGames = games - learnGames;
     if(mode & MODE_FLAG_SHUFFLE){
         mLogs.shuffleRandomList(0, games, mt);
@@ -162,12 +164,15 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         eachLearnGames.push_back(eachLearnGames.back() + g);
         tgames += g;
     }
-    std::vector<int64_t> eachTestGames = {0};
+    std::vector<int64_t> eachTestGames = {learnGames};
     for(int64_t tgames = learnGames, th = 0; th < threads; ++th){
         int64_t g = (games - tgames) / (threads - th);
         eachTestGames.push_back(eachTestGames.back() + g);
         tgames += g;
     }
+    
+    cerr << "learn games dist = " << eachLearnGames << endl;
+    cerr << "test  games dist = " << eachTestGames << endl;
     
     BitSet32 flag(0);
     flag.set(1);
@@ -214,7 +219,6 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         for(auto& t : threadPool)t.join();
         for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
         masterPlayLearner.foutFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
-        
         cerr << "play   - training record : " << masterPlayLearner.toRecordString() << endl;
         
         // 着手テストデータ
@@ -245,20 +249,24 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         }
     }
     
+    int changeTrials = 0;
+    int playTrials = 0;
     for (int j = 0; j < LearningSettings::iterations; ++j){
         
-        cerr << "iteration " << j << endl;
+        cerr << "iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
         
         for(int th = 0; th < threads; ++th){
+            double catr = exp(-changeTrials * LearningSettings::attenuatingRate);
             ls.at(th).changeLearner().setLearnParam(LearningSettings::temperature,
-                                                    LearningSettings::learningRate * exp(-j * LearningSettings::attenuatingRate),
-                                                    LearningSettings::L1Rate * exp(-j * LearningSettings::attenuatingRate),
-                                                    LearningSettings::L2Rate * exp(-j * LearningSettings::attenuatingRate),
+                                                    LearningSettings::learningRate * catr,
+                                                    LearningSettings::L1Rate * catr,
+                                                    LearningSettings::L2Rate * catr,
                                                     LearningSettings::batchSize);
+            double patr = exp(-playTrials * LearningSettings::attenuatingRate);
             ls.at(th).playLearner().setLearnParam(LearningSettings::temperature,
-                                                  LearningSettings::learningRate * exp(-j * LearningSettings::attenuatingRate),
-                                                  LearningSettings::L1Rate * exp(-j * LearningSettings::attenuatingRate),
-                                                  LearningSettings::L2Rate * exp(-j * LearningSettings::attenuatingRate),
+                                                  LearningSettings::learningRate * patr,
+                                                  LearningSettings::L1Rate * patr,
+                                                  LearningSettings::L2Rate * patr,
                                                   LearningSettings::batchSize);
         }
         
@@ -280,6 +288,8 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             }
             for(auto& t : threadPool)t.join();
             for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
+            changeTrials += masterChangeLearner.trials(0);
+            changeTrials += masterChangeLearner.trials(1);
             changePolicy.fout(outDirName + "change_policy_param.dat");
             foutComment(changePolicy, outDirName + "change_policy_comment.txt");
             for(int ph = 0; ph < 2; ++ph){
@@ -295,6 +305,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             }
             for(auto& t : threadPool)t.join();
             for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
+            playTrials += masterPlayLearner.trials();
             playPolicy.fout(outDirName + "play_policy_param.dat");
             foutComment(playPolicy, outDirName + "play_policy_comment.txt");
             cerr << "Play   Training : " << masterPlayLearner.toObjValueString() << endl;
@@ -376,6 +387,8 @@ int main(int argc, char* argv[]){ // For UECda
             LearningSettings::attenuatingRate = atof(argv[c + 1]);
         }else if(!strcmp(argv[c], "-lr")){
             LearningSettings::learningRate = atof(argv[c + 1]);
+        }else if(!strcmp(argv[c], "-bs")){
+            LearningSettings::batchSize = atoi(argv[c + 1]);
         }else if(!strcmp(argv[c], "-th")){
             LearningSettings::threads = atoi(argv[c + 1]);
         }

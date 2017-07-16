@@ -174,7 +174,7 @@ namespace UECda{
         Cards r = CARDS_NULL;
         bool jk = false;
         for(int h = 0; h < 4; ++h){
-            for(int w = 1; w < 14; ++w){
+            for(int w = 0; w < 15; ++w){
                 if(table[h][w]){
                     if(table[h][w] == 1){
                         addIntCard(&r, HWtoIC(h, w));
@@ -188,13 +188,7 @@ namespace UECda{
             }
         }
         // 通常のカード位置以外にあればジョーカー
-        for(int h = 0; h < 4; ++h){
-            if(table[h][0])addJOKER(&r);
-        }
-        for(int h = 0; h < 4; ++h){
-            if(table[h][14])addJOKER(&r);
-        }
-        for(int w = 1; w < 14; ++w){
+        for(int w = 0; w < 15; ++w){
             if(table[4][w])addJOKER(&r);
         }
         // ジョーカー1枚使用の場合には chara もジョーカーに変更

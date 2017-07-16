@@ -2500,6 +2500,7 @@ namespace UECda{
                 out << RankRangeM(r, r + q - 1);
                 // ジョーカー
                 if(m.containsJOKER()){
+                    //cerr << m.jokerRank() << " " << OutRankM(m.jokerRank()) << endl;
                     out << "(" << OutRankM(m.jokerRank()) << ")";
                 }
             }else{

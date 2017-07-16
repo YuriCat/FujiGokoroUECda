@@ -161,6 +161,8 @@ namespace UECda{
         
         BitSet32 flagGame;
         BitSet32 flagMatch;
+        int startedGame = -1;
+        int failedGames = 0;
         
         int t;
         
@@ -194,6 +196,11 @@ namespace UECda{
                 break;
             }
             else if(cmd == "/*"){ // game開始合図
+                if(startedGame >= 0){
+                    cerr << "failed to read game " << (startedGame + failedGames) << endl;
+                    failedGames += 1;
+                }
+                startedGame = pmLog->games();
                 gLog.init();
                 infoClass.clear();
                 infoSeat.clear();
@@ -213,6 +220,7 @@ namespace UECda{
                 gLog.infoSeat() = infoSeat;
                 gLog.infoNewClass() = infoNewClass;
                 pmLog->push_game(gLog);
+                startedGame = -1;
             }
             else if(cmd == "match"){
                 const string& str=q.front();

@@ -488,6 +488,10 @@ int main(int argc, char* argv[]){ // for UECda
             DERR << "server move = " << serverMove << " " << OutCards(serverUsedCards) << endl;
             field.procByServer(serverMove, serverUsedCards);
             
+            //if(serverMove.isSeq() && serverMove.jokerRank() == 15){
+            //    cerr << toString(recv_table) << endl;
+            //}
+            
 #ifdef LOGGING
             MinClientPlayLog<N_PLAYERS> playLog;
             playLog.set(serverMove, tmpTime, myPlayTime);

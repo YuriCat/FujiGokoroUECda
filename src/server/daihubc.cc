@@ -792,6 +792,10 @@ int main(int argc, char *argv[]){
             
             Move mv = TableToMove(work_card);
             
+            if(mv.isSeq() && mv.jokerRank() == 15){
+                //cerr << toString(work_card) << endl << getchar();
+            }
+            
             if(debug){printf("accepted card is \n");} //DEBUG
             if(debug){print_player_card(work_card);} //DEBUG
             if(debug){printf("player card is \n");} //DEBUG
