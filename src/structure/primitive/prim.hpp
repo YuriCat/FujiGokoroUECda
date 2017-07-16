@@ -2619,7 +2619,8 @@ namespace UECda{
                     if(c == ')'){ break; }
                     int r = CharToRankM(c);
                     if(r == RANK_NONE){
-                        CERR << "illegal joker-rank" << endl; return MOVE_NONE;
+                        CERR << "illegal joker-rank " << str << endl;
+                        return MOVE_NONE;
                     }
                     jkr = r;
                 }
@@ -2632,7 +2633,8 @@ namespace UECda{
                     if(c == ')'){ break; }
                     int sn = CharToSuitNumM(c);
                     if(sn == SUITNUM_NONE){
-                        CERR << "illegal joker-suit" << endl; return MOVE_NONE;
+                        CERR << "illegal joker-suit" << str << endl;
+                        return MOVE_NONE;
                     }
                     jks |= SuitNumToSuits(sn);
                 }
