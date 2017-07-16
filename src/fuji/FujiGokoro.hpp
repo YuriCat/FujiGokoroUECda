@@ -367,6 +367,7 @@ namespace UECda{
 				const Cards opsCards = opsHand.getCards();
 
 				const Board bd = tfield.getBoard();
+                CERR << bd << endl;
 				
 				// サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
 				if(bd.domInevitably()){ return MOVE_PASS; }
@@ -420,9 +421,9 @@ namespace UECda{
 					
 					// 合法着手生成(特別着手)
                     int ex_cnt = 0;
-                    /*if(bd.isNF()){
+                    if(bd.isNF()){
                         ex_cnt += genNullPass(ps.mv + ps.qty + ex_cnt);
-                    }*/
+                    }
 					if(containsJOKER(myCards)
 					   && containsS3(opsCards)
 					   ){
@@ -640,11 +641,11 @@ namespace UECda{
 				 field.nextMoves.push(decided_move[i]);
 				 }*/
 				
-                if(bd.isNF() && decided_move[0].isPASS()){
+                /*if(bd.isNF() && decided_move[0].isPASS()){
                     field.broadcastBP();
                     cerr << shared.gameLog.toString(field.getGameNum()) << endl;
                     getchar();
-                }
+                }*/
 				return decided_move[0];
 			}
 			void afterMyPlay(){

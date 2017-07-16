@@ -1,1 +1,9 @@
 /out
+/param
+/param_out
+/dump
+/record
+
+*.exe
+*.dat
+*.bin

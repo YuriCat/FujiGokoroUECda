@@ -474,7 +474,7 @@ int main(int argc, char* argv[]){ // for UECda
             
             // サーバーが受理した役(場に出ている役)
             
-            //cerr << toString(recv_table);
+            //cerr << toString(recv_table) << endl;
             
             Move serverMove = TableToMove(recv_table);
             Cards serverUsedCards = TableToCards(recv_table, false);
