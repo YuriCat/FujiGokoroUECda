@@ -39,7 +39,7 @@ namespace LearningSettings{
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;
-    double attenuatingRate = 0.0000005; // 局面数あたり
+    double attenuatingRate = 0.00000001; // 局面数あたり
     double L1Rate = 0;
     double L2Rate = 0.0000001;
     int batchSize = 1 << 14;
