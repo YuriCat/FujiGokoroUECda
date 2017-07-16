@@ -1,0 +1,1101 @@
+player blauweregen blauweregen blauweregen blauweregen blauweregen
+/* 
+game 0 
+score 
+class 0 1 2 3 4 
+seat 4 2 0 1 3 
+dealt { s7 d8 s8 h9 dt dj hj sk ca da } { d3 d5 d6 c7 d7 h7 ct hq sa h2 s2 } { c4 h4 c6 c9 d9 cj cq ck hk ha d2 } { c3 h3 s3 h6 c8 h8 ht st sj dk jo } { d4 s4 c5 h5 s5 s6 s9 dq sq c2 } 
+changed { } { } { } { } { } 
+original { s7 d8 s8 h9 dt dj hj sk ca da } { d3 d5 d6 c7 d7 h7 ct hq sa h2 s2 } { c4 h4 c6 c9 d9 cj cq ck hk ha d2 } { c3 h3 s3 h6 c8 h8 ht st sj dk jo } { d4 s4 c5 h5 s5 s6 s9 dq sq c2 } 
+play d-3[269244] d-4[439146] d-t[88621] d-2[98563] p[27089] p[84] p[91] p[83] p[80] c-jqk[303801] p[84] p[88] p[70] p[72] p[105] ch-4[181947] hs-t[152162] p[119990] ds-q[231728] cd-a[244352] p[103] p[79] p[94] p[67] s-7[337359] h-a[248541] p[66782] p[254813] c-2[286454] p[103] p[79] p[74] s-456[154521] p[127] p[74] p[71] p[88] p[86] ch-5[105504] dh-j[329663] p[189] p[232015] p[309788] p[90] p[65] s-k[353317] p[77] p[79939] s-a[345370] p[112] p[99] p[169189] d-567[371538] p[73] p[62] p[70] p[88] p[132] c-t[355959] p[139] p[78] p[443774] d-k[249553] s-2[248999] p[9342] p[60] h-q[105728] p[121] p[80] h-k[432917] p[14653] h-2[7963] p[72] p[79] ch-7[82] p[70] ds-8[76] h-9[60] p[126] s-j[95] p[64] p[82] h-678(7)[98] c-8[89] chs-3[67] p[105] p[67] s-9[81] 
+result 1 0 4 2 3 
+*/ 
+/* 
+game 1 
+score 
+class 1 0 4 2 3 
+seat 4 2 0 1 3 
+dealt { h3 h4 c5 s6 h7 h8 s9 dt dj ca sa } { c3 d4 h6 d8 d9 ct hj hk sk c2 s2 } { d3 d5 c6 d6 c9 st cj cq ha d2 } { s3 c4 h5 s8 h9 ht sq ck da jo } { s4 s5 c7 d7 s7 c8 sj dq hq dk h2 } 
+changed { h3 } { d4 h6 } { ha d2 } { } { h2 } 
+original { h4 c5 s6 h7 h8 s9 dt dj ca sa h2 } { c3 d8 d9 ct hj hk sk ha c2 d2 s2 } { d3 d4 d5 c6 d6 h6 c9 st cj cq } { s3 c4 h5 s8 h9 ht sq ck da jo } { h3 s4 s5 c7 d7 s7 c8 sj dq hq dk } 
+play d-3456[325920] p[154] p[147] p[73] p[108] p[78] s-t[182517] s-q[943293] s-2[135428] p[234] p[54] p[72] p[1196964] p[119] d-9[247697] s-j[350078] p[412884] c-q[1513939] c-k[231972] c-2[182382] p[119] p[94] jk[199334] p[86] s-3[91352] h-5[260730] h-j[236427] p[172405] p[343626] p[88] p[90] h-a[209674] p[79] c-3[233994] s-4[398737] s-6[671218] p[97] s-8[48573] c-4[302894] d-8[236919] hs-k[254470] p[86] p[244187] p[101] p[85] p[91] d-2[63] p[75] p[70] p[64] p[75] p[73] c-t[89] d-k[265405] s-a[219957] p[87] p[81] p[65] p[70509] c-5[304901] c-6[254590] p[112] c-8[63896] s-5[253015] s-9[186370] p[92] p[101] p[91] p[79] h-7[183911] c-9[212403] h-t[49353] p[179129] d-j[143516] p[90] d-a[130] p[84] p[108] h-9[79] h-q[98120] h-2[22522] p[118] p[89] p[79] h-4[26101] h-6[45075] p[97] h-8[90] c-a[71] p[116] p[97] p[97] d-t[81] c-j[110] 
+result 2 0 3 1 4 
+*/ 
+/* 
+game 2 
+score 
+class 2 0 3 1 4 
+seat 4 2 0 1 3 
+dealt { h3 s3 h4 s5 c6 h6 s6 c8 cj sq ca } { c3 d3 c7 s8 dj cq ck sk da sa h2 } { c4 d4 h7 s7 d8 c9 dt hj dk ha } { s4 d6 d9 st dq hq hk d2 s2 jo } { c5 d5 h5 d7 h8 h9 s9 ct ht sj c2 } 
+changed { } { c7 cq } { ha } { d6 } { sj c2 } 
+original { h3 s3 h4 s5 c6 h6 s6 c8 cj sq ca } { c3 d3 s8 dj sj ck sk da sa c2 h2 } { c4 d4 d6 h7 s7 d8 c9 dt hj dk } { s4 d9 st dq hq hk ha d2 s2 jo } { c5 d5 h5 c7 d7 h8 h9 s9 ct ht cq } 
+play ds-j[74921] p[109] p[96] p[118] dh-q[170941] cs-k[38600] ch-a(c)[233713] ch-2[67297] p[122] p[87] ds-a[82143] p[117] p[106] p[126] p[67936] p[82] s-8[102] cd-3[87] ch-t[104154] p[103] p[79] p[22303] p[107] cd-7[121214] p[113] p[89] p[29442] hs-9[79245] p[111] h-8[63908] cdh-5[3781] chs-6[251211] p[81] p[91] p[79] p[51] s-5[247954] d-6[226478] s-t[165565] c-q[91] p[111071] p[91753] h-k[5373] p[82441] d-9[84507] c-j[108612] d-k[45475] s-2[100] p[91] p[78] p[79] d-2[107] p[89] p[82] p[71] s-4[104] c-8[120] hs-3[174] cd-4[81] p[92] hs-7[112] p[78] c-9[102] s-q[90] p[77] c-a[101] p[67] h-4[95] 
+result 3 0 4 2 1 
+*/ 
+/* 
+game 3 
+score 
+class 3 0 4 2 1 
+seat 0 1 4 3 2 
+dealt { d5 d6 d7 h7 d9 dq sq sk ha s2 } { s4 h5 s6 s7 s8 ht st hj sj ca h2 } { h3 h4 h8 dj cq ck dk da c2 jo } { c3 d3 s3 c4 c6 c7 c9 h9 s9 ct dt } { d4 c5 s5 h6 c8 d8 cj hq hk sa d2 } 
+changed { s2 } { s4 h5 } { c2 jo } { } { d4 } 
+original { d4 d5 d6 d7 h7 d9 dq sq sk ha } { s6 s7 s8 ht st hj sj ca c2 h2 jo } { h3 h4 s4 h5 h8 dj cq ck dk da } { c3 d3 s3 c4 c6 c7 c9 h9 s9 ct dt } { c5 s5 h6 c8 d8 cj hq hk sa d2 s2 } 
+play c-6[357745] h-8[338088] s-4[408994] d-9[329792] h-2[174792] p[114] p[97] p[91] p[66] p[42446] hs-t[144130] p[352905] p[110] cd-k[1484941] p[94] cd-a(d)[121] p[85] p[68] s-678[95] c-2[168] p[195] p[91] p[142] p[107] p[85] hs-j[106] p[64471] p[134] p[93] ds-q[21522] p[65] h-7[159271] h-q[189141] p[93] p[139] h-a[22987] p[101] p[93] d-4567[9167] p[94] p[66] p[74] p[94] s-k[75] s-a[22966] p[196] p[145] p[112751] h-6[133648] c-7[132898] c-q[167171] p[181] p[114] p[95] h-345[57770] p[57] p[79] p[71] d-j[95712] h-k[75863] p[89] d-a[95] d-2[117] p[90] cd-8[206] c-j[163] p[189] s-2[154] p[94] cs-5[113] 
+result 1 0 2 4 3 
+*/ 
+/* 
+game 4 
+score 
+class 1 0 2 4 3 
+seat 0 1 4 3 2 
+dealt { s4 s5 h6 s7 d8 c9 dt sj hq d2 } { c3 d3 s3 d4 h4 c6 d7 dj sq sa jo } { h5 d6 s6 ct hj dq hk da ha s2 } { h3 c5 h7 h8 s8 d9 s9 st cj cq c2 } { c4 d5 c7 c8 h9 ht ck dk sk ca h2 } 
+changed { s4 } { c6 d7 } { } { cq c2 } { h2 } 
+original { s5 h6 s7 d8 c9 dt sj hq d2 h2 } { c3 d3 s3 d4 h4 dj cq sq sa c2 jo } { h5 d6 s6 ct hj dq hk da ha s2 } { h3 c5 c6 d7 h7 h8 s8 d9 s9 st cj } { c4 s4 d5 c7 c8 h9 ht ck dk sk ca } 
+play dh-4[105852] p[238526] dh-7[511267] p[259335] p[131224] p[38054] p[87] h-3[738197] h-5[457460] h-6[355148] p[23392] h-9[455434] p[106] h-j[349181] h-q[314853] p[182] h-k[223443] p[367923] p[86479] ds-6[499668] p[123374] cs-q[102300] p[290467] p[85] dh-a[327862] p[167712] p[111] c-t[482906] s-j[565660] s-a[229683] p[195] p[146] s-2[24893] p[108] jk[65078] p[127] p[164157] cds-3[224430] p[71058] p[144] p[136] p[59] p[83] c-2[67] p[77] p[81] p[82] p[67] p[81] d-j[78] p[225481] p[87] d-q[168] p[22128] s-7[179547] c-8[156117] c-7[156119] s-t[162216] p[144392] d-k[141451] p[97] p[24844] cs-4[130182] ds-9[133515] p[3449] cs-k[3248] p[111] p[94] d-5[124419] c-6[112949] d-t[81528] c-a[70519] p[119] d-2[55568] p[124] p[77] c-9[62820] h-t[94] c-j[139] h-2[148] p[140] p[157] d-8[93] s-5[113] 
+result 3 0 1 4 2 
+*/ 
+/* 
+game 5 
+score 
+class 3 0 1 4 2 
+seat 0 1 4 3 2 
+dealt { h3 c4 h7 c9 s9 ht dj sq dk c2 } { d3 s3 h4 d7 h8 st hj sj cq ca ha } { h6 s7 c8 s8 h9 cj dq hq sk da } { c3 s4 c5 c6 d6 d8 ck hk h2 s2 jo } { d4 d5 h5 s5 s6 c7 d9 ct dt sa d2 } 
+changed { c2 } { h4 d7 } { h6 } { s2 jo } { } 
+original { h3 c4 h6 h7 c9 s9 ht dj sq dk } { d3 s3 h8 st hj sj cq ca ha s2 jo } { s7 c8 s8 h9 cj dq hq sk da c2 } { c3 h4 s4 c5 c6 d6 d7 d8 ck hk h2 } { d4 d5 h5 s5 s6 c7 d9 ct dt sa d2 } 
+play s-t[102032] p[226261] h-2[353746] p[53] p[82] p[20858] p[90] c-3[512890] c-j[1084429] p[88] c-q[7978] p[209] p[868197] c-2[220458] p[103357] p[116] s-7[319987] h-t[445977] s-2[132658] p[90] p[129] p[65] p[88] p[65680] hs-j[79644] p[133] p[112510] dh-q[250522] p[73] ch-a[66] p[173] p[113] ch-8(c)[98] ds-3[65] cd-t[276116] p[24434] p[71] p[104] p[166] s-6[303576] d-7[122388] h-9[116037] s-q[297807] s-a[203202] p[123] p[106] p[102] p[107] d-4[235077] c-5[200150] s-k[90359] p[81] p[207527] p[94] d-a[81] p[62] cs-8[89] h-3[184302] c-7[139316] d-8[3835] hs-4[113288] p[107415] hs-5[25450] p[92] p[84] d-9[102060] h-k[87195] p[87] d-2[75] p[86] p[117] d-5[80] c-k[148] p[72] p[82] cd-6[55] 
+result 4 0 1 3 2 
+*/ 
+/* 
+game 6 
+score 
+class 4 0 1 3 2 
+seat 2 1 4 3 0 
+dealt { d4 s6 s7 c8 d8 c9 d9 h9 sq sk da } { h3 d5 c6 h6 c7 dt cj dj cq c2 d2 } { c4 s4 c5 s5 s8 ht dq dk ha sa } { s3 h5 d6 d7 ct st sj hk ca h2 jo } { c3 d3 h4 h7 h8 s9 hj hq ck s2 } 
+changed { sk da } { h3 d5 } { ht } { jo } { } 
+original { h3 d4 d5 s6 s7 c8 d8 c9 d9 h9 sq } { c6 h6 c7 dt cj dj cq sk da c2 d2 } { c4 s4 c5 s5 s8 dq dk ha sa jo } { s3 h5 d6 d7 ct ht st sj hk ca h2 } { c3 d3 h4 h7 h8 s9 hj hq ck s2 } 
+play h-7[282500] d-t[134303] p[567071] s-j[756034] d-q[198628] c-k[202961] d-a[155067] p[779457] p[76399] p[292271] p[165020] c-7[265965] p[3686737] h-2[1571117] p[35343] p[111] p[77] p[103] d-7[1825115] s-8[243374] cs-4[399259] p[131] ch-6[273077] p[468708] ch-t[577858] p[15544] p[311] p[174] s-3[699586] d-k[341950] p[480904] d-2[455522] p[79] p[83] jk[611954] p[94] p[109] cs-5[524181] p[89] cd-j[182745] p[69] p[79] hs-a[78] p[83] h-4[871030] c-q[159175] p[91] c-a[710733] p[91] c-2[122] p[142] p[91] s-k[102] p[92] p[164] p[161620] d-4[200782] d-6[294020] p[154] d-8[125681] s-6[157322] s-t[16616] p[91677] s-q[32802] p[92] p[86] d-9[130790] p[186774] h-j[136421] p[113] h-q[61797] p[129] s-9[25757] p[96] p[32664] s-2[93] p[112] h-8[116] cd-3[111] ch-9[152] p[135] p[87] d-5[95] h-k[70] p[80] p[66] h-5[174] 
+result 4 1 0 3 2 
+*/ 
+/* 
+game 7 
+score 
+class 4 1 0 3 2 
+seat 2 1 4 3 0 
+dealt { d3 h3 s4 c5 c6 c7 c8 d8 hj ck } { h5 h6 s7 h8 s8 c9 ht st cq s2 jo } { h4 s5 d7 h9 ct sj sq dk hk ca sa } { c4 d4 d6 s6 d9 hq da ha c2 h2 } { c3 s3 d5 h7 s9 dt cj dj dq sk d2 } 
+changed { hj ck } { s7 } { h4 d7 } { h2 } { } 
+original { d3 h3 h4 s4 c5 c6 c7 d7 c8 d8 } { h5 h6 h8 s8 c9 ht st cq h2 s2 jo } { s5 h9 ct hj sj sq ck dk hk ca sa } { c4 d4 d6 s6 s7 d9 hq da ha c2 } { c3 s3 d5 h7 s9 dt cj dj dq sk d2 } 
+play dh-3[317052] cd-4[434178] cs-a[175702] p[125] p[165905] p[98] p[111] p[129] s-5[275060] h-7[736353] c-9[401482] p[90] h-q[999114] p[280004] p[345967] s-2[320410] p[120] p[12934] hs-t[357955] p[89] p[291222] hs-j[328626] p[59] p[14335] p[91] h-9[381332] c-j[381368] h-2[89] p[67] p[100] p[78] p[70] p[81] h-5678(7)[70] s-8[95] c-q[78] p[64] h-a[190984] p[86] d-2[180703] p[90] p[84] d-5[208777] d-7[135017] d-9[23008] d-k[170139] p[113] p[79] d-a[46231] p[93] p[83] ds-6[229495] ch-k[4558] p[135] p[93] p[85] p[110] c-t[197105] d-q[130231] p[109] c-2[88] p[131] p[213] p[127] s-7[103] s-q[123] s-k[137] p[100] p[132] s-9[102] p[159] d-t[93] d-j[115] p[90] cs-3[84] 
+result 4 0 2 1 3 
+*/ 
+/* 
+game 8 
+score 
+class 4 0 2 1 3 
+seat 2 1 4 3 0 
+dealt { h3 d4 s4 h5 s7 c9 ht sj ck dk jo } { c3 d3 h6 c8 dt st cj dj cq ca ha } { h4 d5 s5 s6 c7 d7 h9 s9 hq c2 } { c4 c5 d6 d8 h8 hj dq sq sk da h2 } { s3 c6 h7 s8 d9 ct hk sa d2 s2 } 
+changed { dk jo } { h6 cq } { } { c5 } { s2 } 
+original { h3 d4 s4 h5 h6 s7 c9 ht sj cq ck } { c3 d3 c8 dt st cj dj dk ca ha jo } { h4 d5 s5 s6 c7 d7 h9 s9 hq c2 } { c4 d6 d8 h8 hj dq sq sk da h2 s2 } { s3 c5 c6 h7 s8 d9 ct hk sa d2 } 
+play ds-t[99208] p[88] ds-q[133152] p[89] p[92] ds-k(s)[25667] p[79] p[39] cd-j[33206] p[89] p[260228] p[134] p[100] ch-a[92] p[108] c-8[83] cd-3[74] ds-4[172742] dh-8[28336] d-6[92100] p[183488] d-9[243516] p[54] d-a[4618] d-2[137187] p[148] p[164] c-6[226015] c-9[278414] p[86] p[155758] c-t[8130] c-q[190337] p[101] c-k[185600] p[114] h-3[207328] c-4[161136] s-6[129152] h-7[197360] s-j[197900] s-k[23512] p[94] s-a[189906] p[81] s-2[113] p[83] p[199] h-2[119] p[75] p[95] p[127] p[125] h-j[82] h-q[55328] h-k[8037] p[103] p[93] p[80] s-3[99145] h-5[87479] c-2[89] p[96] p[80] p[76] ds-5[115] p[83] p[86] cd-7[101] hs-9[87] p[77] h-4[101] s-8[90] c-5[81] 
+result 4 0 2 1 3 
+*/ 
+/* 
+game 9 
+score 
+class 4 0 2 1 3 
+seat 0 4 1 2 3 
+dealt { h4 h5 c7 s8 h9 s9 ct ht cj dj sa } { c3 d3 d4 d5 s7 d9 st sj ck sk ha } { s4 s5 d6 d8 hj cq dq sq hk c2 s2 } { s3 h6 s6 h7 c8 dt dk d2 h2 jo } { h3 c4 c5 c6 d7 h8 c9 hq ca da } 
+changed { dj sa } { c3 d9 } { } { h7 } { da } 
+original { c3 h4 h5 c7 s8 d9 h9 s9 ct ht cj } { d3 d4 d5 s7 st dj sj ck sk ha sa } { s4 s5 d6 d8 hj cq dq sq hk c2 s2 } { s3 h6 s6 c8 dt dk da d2 h2 jo } { h3 c4 c5 c6 d7 h7 h8 c9 hq ca } 
+play s-7[215846] s-8[1411734] c-3[1590077] d-6[401553] d-t[24303] p[126] p[156065] p[83] d-q[338782] jk[67] p[27] s-3[85] d-ka2[89] p[110] p[114] p[93] p[167] p[96] c-8[87] h-2[67] p[81] p[68] p[80] p[72] p[112] hs-6[85] dh-7[162827] ds-j[118323] p[29] cs-q[97932] p[314] cs-k[4429] p[51875] p[117] d-345[76188] p[88] p[119] p[158] p[129] hs-a[130027] p[92] p[180531] p[103] p[64] s-t[79] p[105533] h-j[41916] h-q[128577] h-k[4316] p[183] p[135] s-5[110609] c-9[127932] c-j[73005] c-2[81] p[207] p[105] p[77] d-8[100] s-2[108] p[89] p[47] p[73] s-4[194] h-8[499] c-456[137] p[207] p[208] c-a[130] p[3] p[81] h-3[110] 
+result 4 1 2 0 3 
+*/ 
+/* 
+game 10 
+score 
+class 4 1 2 0 3 
+seat 0 4 1 2 3 
+dealt { d3 h3 s3 c6 d7 st sj sk d2 h2 } { c3 c5 s5 c7 d8 cj hj cq dq ca s2 } { d4 h5 h6 s8 h9 s9 ct ht hq dk } { h4 s4 d5 s6 c8 c9 dj sq sa c2 jo } { c4 d6 h7 s7 h8 d9 dt ck hk da ha } 
+changed { d2 h2 } { c7 } { } { d5 s6 } { ha } 
+original { d3 h3 s3 d5 c6 s6 d7 st sj sk } { c3 c5 s5 d8 cj hj cq dq ca ha s2 } { d4 h5 h6 s8 h9 s9 ct ht hq dk } { h4 s4 c8 c9 dj sq sa c2 d2 h2 jo } { c4 d6 c7 h7 s7 h8 d9 dt ck hk da } 
+play d-5[406316] h-6[165014] c-9[161687] d-t[698553] s-2[367955] p[77] p[64] p[128497] p[126] p[109] cs-5[348513] cs-6[1196798] p[97] cs-q(c)[167989] p[139] p[138] p[152] p[156] d-j[111722] p[269017] p[327087] p[202565] h-q[296640] s-a[86] p[147] d-2[210] p[103] ch-2[108] p[144] p[102] p[147] p[129] p[160] c-8[80] hs-4[59] ch-k[162944] ch-a[126394] p[210] p[150] p[101] p[97] ch-j[141960] p[76] p[65] p[150] cd-q[105] p[107] d-8[84] c-3[95] s-t[149711] d-k[100238] p[34638] p[72] p[109] h-5[106875] d-6[49464] d-7[26309] p[78] d-9[103] p[67] d-a[75] p[83] chs-7[156] p[117] p[117] p[208] h-8[93] c-4[128] s-j[134] p[88] s-k[81] p[116] dhs-3[80] 
+result 3 1 4 0 2 
+*/ 
+/* 
+game 11 
+score 
+class 3 1 4 0 2 
+seat 0 4 1 2 3 
+dealt { d3 c4 h4 d5 s6 dt ht cq dq sa } { d6 s7 s8 cj dj sj ck da c2 d2 jo } { h3 d4 c5 h6 c9 ct hj hq hk h2 } { c3 s3 s4 h5 d7 d8 h8 s9 st ha s2 } { s5 c6 c7 h7 c8 d9 h9 sq dk sk ca } 
+changed { sa } { s7 } { hk h2 } { s4 d7 } { } 
+original { d3 c4 h4 d5 s6 s7 dt ht cq dq } { d6 s8 cj dj sj ck da sa c2 d2 jo } { h3 d4 s4 c5 h6 d7 c9 ct hj hq } { c3 s3 h5 d8 h8 s9 st hk ha h2 s2 } { s5 c6 c7 h7 c8 d9 h9 sq dk sk ca } 
+play d-3[634675] d-7[1268309] d-8[113209] h-5[251769] h-7[604144] p[113629] p[573019] h-j[3623736] h-k[162866] p[101] p[201] h-a[90467] p[43409] s-t[216909] s-q[931172] p[410524] p[69] p[92] s-2[83475] p[85] p[94] s-9[157133] c-a[295988] d-2[454853] p[79] p[165] p[86] p[203] p[259069] cds-j[428310] p[74] p[86] p[92] p[174] p[148] c-ka2(a)[97] p[151] p[85] p[82] p[85] p[88] ds-a[79] p[91] p[71] p[85] p[95] p[90] s-8[67] d-6[104] s-7[215101] c-9[221539] h-2[157] p[142] p[144] p[77] p[65] h-8[86] cs-3[79] dh-9[5352] dh-t[117577] p[85] p[91] p[74] ch-4[142360] p[106] ds-k[112] p[71] p[70] c-678[65] s-5[83] s-6[182] p[157] p[136] cd-q[61] p[122] p[96] d-5[165] 
+result 3 0 4 1 2 
+*/ 
+/* 
+game 12 
+score 
+class 3 0 4 1 2 
+seat 2 1 3 4 0 
+dealt { s3 h4 h5 s6 c7 s7 c8 ct dj dq c2 } { c4 c6 d6 d7 c9 cj hj hk sa h2 jo } { c3 d4 s4 d5 h7 s9 ht sq ca ha s2 } { d3 h3 c5 s5 s8 dt st sj hq dk } { h6 d8 h8 d9 h9 cq ck sk da d2 } 
+changed { c2 } { c4 d7 } { ha s2 } { sj } { } 
+original { s3 h4 h5 s6 c7 s7 c8 ct dj sj dq } { c6 d6 c9 cj hj hk ha sa h2 s2 jo } { c3 c4 d4 s4 d5 d7 h7 s9 ht sq ca } { d3 h3 c5 s5 s8 dt st hq dk c2 } { h6 d8 h8 d9 h9 cq ck sk da d2 } 
+play cs-5[222369] dh-9[122038] ch-j[104018] p[79] p[114] p[202] cs-k[275175] hs-a[127094] p[85] p[82191] cd-6[113822] p[597470] dh-7[467168] ds-t[329712] p[107] dh-k(d)[126157] p[89] p[85] hs-2[72] p[76] c-9[103] c-t[467910] p[138608] c-2[88350] p[126] p[59] p[67] dh-3[100469] dh-8[22677] d-2[114925] p[77] p[73] p[124] p[149] c-q[90312] p[115] c-a[287156] p[79] p[69] p[66] c-3[348947] h-q[127089] d-a[104] p[86] p[74] p[83] p[89] h-6[89] c-8[76385] s-3[82087] d-5[103910] s-8[81] d-k[66] p[89] p[80] h-4[77] h-t[183] p[78] p[95] cds-4[121] p[84] p[88] s-q[74] p[86] p[75] s-9[69] 
+result 4 0 3 2 1 
+*/ 
+/* 
+game 13 
+score 
+class 4 0 3 2 1 
+seat 2 1 3 4 0 
+dealt { h3 s4 c5 h5 d7 sj dq dk hk da c2 } { c4 d5 h6 s7 s8 h9 st hj sq sa s2 } { s3 d4 c6 s6 c7 h7 c8 s9 dt dj ca } { d3 h4 s5 d6 d8 c9 cj hq ck ha } { c3 h8 d9 ct ht cq sk d2 h2 jo } 
+changed { da c2 } { c4 d5 } { ca } { } { c3 } 
+original { h3 c4 s4 c5 d5 h5 d7 sj dq dk hk } { h6 s7 s8 h9 st hj sq da sa c2 s2 } { c3 s3 d4 c6 s6 c7 h7 c8 s9 dt dj } { d3 h4 s5 d6 d8 c9 cj hq ck ha } { h8 d9 ct ht cq sk ca d2 h2 jo } 
+play d-3[644803] d-9[129304] p[117994] d-q[659505] p[140] p[128] d-2[62523] p[68] p[8968] s-k[134451] p[258608] p[91] p[93] p[432562] h-2[78] p[88] c-qka(k)[74] p[67] p[103] p[135] p[133] p[118] h-8[102] ch-t[166] p[109980] p[83528] p[128] p[149] s-7[191962] s-j[201915] p[119] p[97] s-q[10412] p[74] p[130815] h-9[180060] p[207112] d-j[301571] c-k[301002] s-a[147169] p[74] p[97] p[121859] s-t[140041] p[153215] p[179] c-j[339166] d-a[88603] p[121] p[133028] h-6[140014] d-7[292041] s-9[323977] p[301801] c-2[70] p[99] p[127] p[77] s-8[90] s-2[78] p[101] p[74] p[87] p[81] h-j[101] p[5005] p[104] h-q[40820] p[46291] d-6[172070] h-k[162489] p[122] h-a[4441] p[75] p[106] h-4[125386] p[115746] d-t[86674] p[74] p[70] cs-3[27178] p[77] cs-4[28082] cs-6[86] p[17] p[75] ch-7[104] p[95] p[63] p[59] c-8[111] d-4[65] c-9[204] d-k[125] p[154] p[113] cdh-5[174] p[130] p[71] h-3[102] 
+result 3 1 2 4 0 
+*/ 
+/* 
+game 14 
+score 
+class 3 1 2 4 0 
+seat 2 1 3 4 0 
+dealt { c5 d6 s6 st cq ck sk ca ha sa c2 } { d3 s3 h4 s4 h5 s5 c9 h9 dt sq s2 } { c3 d5 c6 d7 c8 d9 cj hj dk jo } { c7 h7 s7 d8 dj dq hk da d2 h2 } { h3 c4 d4 h6 h8 s8 s9 ct ht sj hq } 
+changed { c2 } { dt } { } { d2 h2 } { h3 h6 } 
+original { c5 d6 s6 dt st cq ck sk ca ha sa } { d3 s3 h4 s4 h5 s5 c9 h9 sq c2 s2 } { c3 d5 c6 d7 c8 d9 cj hj dk jo } { h3 h6 c7 h7 s7 d8 dj dq hk da } { c4 d4 h8 s8 s9 ct ht sj hq d2 h2 } 
+play hs-4[214059] ds-6[95929] p[478724] p[929244] ch-t[210917] p[25655] cs-k[162526] p[72677] p[109293] c-5[125235] c-6[647808] p[229339] p[102] c-2[288725] p[91] p[117462] p[178] hs-5[371105] ds-t[7442] p[608703] p[83] p[108997] p[138] p[209124] chs-a[53060] p[144] p[65] p[81] p[84] p[132] c-q[127] p[231237] p[387036] d-2[296529] p[172] p[138] s-j[383582] s-q[77376] p[11541] p[95] p[114] p[56536] ch-9[495413] ch-j[254134] p[87] p[96] p[70] p[75] d-9[283599] d-j[459926] p[108] p[73] d-k[73879] d-a[143958] p[23018] p[99] h-6[398795] h-q[368083] p[92] p[19123] h-k[38001] h-2[9987] p[150] p[118] cd-4[364683] p[109] p[218045] p[317784] hs-8[90] s-9[69] s-2[104] p[3716] p[71] p[69] ds-3[70] p[108] p[77] d-567(6)[119] p[66] p[76] c-8[75] c-3[74] 
+result 0 2 3 4 1 
+*/ 
+/* 
+game 15 
+score 
+class 0 2 3 4 1 
+seat 3 1 4 2 0 
+dealt { h3 c5 s5 d6 c8 ct st hk sk c2 d2 } { d3 c4 d4 h5 h8 ht cj ca s2 jo } { s3 c6 h7 s7 d8 s8 c9 s9 da ha h2 } { h4 s4 d5 h6 c7 dj hj dq ck dk } { c3 s6 d7 d9 h9 dt sj cq hq sq sa } 
+changed { h3 d6 } { } { h2 } { ck dk } { c3 } 
+original { c5 s5 c8 ct st ck dk hk sk c2 d2 } { d3 c4 d4 h5 h8 ht cj ca s2 jo } { c3 s3 c6 h7 s7 d8 s8 c9 s9 da ha } { h3 h4 s4 d5 d6 h6 c7 dj hj dq } { s6 d7 d9 h9 dt sj cq hq sq sa h2 } 
+play h-5[214019] c-7[439794] c-8[83270] cs-5[138714] cs-9[477459] p[443063] p[347064] p[87] cs-t[85794] p[117] cs-k[85] p[97] cd-2[84] p[114] p[114] p[108] p[91] p[76] dh-k[79] p[8637] p[106] p[61757] p[97] cs-3[229237] cs-q[273970] p[45829] p[80] p[135] p[139] s-6[318945] c-j[172200] p[315626] p[274563] h-q[273023] c-a[179175] h-2[213859] p[55105] p[206] d-t[300416] s-2[87611] p[80] p[29] p[131] p[6655] cd-4[195626] p[477755] hs-7[211004] dh-9[193464] dh-t(d)[104781] dh-a[82] p[74] p[73] p[81] ds-8[88] c-6[87] s-j[6605] p[114] d-q[48365] s-a[91] p[74] p[120] d-7[71] h-8[90] d-3[87] 
+result 0 3 1 4 2 
+*/ 
+/* 
+game 16 
+score 
+class 0 3 1 4 2 
+seat 3 1 4 2 0 
+dealt { c3 d4 h5 c6 c7 s7 s9 st hj ck c2 } { h8 d9 h9 dt hq sq dk ha h2 jo } { d3 h3 s4 d6 s6 s8 ct dj sj ca s2 } { s3 c5 h6 d7 h7 ht cj sk da d2 } { c4 h4 d5 s5 c8 d8 c9 cq dq hk sa } 
+changed { c3 d4 } { jo } { s4 } { da d2 } { } 
+original { h5 c6 c7 s7 s9 st hj ck da c2 d2 } { s4 h8 d9 h9 dt hq sq dk ha h2 } { d3 h3 d6 s6 s8 ct dj sj ca s2 jo } { c3 s3 d4 c5 h6 d7 h7 ht cj sk } { c4 h4 d5 s5 c8 d8 c9 cq dq hk sa } 
+play c-t[133037] h-k[116983] h-a[129769] p[74] p[69] p[22134] p[85] p[116589] d-t[245012] c-j[5815086] c-k[274586] c-a[194494] p[91] p[106] p[160] c-2[231646] p[128168] p[79] c-6[347063] s-8[141918] dh-3[322162] ch-4[541503] dh-9[300373] p[103] p[97] ds-j[26895] cd-q[254955] p[104] cs-2(c)[97] p[88] p[75] ds-6[85] cd-8[141146] ds-5[58190] hs-q[29519] p[106] p[129] p[195] p[97] s-4[131084] c-5[171508] h-j[151190] p[190078] h-2[113] p[82] p[71] p[71] h-8[87] d-k[83] p[70] p[41582] s-a[8808] p[83] c-9[71] h-t[101] d-a[94] p[114] d-2[76] p[79] cs-7[94] p[78] p[97] s-9[102] s-k[95] p[58] p[89] d-4[129] s-t[140] p[203] p[83] h-5[108] 
+result 3 1 0 4 2 
+*/ 
+/* 
+game 17 
+score 
+class 3 1 0 4 2 
+seat 3 1 4 2 0 
+dealt { c3 d4 h7 s8 h9 s9 st cj sk ha } { h3 s4 c6 d6 s6 s7 h8 ct hj cq dq } { c4 h4 c5 d5 c7 d7 sq ck dk hk c2 } { d3 s3 s5 c8 d8 ht hq ca sa h2 } { h5 h6 c9 d9 dt dj sj da d2 s2 jo } 
+changed { ha } { s4 } { c5 d5 } { sa h2 } { } 
+original { c3 d4 s4 h7 s8 h9 s9 st cj sk } { h3 c6 d6 s6 s7 h8 ct hj cq dq ha } { c4 h4 c7 d7 sq ck dk hk sa c2 h2 } { d3 s3 c5 d5 s5 c8 d8 ht hq ca } { h5 h6 c9 d9 dt dj sj da d2 s2 jo } 
+play ds-3[314439] ds-4[195871] p[68] ds-j[112944] p[154] p[134] p[76] p[142438] h-567(7)[275692] p[97] p[62] s-89t[443909] c-3[523834] s-q[88487] d-a[84442] p[74] p[127] p[125] c-2[208386] p[125] p[94] ch-4[243144] cd-9[29194] p[409919] p[103] p[109] cd-k[278998] p[143] p[127] s-a[227758] d-2[103] p[113] p[59] p[65] p[128] p[155] s-2[106] p[123] p[155] p[94] p[208] p[153] d-t[94] p[405029] h-q[126925] s-k[235320] p[117971] c-a[22080] p[86] p[145] cd-8[223671] cds-5[5189] p[76] p[67] cds-6[118489] p[168] p[138] s-7[116235] h-t[108] p[102089] h-k[4738] h-a[46406] h-2[87] p[109] p[107] cd-7[77] cd-q[117] p[67] p[78] h-8[69] h-3[81] h-7[92] h-j[37] p[53] p[75] c-t[62] 
+result 4 3 2 1 0 
+*/ 
+/* 
+game 18 
+score 
+class 4 3 2 1 0 
+seat 2 0 4 3 1 
+dealt { c5 d5 s7 c8 st dj dq sq ck ca da } { d4 s5 d6 d7 h8 s8 ct ht cq sa } { c3 s3 s4 c6 c7 h9 s9 hk d2 h2 } { d3 h3 c4 h6 d8 dt hj hq dk c2 s2 } { h4 h5 s6 h7 c9 d9 cj sj sk ha jo } 
+changed { ca da } { sa } { } { c4 } { h4 s6 } 
+original { h4 c5 d5 s6 s7 c8 st dj dq sq ck } { c4 d4 s5 d6 d7 h8 s8 ct ht cq } { c3 s3 s4 c6 c7 h9 s9 hk d2 h2 } { d3 h3 h6 d8 dt hj hq dk sa c2 s2 } { h5 h7 c9 d9 cj sj sk ca da ha jo } 
+play h-6[241098] c-7[103715] s-8[296519] d-6[380735] h-7[283596] c-8[6307037] h-4[6344439] d-t[444237] d-2[626029] p[115] p[45410] p[131] p[129] p[87] s-4[674110] s-5[363922] p[355983] s-6[1058561] s-a[390530] p[80] p[64] p[78] p[337105] h-j[561837] h-k[416680] p[120] p[370728] p[195] p[117] p[7399] cs-3[351457] cd-4[358665] cd-9[147794] p[81] p[195] p[71] p[71] p[262081] h-5[282151] s-7[476115] h-q[454948] p[28817] p[127] s-k[186852] p[75] s-2[561154] jk[126] p[213] p[152] cdh-a[77] p[89] p[77] p[85] p[61] p[101] cs-j[125] p[236184] p[66] p[57] p[57] s-t[237249] d-k[31371] p[279877] p[67] p[79] c-2[67] p[72] d-8[99] dh-3[96] p[173820] ch-t[5319] p[45977] p[86] h-8[123459] d-7[68518] d-j[4150] p[103] p[66] p[1592] cd-5[5661] hs-9[36228] p[92] ds-q[73] p[62] p[72] c-k[58] h-2[83] p[73] p[68] c-6[65] 
+result 2 4 3 1 0 
+*/ 
+/* 
+game 19 
+score 
+class 2 4 3 1 0 
+seat 2 0 4 3 1 
+dealt { d3 h3 d4 d5 c6 s6 c7 h7 s8 cj ha } { c5 s5 d6 s7 c9 dj sj dk sk da } { h4 h5 d9 ct dt cq sq ca d2 h2 } { s3 s4 c8 h8 h9 ht hj dq ck hk c2 } { c3 c4 h6 d7 d8 s9 st hq sa s2 jo } 
+changed { } { sk da } { h2 } { s4 } { h6 d7 } 
+original { d3 h3 d4 d5 c6 s6 c7 h7 s8 cj ha } { c5 s5 d6 h6 d7 s7 c9 dj sj dk } { h4 s4 h5 d9 ct dt cq sq ca d2 } { s3 c8 h8 h9 ht hj dq ck hk c2 h2 } { c3 c4 d8 s9 st hq sk da sa s2 jo } 
+play h-3[222726] d-q[141007] p[155356] p[1478379] s-k[153653] p[120775] c-2[116491] p[8227] p[112] h-9tj[250219] p[89] p[122] p[3996] p[115] p[126] ch-k[228489] p[125] p[212] p[337524] p[151] p[89] h-2[111] p[145] p[111] p[67191] p[81] p[76] ch-8[82] s-3[74] h-5[216469] c-9[290639] h-q[173836] h-a[79550] p[90] p[65] p[5136] p[116] cs-6[354775] cs-q[332961] p[73] p[7701] p[70] p[65] hs-4[282245] ds-7[387234] ds-a[234910] p[74] p[112] p[87] p[4587] c-345( )[203358] p[151] p[106] p[66] p[62] s-t[191092] c-j[294246] c-a[25368] p[127] p[107] p[66] p[71] d-9[274502] d-k[237493] p[85] p[121] d-2[71] p[94] p[74] cd-t[73] p[2888] p[84] p[124] cs-5[106635] p[65] ch-7[3550] ds-j[107] p[66] p[78] dh-6[103] p[77] p[56] d-8[67] s-9[173] p[90] s-2[75] 
+result 4 2 1 0 3 
+*/ 
+/* 
+game 20 
+score 
+class 4 2 1 0 3 
+seat 2 0 4 3 1 
+dealt { c4 h4 c5 s5 d9 hj cq ck c2 jo } { d3 d4 c6 c9 h9 ht st hq sq ca d2 } { s3 s4 h5 c7 c8 s8 ct dt dk hk sa } { h3 h6 s6 d7 h8 s9 cj sk da h2 s2 } { c3 d5 d6 h7 s7 d8 dj sj dq ha } 
+changed { c2 jo } { } { s4 } { h3 d7 } { ha } 
+original { h3 c4 h4 c5 s5 d7 d9 hj cq ck } { d3 d4 c6 c9 h9 ht st hq sq ca d2 } { s3 h5 c7 c8 s8 ct dt dk hk ha sa } { h6 s6 h8 s9 cj sk da c2 h2 s2 jo } { c3 s4 d5 d6 h7 s7 d8 dj sj dq } 
+play d-3[221866] d-5[448089] d-7[1927483] d-a[41183] p[125] d-2[185694] p[84] p[74] p[110274] p[100] d-4[319607] d-6[322045] d-9[5776614] p[90366] d-k[318254] p[56] p[122] p[41] p[89] h-5[477274] c-6[27984] d-8[1111761] c-3[960075] h-j[537788] s-k[361538] p[473557] p[307633] p[105] p[128] p[372090] s-9[291495] h-k[640694] p[433332] p[265] p[188] h-2[351009] p[143] p[336868] c-j[338196] p[928204] c-a[554424] p[200] p[87] c-2[77] p[84] p[98] h-678(7)[108] s-2[66] p[65] p[71] p[147] p[136] p[124] s-6[108] c-7[114743] s-t[293812] d-q[515363] p[380657] h-a[332321] p[115] p[95] p[85] s-3[275707] h-t[47096] p[242292] p[311830] s-a[125] p[70] p[99] cs-8[168] cd-t[109] hs-q[141] p[154] p[64] p[104] ch-9[123] ds-j[84] p[103] p[82] hs-7[121] p[56] p[80] s-4[92] 
+result 4 2 1 0 3 
+*/ 
+/* 
+game 21 
+score 
+class 4 2 1 0 3 
+seat 1 0 4 3 2 
+dealt { c4 d7 s7 d8 d9 ct ht hj dq s2 } { d4 h5 s5 h6 s6 cq hq ck sk da sa } { d3 h7 h8 s8 c9 cj dk ha c2 d2 jo } { h3 s3 h4 d5 c6 c7 c8 s9 dj sj h2 } { c3 s4 c5 d6 h9 dt st sq hk ca } 
+changed { dq s2 } { } { h7 } { h4 d5 } { ca } 
+original { c4 h4 d5 d7 s7 d8 d9 ct ht hj } { d4 h5 s5 h6 s6 cq hq ck sk da sa } { d3 h8 s8 c9 cj dk ca ha c2 d2 jo } { h3 s3 c6 c7 c8 s9 dj sj dq h2 s2 } { c3 s4 c5 d6 h7 h9 dt st sq hk } 
+play c-9tj(t)[93867] p[72] p[54] p[60] p[62] p[55] ch-a[59724] p[48] p[95] p[57] p[25165] p[2722] d-k[39493] p[195084] p[152] p[84] h-2[246682] p[104] p[76] c-678[370743] hs-3[175497] hs-8[106] cd-2[161] p[69] p[144] p[89] p[83] p[95] d-3[84] d-4[7339] d-5[291039] d-6[238662] d-q[2331] d-a[120381] p[3] p[86] p[46] p[97] hs-6[162263] ds-7[215490] ds-t[205805] ds-j[109] p[117] p[115] p[92] p[91] s-2[81] p[93] p[101] p[98] p[89] s-9[73] c-k[67] p[92] p[85] s-a[103] p[84] ch-q[72] p[92] p[89] p[93] s-k[77] p[104] p[75] p[91] hs-5[83] ch-t[30] p[75] p[83] ch-4[434] p[85] p[89] d-8[86] d-9[65] s-q[103] p[91] p[106] s-4[111] h-j[87] 
+result 3 2 0 1 4 
+*/ 
+/* 
+game 22 
+score 
+class 3 2 0 1 4 
+seat 1 0 4 3 2 
+dealt { s3 h4 s5 c9 ht sj ck ca da c2 jo } { c4 h6 c7 c8 h9 dt cj hj cq dk hk } { c3 h3 d4 s4 d5 s6 d7 d8 s9 hq h2 } { c6 h7 h8 d9 ct st dq sq ha d2 } { d3 c5 h5 d6 s7 s8 dj sk sa s2 } 
+changed { jo } { } { d5 s6 } { c6 } { sa s2 } 
+original { s3 h4 s5 c6 c9 ht sj ck ca da c2 } { c4 h6 c7 c8 h9 dt cj hj cq dk hk } { c3 h3 d4 s4 d7 d8 s9 hq sa h2 s2 } { h7 h8 d9 ct st dq sq ha d2 jo } { d3 c5 d5 h5 d6 s6 s7 s8 dj sk } 
+play d-3[387432] d-9[102435] p[69] d-t[238484] p[323529] d-j[275321] d-2[161223] p[83] p[152] p[5224] cs-t[228425] p[47254] p[480966] p[260582] p[115] ds-q[148] p[105] h-678(6)[98] h-a[115] p[76788] p[83] c-2[207600] p[184] p[120] s-3[490626] s-7[44955] s-9[7942] p[81] s-j[175723] s-k[32181] s-a[183547] p[89] p[93] p[56733] d-7[219287] c-8[317958] c-7[299758] c-9[281540] p[99] p[93] c-q[149702] c-k[221704] p[96] p[130419] h-4[231288] s-8[158] cdh-5[141] p[191] p[121] p[88] p[85] ds-6[110] p[24988] dh-k[144582] p[124534] p[197] h-6[154855] d-a[136330] s-2[4257] p[106] p[116] p[109] ch-3[105426] p[107471] p[82] ds-4[146] p[110] d-8[103] h-2[73] p[57] p[73] p[120] h-q[78] p[138] p[133] c-4[185] c-6[111] c-j[64] c-a[126] p[119] p[137] s-5[119] h-j[151] p[147] p[67] h-9[62] 
+result 4 3 2 0 1 
+*/ 
+/* 
+game 23 
+score 
+class 4 3 2 0 1 
+seat 1 0 4 3 2 
+dealt { c5 d5 h5 h6 d7 h9 hq sq sk s2 } { s7 c8 s8 ct ht st dj hj ck da sa } { h3 s3 c4 h4 s6 c7 dt sj hk ha c2 } { c3 d3 d4 s5 c6 h8 cj cq dq d2 jo } { s4 d6 h7 d8 c9 d9 s9 dk ca h2 } 
+changed { sk s2 } { sa } { } { d4 s5 } { s4 } 
+original { d4 c5 d5 h5 s5 h6 d7 h9 hq sq } { s4 s7 c8 s8 ct ht st dj hj ck da } { h3 s3 c4 h4 s6 c7 dt sj hk ha c2 } { c3 d3 c6 h8 cj cq dq sk d2 s2 jo } { d6 h7 d8 c9 d9 s9 dk ca sa h2 } 
+play c-6[110613] c-7[229828] c-k[213804] p[69] p[238325] p[11414] c-2[147400] p[94] p[151] hs-3[331564] dh-j[436508] p[169713] cs-a[8396] p[144961] p[99] p[82] p[63] d-6[466312] c-j[190619] h-k[287745] p[279231] p[137] h-2[459305] p[161752] p[101] p[68] d-8[566274] cds-9[293233] cds-q(s)[261573] p[146] p[124] p[99] p[78] p[71] s-k[149968] p[111636] p[348301] p[72] p[119] s-2[84] p[110] h-8[128] d-2[123] p[148] p[106] p[145] p[201] p[103] cd-3[112] ch-4[74478] cs-8[87783] s-7[186292] s-q[97532] p[84] p[58] p[58] p[69] cdhs-5[79454] p[163] p[121] p[72] p[66] h-q[154380] h-7[129437] p[104] p[78] h-6[3459] p[102] p[90] h-9[128420] p[156] p[42566] s-4[87] p[175] p[72] chs-t[117] p[154] p[201] p[148] p[127] d-a[94] d-7[161] p[111] p[81] d-4[71] d-k[116] 
+result 2 1 4 0 3 
+*/ 
+/* 
+game 24 
+score 
+class 2 1 4 0 3 
+seat 4 3 1 0 2 
+dealt { h4 c5 d7 h7 d8 s8 st cq da c2 } { c3 s5 h6 d9 ht hq sq dk ha sa } { d3 h3 s4 h5 c7 c8 h9 ct dt dj ca } { s3 d4 d6 s7 h8 s9 hj hk sk d2 jo } { c4 d5 c6 s6 c9 cj sj dq ck h2 s2 } 
+changed { } { c3 } { dj ca } { d4 d6 } { s2 } 
+original { h4 c5 d7 h7 d8 s8 st cq da c2 } { s5 h6 d9 ht hq sq dk ha sa s2 } { d3 h3 d4 s4 h5 d6 c7 c8 h9 ct dt } { s3 s7 h8 s9 dj hj hk sk ca d2 jo } { c3 c4 d5 c6 s6 c9 cj sj dq ck h2 } 
+play d-6[510329] c-9[342495] h-t[175610] c-q[228328] c-a[133585] p[90] p[87] p[116] c-2[275485] p[74248] p[75] c-5[383535] s-7[204547] h-9[5245341] h-2[808614] p[28] p[49] jk[194727] p[74] p[70] s-3[24281] dh-j[221960] p[124] p[165] hs-q[466309] p[69] hs-k[29872] hs-a[255407] p[104] p[57] h-6[283876] s-t[250694] d-2[95] p[170] p[184] p[130] p[167] p[114] h-8[149] s-9[120] p[118440] p[340574] d-k[120549] d-a[24292] p[71] p[129] dh-7[144292] p[56277] p[111957] p[110] ds-8[152] h-4[63] h-5[32156] p[178] p[90] p[120] ds-4[110582] cs-6[77706] p[141] cd-t[2674] cs-j[49424] p[77] p[144] d-5[60342] d-9[20944] p[112] d-q[44665] p[138] p[128] c-4[44618] s-2[113] p[89] p[127] p[106] s-5[98] c-8[121] dh-3[81] p[150] p[114] c-7[75] 
+result 1 2 3 0 4 
+*/ 
+/* 
+game 25 
+score 
+class 1 2 3 0 4 
+seat 4 3 1 0 2 
+dealt { d3 h5 dt ht st dq dk hk sa h2 } { h3 s4 s7 c8 h9 hq ck sk da c2 } { s3 d4 s6 h7 c9 d9 cj hj d2 s2 jo } { c3 h4 c5 d5 h6 s9 ct dj cq sq ha } { c4 s5 c6 d6 c7 d7 d8 h8 s8 sj ca } 
+changed { h5 } { } { jo } { c3 h4 } { sj ca } 
+original { d3 dt ht st dq dk hk sa h2 jo } { h3 s4 s7 c8 h9 hq ck sk da c2 } { s3 d4 h5 s6 h7 c9 d9 cj hj d2 s2 } { c5 d5 h6 s9 ct dj sj cq sq ca ha } { c3 c4 h4 s5 c6 d6 c7 d7 d8 h8 s8 } 
+play d-3[100317] h-6[221781] h-7[204495] h-8[202652] c-3[1414029] s-7[474428] d-q[285883] p[240950] d-2[604537] p[69] p[144] p[249000] p[119] d-4[776944] s-5[1070336] h-9[339353] s-a[290465] p[97] p[295612] p[178] c-2[286100] p[64331] p[78] c-8[352545] s-4[343282] h-2[91] p[78] p[75] p[92] p[61] p[79] cdhs-t(c)[126] p[129] p[137] p[131] p[96] p[90] dh-k[132] cs-q[224521] ch-j[208651] cd-7[199865] p[99] p[49690] p[74] cd-6[93] p[93] ds-8[82] ch-4[59] p[76] p[70] p[79] d-a[104965] s-9[118755] h-5[117553] p[7131] p[124] p[121546] s-6[129388] p[3027] p[43645] p[23149] s-2[71464] h-q[31998] c-t[82308] s-3[160] p[173] p[133] p[70] cd-9[80] p[75] cd-5[134] p[90] ds-j[164] p[149] p[148] ch-a[163] 
+result 0 4 2 3 1 
+*/ 
+/* 
+game 26 
+score 
+class 0 4 2 3 1 
+seat 4 3 1 0 2 
+dealt { d3 s3 c4 s5 c6 d8 d9 ht st cq s2 } { c3 h4 d6 s6 ct cj dq sq ck c2 } { d5 c7 s7 h8 s8 hj sj hq ca da h2 } { s4 c5 d7 h7 c9 h9 dt dj hk sa jo } { h3 d4 h5 h6 c8 s9 dk sk ha d2 } 
+changed { c4 d9 } { ck c2 } { } { jo } { d4 } 
+original { d3 s3 s5 c6 d8 ht st cq ck c2 s2 } { c3 c4 h4 d6 s6 d9 ct cj dq sq } { d5 c7 s7 h8 s8 hj sj hq ca da h2 } { d4 s4 c5 d7 h7 c9 h9 dt dj hk sa } { h3 h5 h6 c8 s9 dk sk ha d2 jo } 
+play c-6[175564] d-t[295999] h-q[175703] h-a[219122] p[81] p[98] p[125] h-2[96628] p[5509] p[65] cs-7[273215] ds-k[134693] p[148] p[51521] p[64] cd-a[48681] p[5991] p[185] hs-j[252659] p[6496] p[368783] p[220340] p[107] p[130] hs-8[138] d-5[84] c-8[185826] h-3456(4)[72981] p[89] p[66] p[62] p[72] d-2[128] p[84] p[81] p[59] p[74] s-9[73] c-t[177013] c-q[63797] p[94] p[87] c-k[28797] p[41665] ds-3[89369] dh-7[143568] p[28039] hs-t[4555] p[101] cs-2[76] p[64] d-8[81] s-5[70] h-k[3541] p[74] p[67] ds-4[2467] ds-6[164] p[75] p[123] c-3[108] d-j[110] p[49] p[81] ch-9[111] ds-q[147] p[103] p[136] d-9[124] s-a[220] p[130] p[103] c-5[74] 
+result 2 4 0 3 1 
+*/ 
+/* 
+game 27 
+score 
+class 2 4 0 3 1 
+seat 4 1 2 0 3 
+dealt { c3 h3 s3 s4 c5 h5 d6 h7 cq dq sq } { c4 h4 d7 s7 c8 d8 h8 s8 st hj } { d3 d4 d5 dt cj hq ha sa d2 s2 jo } { c7 c9 h9 s9 ck dk hk da c2 h2 } { s5 c6 h6 s6 d9 ct ht dj sj sk ca } 
+changed { } { st hj } { cj sa } { h2 } { s5 } 
+original { c3 h3 s3 s4 c5 h5 d6 h7 cq dq sq } { c4 h4 d7 s7 c8 d8 h8 s8 cj sa } { d3 d4 d5 dt st hj hq ha d2 s2 jo } { s5 c7 c9 h9 s9 ck dk hk da c2 } { c6 h6 s6 d9 ct ht dj sj sk ca h2 } 
+play d-345[73614] p[103] p[61] p[100] p[118] p[114] h-jqka(k)[91] p[87] p[70] p[76] p[75] p[61] ds-2[91] p[128] p[63] p[87] p[123] p[120] ds-t[88] ds-j[39975] p[55332] p[101] p[104] p[144] chs-6[108893] p[163606] chs-9[6112] p[86] p[92] p[128] s-5[104984] s-a[33721] p[156] p[112] p[144] p[71] cdhs-8[25855] ds-7[26410] p[101] ch-5[8535] p[90] ch-4[9405] ch-3[99] p[57] p[70] cds-q[76] p[72] p[72] p[81] p[82] d-6[83] p[79] p[71] p[116] s-4[63] s-3[83] p[76] h-7[74] p[71] p[66] p[64] c-2[58660] c-j[82] p[189] c-7[181] p[111] cdh-k[204] p[173] p[216] d-a[106] 
+result 1 2 0 3 4 
+*/ 
+/* 
+game 28 
+score 
+class 1 2 0 3 4 
+seat 4 1 2 0 3 
+dealt { h3 c6 h6 c7 s8 c9 d9 h9 dt sq ca } { c3 c5 h5 d8 h8 cj sj ck sk s2 } { s3 s4 d5 d7 h7 c8 s9 cq hq c2 h2 } { d3 c4 s5 s7 ht st dk hk ha sa } { d4 h4 d6 s6 ct dj hj dq da d2 jo } 
+changed { h3 } { } { s4 d5 } { sa } { d2 jo } 
+original { c6 h6 c7 s8 c9 d9 h9 dt sq ca sa } { c3 c5 h5 d8 h8 cj sj ck sk s2 } { s3 d7 h7 c8 s9 cq hq c2 d2 h2 jo } { d3 h3 c4 s5 s7 ht st dk hk ha } { d4 h4 s4 d5 d6 s6 ct dj hj dq da } 
+play s-5[341518] h-8[131320] ch-5[163736] ch-q[156591] p[169] p[124] p[83] p[134] ch-2[122] p[94] s-9[95] c-t[242559] s-q[468229] p[187044] s-2[269962] jk[130] p[68] p[83] p[73] s-3[82] c-8[92] d-2[66] p[69] p[76] p[165] p[83] p[72] dh-7[67] dh-j[58942] p[88] dh-k[129014] p[68] p[75] p[71] dh-3[179398] cs-j[5734] p[100] p[168920] p[83] cs-k[103] p[64] d-8[95] c-3[71] s-6[122393] c-7[113730] h-a[114314] p[73] p[69] p[89] c-4[71912] d-q[28888] p[86596] p[73] d-a[98] p[68] d-456[95] p[77] p[86] p[97] hs-4[76] cs-a[101] p[68] p[73] cdh-9[113] p[67] p[45] s-8[80] d-t[109] p[66] p[85] ch-6[75] 
+result 3 1 0 4 2 
+*/ 
+/* 
+game 29 
+score 
+class 3 1 0 4 2 
+seat 4 1 2 0 3 
+dealt { c3 c5 d5 h5 s6 s7 h8 st hj sq dk } { s3 s4 c7 d8 d9 ct dj ck hk jo } { h4 s5 c6 h7 h9 sj hq sk da ha s2 } { c4 d4 d6 d7 cj cq dq ca sa h2 } { d3 h3 h6 c8 s8 c9 s9 dt ht c2 d2 } 
+changed { dk } { c7 } { h4 c6 } { sa h2 } { } 
+original { c3 c5 d5 h5 s6 c7 s7 h8 st hj sq } { s3 s4 d8 d9 ct dj ck dk hk jo } { s5 h7 h9 sj hq sk da ha sa h2 s2 } { c4 d4 h4 c6 d6 d7 cj cq dq ca } { d3 h3 h6 c8 s8 c9 s9 dt ht c2 d2 } 
+play dh-3[144311] cs-7[514757] p[1906250] p[320760] ds-a[200481] p[127588] p[85] p[43952] h-7[256570] s-8[383725] dh-t[405789] p[123] p[2181798] p[466962] hs-2[228145] p[126] p[204] s-5[265336] c-8[620117] cs-9[236736] p[156] p[341448] ch-k[708787] p[129] cd-2[188] p[121] p[143] h-6[97] s-t[333808] c-j[256610] p[435425] h-q[214579] p[105] c-a[91375] p[86] p[98] cd-6[309028] p[11003] p[91] p[79] cd-q[138556] p[78] cdh-4[7135] p[95] p[87] cdh-5[83913] p[86] p[110] h-j[294730] p[128] p[112062] h-a[230000] p[154] p[74] s-j[204368] p[239546] p[67] jk[101047] p[110] s-3[9409] d-9[92991] s-k[91] p[129] p[147] p[96] p[130] h-9[110] p[95998] p[118] c-t[22342] d-j[79] d-k[71] p[93] d-8[107] s-4[89] s-6[205] p[126] s-q[70] p[95] h-8[104] c-3[155] 
+result 3 2 1 4 0 
+*/ 
+/* 
+game 30 
+score 
+class 3 2 1 4 0 
+seat 3 1 0 2 4 
+dealt { c4 s4 s5 s6 d7 c9 dq hq dk c2 } { d3 h4 d5 c7 h8 ct dt ht sj sk s2 } { c3 d4 h5 s7 d8 s8 h9 s9 st ca h2 } { c5 d6 h6 h7 c8 dj hj sq sa jo } { h3 s3 c6 d9 cj cq ck hk da ha d2 } 
+changed { c2 } { } { d4 } { sa jo } { c6 d9 } 
+original { c4 d4 s4 s5 s6 d7 c9 dq hq dk } { d3 h4 d5 c7 h8 ct dt ht sj sk s2 } { c3 h5 s7 d8 s8 h9 s9 st ca c2 h2 } { c5 c6 d6 h6 h7 c8 d9 dj hj sq } { h3 s3 cj cq ck hk da ha sa d2 jo } 
+play d-3[314602] h-7[850979] c-9[189039] h-k[127059] c-2[282125] p[75] p[67] p[61] jk[71] p[82] s-3[79] c-jqk[49] p[70] p[65] p[79] p[84] p[80] dhs-a[71] p[72] p[56] p[65] p[78] p[80] d-2[82] p[128] p[73] p[72] p[75] p[96] h-3[66] h-5[158259] h-8[51914] d-5[185262] d-9[138679] d-k[4197] p[114] p[83] p[114] p[63] s-456[212679] p[185611] p[157] p[189] p[91] cd-4[105428] p[99745] cd-t[167415] p[107] p[77] p[102] h-t[219530] s-q[249329] p[78] c-a[213595] p[189126] p[125] p[23411] h-9[207648] s-j[230670] p[80] p[169266] h-2[180] p[93] p[110] s-789t[104] d-8[110] c-3[116] c-7[91143] c-8[67881] dh-j[66249] dh-q[71] p[82] p[87] p[70] d-7[66] s-k[125] p[67] s-2[78] p[85] h-4[76] 
+result 2 3 1 4 0 
+*/ 
+/* 
+game 31 
+score 
+class 2 3 1 4 0 
+seat 3 1 0 2 4 
+dealt { c3 d3 d5 ct ht hj hq hk ca jo } { d4 h4 s5 d6 c7 d7 c8 c9 cq dk c2 } { s3 h5 c6 s6 h7 h8 d9 cj dq ck sa } { c4 s4 h6 s7 s8 s9 sj sq ha h2 } { h3 c5 d8 h9 dt st dj sk da d2 s2 } 
+changed { } { c2 } { h5 } { ha h2 } { c5 h9 } 
+original { c3 d3 d5 ct ht hj hq hk ca jo } { d4 h4 h5 s5 d6 c7 d7 c8 c9 cq dk } { s3 c6 s6 h7 h8 d9 cj dq ck sa c2 } { c4 s4 c5 h6 s7 s8 h9 s9 sj sq } { h3 d8 dt st dj sk da ha d2 h2 s2 } 
+play h-9tjqk(9)[128819] p[134] p[117] p[84] p[95] p[116] c-t[52387] p[235766] h-8[559578] s-a[540885] d-k[441171] s-j[693671] d-5[25823] p[123153] p[364337] p[428386] p[1005909] c-3[137] p[102] d-3[121] p[100] p[156] p[138] p[144] p[86] c-a[72] s-k[231573] d-q[313860] d-7[161445] p[116] p[71] p[83] d-6[7252] p[122756] hs-5[188328] p[208742] p[100] p[49] dh-4[62] p[99] c-789[78] c-q[76] s-7[165853] p[49912] s-3[252749] p[170] p[135] c-k[259654] h-6[133010] p[123103] p[101] c-5[4038] p[57264] hs-9[46997] p[94] p[58451] cs-4[74] p[109] s-8[102] s-q[74] d-8[198] dhs-2[369] p[142] p[140] dh-a[177] p[166] ds-t[159] p[105] h-3[110] p[69] p[57] d-j[73] 
+result 0 1 4 2 3 
+*/ 
+/* 
+game 32 
+score 
+class 0 1 4 2 3 
+seat 3 1 0 2 4 
+dealt { d3 h3 c4 h5 c6 d7 h7 c9 dq sk sa } { h4 d5 d6 s6 h8 dj hq dk ca h2 } { c3 d4 c5 s5 h6 s7 c8 h9 cq ha jo } { s3 s8 s9 dt cj sj hk c2 d2 s2 } { s4 c7 d8 d9 ct ht st hj sq ck da } 
+changed { c4 h5 } { d5 } { ha jo } { } { da } 
+original { d3 h3 c6 d7 h7 c9 dq sk ha sa jo } { h4 d6 s6 h8 dj hq dk ca da h2 } { c3 c4 d4 c5 h5 s5 h6 s7 c8 h9 cq } { s3 s8 s9 dt cj sj hk c2 d2 s2 } { s4 d5 c7 d8 d9 ct ht st hj sq ck } 
+play c-6[164154] c-7[526278] c-8[427493] c-3[547290] h-8[481964] h-4[471859] s-9[517260] s-k[212664] p[111] p[66] p[115] s-2[453311] p[31480] p[65] d-t[585653] d-q[224524] p[95] p[132] d-k[112378] d-2[347472] p[62638] p[66] p[61] cs-j[448922] p[260952] p[76] p[80] cd-a[557591] p[77] p[63] ds-6[587987] p[97] dh-7[243035] p[481902] p[87] p[63] cs-9(s)[212] hs-a[71] p[77] dh-3[82] p[5453] cd-4[199968] p[221] p[95] p[125271] chs-5[474384] p[72] p[67] chs-t[71878] p[95] p[142] d-5[187169] h-6[203623] h-q[113279] h-k[171311] p[88] p[102] h-2[72] p[76] p[83] d-j[75] c-2[78] p[71] p[81] p[89] s-8[77] s-3[69] d-8[94] d-9[77] c-q[73] c-k[64] p[72] p[97] h-j[74] p[99] s-q[62] p[75] s-4[78] 
+result 0 1 4 2 3 
+*/ 
+/* 
+game 33 
+score 
+class 0 1 4 2 3 
+seat 3 4 2 0 1 
+dealt { d3 d4 c5 s7 s8 d9 dt cq sk ca ha } { h5 s6 d7 d8 s9 ct ht dq sq dk h2 } { s3 c4 st dj hj hk da sa c2 d2 } { h3 h4 s4 d6 h6 c8 cj sj ck s2 jo } { c3 d5 s5 c6 c7 h7 h8 c9 h9 hq } 
+changed { d4 c5 } { d7 } { c2 d2 } { } { hq } 
+original { d3 s7 s8 d9 dt cq sk ca ha c2 d2 } { h5 s6 d8 s9 ct ht dq hq sq dk h2 } { s3 c4 d4 c5 st dj hj hk da sa } { h3 h4 s4 d6 h6 c8 cj sj ck s2 jo } { c3 d5 s5 c6 c7 d7 h7 h8 c9 h9 } 
+play d-9[182254] d-k[184061] p[24780] p[145] p[514013] d-2[52452] p[73] p[60] d-3[162914] s-6[342366] c-8[326084] h-3[342951] c-6[761912] s-t[2636923] c-q[300033] p[546566] c-k[546896] p[104] p[85] c-2[278009] jk[563665] p[99] p[122] hs-4[563114] ds-5[368918] p[370912] ch-a[312997] p[74] p[144] p[135] p[79] s-8[346061] s-7[338147] s-9[371338] s-2[241997] p[146] p[81] p[77] p[166] p[162] dh-6[109403] ch-9[422145] dh-j[407516] p[91] p[360274] p[95] p[153] p[9050] s-3[420348] d-t[187396] h-q[242987] p[92] p[122] h-k[402493] p[72] h-2[117556] p[72] p[121] ch-t[90123] cs-j[90] p[110] p[3935] p[65] ds-q[3555] p[80] d-8[68] h-5[77] h-8[132] cdh-7[90] p[118] p[98] p[75] c-3[83] d-a[63] p[67] p[66] cd-4[81] p[109] p[68] s-a[107] p[99] p[97] c-5[90] 
+result 4 1 3 0 2 
+*/ 
+/* 
+game 34 
+score 
+class 4 1 3 0 2 
+seat 3 4 2 0 1 
+dealt { s4 s6 h7 dt cj ca da ha c2 d2 } { h3 h4 h8 s8 s9 dj sj hq sq h2 } { d5 c6 c8 d8 h9 ct st dq dk hk jo } { c3 d3 d4 c5 s5 d6 d7 hj cq sa s2 } { s3 c4 h5 h6 c7 s7 c9 d9 ht ck sk } 
+changed { c2 d2 } { h4 } { jo } { d4 d7 } { } 
+original { d4 s4 s6 d7 h7 dt cj ca da ha } { h3 h8 s8 s9 dj sj hq sq h2 jo } { h4 d5 c6 c8 d8 h9 ct st dq dk hk } { c3 d3 c5 s5 d6 hj cq sa c2 d2 s2 } { s3 c4 h5 h6 c7 s7 c9 d9 ht ck sk } 
+play d-6[169301] h-t[493592] d-q[270371] p[1766505] h-2[49951] p[71] p[122] p[190] p[4054] s-89tjq(t)[51753] h-q[174654] h-j[9432] h-6[237267] h-4[263314] p[102] h-3[99] p[85] p[62] p[67] p[190] h-8[108] d-j[114] d-3[107309] p[115] p[163] p[90] p[132] s-a[111954] c-4[178858] p[79] p[68] c-3[96464] p[149] p[122] cds-2[140545] p[154] p[65] cdh-a[43429] p[109] p[43] d-t[242609] p[6671] h-5[208345] p[82] d-4[226831] s-3[194793] p[129] p[98] cs-k[166144] cs-t[162085] p[77] cs-5[67] p[135] p[191] p[146] c-q[136] s-7[70688] p[76768] s-6[161] p[135] s-4[97] p[75] dh-7[99] p[121] p[131] p[77] c-j[121] c-7[167] c-6[144] p[145] p[160] cd-8[134] h-9[114] p[89] d-5[110] p[104] dh-k[93] 
+result 2 0 3 1 4 
+*/ 
+/* 
+game 35 
+score 
+class 2 0 3 1 4 
+seat 3 4 2 0 1 
+dealt { c4 s4 h5 d6 s6 h7 c8 c9 dk ca } { d4 h6 s7 s8 ct hj hk c2 d2 s2 jo } { c3 c7 d9 cj sj cq dq hq da h2 } { c5 d5 s5 c6 d7 h9 dt ht st dj sq } { d3 h3 s3 h4 d8 h8 s9 ck sk ha sa } 
+changed { } { h6 s7 } { h2 } { c6 } { ha sa } 
+original { c4 s4 h5 d6 s6 h7 c8 c9 dk ca } { d4 s8 ct hj hk ha sa c2 d2 s2 jo } { c3 c6 c7 d9 cj sj cq dq hq da } { c5 d5 s5 d7 h9 dt ht st dj sq h2 } { d3 h3 s3 h4 h6 s7 d8 h8 s9 ck sk } 
+play h-6[335452] c-7[261004] c-9[205933] c-t[70639] p[101] p[2062193] p[530249] c-a[245727] c-2[102] p[69] p[90] h-jqk(q)[93] p[90] p[89] p[89] p[82] p[80] hs-a[68] p[67] p[90] p[78] p[66] ds-2[67] p[68] s-8[61] d-4[66] d-7[182810] d-8[36131] s-9[179165] c-q[186142] p[168216] p[60749] c-k[119549] p[84] p[95] h-4[178035] c-6[202202] h-7[197307] d-j[220313] p[80295] h-q[207686] p[231483] p[178197] p[25530] c-3[227765] h-5[266865] h-9[97] p[94] p[89] p[64] h-2[70] p[102] cds-5[100] p[90] p[86] p[82] dhs-t[106] p[56] s-q[99] s-k[102] p[110] p[114] p[105] dhs-3[79] p[91] p[108] p[95] h-8[77] s-7[82] d-9[170] d-k[115] d-a[125] p[102] p[113] cs-j[88] p[106] p[118] d-q[54] 
+result 4 0 3 1 2 
+*/ 
+/* 
+game 36 
+score 
+class 4 0 3 1 2 
+seat 4 3 1 0 2 
+dealt { c6 d6 h7 d8 ct ht st cj sj cq s2 } { s3 h5 s5 s6 c9 s9 hq ck da c2 d2 } { d3 c4 c8 h8 h9 dt dq sk h2 jo } { h4 c5 d5 h6 c7 s8 dj sq ca ha sa } { c3 h3 d4 s4 d7 s7 d9 hj dk hk } 
+changed { cq s2 } { s3 s6 } { jo } { c7 } { } 
+original { s3 c6 d6 s6 h7 d8 ct ht st cj sj } { h5 s5 c9 s9 cq hq ck da c2 d2 s2 } { d3 c4 c7 c8 h8 h9 dt dq sk h2 } { h4 c5 d5 h6 s8 dj sq ca ha sa jo } { c3 h3 d4 s4 d7 s7 d9 hj dk hk } 
+play c-4[286178] d-9[213636] d-a[99158] p[88] p[11765] p[101] p[92] p[62574] hs-5[148303] p[4118155] p[365189] p[479803] ds-7[347154] cs-9[180796] p[141161] ch-q[93] p[112] cds-2[66] p[71] p[83] p[81] p[71] p[80] c-k[90] p[78] p[152150] p[190769] p[168] cds-6[319952] p[66981] p[96] p[82] chs-t[193420] p[112] s-3[240713] s-q[216356] s-k[259834] p[90] p[65] s-a[101130] p[76] p[4402] h-456(5)[217625] p[90] p[80] p[64] p[79] cd-5[174338] ch-8[325706] c-7[341058] p[301999] d-8[108835] cs-j[217349] ch-a[102] p[110] p[102] p[89] p[84] s-8[100] d-j[85] p[78638] h-k[49989] p[78] p[64] ch-3[52602] p[72] p[164] ds-4[50818] p[114] d-k[44712] p[142] p[20954] p[100] h-j[118] p[117] d-q[97] h-2[75] p[81] h-9[91] p[75] d-t[89] p[84] d-3[68] 
+result 4 0 3 1 2 
+*/ 
+/* 
+game 37 
+score 
+class 4 0 3 1 2 
+seat 4 3 1 0 2 
+dealt { c4 h4 s4 c5 s5 d6 sj dq hq ck da } { h3 d4 c7 h7 ct cq dk hk ha sa h2 } { s6 s7 c9 d9 h9 s9 st cj d2 jo } { c3 d5 d7 c8 h8 s8 ht dj sk ca s2 } { d3 s3 h5 c6 h6 d8 dt hj sq c2 } 
+changed { ck da } { d4 ct } { jo } { c3 } { } 
+original { c4 d4 h4 s4 c5 s5 d6 ct sj dq hq } { h3 c7 h7 cq ck dk hk da ha sa h2 } { c3 s6 s7 c9 d9 h9 s9 st cj d2 } { d5 d7 c8 h8 s8 ht dj sk ca s2 jo } { d3 s3 h5 c6 h6 d8 dt hj sq c2 } 
+play h-5[261232] c-q[152408] p[80] s-k[137348] d-2[253828] p[86] p[66] p[42095] p[186] cdhs-9[172853] p[137] p[84] p[46496] cdhs-8(d)[63827] h-t[252823] c-j[129547] s-q[160376] s-a[171712] p[85] p[238417] p[96] p[88] p[103] ch-7[88057] p[218572] p[110] p[119] p[185] dh-a[180] p[92] cdh-k[85] p[70] p[65] p[67] p[209] p[126] h-2[96] p[84] p[60] p[68] p[84] p[54] h-3[68] d-6[221382] d-7[138176] p[81] d-8[171435] ds-3[160319] dh-q[97599] p[84] p[99] p[121] p[94] cdhs-4[82812] p[104] p[187] p[204] p[160] c-t[169231] p[67859] s-6[182029] p[95] c-5[150790] c-3[117649] p[67] p[76] s-t[164708] c-6[97986] s-5[95] p[97] p[99] p[141] p[102] s-j[100] p[43105] s-7[74] p[70] d-t[163] d-5[121] p[136] p[136] s-2[107] h-j[142] p[140] h-6[192] p[116] c-2[96] 
+result 1 0 2 4 3 
+*/ 
+/* 
+game 38 
+score 
+class 1 0 2 4 3 
+seat 4 3 1 0 2 
+dealt { c3 d3 h3 h4 c6 d6 d9 dt sj dq jo } { d5 h6 d8 st cj hj ca da sa c2 s2 } { c4 c5 h5 h7 s9 ct ck hk d2 h2 } { d4 s6 c7 d7 c9 h9 dj cq hq sk ha } { s3 s4 s5 s7 c8 h8 s8 ht sq dk } 
+changed { h4 } { d5 h6 } { } { sk ha } { dk } 
+original { c3 d3 h3 c6 d6 d9 dt sj dq dk jo } { d8 st cj hj sk ca da ha sa c2 s2 } { c4 c5 h5 h7 s9 ct ck hk d2 h2 } { d4 d5 h6 s6 c7 d7 c9 h9 dj cq hq } { s3 h4 s4 s5 s7 c8 h8 s8 ht sq } 
+play d-9tjqk(j)[23238] p[126] p[64] p[73] p[118] p[150] cd-6[23142] p[97] p[158087] hs-4[169990] p[120] dh-3[140] p[202] p[86] c-3[69] p[65] p[65] p[104] p[69] p[94] s-j[85] d-5[183075] p[99313] s-3[59710] p[101] p[187] p[90] s-7[124256] p[81] d-4[66561] p[105] p[86] p[64] ch-q[111467] p[124593] cs-8[104977] s-q[108624] d-8[45081] cdhs-a[8081] p[74] p[75] p[65] p[59] s-t[158787] p[160681] p[221987] p[111] s-k[81] s-2[85] p[63] c-2[82] p[115] p[79] p[83] p[92] ch-j[89] p[84] p[90365] p[108] hs-6[61741] p[68659] p[91] cd-7[139] ch-9[201] p[115] d-j[70] h-k[105] p[133] p[120] ch-5[215] p[99] dh-2[105] p[117] c-t[193] p[78] p[100] c-4[173] s-5[146] s-9[90] p[72] p[72] c-k[88] p[83] p[66] h-7[91] 
+result 0 1 3 2 4 
+*/ 
+/* 
+game 39 
+score 
+class 0 1 3 2 4 
+seat 3 0 4 2 1 
+dealt { d4 d5 c6 d6 h6 c7 ht ck ha c2 s2 } { d3 c4 h5 s5 ct dt st cj cq dq sq } { s4 c5 s7 h8 c9 d9 dj hj hq dk hk } { s3 d7 c8 d8 s8 s9 sk da d2 jo } { c3 h3 h4 s6 h7 h9 sj ca sa h2 } 
+changed { c7 ck } { c4 } { hk } { } { sa h2 } 
+original { d4 d5 c6 d6 h6 ht ha sa c2 h2 s2 } { d3 h5 s5 ct dt st cj cq dq sq hk } { c4 s4 c5 s7 h8 c9 d9 dj hj hq dk } { s3 d7 c8 d8 s8 s9 sk da d2 jo } { c3 h3 h4 s6 c7 h7 h9 sj ck ca } 
+play d-3[185788] h-4[1183105] s-9[180320] h-t[112852] h-q[394881] h-k[243378] p[90] p[239023] h-2[193489] p[130] p[106] p[67] d-456[248592] p[73] p[368371] p[173] d-789(9)[338525] s-3[339662] c-2[104] p[103] p[68] p[110] p[31] p[83] hs-a[82] p[75] p[85] p[74] p[73] p[65] s-2[69] p[72] p[66] p[71] p[90] p[73] ch-6[98] p[185675] ds-t[87643] p[79] p[74] ds-q[103823] p[117] c-tjq[39401] p[157] p[192] p[87] p[103] hs-5[145] ch-7[148273] cs-8[101] d-a[81] p[78] p[90] d-2[75] p[61] s-k[173] p[129] p[142] cs-4[3224] p[141] cd-9[116] dh-j[101] p[91] c-5[152] s-6[150] s-7[134] s-j[186] p[121] p[160] ch-3[156] p[169] p[69] c-k[101] p[63] c-a[110] p[71] h-9[87] 
+result 0 1 4 2 3 
+*/ 
+/* 
+game 40 
+score 
+class 0 1 4 2 3 
+seat 3 0 4 2 1 
+dealt { c3 d3 c5 d6 h6 c7 d7 sq ca sa h2 } { h3 d4 h4 h5 s7 d8 d9 dt dq ck dk } { s4 s5 c6 h8 ct ht st dj hj sk da } { s3 d5 s6 h7 h9 sj cq ha c2 d2 } { c4 c8 s8 c9 s9 cj hq hk s2 jo } 
+changed { c5 d6 } { d4 } { sk da } { } { jo } 
+original { c3 d3 h6 c7 d7 sq sk ca da sa h2 } { h3 h4 h5 s7 d8 d9 dt dq ck dk jo } { s4 c5 s5 c6 d6 h8 ct ht st dj hj } { s3 d5 s6 h7 h9 sj cq ha c2 d2 } { c4 d4 c8 s8 c9 s9 cj hq hk s2 } 
+play cd-3[148419] cd-6[455528] cd-k[62125] p[104] p[229238] cd-a[29438] p[82] p[80] p[71] h-6[129732] h-8[196528] cs-5[258937] cs-7(c)[478831] cs-9[170481] p[110] p[255] cs-t[114097] p[74] p[156] p[152] s-4[111072] d-9[190136] c-j[235334] c-q[264680] p[81] p[92] p[63] p[66] p[222988] d-5[309271] h-2[77] p[129] p[117] p[69] p[208] p[80] s-qka[75] p[125] p[111] p[86] p[67] p[90] cd-7[77] dh-j[6482] p[134] p[142] p[157378] p[131] h-t[72] d-q[42423] h-k[123392] h-a[2335] p[67] p[68] p[87] s-j[103087] p[207] s-2[65693] p[102] p[144] cd-4[80456] cd-2[72682] p[71] p[126] p[195] s-6[79692] d-8[100] h-345[118] p[213] p[192] p[121] d-t[92] h-q[197] p[201] p[163] cs-8[95] 
+result 0 2 1 4 3 
+*/ 
+/* 
+game 41 
+score 
+class 0 2 1 4 3 
+seat 3 0 4 2 1 
+dealt { d3 s3 d8 c9 s9 ct dt cj hj ha h2 } { c4 d4 d5 h5 c6 d6 h6 h7 st ca d2 } { c3 s5 c8 h8 s8 h9 ht sk sa c2 s2 } { c5 s6 c7 d9 dj cq sq ck hk jo } { h3 h4 s4 d7 s7 sj dq hq dk da } 
+changed { s9 dt } { } { s5 } { hk jo } { da } 
+original { d3 s3 d8 c9 ct cj hj hk ha h2 jo } { c4 d4 d5 h5 c6 d6 h6 h7 st ca d2 } { c3 c8 h8 s8 h9 ht sk da sa c2 s2 } { c5 s6 c7 d9 s9 dt dj cq sq ck } { h3 h4 s4 s5 d7 s7 sj dq hq dk } 
+play h-jqka2(q)[79926] p[88] p[46] p[55] p[139] p[149] ds-3[163] p[132] p[113] p[114] p[101] p[71] d-8[84] c-9tj[65] p[46] h-567[29570] p[118] p[76] p[68] d-2[124095] d-k[125582] p[174769] p[131] d-5[59914] p[121] p[66624] c-a[116122] s-j[133708] s-9[315205] s-8[42710] s-ka2[305346] p[106] p[149] d-9tj[127791] p[76] p[93] cs-q[199791] p[23288] cd-6[72786] hs-4[24145] p[70] p[74] p[58] dh-q[161937] p[199] p[29936] cd-4[4344] p[86] p[64] s-t[83] s-5[119] p[74] p[65] p[76] ds-7[127] p[65] p[89] p[73] h-3[83] p[82] p[78] s-6[139] p[81] c-5[121] p[85] c-k[95] c-8[94] d-a[127] c-7[78] 
+result 0 1 4 3 2 
+*/ 
+/* 
+game 42 
+score 
+class 0 1 4 3 2 
+seat 2 3 0 4 1 
+dealt { c3 s3 c5 s8 dt ht sk ha c2 h2 jo } { d3 d4 h4 s4 c6 d6 d8 h8 st dj cq } { h3 c4 h5 s5 s6 c7 cj sj sq sa } { d5 h6 d7 c9 h9 s9 hj dq dk da d2 } { h7 s7 c8 d9 ct hq ck hk ca s2 } 
+changed { c3 c5 } { st } { sq sa } { d2 } { } 
+original { s3 s8 dt ht sq sk ha sa c2 h2 jo } { d3 d4 h4 s4 c6 d6 d8 h8 dj cq d2 } { c3 h3 c4 c5 h5 s5 s6 c7 cj sj } { d5 h6 d7 c9 h9 s9 st hj dq dk da } { h7 s7 c8 d9 ct hq ck hk ca s2 } 
+play d-3[169160] d-5[653072] p[94] d-9[43600] d-t[85251] d-j[108713] d-q[738114] p[70] jk[69518] p[124] p[89] s-3[23566] h-t[141720] c-q[209489] p[176704] p[70] c-a[374320] c-2[78] p[117] p[136] p[148] s-qka[157] p[74] p[85] p[68] p[68] p[151] s-8[111] h-2[99] p[60] p[54] p[123] p[116] p[88] h-a[88] d-2[90311] p[107] p[90] p[76] p[75] dhs-4[103866] chs-9[44041] p[77] p[152] p[193] p[151] h-6[180040] c-7[200658] c-8[196264] hs-7[203872] dh-8[150] cd-6[109] p[83] p[77281] ch-k[92702] p[178] h-q[98497] d-k[53587] p[145] s-2[175] p[211] p[147] c-t[124] h-j[285] p[144] d-a[190] p[109] d-7[185] c-j[215] p[136] p[64] s-6[103] s-t[91] 
+result 0 1 4 3 2 
+*/ 
+/* 
+game 43 
+score 
+class 0 1 4 3 2 
+seat 2 3 0 4 1 
+dealt { c4 d4 c5 s6 h8 ct sj dq hq s2 jo } { s5 d9 s9 dj hj cq sq hk sk da d2 } { c3 s3 d7 s7 h9 dt ht st ca h2 } { h3 d5 c6 d6 h6 h7 c8 c9 dk ha sa } { d3 h4 s4 h5 c7 d8 s8 cj ck c2 } 
+changed { c5 s6 } { s5 } { ca h2 } { sa } { } 
+original { c4 d4 h8 ct sj dq hq ca h2 s2 jo } { d9 s9 dj hj cq sq hk sk da sa d2 } { c3 s3 c5 s6 d7 s7 h9 dt ht st } { h3 d5 s5 c6 d6 h6 h7 c8 c9 dk ha } { d3 h4 s4 h5 c7 d8 s8 cj ck c2 } 
+play d-3[248689] h-8[122440] cd-4[97729] cs-q[272953] p[69] p[116] p[169] cs-a(s)[113878] p[101] p[163] c-t[95569] d-2[8262] p[120] p[75] p[82] p[65] p[88] ds-9[368721] p[89] p[286055] p[126] dh-q[10418] hs-k[425816] hs-2[65] p[156] p[191] s-j[83] s-a[61779] p[174] p[114] p[140] p[107] dh-j[24330] p[71] p[73] p[132] p[88] d-a[65] p[94] p[182] c-2[53766] p[123] c-7[85929] c-9[184440] p[121] c-j[23628] p[144] c-k[4732] p[59] hs-4[52063] ds-5[72087] ds-7[71471] ds-8[130] h-5[111] c-8[898] cdh-6[593] dhs-t[100] p[82] p[89] c-5[131] h-7[86] h-9[87] h-a[67] p[89] p[80] d-k[104] p[87] p[78] h-3[68] 
+result 0 1 4 3 2 
+*/ 
+/* 
+game 44 
+score 
+class 0 1 4 3 2 
+seat 2 3 0 4 1 
+dealt { c3 h3 s5 h6 d8 h9 ct dj dq c2 jo } { d4 s4 h5 s7 c9 ht cj sj sq da ha } { c6 d6 c7 dt st cq dk ca d2 s2 } { d3 s3 c5 d5 h7 d9 hj ck sk sa h2 } { c4 h4 s6 d7 c8 h8 s8 s9 hq hk } 
+changed { s5 h9 } { h5 } { d2 s2 } { h2 } { } 
+original { c3 h3 h6 d8 ct dj dq c2 d2 s2 jo } { d4 s4 s7 c9 ht cj sj sq da ha h2 } { s5 c6 d6 c7 h9 dt st cq dk ca } { d3 s3 c5 d5 h5 h7 d9 hj ck sk sa } { c4 h4 s6 d7 c8 h8 s8 s9 hq hk } 
+play ds-3[240856] cd-6[462013] cs-8[280373] d-7[344092] c-t[118087] s-q[332155] s-a[527660] p[161] p[135] s-2[99167] p[77] p[65] p[8204] h-6[244293] c-9[494855] h-j[991391] c-q[333873] p[235298] d-2[72] p[178] p[72] p[77] p[128] d-jqk(k)[101] p[165] p[132] p[146] p[131] p[160] d-8[104] c-2[101] p[123] p[139] p[70] p[169] p[72] ch-3[61] ds-4[72661] p[145678] ds-t[57317] p[115] p[82] p[121] s-5[190622] s-6[182813] s-7[40517] s-k[109961] p[141] p[52] p[77] p[44] cdh-5[189574] p[92] p[179] p[91] p[168] h-7[182960] h-9[120228] h-q[141091] h-2[123701] p[85] p[176] p[121] p[108] h-t[134636] c-k[134866] p[145810] p[108] h-a[185] p[217] p[157] d-a[102] p[104] p[90] p[86] p[92] cs-j[84] p[82] p[90] p[92] d-9[61] c-a[79] p[71] p[83] d-k[78] p[96] p[77] c-7[135] 
+result 0 1 3 2 4 
+*/ 
+/* 
+game 45 
+score 
+class 0 1 3 2 4 
+seat 1 0 3 4 2 
+dealt { s3 d6 d7 dt st cj dj sj hq hk da } { h8 c9 d9 ht dk ca ha h2 s2 jo } { c3 d4 c5 s5 c6 c7 d8 h9 s9 ct ck } { d3 h4 s4 d5 h7 c8 s8 cq sq c2 } { h3 c4 h5 h6 s6 s7 hj dq sk sa d2 } 
+changed { s3 d6 } { ht } { ck } { } { sa d2 } 
+original { d7 dt st cj dj sj hq hk da sa d2 } { h8 c9 d9 ck dk ca ha h2 s2 jo } { c3 d4 c5 s5 c6 c7 d8 h9 s9 ct ht } { d3 h4 s4 d5 h7 c8 s8 cq sq c2 } { h3 s3 c4 h5 d6 h6 s6 s7 hj dq sk } 
+play d-5[243684] h-8[82755] cd-9[104751] ds-t[229653] p[102] p[121] p[295401] hs-2[90] p[136] p[70] cdh-k(h)[81] p[89] p[83] p[204] p[122] p[98] ch-a[85] p[78] p[103] p[144] p[150] h-q[100399] p[18329] p[154] c-2[63584] p[99] p[153] hs-4[172780] ds-a[89542] p[153] p[89] p[69] p[99] cds-j[105331] p[105] p[63] p[63] p[57] h-k[71] p[95] p[80] p[75] d-2[69] p[71] d-7[118] d-q[219379] p[108] p[66] p[61] h-5[375370] d-8[170558] c-3[195435] h-7[29950] h-j[45460] p[85] p[85] p[84] c-4[172865] s-5[75503] c-8[95] cs-q[94] p[112] p[106] p[94] s-8[79] d-3[96] s-7[206] p[332] s-k[131] p[60] dhs-6[111] p[98] p[71] hs-3[128] 
+result 1 0 4 2 3 
+*/ 
+/* 
+game 46 
+score 
+class 1 0 4 2 3 
+seat 1 0 3 4 2 
+dealt { c3 h5 h7 h8 d9 h9 dt hq dk s2 jo } { d5 s5 d6 c7 dj hj cq ca ha c2 h2 } { d3 h3 s3 d4 c5 s6 d7 s9 ht dq } { c4 h4 c8 d8 s8 ct cj sj sq sk } { s4 c6 h6 s7 c9 st ck hk da sa d2 } 
+changed { c3 } { d6 c7 } { ht dq } { } { d2 } 
+original { h5 h7 h8 d9 h9 dt hq dk d2 s2 jo } { d5 s5 ht dj hj cq dq ca ha c2 h2 } { d3 h3 s3 d4 c5 d6 s6 c7 d7 s9 } { c4 h4 c8 d8 s8 ct cj sj sq sk } { c3 s4 c6 h6 s7 c9 st ck hk da sa } 
+play d-4[312018] c-t[161995] c-2[142036] p[10492] p[65] p[130] p[83] p[127] ds-5[157783] dh-9[347433] p[553625] p[132] p[336041] dh-j[168881] p[194414] p[150] cd-q[215879] p[313273] p[333240] p[81] p[76] p[176066] h-t[194952] d-k[234303] p[369224] p[106] p[144] h-2[8297] p[64729] p[83] ch-a[68] p[23805] p[102] p[148] p[113] d-t[97325] p[338796] p[109] c-j[247379] d-2[90] p[44] p[98] h-5678(6)[99] s-2[96] p[90] p[141] p[122] p[83] h-q[99] d-a[140608] p[93] p[107] p[86] s-7[180371] s-9[64925] p[134861] s-t[2784] p[178] p[70263] c-3[113362] c-5[168819] c-8[100] s-jqk[115] p[194] p[102] p[121] ds-8[146] ch-4[108] ch-6[117] p[145] ch-k[192] p[96] c-9[126] p[115] s-a[85] p[74] s-4[86] 
+result 1 0 4 2 3 
+*/ 
+/* 
+game 47 
+score 
+class 1 0 4 2 3 
+seat 1 0 3 4 2 
+dealt { c3 h3 s3 c4 d5 c6 h6 d7 ct st hq } { d4 s4 c5 c8 d8 s9 cj ck hk sk ha } { h5 s5 h8 ht sj dk ca c2 h2 s2 } { d3 c7 h7 c9 hj cq dq sq da sa } { h4 d6 s6 s7 s8 d9 h9 dt dj d2 jo } 
+changed { d5 } { c5 cj } { h2 s2 } { } { jo } 
+original { c3 h3 s3 c4 c6 h6 d7 ct st hq jo } { d4 s4 c8 d8 s9 ck hk sk ha h2 s2 } { c5 h5 s5 h8 ht cj sj dk ca c2 } { d3 c7 h7 c9 hj cq dq sq da sa } { h4 d5 d6 s6 s7 s8 d9 h9 dt dj d2 } 
+play d-3[203047] s-9[126301] h-q[158566] p[332723] d-k[4268320] p[318384] s-2[119144] p[23345] p[114] p[152] cs-k[157879] p[84] p[56] p[68] ds-a[507124] p[85] p[98] c-9[593304] p[176303] p[382878] d-t[1491430] c-a[224972] p[78] d-2[331541] p[96] p[124] d-5[422253] h-8[386341] chs-5[326717] cds-q[23667] p[127] p[125] p[146] p[134] p[211] ch-7[82915] cd-8[129] h-ka2[161] p[169] p[77] p[60] p[79] p[80] ds-4[88] ch-6[176824] dh-9[149163] cs-j[158866] p[91] p[124] p[152] p[100] c-2[62805] p[88] p[95381] p[105] p[207] h-t[77] h-j[161] p[75] p[102] chs-3[690] p[139] p[147] ds-7(s)[201] p[194] cs-t[117] p[165] c-4[82] 
+result 3 0 1 2 4 
+*/ 
+/* 
+game 48 
+score 
+class 3 0 1 2 4 
+seat 1 0 3 4 2 
+dealt { d3 c4 d5 c6 d6 c8 h9 hj sj ca jo } { d4 c7 d7 ct cj dq ck dk sa c2 d2 } { s3 h5 s5 s7 d8 s8 s9 dj cq h2 } { c3 h7 h8 c9 dt st sq sk ha s2 } { h3 h4 s4 c5 h6 s6 d9 ht hq hk da } 
+changed { jo } { d4 ct } { cq } { } { hk da } 
+original { d3 c4 d5 c6 d6 c8 h9 hj sj cq ca } { c7 d7 cj dq ck dk hk da sa c2 d2 } { s3 h5 s5 s7 d8 s8 s9 dj h2 jo } { c3 h7 h8 c9 dt st sq sk ha s2 } { h3 d4 h4 s4 c5 h6 s6 d9 ct ht hq } 
+play d-3[675689] c-5[1553828] d-j[32362] s-q[244772] d-2[200166] p[83] p[202] jk[167] p[85] p[121] s-3[207] s-789[115] d-8[92] h-2[110] p[90] p[115] p[139] p[71] p[59] hs-5[68] ds-t[60780] ds-a[112616] p[74] p[88] p[65] p[78] c-j[136955] c-q[190270] p[154] p[190] c-k[111015] p[157799] p[116509] cd-7[70794] p[149050] p[115578] p[80] dh-k[80] p[91] c-2[74] p[84] p[106] p[69] p[67] d-q[69] p[43687] p[139] s-k[128850] p[56519] h-7[139341] h-9[138334] h-q[124538] h-a[40994] p[139] p[203] p[100] c-9[49479] c-a[60901] p[101] p[157] p[142] d-5[63848] d-9[25852] p[77] p[101] p[203] hs-6[100113] p[128] hs-j[8320] p[89] p[115] c-4[31875] h-t[58883] s-2[187] p[142] p[140] p[203] h-8[114] c-3[121] c-8[126] cd-6[88] 
+result 3 1 0 2 4 
+*/ 
+/* 
+game 49 
+score 
+class 3 1 0 2 4 
+seat 1 0 3 4 2 
+dealt { c4 s4 c6 d6 d7 d8 d9 s9 dk ha } { h3 s3 h4 h5 h6 c8 h8 s8 sj cq jo } { d3 s6 c7 h9 dt ht st sq hk sa d2 } { c5 d5 h7 c9 ct dj hq sk ca da s2 } { c3 d4 s5 s7 cj hj dq ck c2 h2 } 
+changed { ha } { sj } { s6 c7 } { } { c2 h2 } 
+original { c4 s4 c6 d6 d7 d8 d9 s9 sj dk } { h3 s3 h4 h5 h6 c8 h8 s8 cq ha jo } { d3 h9 dt ht st sq hk sa c2 d2 h2 } { c5 d5 h7 c9 ct dj hq sk ca da s2 } { c3 d4 s5 s6 c7 s7 cj hj dq ck } 
+play s-q[146327] s-k[160352] p[79331] p[85] p[205] s-a[8948] p[144470] p[79] h-9[116590] c-t[342443] c-q[251656] p[81] p[242756] c-2[43988] p[95] jk[154115] p[128] s-3[29949] h-3456[39726] p[175] p[201] p[165] p[132] p[64] chs-8[99] h-a[127] p[191] p[90] h-2[66170] p[85] p[93] dhs-t[99793] p[98] p[79] p[100] p[79] h-k[65919] p[149638] p[73] p[97] d-2[152] p[67] d-3[73] c-9[118397] s-j[140806] p[180294] h-q[48317] d-k[173619] c-a[46151] p[75] p[31597] h-7[71299] p[152975] d-q[157353] d-a[47632] p[82] p[72] d-j[25829] p[85] p[111469] s-2[97] p[115] cd-5[60] cd-6[185] p[192] p[156] d-789[915] cs-4[209] p[147] p[151] s-9[100] 
+result 3 0 1 2 4 
+*/ 
+/* 
+game 50 
+score 
+class 3 0 1 2 4 
+seat 1 0 3 4 2 
+dealt { d3 s4 c5 c9 s9 ht cq ck c2 d2 s2 } { s3 c4 h4 h6 s6 d7 h7 c8 sq da ha } { h3 c6 d6 s7 d8 h9 dj sj hq ca } { d4 d5 c7 h8 s8 d9 st dq dk hk } { c3 h5 s5 ct dt cj hj sk sa h2 jo } 
+changed { s2 } { c4 h4 } { h3 } { } { h2 jo } 
+original { d3 h3 s4 c5 c9 s9 ht cq ck c2 d2 } { s3 h6 s6 d7 h7 c8 sq da ha h2 jo } { c6 d6 s7 d8 h9 dj sj hq ca s2 } { d4 d5 c7 h8 s8 d9 st dq dk hk } { c3 c4 h4 h5 s5 ct dt cj hj sk sa } 
+play dh-3[229359] ch-4[939156] cd-6[160623] hs-8[281964] d-4[376911] s-q[177896] c-k[403846] p[525363] c-a[274490] p[97] jk[53620] p[93] p[62] s-3[22947] dh-7[106924] cs-9[166791] cd-t[206357] p[346819] p[174871] dh-a[33724] p[22831] p[168] p[92] c-8[73] h-2[72] p[87] p[77] p[125] p[165] p[152] hs-6[106] p[42918] ch-j[30211] p[95] dh-k[147531] p[109] p[93] d-9[165835] h-t[62357] p[166831] h-q[10469] p[74] p[69] p[70] ds-j[168751] p[152] p[124020] p[93] p[65] s-7[146832] s-t[147421] p[77] p[138851] s-2[198] p[94] p[69] d-8[68] h-9[71] d-q[28559] d-2[1564] p[75] p[85] p[67] c-5[22620] s-k[46221] p[106] p[22814] s-a[153] p[70] hs-5[71] p[152] p[107] p[125] c-3[194] c-7[193] c-q[150] p[169] c-2[64] p[114] s-4[116] 
+result 3 0 1 4 2 
+*/ 
+/* 
+game 51 
+score 
+class 3 0 1 4 2 
+seat 2 1 4 0 3 
+dealt { h3 d4 c6 s6 h7 c9 s9 ct sj sq c2 } { s3 s7 c8 d9 dt ht dj cq ca da sa } { d3 h4 s4 c5 h5 s8 ck dk hk jo } { d5 s5 c7 d8 h8 h9 sk ha h2 s2 } { c3 c4 d6 h6 d7 st cj hj dq hq d2 } 
+changed { c2 } { s7 ht } { h5 } { h2 s2 } { } 
+original { h3 d4 h5 c6 s6 h7 c9 s9 ct sj sq } { s3 c8 d9 dt dj cq ca da sa h2 s2 } { d3 h4 s4 c5 s8 ck dk hk c2 jo } { d5 s5 c7 s7 d8 h8 h9 ht sk ha } { c3 c4 d6 h6 d7 st cj hj dq hq d2 } 
+play c-2[104950] p[90] p[123] p[85] p[149] p[1687] cdhs-k(s)[24015] p[75] p[173] p[99] p[87] p[66] hs-4[21193] p[82] p[123] p[102] p[176] p[144] s-8[102] d-3[140] p[170] p[102] p[153] p[140] p[125] c-5[98] p[92] s-3[55915] p[64] p[65] p[63] cds-a[172876] p[79] p[119] p[145] p[145] d-9tj[69314] p[69] p[79] p[90] p[41] c-q[68449] s-j[211679] s-t[494187] p[228991] p[78] p[165922] p[86] ch-j[340453] cs-7[218403] p[26] cs-6[105675] p[83] p[40] p[95] c-t[219042] c-4[217240] p[118] p[72] p[81] p[79597] dh-q[218278] ds-5[238878] p[83] p[76] p[121] p[79] s-k[258078] c-8[94] hs-2[87] cs-9[102217] dh-6[8762] p[72] p[74] p[74] d-7[92035] p[175] d-4[64564] p[133] p[192] h-7[65396] c-3[98] p[92] p[81] p[81] d-2[74] d-8[78] h-89t[192] h-a[122] 
+result 4 1 0 3 2 
+*/ 
+/* 
+game 52 
+score 
+class 4 1 0 3 2 
+seat 2 1 4 0 3 
+dealt { h4 s5 c7 c8 c9 dt st dj dq sa } { h3 s4 d5 d9 ht sj hq sq ca da d2 } { c3 d3 h5 s7 s8 h9 cq ck ha h2 s2 } { s3 d4 c6 d6 h6 d7 s9 cj dk c2 jo } { c4 c5 s6 h7 d8 h8 ct hj hk sk } 
+changed { dq sa } { s4 } { h5 s7 } { jo } { } 
+original { h4 h5 s5 c7 s7 c8 c9 dt st dj } { h3 d5 d9 ht sj hq sq ca da d2 jo } { c3 d3 s8 h9 cq dq ck ha sa h2 s2 } { s3 d4 s4 c6 d6 h6 d7 s9 cj dk c2 } { c4 c5 s6 h7 d8 h8 ct hj hk sk } 
+play cd-3[124898] ds-4[133470] ds-9(s)[241435] ds-t[3218000] p[73] p[89] p[107] p[86] p[113] h-4[3366773] c-5[481773] c-k[173198] p[487526] p[253661] p[172] p[144] p[120] cd-q[170474] p[101] p[296401] p[162] p[126886] hs-a[146] hs-2[84] p[108] s-8[166] h-9[123] d-k[187199] d-a[133777] p[84] p[75] p[66] p[85922] h-t[164522] d-j[176638] p[4227] p[214683] c-a[134418] p[67] p[58025] h-3[155391] c-9[239298] h-j[241681] c-2[232133] p[74] p[89] p[97] p[166] s-3[280085] s-j[179653] p[69] s-k[232527] p[119] p[131] p[200] c-4[250580] d-7[261071] d-2[109] p[112] p[101] p[142] p[81] hs-q[111] p[119] p[142] p[81] p[71] d-5[63] c-8[42395] hs-5[106800] dh-8[1934] c-t[65341] p[31837] p[72] p[4597] h-7[23967] c-j[41358] p[87] h-k[115] p[92] p[77] s-6[77] s-9[97] p[66] p[68] cdh-6[126] 
+result 4 1 0 3 2 
+*/ 
+/* 
+game 53 
+score 
+class 4 1 0 3 2 
+seat 2 1 4 0 3 
+dealt { c4 c5 d7 h7 d9 ht dj sq d2 h2 } { d3 h3 d4 s5 s6 s7 s8 hq ck ca da } { h4 d5 d6 h6 c8 dt cj dq dk sa c2 } { c3 s4 h8 h9 s9 ct hj sj cq hk s2 } { s3 h5 c6 c7 d8 c9 st sk ha jo } 
+changed { d2 h2 } { d4 } { h4 d5 } { s2 } { } 
+original { c4 h4 c5 d5 d7 h7 d9 ht dj sq } { d3 h3 s5 s6 s7 s8 hq ck ca da s2 } { d6 h6 c8 dt cj dq dk sa c2 d2 h2 } { c3 d4 s4 h8 h9 s9 ct hj sj cq hk } { s3 h5 c6 c7 d8 c9 st sk ha jo } 
+play s-5678[144810] h-q[107574] p[70] p[384662] d-k[300326] p[133] s-2[2227] p[145] p[155] dh-3[44614] ch-4[292655] p[164045] dh-6[263007] hs-9[282001] cd-a[63056] p[78] dh-2[214489] p[88] p[97] p[86] c-j[228374] c-q[306087] c-k[122] p[83] p[41326] c-2[78260] p[77] p[78] d-t[135070] h-k[231193] p[82] h-a[191433] p[73] p[79] p[3187] h-5[207822] c-8[132468] d-q[214920] p[90] p[59] p[167691] s-a[198] c-3[237683] h-t[232577] p[59538] p[248915] p[228471] cd-5[191742] p[28341] hs-j[164311] p[100] p[180] h-8[282868] ds-4[71368] p[138024] cs-6(s)[50127] p[220] p[109] c-7[49628] c-t[169] p[74] p[125] dh-7[72] p[67] p[63] d-j[105] p[205] s-q[198] p[101] d-9[111] 
+result 3 0 1 2 4 
+*/ 
+/* 
+game 54 
+score 
+class 3 0 1 2 4 
+seat 1 3 0 2 4 
+dealt { h3 s4 d5 d7 d9 h9 cq hk sk c2 } { d3 c5 h7 s7 c9 s9 dt cj dj sj ck } { h4 h6 s6 c8 ct hj hq dk ca d2 s2 } { c3 s3 c4 d4 h5 s5 s8 dq sq da } { c6 d6 c7 d8 h8 ht st ha sa h2 jo } 
+changed { c2 } { c5 dt } { h4 } { } { h2 jo } 
+original { h3 h4 s4 d5 d7 d9 h9 cq hk sk } { d3 h7 s7 c9 s9 cj dj sj ck h2 jo } { h6 s6 c8 ct hj hq dk ca c2 d2 s2 } { c3 s3 c4 d4 h5 s5 s8 dq sq da } { c5 c6 d6 c7 d8 h8 dt ht st ha sa } 
+play hs-7[70726] hs-a[603423] p[78] p[69] p[86] p[1351] p[204] c-567[671741] p[105] p[118] p[199] p[47149] p[96] dhs-t[531101] p[62818] p[88] p[132] cds-j[6311] p[75] p[80] cs-9[83380] p[110] p[224791] p[336551] ds-q[268367] cd-k(d)[124465] p[88] p[94] h-2[81] p[96] p[72] p[128] p[139] p[69] d-3[97] h-8[142] d-8[98] d-6[76] h-j[80021] p[107968] p[92003] h-q[69427] p[72] c-t[70054] p[202363] p[67485] d-k[88] c-a[97] p[87] cds-2[90] p[100] p[74] p[87] c-8[72] hs-6[94] p[105] p[97] h-3[172] s-8[171] cd-4[146] dh-9[123] p[51] p[88] d-5[100] p[74] c-q[41] p[104] hs-4[117] hs-5[88] hs-k[86] p[83] p[89] d-7[77] 
+result 3 0 2 4 1 
+*/ 
+/* 
+game 55 
+score 
+class 3 0 2 4 1 
+seat 1 3 0 2 4 
+dealt { d6 s6 d7 s8 dt sq ck sk c2 s2 } { d4 h5 c6 h6 c7 s7 s9 hj dq dk da } { c3 h3 h4 c8 c9 d9 ct hq hk ha jo } { d3 s4 c5 s5 h7 d8 st dj sj h2 } { s3 c4 d5 h8 h9 ht cj cq ca sa d2 } 
+changed { s2 } { d4 h5 } { } { sj h2 } { d5 } 
+original { d5 d6 s6 d7 s8 dt sq ck sk c2 } { c6 h6 c7 s7 s9 hj sj dq dk da h2 } { c3 h3 h4 c8 c9 d9 ct hq hk ha jo } { d3 d4 s4 c5 h5 s5 h7 d8 st dj } { s3 c4 h8 h9 ht cj cq ca sa d2 s2 } 
+play h-7[274394] s-9[81361] c-q[208284] p[288185] p[541967] p[79] h-2[110256] p[90] p[152] cs-7[193847] cs-a[338624] p[110] p[80] p[72] p[57] p[76] h-89t[410549] c-4[389413] c-t[279575] c-2[310058] p[87] p[41] p[65] p[56856] p[76] s-8[377420] d-567[381509] p[112] d-qka[145721] p[97] p[81] p[30] p[78] ch-6[340748] p[149807] cd-9[193888] cs-k[380377] p[96] p[118] p[293651] p[71] s-6[401093] s-t[459965] p[357150] s-2[47100] p[10198] p[114] p[70] p[81] c-j[165452] h-q[244563] p[87] p[108] p[12] d-2[149] p[137459] p[81] s-3[78] c-8[75] h-345( )[94] p[81] p[79] p[80] p[111] h-k[148] p[89] p[89] p[93] h-a[82] p[74] c-3[81] s-q[66] p[86] p[67] p[88] d-t[75] d-j[102] p[71] p[69] d-3[82] s-j[77] p[88] p[71] h-j[70] 
+result 2 3 1 4 0 
+*/ 
+/* 
+game 56 
+score 
+class 2 3 1 4 0 
+seat 1 3 0 2 4 
+dealt { d3 h4 d5 d6 d8 h8 s9 dt hq sk sa } { d4 s4 c5 d7 s7 dj sj dq ca ha } { h3 s5 c6 h7 s8 d9 ht cq ck dk hk } { s3 s6 h9 ct st hj sq h2 s2 jo } { c3 c4 h5 h6 c7 c8 c9 cj da c2 d2 } 
+changed { } { ha } { h3 } { s2 jo } { h5 h6 } 
+original { d3 h4 d5 d6 d8 h8 s9 dt hq sk sa } { h3 d4 s4 c5 d7 s7 dj sj dq ca } { s5 c6 h7 s8 d9 ht cq ck dk hk ha } { s3 h5 h6 s6 h9 ct st hj sq h2 } { c3 c4 c7 c8 c9 cj da c2 d2 s2 jo } 
+play h-4[339488] h-5[780328] p[82] p[27562] h-7[246766] h-q[164120] p[1365397] h-a[204136] p[21] p[32] s-5[346200] d-6[383418] h-9[2563727] d-q[338402] d-a[112033] p[159] p[156] p[106] p[70] d-2[209088] p[44722] c-4[204255] c-6[513394] p[119] p[3846427] p[365433] c-2[139] p[97] p[208] s-2[190] p[112] p[64] p[68] p[61] p[117] c-789tj(t)[196] c-3[112] p[136] p[128] p[94] p[56] cdh-k[222835] p[85] p[69] p[82] p[70] c-q[176495] d-t[219359] p[253186] c-5[270879] p[74] d-3[223834] p[74] p[85] s-a[249043] h-j[293373] h-3[87600] p[103] p[144] p[141] p[102] ds-j[161974] p[139] dh-8[92305] s-k[259679] s-q[48427] p[220823] s-8[27476] h-t[235620] s-9[65337] s-3[128108] p[64] p[70] p[66] p[72] cs-t[44187] ds-7[3403] p[91] p[63] hs-6[2384] ds-4[144] p[108] p[87] c-a[80] d-9[68] d-5[77] 
+result 3 1 2 4 0 
+*/ 
+/* 
+game 57 
+score 
+class 3 1 2 4 0 
+seat 2 0 1 3 4 
+dealt { s3 s4 d5 h6 d8 h8 c9 d9 sj h2 } { d3 s6 c7 h7 s7 h9 dj ca da ha sa } { h3 c5 c6 d7 cq dq hq ck d2 s2 jo } { h4 s5 d6 s8 dt st sq dk hk c2 } { c3 c4 d4 h5 c8 s9 ct ht cj hj sk } 
+changed { h2 } { s6 } { } { hk c2 } { c3 h5 } 
+original { s3 s4 d5 h6 s6 d8 h8 c9 d9 sj } { d3 c7 h7 s7 h9 dj ca da ha sa h2 } { h3 c5 c6 d7 cq dq hq ck d2 s2 jo } { c3 h4 h5 s5 d6 s8 dt st sq dk } { c4 d4 c8 s9 ct ht cj hj hk sk c2 } 
+play h-9[160588] c-k[104053] p[75] p[74] c-2[97252] p[214] p[43884] p[205] cd-4[227090] dh-a[293078] ds-2[261916] p[96] p[123] p[202] p[83] p[63] cdhs-q(s)[123630] p[92] p[108] p[87] p[80] p[89] d-7[222465] d-5[5482] p[73] p[66] d-3[297653] p[96] p[154] p[159] h-2[361815] c-6[258789] s-4[254338] p[277265] p[95] p[54] h-3[62] p[157] p[138] c-5[119] s-3[68312] p[94] p[80] p[90] p[84] cd-9[63829] hs-5[178773] p[92] p[76] p[70] p[77] s-q[200987] s-9[209224] s-7[591399] p[135343] p[116] p[137] p[139] cs-a[485388] dh-8[74] hs-6[175] p[125] p[144] p[89] p[78] s-j[67] s-t[108103] p[110] p[129] s-8[105298] d-k[106455] h-t[67150] p[2886] d-6[170] p[106] h-4[202] c-3[81] p[104] d-t[110] c-8[68] hs-k[85] ch-7[82] p[72] p[78] d-j[76] 
+result 1 3 0 2 4 
+*/ 
+/* 
+game 58 
+score 
+class 1 3 0 2 4 
+seat 2 0 1 3 4 
+dealt { h3 d4 h4 c5 s6 d7 s7 dt cq ck h2 } { c3 s3 c6 c7 c8 ht dk sk sa c2 } { d5 h6 d9 h9 ct st cj dj sj dq ha } { d3 c4 h5 s5 d6 s8 c9 hj hq sq hk } { s4 h7 d8 h8 s9 ca da d2 s2 jo } 
+changed { h3 } { c2 } { d5 h6 } { } { s2 jo } 
+original { d4 h4 c5 s6 d7 s7 dt cq ck c2 h2 } { c3 h3 s3 c6 c7 c8 ht dk sk sa } { d9 h9 ct st cj dj sj dq ha s2 jo } { d3 c4 h5 s5 d6 s8 c9 hj hq sq hk } { s4 d5 h6 h7 d8 h8 s9 ca da d2 } 
+play c-4[397753] s-9[544910] h-t[121163] d-q[143455] p[296277] p[209348] d-2[2242097] p[122] p[122932] p[198] s-4[2456160] s-a[165565] s-2[185769] p[92] p[115] p[77] p[71] p[38974] dh-9[227120] p[89280] p[252713] cd-a[23428] p[143] p[99] p[64] h-678[114] d-8[117] d-5[96] d-k[85626] p[24991] p[141] p[82] p[69] c-678[86405] chs-3[9141] cds-t(d)[152152] p[78] p[66] p[105] cds-j[88] p[74] h-a[91] p[118857] p[78] p[73] d-4[714946] p[252424] s-k[149] c-2[5471] p[98] ds-7[88370] p[752] p[163] c-q[4211] p[875] c-k[420] p[160] h-4[951] d-6[973] d-t[142] p[103] p[57] c-5[137] c-9[170] p[104] p[137] hs-5[105] p[110] p[117] d-3[181] h-2[113] p[102] p[173] s-6[78] 
+result 3 2 1 4 0 
+*/ 
+/* 
+game 59 
+score 
+class 3 2 1 4 0 
+seat 2 0 1 3 4 
+dealt { h7 s8 d9 st dj dq sq ca sa jo } { c3 d4 h4 d6 h6 s7 c8 cj dk da ha } { d3 c4 d5 s5 d7 d8 c9 ht ck c2 d2 } { h3 c5 h5 c6 s6 h8 h9 sj hq hk } { s3 s4 c7 s9 ct dt hj cq sk h2 s2 } 
+changed { jo } { } { c4 } { hq hk } { s4 c7 } 
+original { c4 h7 s8 d9 st dj dq sq ca sa } { c3 d4 h4 d6 h6 s7 c8 cj dk da ha } { d3 d5 s5 d7 d8 c9 ht ck c2 d2 jo } { h3 s4 c5 h5 c6 s6 c7 h8 h9 sj } { s3 s9 ct dt hj cq hq hk sk h2 s2 } 
+play c-9[164683] s-t[216215] p[2476322] s-k[189111] p[79] p[53843] p[154257] p[96894] s-3[217697] s-7[571294] p[137649] s-8[257847] h-7[514835] h-9[1644055] h-j[208669] p[197061] p[169050] p[69] p[69] h-k[259309] p[194905] cd-t[330598] p[125220] p[597496] ds-q[336421] p[77] p[220403] p[167917] c-4[390217] c-7[476257] p[309714] c-j[419316] c-k[309486] p[144626] p[87] p[111] p[302655] d-3[379653] d-9[435623] p[71] p[80] d-k[267936] d-2[337264] p[87] p[116] p[49376] h-t[203024] d-j[474329] p[112] h-2[508976] p[133] p[121997] p[92] p[75] s-9[383265] p[13686] c-2[90] p[80] p[70] p[83] p[74] d-5678(6)[75] s-5[84] p[258389] s-j[288843] s-2[90] p[95] p[73] p[92] ch-q[161] p[72437] cs-a[120] p[89] h-3[110] c-8[734] dh-6[207] p[112] p[111] dh-4[121] ch-5[80] dh-a[92] p[103] p[84] c-3[63] 
+result 2 3 0 4 1 
+*/ 
+/* 
+game 60 
+score 
+class 2 3 0 4 1 
+seat 3 0 2 1 4 
+dealt { c6 c7 h9 ct dt cj sj ca da d2 jo } { c3 d3 h3 d4 d5 h5 h7 hj c2 s2 } { s3 c5 s5 d6 d7 c9 s9 dk ha sa h2 } { c4 h4 h6 s6 s8 st dj dq hq sq } { s4 s7 c8 d8 h8 d9 ht cq ck hk sk } 
+changed { } { s2 } { s3 d6 } { hq sq } { s4 } 
+original { c6 c7 h9 ct dt cj sj ca da d2 jo } { c3 d3 h3 d4 s4 d5 h5 h7 hj c2 } { c5 s5 d7 c9 s9 hq sq dk ha sa h2 } { s3 c4 h4 d6 h6 s6 s8 st dj dq } { s7 c8 d8 h8 d9 ht cq ck hk sk s2 } 
+play ds-4[245825] p[2304220] cs-5[84213] cs-j[229737] cs-k[229975] p[108] p[102] p[24565] p[102] s-7[319047] h-j[175579] p[310842] d-k[259253] p[327663] s-2[284499] p[93] p[128] p[74] h-t[362490] p[88655] d-j[276126] h-2[278128] p[7335] p[88] p[72] p[64] cs-9[355646] cd-t[69203] p[78] p[101] p[80] hs-q[165247] cd-a[65] p[83] p[65] c-678(8)[170] d-2[86] p[80] p[82] p[67] p[71] p[64] h-9[66] c-q[372192] p[170646] p[76] s-a[153907] p[225] p[162] d-7[68260] d-9[157081] p[86] d-q[53309] p[92] p[88] p[105] s-3[158009] h-a[114] p[85] p[45016] p[168] cdh-8[130] h-k[113] p[203] p[116] cdh-3[201] dhs-6[156] p[103] p[75] s-t[81] c-2[63] p[77] p[110] dh-5[108] p[172] p[84] h-7[114] 
+result 0 3 1 4 2 
+*/ 
+/* 
+game 61 
+score 
+class 0 3 1 4 2 
+seat 3 0 2 1 4 
+dealt { s3 d4 d7 s7 h9 ct hj dq hk da s2 } { c4 h4 s5 c7 h8 s8 d9 cq c2 d2 jo } { d3 d6 c8 s9 cj dj ck sk ha sa } { h3 d5 h5 h7 d8 c9 dt ht hq h2 } { c3 s4 c5 c6 h6 s6 st sj sq dk ca } 
+changed { s3 d4 } { jo } { d6 } { hq h2 } { } 
+original { d7 s7 h9 ct hj dq hq hk da h2 s2 } { c4 h4 s5 d6 c7 h8 s8 d9 cq c2 d2 } { d3 c8 s9 cj dj ck sk ha sa jo } { h3 s3 d4 d5 h5 h7 d8 c9 dt ht } { c3 s4 c5 c6 h6 s6 st sj sq dk ca } 
+play cd-j[115466] p[86440] p[207] p[30527] p[135] cs-k[97186] hs-a[53016] p[83] s-9[81318] c-t[183804] p[744889] c-q[178830] p[88] p[46566] p[74] p[60887] s-5[306584] h-7[313921] c-8[95] cd-3(c)[121] ds-7[112780] p[88] hs-8[116919] d-9[301959] p[113306] d-q[149185] p[246345] d-2[122799] p[72] p[35] d-6[165313] c-9[255623] d-a[10596] p[85] p[157690] p[76] h-2[201] p[91] h-jqk[119] p[84] p[68] p[59] p[58] s-2[65] p[161] p[123] p[138] p[140] h-9[120] p[431616] p[34980] p[140074] s-4[394172] c-7[7405] d-8[83089] hs-3[172554] hs-6[92259] p[79] p[81] p[74] c-6[90457] c-2[81] p[66] p[135] p[100] ch-4[112] dh-5[66] p[209] dh-t[87] p[69] d-4[101] 
+result 1 2 0 3 4 
+*/ 
+/* 
+game 62 
+score 
+class 1 2 0 3 4 
+seat 3 0 2 1 4 
+dealt { s3 d4 c5 s5 c6 d6 s6 c7 cj ca d2 } { h4 d9 ht st hj sk da sa h2 jo } { c3 h3 h6 s7 h8 s8 c9 ct dq hq dk } { d3 h5 h7 c8 d8 sj cq sq hk c2 } { c4 s4 d5 d7 h9 s9 dt dj ck ha s2 } 
+changed { d4 } { } { h6 s7 } { c2 } { ha s2 } 
+original { s3 c5 s5 c6 d6 s6 c7 cj ca c2 d2 } { h4 d9 ht st hj sk da sa h2 jo } { c3 h3 h8 s8 c9 ct dq hq dk ha s2 } { d3 d4 h5 h7 c8 d8 sj cq sq hk } { c4 s4 d5 h6 d7 s7 h9 s9 dt dj ck } 
+play d-4[267857] c-9[149875] c-j[122813] p[2429401] p[71896] p[111037] p[107] p[142955] c-7[242373] d-j[1226314] s-k[384799] p[221] h-a[255045] p[281804] p[139] h-2[375838] p[103] p[48338] h-4[434500] h-5[557809] h-8[311571] s-8[397954] ch-3[360947] cs-5[280779] ds-7[411589] ds-9(s)[284960] p[111] p[118] p[86] p[153] p[94997] hs-t[59361] cs-q[336351] p[110] p[543450] p[207] ds-a[10419] p[115] p[136] h-j[86] h-k[199057] p[142] p[41] p[61] p[104] h-7[233988] d-k[200981] c-a[130186] p[125] p[113] s-2[23254] p[205] p[146] dh-q[72955] cd-2[91] p[104] p[84] p[107] p[100] cds-6[73] p[83] p[113] p[94] p[86] s-3[75] d-t[23309] s-j[3936] p[105] c-k[27335] p[92] p[115] cs-4[28947] cd-8[113] d-3[98] c-t[65] 
+result 1 0 3 2 4 
+*/ 
+/* 
+game 63 
+score 
+class 1 0 3 2 4 
+seat 0 2 1 3 4 
+dealt { d4 s4 c5 d5 s6 c7 d8 dk hk da } { h5 s8 h9 ht cj dj sq ha sa h2 s2 } { c4 c6 d7 s7 h8 d9 hj cq hq jo } { c3 h6 s9 st sj dq ck sk ca c2 d2 } { d3 h3 s3 h4 s5 d6 h7 c8 c9 ct dt } 
+changed { s6 } { h5 h9 } { jo } { } { ct dt } 
+original { d4 s4 c5 d5 c7 d8 dk hk da jo } { s8 ct dt ht cj dj sq ha sa h2 s2 } { c4 c6 s6 d7 s7 h8 d9 hj cq hq } { c3 h6 s9 st sj dq ck sk ca c2 d2 } { d3 h3 s3 h4 h5 s5 d6 h7 c8 c9 h9 } 
+play h-4[367203] c-7[120888] d-9[286217] s-q[6413] c-2[337443] p[116] p[42592] p[105] p[94] p[79] s-9tj[402671] p[96] p[120669] p[79] p[57] p[74] c-3[366315] d-6[2363961] d-8[266697] cd-5[379263] cs-6[361725] hs-a[386059] p[73] p[65] p[57] p[61] p[87441] cdh-t[423055] p[107] p[86] dhs-k(s)[312976] p[75] p[78] p[74] ds-4[16599] ds-7[353481] p[103] p[81] p[70] p[62] p[73] h-j[397893] s-2[81] p[104] p[85] p[60] p[78] p[77] s-8[72] h-2[58] p[93] p[74] p[77] p[77] p[67] cd-j[67] p[198424] p[94] p[71] ch-q[6141] p[64] h-8[91] c-4[84] h-6[27802] h-7[80266] p[99] p[88] p[74813] hs-5[84065] p[76] cs-k[70] p[78] p[82] c-a[103] p[84] p[62] d-2[73] p[67] d-q[62] p[62] d-a[68] 
+result 3 0 1 2 4 
+*/ 
+/* 
+game 64 
+score 
+class 3 0 1 2 4 
+seat 0 2 1 3 4 
+dealt { d3 h3 s3 s5 s6 d7 h7 c9 hq s2 } { s4 c5 h6 c7 ct ht cq sk sa c2 d2 } { d4 h5 c6 dt st cj dj dq da ha } { s7 c8 h8 d9 s9 hj dk hk ca h2 jo } { c3 c4 h4 d5 d6 d8 s8 h9 sj sq ck } 
+changed { s2 } { s4 c5 } { d4 } { } { sq ck } 
+original { d3 h3 s3 d4 s5 s6 d7 h7 c9 hq } { h6 c7 ct ht cq sq ck sk sa c2 d2 } { h5 c6 dt st cj dj dq da ha s2 } { s7 c8 h8 d9 s9 hj dk hk ca h2 jo } { c3 c4 h4 s4 c5 d5 d6 d8 s8 h9 sj } 
+play d-4[329174] c-6[203720] c-7[164429] c-a[202522] p[98] p[89] p[150] c-2[52568] p[180982] p[70] ch-t[183074] dh-k[411439] p[152] p[77] p[325787] p[66] p[25308] h-j[169779] p[134] p[900238] d-q[376437] s-a[235926] h-2[73] p[52] p[85] p[81] s-789(8)[75] ch-8[86] d-9[79] s-j[199534] p[169382] p[265047] d-2[153533] p[97] p[106] cs-q[70000] p[94] p[129] dh-a[304464] p[72] p[64] ds-t[391815] cs-k[95] p[128] p[92] p[87] p[128] h-6[123] h-9[107709] p[93724] p[81] p[152] d-6[119183] c-9[100524] s-2[121] p[79] p[69] p[196] cd-j[116] p[80] p[147] p[99] h-5[75] d-8[163] c-345[467] p[123] p[194] hs-4[170] dh-7[127] p[148] p[145] s-5[127] s-8[150] d-5[86] 
+result 4 1 2 0 3 
+*/ 
+/* 
+game 65 
+score 
+class 4 1 2 0 3 
+seat 0 2 1 3 4 
+dealt { d4 s5 c6 c8 ct st cj hq dk da ha } { c4 h5 c7 s9 ht dj dq hk sk c2 } { h4 s4 c5 d7 h8 dt hj cq sa h2 } { h3 d5 h7 s7 d9 h9 sj ck d2 s2 jo } { c3 d3 s3 d6 h6 s6 d8 s8 c9 sq ca } 
+changed { da ha } { c4 } { } { h3 d5 } { ca } 
+original { h3 d4 d5 s5 c6 c8 ct st cj hq dk } { h5 c7 s9 ht dj dq hk sk ca c2 } { h4 s4 c5 d7 h8 dt hj cq sa h2 } { h7 s7 d9 h9 sj ck da ha d2 s2 jo } { c3 d3 s3 c4 d6 h6 s6 d8 s8 c9 sq } 
+play c-4[238893] c-6[751056] c-q[156331] c-2[173423] p[22174] p[165] p[147] p[71] p[66] c-7[303609] s-j[190175] s-q[353179] p[87] p[381019] p[242572] s-2[152844] p[117] p[94098] hs-7[164200] ds-8[491840] cds-3[299218] p[72] p[64] p[149] dhs-9(s)[158462] p[108] p[113] dh-a[37] p[91] p[95] p[191] p[109] p[69] d-2[87] p[88] p[149] p[132] p[66] p[62] c-k[90] p[80] p[118] s-a[200575] p[92] p[47729] c-5[291072] d-j[209317] p[131] d-k[204811] p[74] p[71] p[81] h-3[243769] h-8[286907] d-7[235883] s-9[245244] p[105] h-q[233327] p[94160] c-a[132454] p[112] p[102] h-t[185013] p[93] c-j[207070] p[58220] d-q[27860] p[143] p[121] hs-k[118] p[110] p[101] p[125] p[78] h-5[75] c-9[43999] p[84900] d-t[130] p[202] h-j[100] h-2[118] p[112] hs-4[113] hs-6[187] p[165] p[201] d-6[104] 
+result 4 1 2 0 3 
+*/ 
+/* 
+game 66 
+score 
+class 4 1 2 0 3 
+seat 3 2 1 0 4 
+dealt { c6 d6 s6 d8 cj sj sq sk da s2 } { c3 d3 c4 h4 c5 d5 s8 c9 s9 dj hk } { h3 s3 h5 h6 ct dt ht cq hq ha h2 } { d4 s4 c7 d7 c8 h8 dq dk sa d2 jo } { s5 h7 s7 d9 h9 st hj ck ca c2 } 
+changed { da s2 } { dj } { } { c7 d7 } { c2 } 
+original { c6 d6 s6 c7 d7 d8 cj sj sq sk } { c3 d3 c4 h4 c5 d5 s8 c9 s9 hk c2 } { h3 s3 h5 h6 ct dt ht cq hq ha h2 } { d4 s4 c8 h8 dq dk da sa d2 s2 jo } { s5 h7 s7 d9 h9 st dj hj ck ca } 
+play cd-5[201097] cd-7[1451966] p[108] p[83710] cd-t[281838] p[103] p[123] p[121] h-6[428653] s-8[250345] ch-4[310327] p[217712] dh-9[249078] ds-a[73823] p[89] p[83] p[170] ds-2[155] p[98] d-qka(a)[155] p[69] p[73] p[79] p[78] p[79] ch-8[86] ds-4[70] ch-q[128386] p[147] p[145] p[123] p[68] h-5[149114] c-2[127560] p[11] p[71] p[167] p[68] cd-3[96144] cd-6[194188] p[95] p[73] p[62] p[79] s-6[196801] s-t[161615] p[74] p[103] s-q[62086] p[96] s-k[91] p[62] d-8[84] cs-j[66] p[71] p[91] p[137] c-k[97621] h-a[42208] p[82] p[82] p[3937] h-t[22597] h-k[4582] p[115] h-2[77] p[91] p[84] hs-3[80] cs-9[87] 
+result 1 3 2 0 4 
+*/ 
+/* 
+game 67 
+score 
+class 1 3 2 0 4 
+seat 3 2 1 0 4 
+dealt { h3 s6 d7 h9 dq sq hk sa d2 h2 } { s4 c6 h6 s7 c8 d8 h8 c9 ht c2 jo } { d3 s5 d6 c7 d9 s9 st sj ca da s2 } { c3 c4 c5 d5 cj cq hq ck dk sk ha } { s3 d4 h4 h5 h7 s8 ct dt dj hj } 
+changed { h3 } { jo } { } { c3 c4 } { dj hj } 
+original { s6 d7 h9 dq sq hk sa d2 h2 jo } { h3 s4 c6 h6 s7 c8 d8 h8 c9 ht c2 } { d3 s5 d6 c7 d9 s9 st sj ca da s2 } { c5 d5 cj dj hj cq hq ck dk sk ha } { c3 s3 c4 d4 h4 h5 h7 s8 ct dt } 
+play d-6[489617] s-7[213573] h-9[98076] p[1250814] h-a[202789] p[98] p[63] h-2[149087] p[77] p[65123] s-6[221872] h-7[2808003] p[308054] d-9[471959] h-t[108119] h-k[93020] p[148] p[129] p[60] p[30731] ds-q[157140] p[94] p[325543] cd-a[268957] p[75] p[155355] p[87] d-3[361050] s-4[387720] s-a[281929] p[104] p[142] p[291436] p[140] jk[157] p[107] d-2[115] p[100] p[159] p[73] p[65] p[86] d-7[93] s-8[218462] cs-3[245403] ch-q[131800] p[100] p[101] p[68] p[73] cdh-j[172] p[93] p[125] p[94] cds-k[204] p[82] cd-5[102] p[87] ch-6[124863] cd-t[3219] p[127] p[119] cdh-4[26129] p[105] cdh-8[3125] c-9[22597] p[108] p[21812] c-2[123] p[90] h-3[78] h-5[123] 
+result 0 2 4 1 3 
+*/ 
+/* 
+game 68 
+score 
+class 0 2 4 1 3 
+seat 3 2 1 0 4 
+dealt { d4 d5 h6 c7 dt sq ck sk ha sa s2 } { c3 s3 c4 s5 d6 h9 ct sj dq hk } { d3 h3 h4 s4 c5 d7 s7 hj ca h2 } { h5 c6 s6 h7 c9 d9 s9 cj cq dk c2 } { c8 d8 h8 s8 ht st dj hq da d2 jo } 
+changed { d4 d5 } { } { ca h2 } { h5 } { jo } 
+original { h6 c7 dt sq ck sk ca ha sa h2 s2 } { c3 s3 c4 s5 d6 h9 ct sj dq hk } { d3 h3 d4 h4 s4 c5 d5 d7 s7 hj } { c6 s6 h7 c9 d9 s9 cj cq dk c2 jo } { h5 c8 d8 h8 s8 ht st dj hq da d2 } 
+play cd-5[289512] p[87] cs-k[145336] p[98] p[22433] p[73] p[78697] c-7[204040] h-q[1499370] d-k[369175] p[89] p[87] s-2[213367] p[80] p[354905] p[94] h-6[256393] d-j[266803] p[705311] p[988] p[374182] s-q[85239] d-a[241988] h-2[47219] p[117] p[69] chs-a[123686] p[136] p[211] p[133] p[81] p[145] d-t[108] d-2[21648] p[8919] p[83] p[79] p[81] hs-t[127276] ch-j(h)[171836] p[90] p[109] p[86] p[204] h-7[95704] p[210098] h-9[306365] p[224] p[89] p[242208] c-4[365904] s-8[124] cdh-8[112] h-5[107] c-q[23104] p[71] h-k[74131] c-2[66] p[62] p[66] cds-9[65] p[104] p[135] p[161] cs-6[108] ds-7[198] p[99] p[66] dhs-4[256] p[208] p[89] dh-3[122] p[73] p[79] h-j[94] 
+result 0 4 3 2 1 
+*/ 
+/* 
+game 69 
+score 
+class 0 4 3 2 1 
+seat 4 1 0 3 2 
+dealt { d3 h3 d4 h6 c8 d8 d9 h9 s9 ct hk } { c4 s5 c6 s6 h7 s8 dt ht sj ha sa } { c3 c5 d5 h5 c7 dj hj cq sq ck da } { h4 s4 d6 s7 c9 st cj sk c2 d2 } { s3 d7 h8 dq hq dk ca h2 s2 jo } 
+changed { d4 h6 } { ha sa } { da } { } { d7 } 
+original { d3 h3 c8 d8 d9 h9 s9 ct hk ha sa } { c4 d4 s5 c6 h6 s6 h7 s8 dt ht sj } { c3 c5 d5 h5 c7 d7 dj hj cq sq ck } { h4 s4 d6 s7 c9 st cj sk c2 d2 } { s3 h8 dq hq dk ca da h2 s2 jo } 
+play dh-3[151818] cd-7[288465] p[1769247] dh-q[169735] p[145106] hs-a[81674] p[161] hs-2[62345] p[79] p[130] d-k[195] p[398741] p[98] p[145] p[80] jk[105] s-3[86] h-8[105] cd-a[127] p[26970] p[76] p[83] p[63] s-7[449893] c-t[6662] c-k[133466] p[80] p[131985] p[57] p[115] cdh-5[182927] chs-6[213669] p[84] dhs-9[81799] p[127] p[116] p[147] cd-8[127] h-k[121] p[113] p[53] d-2[86699] p[89] d-6[140496] c-q[112214] p[144] s-k[73642] p[101] p[71079] s-t[91924] s-q[103] p[55] p[72] p[99] dh-j[84] p[86] p[69] p[75] c-3[70] s-5[136] c-j[77] p[78] p[66] hs-4[88] dh-t[79] p[63] p[70] h-7[73] c-2[89] p[91] p[161] c-9[105] 
+result 1 4 2 3 0 
+*/ 
+/* 
+game 70 
+score 
+class 1 4 2 3 0 
+seat 4 1 0 3 2 
+dealt { c3 s4 c5 h6 h8 ck sk ha c2 d2 h2 } { d4 d5 h5 h7 c8 d9 cj cq hq dk } { d3 h3 s3 c4 c6 h9 s9 ct ht s2 } { s5 d6 s6 c7 d8 c9 dt dq sq sa jo } { h4 d7 s7 s8 st dj hj sj hk ca da } 
+changed { s4 } { hq dk } { } { jo } { h4 st } 
+original { c3 c5 h6 h8 ck sk ha c2 d2 h2 jo } { d4 h4 d5 h5 h7 c8 d9 st cj cq } { d3 h3 s3 c4 c6 h9 s9 ct ht s2 } { s4 s5 d6 s6 c7 d8 c9 dt dq sq sa } { d7 s7 s8 dj hj sj hq dk hk ca da } 
+play c-4[258552] h-7[1175724] s-8[144456] ds-7[164531] p[465979] cs-k[293311] p[93] p[124] cd-a[108146] ch-2[283543] p[68] p[72] h-6[290329] h-t[551053] p[82] h-q[5929] p[146] h-a[68] p[58] p[93] p[78] h-8[61] d-2[124] p[128] p[163] p[127] p[158] p[69] c-345(4)[97] p[77] p[121] p[167] p[141] dhs-3[273200] p[115] dhs-j[111] p[75] p[113] p[75] dh-k[113] p[83] p[84] p[54] s-456[330388] p[177] p[53] p[72] d-6[141847] c-t[149285] p[91839] s-a[120604] p[33997] p[108] c-7[135178] p[84684] s-t[117472] p[58051] c-j[110271] p[110531] dh-5[111463] p[93272] hs-9[3150] p[126] p[59] s-2[112] p[66] p[84] p[81] c-6[81] c-8[103] dh-4[81] ds-q[92] p[68] p[65] c-9[76] c-q[67] p[236] p[74] d-9[77] 
+result 0 3 2 4 1 
+*/ 
+/* 
+game 71 
+score 
+class 0 3 2 4 1 
+seat 4 1 0 3 2 
+dealt { s4 d5 h5 d6 c8 d9 s9 ct ht sq h2 } { d3 c5 c6 d8 s8 c9 cj sj cq dq da } { c3 s5 h6 s6 c7 d7 h9 dt hq ca jo } { h3 c4 d4 h7 st dj ck hk sk ha } { s3 h4 s7 h8 hj dk sa c2 d2 s2 } 
+changed { s4 d6 } { da } { } { sk ha } { h4 } 
+original { d5 h5 c8 d9 s9 ct ht sq sk ha h2 } { d3 h4 c5 c6 d8 s8 c9 cj sj cq dq } { c3 s5 h6 s6 c7 d7 h9 dt hq ca jo } { h3 c4 d4 s4 d6 h7 st dj ck hk } { s3 s7 h8 hj dk da sa c2 d2 s2 } 
+play h-4[313181] s-7[143400] s-t[1800139] s-q[115404] p[24893] p[127] s-a[147513] p[90] p[169] p[120211] h-j[156060] p[1758158] h-a[230443] p[154976] p[112] p[126] p[137254] dh-5[308468] hs-6[693819] ds-8[313322] d-3[369029] h-8[104] d-ka2[128] p[207] p[76] p[73] p[100] p[72] cs-2[133] p[123] p[142] p[54] p[134] p[70] s-3[108] d-6[315882] c-8[212730] ds-9[213555] p[272692] cs-j[275396] p[110696] p[114] p[251321] c-5[287712] h-7[292535] s-k[71191] p[187605] p[112] p[62] h-2[70] p[112] ch-t[120] p[37560] cd-q[74957] ch-k[4787] p[73] p[145] cds-4[46510] cdh-7(h)[45953] p[73] p[80] p[99] h-9[47444] p[136] p[32029] d-t[4044] h-q[4262] p[1426] c-3[36989] c-6[48968] p[87] c-a[192] p[96] p[32] s-5[95] c-9[103] 
+result 1 3 2 4 0 
+*/ 
+/* 
+game 72 
+score 
+class 1 3 2 4 0 
+seat 3 0 4 1 2 
+dealt { s5 c6 s7 s8 c9 h9 dj hq sq sk jo } { c3 d6 h7 h8 s9 ct cj dq da h2 } { c4 h4 d5 c7 c8 d9 hj sj cq ck sa } { d4 s4 c5 h5 h6 dt dk hk ca d2 } { d3 h3 s3 s6 d7 d8 ht st ha c2 s2 } 
+changed { c6 } { h2 } { } { ca d2 } { s6 d7 } 
+original { s5 s7 s8 c9 h9 dj hq sq sk h2 jo } { c3 c6 d6 h7 h8 s9 ct cj dq da } { c4 h4 d5 c7 c8 d9 hj sj cq ck sa } { d4 s4 c5 h5 h6 s6 d7 dt dk hk } { d3 h3 s3 d8 ht st ca ha c2 d2 s2 } 
+play hs-t[66493] hs-q[141295] p[91] p[87] p[63] p[107] p[56094] d-j[170057] p[386283] p[268720] p[3201552] s-2[118728] p[27516] p[93] ch-a[70573] p[4942] p[113] p[123] p[129] cd-2[76] p[111] d-8[64] dhs-3[69] p[3286] p[130] p[148] p[67] ch-9[95825] p[258528] p[143] p[51513] p[68] s-5678(6)[82] h-2[67] p[98] p[77] p[134] p[110] s-k[109] p[23569] p[104306] p[118] ch-4[167505] p[312688] ch-5[193580] p[82] p[72] ds-4[209241] hs-j[12905] p[82] dh-k[120515] p[64] p[66] hs-6[31771] p[85] p[117] p[71] d-7[57006] d-9[96313] d-q[67192] p[90] p[71] p[56596] h-7[56064] d-t[109] c-k[260] p[80] p[79] c-8[141] c-7[75] s-9[90] c-q[86] p[80] s-a[72] p[76] d-5[72] 
+result 1 4 3 2 0 
+*/ 
+/* 
+game 73 
+score 
+class 1 4 3 2 0 
+seat 3 0 4 1 2 
+dealt { c3 s4 c5 d5 h5 s6 cj cq dq sa jo } { d4 h4 c6 h7 s7 h8 h9 ca h2 s2 } { c4 h6 c7 s8 dt ht dj sq sk ha d2 } { d3 s3 d6 d7 c9 ct sj hq dk da } { h3 s5 c8 d8 d9 s9 st hj ck hk c2 } 
+changed { c3 } { h2 s2 } { d2 } { } { s5 st } 
+original { s4 c5 d5 h5 s6 cj cq dq sa d2 jo } { d4 h4 s5 c6 h7 s7 h8 h9 st ca } { c3 c4 h6 c7 s8 dt ht dj sq sk ha } { d3 s3 d6 d7 c9 ct sj hq dk da } { h3 c8 d8 d9 s9 hj ck hk c2 h2 s2 } 
+play d-7[607687] h-j[93200] s-a[160428] p[79] p[84] p[81] c-2[76893] p[24081] p[81] ds-9[145411] p[320883] p[377810] p[165] p[123] ch-k[105] hs-2[103] p[133] cd-8[161] h-3[103] s-4[147864] s-8[349286] h-6[357839] s-t[347101] s-j[268962] p[10022] s-q[236578] p[160] p[78] s-k[212475] p[107] c-4[278030] s-5[294226] c-9[292027] c-j[50542] p[112] c-a[310450] p[120] p[94664] p[143] c-6[360911] c-t[306210] c-q[229320] p[89] p[84] p[79] p[48427] d-q[253123] p[153289] p[77] d-k[365743] d-2[90] p[147] p[133] cdhs-5(s)[153] p[114] p[124] p[144] p[170] s-6[104] p[44026] p[109781] s-3[53701] p[92] d-a[102690] d-j[67767] d-4[43580] p[4191] p[66] p[69] h-789[43414] s-7[24073] d-6[71256] p[22327] h-4[199] d-3[154] p[98] h-q[108] 
+result 1 2 4 3 0 
+*/ 
+/* 
+game 74 
+score 
+class 1 2 4 3 0 
+seat 3 0 4 1 2 
+dealt { d3 s3 c4 c5 d5 h5 s6 s9 dt ca s2 } { d4 h4 c7 d7 h8 c9 ht cq ck sk } { h3 s5 d8 s8 h9 ct st hj sq hk ha } { c6 h7 cj dj dq hq da sa c2 h2 } { c3 s4 d6 h6 s7 c8 d9 sj dk d2 jo } 
+changed { s6 } { } { hk ha } { h2 } { c3 s7 } 
+original { d3 s3 c4 c5 d5 h5 s9 dt ca h2 s2 } { d4 h4 c7 d7 h8 c9 ht cq ck sk } { c3 h3 s5 s7 d8 s8 h9 ct st hj sq } { c6 s6 h7 cj dj dq hq da sa c2 } { s4 d6 h6 c8 d9 sj dk hk ha d2 jo } 
+play ds-3[215598] p[600806] dh-4[171285] cs-6[258242] dh-k[180958] p[66325] p[73] ds-a[241578] p[5669] p[71] cd-j[371263] p[77799] p[89587] p[111] cs-k[87693] p[160] p[183] c-9[324223] c-2[255450] p[33839] p[116] p[103] p[80] p[71] dh-q[381136] p[114776] p[341798] p[89] p[87] p[71] h-7[85] d-9[166655] d-t[118217] p[87] p[84] d-2[26889] p[91] p[7135] s-4[197072] s-9[660447] s-q[390717] p[109] p[4781] s-2[380118] p[108] p[70] cdh-5[784434] p[93] p[99] p[171940] p[98] c-a[261137] p[76] p[67] jk[178023] p[83] p[70] s-j[205490] h-2[97] p[99] p[74] p[91] p[92] c-4[71] s-7[172713] h-t[248716] h-a[97] p[53] p[98] p[71] c-8[128] dh-6[111] cs-t[106] p[68] p[98] s-5[93] h-8[107] c-q[78] p[71] p[72] cd-7[59] 
+result 1 3 4 0 2 
+*/ 
+/* 
+game 75 
+score 
+class 1 3 4 0 2 
+seat 4 2 0 1 3 
+dealt { s4 c7 c9 d9 dt st dj hj ca c2 } { d3 c4 d4 h5 s5 d7 d8 h8 ct hk sa } { s3 c5 s6 h9 s9 cj sj hq da s2 } { h4 d5 c6 d6 ht cq sq ck dk h2 jo } { c3 h3 h6 h7 s7 c8 s8 dq sk ha d2 } 
+changed { s4 } { sa } { da s2 } { h4 d5 } { } 
+original { c7 c9 d9 dt st dj hj ca sa c2 } { d3 c4 d4 s4 h5 s5 d7 d8 h8 ct hk } { s3 h4 c5 d5 s6 h9 s9 cj sj hq } { c6 d6 ht cq sq ck dk da h2 s2 jo } { c3 h3 h6 h7 s7 c8 s8 dq sk ha d2 } 
+play d-3[299606] h-6[171060] c-7[155161] h-q[2019010] d-a[168159] p[115] p[258903] c-2[235632] p[89] p[122395] p[77] cd-9[316841] p[683075] cd-k[198966] p[112] p[76] p[88] p[67] cd-6[172163] p[249473] hs-7[512429] dh-j[374096] p[92] cs-q[9431] p[74] cs-a[34186] cs-2(c)[85] p[70] p[84] h-2[76] p[90] p[77] p[78] p[72] p[70] h-t[59] p[151546] d-q[75110] p[80] p[54] s-k[73] h-a[111] d-2[82] p[86] cs-8[83] ch-3[68] ds-t[68] p[315] p[149] s-3[186] h-8[5273] cds-4[765] p[143] p[126] hs-5[336] hs-9[167] p[132] p[211] cd-5[77] p[61] cs-j[142] p[97] h-4[73] d-8[64] c-t[87] p[81] h-k[88] p[114] d-7[104] 
+result 2 3 4 0 1 
+*/ 
+/* 
+game 76 
+score 
+class 2 3 4 0 1 
+seat 4 2 0 1 3 
+dealt { h5 h6 d8 ht dj sk da ha d2 s2 } { c4 c5 d5 s8 h9 s9 hq sa c2 h2 jo } { c3 d3 s4 s6 c8 dt cj dq dk ca } { s3 s5 c6 c7 d7 h7 h8 c9 sj ck hk } { h3 d4 h4 d6 s7 d9 ct st hj cq sq } 
+changed { } { jo } { dk ca } { s5 c6 } { h3 } 
+original { h5 h6 d8 ht dj sk da ha d2 s2 } { h3 c4 c5 d5 s8 h9 s9 hq sa c2 h2 } { c3 d3 s4 s5 c6 s6 c8 dt cj dq } { s3 c7 d7 h7 h8 c9 sj ck dk hk ca } { d4 h4 d6 s7 d9 ct st hj cq sq jo } 
+play c-6[301944] c-9[72313] c-2[296437] p[43278] p[80] p[72] p[65] p[73] c-4[421891] d-6[350568] d-j[649379] d-q[4967258] p[185896] p[199] p[64392] d-2[211425] p[99] p[150] h-6[270656] d-t[5562039] s-j[212004] h-q[283828] p[111807] s-k[147914] p[85] c-a[106115] p[266557] s-2[179145] p[200] p[148] h-t[261744] p[803591] h-k[314724] h-2[290872] p[57750] p[197] p[122] p[114] cd-5[363794] cs-q[344475] dh-a[90] p[77] p[71] p[114] p[65] p[66] d-8[76] h-5[81] c-8[243922] s-456[108465] p[178] p[115] p[143] p[112] cd-3[6014] cd-k[66567] p[85] p[157] p[119] p[83] cdh-7[52292] p[56] p[2823] p[151] p[87] h-8[63] s-3[78] s-8[123175] hs-9[124459] p[6300] p[72] p[55] s-a[61567] p[1153] p[119] p[79] h-3[81] h-j[144] p[67] p[211] cd-9(c)[131] p[110] cs-t[129] p[112] dh-4[123] p[134] p[83] s-7[135] 
+result 0 2 4 1 3 
+*/ 
+/* 
+game 77 
+score 
+class 0 2 4 1 3 
+seat 4 2 0 1 3 
+dealt { s3 c6 h6 s7 c8 h8 ht cj da ha d2 } { c3 d4 s6 d8 d9 h9 hj ck hk h2 } { c4 c5 d5 s5 h7 s8 c9 st hq sk jo } { d3 h3 s4 h5 s9 dt dj sj sq ca sa } { h4 d6 c7 d7 ct cq dq dk c2 s2 } 
+changed { s7 ht } { } { sk jo } { h5 } { s2 } 
+original { s3 c6 h6 c8 h8 cj sk da ha d2 jo } { c3 d4 s6 d8 d9 h9 hj ck hk h2 } { c4 c5 d5 s5 h7 s7 s8 c9 ht st hq } { d3 h3 s4 s9 dt dj sj sq ca sa s2 } { h4 h5 d6 c7 d7 ct cq dq dk c2 } 
+play dh-3[210211] dh-9[170894] p[134] dh-a[46019] p[148] p[148] p[66] p[3546] c-j[133933] h-q[1785954] s-2[287904] p[86] p[211] jk[88398] p[94] p[103] s-3[23307] s-k[115816] p[115] p[336629] h-2[526102] p[139] p[115] p[162] s-6[574285] c-t[324799] d-2[205] p[132] p[164] p[107] p[142] p[110] ch-8[115] ch-6[86] hs-7[154449] ds-j[111382] ch-k[119180] p[130] p[191] cs-a[109713] p[75] p[136] s-4[124935] d-8[68955] d-4[148914] d-6[94938] p[95] d-t[31051] p[75] d-k[123813] p[154] p[137] cd-7[139313] hs-t[110183] p[128] p[116] cd-q[6292] p[142] p[103] h-5[107731] c-9[54645] p[42071] p[63125] c-2[105] p[101] p[110] h-4[92] s-8[112] cds-5[106] p[58] p[77] p[91] c-4[90] s-q[94] p[74] p[95] s-9[95] 
+result 0 4 2 3 1 
+*/ 
+/* 
+game 78 
+score 
+class 0 4 2 3 1 
+seat 2 0 1 3 4 
+dealt { d3 c4 h4 c6 s7 dt hj dk ca sa h2 } { h5 s5 s6 c7 s9 ct cq hq sq ha } { d5 d7 s8 h9 st sk da c2 d2 s2 } { c3 h3 s3 d6 h6 h7 d8 h8 c9 d9 sj } { d4 s4 c5 c8 ht cj dj dq ck hk jo } 
+changed { c6 s7 } { sq ha } { } { sj } { c5 } 
+original { d3 c4 h4 dt hj sq dk ca ha sa h2 } { h5 s5 c6 s6 c7 s7 s9 ct cq hq } { d5 d7 s8 h9 st sk da c2 d2 s2 } { c3 h3 s3 c5 d6 h6 h7 d8 h8 c9 d9 } { d4 s4 c8 ht cj dj sj dq ck hk jo } 
+play d-t[196403] p[191] d-q[79027] p[161] d-a[176211] p[78] p[83728] p[107519] d-7[269113] s-q[180635] p[94] p[252907] p[181] s-k[188116] s-a[156872] s-2[214981] p[73] p[115] h-9[403005] h-j[198791] p[99] p[322215] p[91206] p[83] h-2[203876] p[137] ch-4[199916] cd-9[312648] hs-t(s)[549176] p[63802] p[27921] ch-a[63457] p[133] p[93] p[77] d-3[44655] c-5[302507] c-8[129975] ch-k[229400] p[72] p[34451] p[87] p[107] p[90] cds-j[98] p[76] p[75] p[59] p[58] p[66] ds-4[119] cs-6[205997] p[9742] p[170] p[185607] cs-7[205464] p[77] hs-5[220668] p[9008] p[83] dh-6[146060] ch-q[4496] p[96] p[97] c-t[180261] c-2[89851] p[83] p[124] p[69] p[70] s-t[69181] d-k[97] p[84] p[73] d-2[72] p[64] s-8[67] d-5[68] d-8[69] chs-3[91] p[72] p[75] h-8[67] h-7[85] 
+result 1 4 2 3 0 
+*/ 
+/* 
+game 79 
+score 
+class 1 4 2 3 0 
+seat 2 0 1 3 4 
+dealt { c4 d8 h8 hj hq sk da ha c2 d2 } { c3 d3 d4 h5 c6 h6 s6 s7 c9 sj sq } { s3 h4 d5 s5 h9 s9 ct ht ck dk hk } { h3 c5 d6 h7 d9 cj dj dq s2 jo } { s4 c7 d7 c8 s8 dt st cq ca sa h2 } 
+changed { sk } { sj sq } { } { jo } { s4 sj } 
+original { c4 d8 h8 hj hq da ha c2 d2 jo } { c3 d3 d4 s4 h5 c6 h6 s6 s7 c9 sj } { s3 h4 d5 s5 h9 s9 ct ht ck dk hk } { h3 c5 d6 h7 d9 cj dj dq sk s2 } { c7 d7 c8 s8 dt st cq sq ca sa h2 } 
+play s-7[539690] p[315298] d-8[88876] dh-a[71175] p[161] p[134] p[135] p[123] cd-2[162] p[107] h-jqk(k)[108] p[134] p[160] p[151] p[64] p[77] h-8[85] c-4[108] c-5[299625] c-8[64655] ds-t[117158] p[113] p[3549] cd-j[145492] cs-q[43309] p[90] cs-a[151] p[143] s-8[110] h-2[123] p[71] p[61] p[64] p[65] cd-7[94] p[72] ch-t[137151] p[114] p[3716] ds-5[141996] p[93] p[52546] p[104548] h-4[117735] d-6[213182] c-9[120767] c-k[118] p[94] p[150] p[67] hs-9[101] p[158] p[123] dh-k[161] p[152] s-3[70] d-9[129] s-j[152] d-q[188] p[65] s-k[73] s-2[76] p[91] h-7[168] p[116] p[113] h-3[86] 
+result 0 4 2 3 1 
+*/ 
+/* 
+game 80 
+score 
+class 0 4 2 3 1 
+seat 2 0 1 3 4 
+dealt { d3 c4 s5 h6 s8 d9 cj hj sq da c2 } { h3 h4 h5 c6 s6 dt cq hk sk jo } { c3 s3 c5 s7 c9 ct dj dk ca ha } { s4 d5 d6 c7 d7 c8 s9 st hq sa h2 } { d4 h7 d8 h8 h9 ht sj dq ck d2 s2 } 
+changed { c4 h6 } { sk jo } { } { h2 } { ck } 
+original { d3 s5 s8 d9 cj hj sq sk da c2 jo } { h3 c4 h4 h5 c6 h6 s6 dt cq hk } { c3 s3 c5 s7 c9 ct dj dk ca ha } { s4 d5 d6 c7 d7 c8 s9 st hq ck sa } { d4 h7 d8 h8 h9 ht sj dq d2 h2 s2 } 
+play d-3[155911] c-8[328360] s-4[323407] s-j[207812] p[110] p[129] s-q[127606] p[142297] s-2[75006] p[132031] p[98] d-4[332368] d-t[4323078] d-j[563980] d-a[195014] p[127] p[245638] p[143] p[122] p[4400] d-9[248196] s-t[306358] d-q[92134] p[353288] d-k[429294] p[36818] p[66] d-2[100439] p[87] p[84] h-789t[82] d-8[86] h-2[118] p[121] p[158] p[78507] p[90] h-345[355216] p[91] p[94] p[99] p[94] chs-6[162886] p[91] cdh-j(d)[196844] p[92] p[160] p[119] s-5[196060] s-9[341689] p[79] p[83] s-k[56353] s-a[300166] p[91] p[120] d-567[291937] p[131] p[116] p[80] p[40] c-7[278912] h-k[283323] p[170002] c-2[73] p[71] p[66] p[72] s-8[120] h-q[74240] p[86] p[22614] c-k[79] c-4[71] c-5[93] c-q[87] 
+result 1 3 4 2 0 
+*/ 
+/* 
+game 81 
+score 
+class 1 3 4 2 0 
+seat 2 3 1 0 4 
+dealt { s3 d4 s4 st dj hj cq dq sa s2 } { h3 c5 s5 s8 c9 cj sq ca da h2 } { d5 h5 c7 h7 h8 d9 ht sj hk sk ha } { c4 h4 d6 s7 d8 s9 ct ck c2 d2 jo } { c3 d3 c6 h6 s6 d7 c8 h9 dt hq dk } 
+changed { s3 } { h2 } { sk ha } { } { d7 dt } 
+original { d4 s4 st dj hj cq dq sa h2 s2 } { h3 s3 c5 s5 s8 c9 cj sq ca da } { d5 h5 c7 d7 h7 h8 d9 dt ht sj hk } { c4 h4 d6 s7 d8 s9 ct ck c2 d2 jo } { c3 d3 c6 h6 s6 c8 h9 hq dk sk ha } 
+play cd-3[176906] ch-4[96630] dh-5[1589243] dh-j[263418] p[71] p[81] p[22787] p[147] p[163] s-t[311807] c-j[246876] h-q[227655] c-k[357475] p[114] h-2[319043] p[137] p[155] p[33689] p[116] ds-4[253540] cs-5[273145] ds-k[328896] p[113870] p[95] p[142] cd-a[283552] p[140] p[141] c-9[321532] p[6043] c-t[21799] p[75] p[274263] p[65] p[139] s-789(8)[123] cd-2[77] p[78] p[156] p[116] p[153] p[154] d-8[117] d-6[122] d-9[187568] d-q[116] p[92] p[74] p[107] p[53] s-a[87] p[81] p[91] p[91] s-2[117] p[105] c-q[89] p[102] p[7369] h-k[3549] p[102] cdh-7[106] p[171] p[121] p[88] dh-t[76] p[78] p[74] p[67] h-8[82] s-j[75] s-q[147] p[106] p[128] s-8[39] hs-3[127] 
+result 1 3 2 0 4 
+*/ 
+/* 
+game 82 
+score 
+class 1 3 2 0 4 
+seat 2 3 1 0 4 
+dealt { c4 d4 d6 d7 c8 st hq ck sk c2 h2 } { h5 c6 c9 d9 s9 hj cq d2 s2 jo } { s4 d5 s5 h6 d8 h9 ct cj dq dk ha } { d3 h3 h4 c5 s6 h7 h8 s8 dj sj hk } { c3 s3 c7 s7 dt ht sq ca da sa } 
+changed { st } { jo } { } { h4 c5 } { da sa } 
+original { c4 d4 d6 d7 c8 hq ck sk c2 h2 jo } { h5 c6 c9 d9 s9 st hj cq d2 s2 } { s4 d5 s5 h6 d8 h9 ct cj dq dk ha } { d3 h3 s6 h7 h8 s8 dj sj hk da sa } { c3 s3 h4 c5 c7 s7 dt ht sq ca } 
+play h-7[187938] d-8[261781] s-4[379280] h-q[279920] p[1089389] p[1088936] h-k[152872] p[271309] h-2[277105] p[114] p[30440] cd-4[311069] p[330982] cs-7[1237234] hs-8[258599] dh-3[291968] ds-5[339295] cs-k[606420] p[116137] p[150] p[299841] p[63] p[69] d-678(8)[73] c-8[74] c-2[59] p[76] p[71] p[71] p[79] c-6[281323] c-a[256994] p[90] p[69] p[71] p[66] h-4[266168] s-6[7129] h-9[254945] s-t[306711] p[263795] s-j[222859] p[88] s-2[104054] p[190] p[153] h-5[288145] s-q[274472] s-a[143991] p[106] p[114] p[70] p[151] d-j[89585] p[193044] c-q[89424] p[136] d-a[159] p[97912] c-j[116184] d-2[110358] p[140] p[77] p[117] cds-9[5403] p[118] p[99] p[115] h-j[100] p[72] d-q[81] h-a[65] p[119] c-t[145] p[200] d-k[146] p[138] h-6[94] 
+result 0 2 3 1 4 
+*/ 
+/* 
+game 83 
+score 
+class 0 2 3 1 4 
+seat 2 3 1 0 4 
+dealt { d4 d6 h6 d8 d9 st dj da ha s2 jo } { c4 s5 s6 h7 c8 s8 s9 ht cq hq dk } { h3 s4 d5 c6 c7 h8 h9 dt c2 h2 } { d3 h5 d7 c9 ct hj dq sq hk sk } { c3 s3 h4 c5 s7 cj sj ck ca sa d2 } 
+changed { d4 st } { } { h2 } { d7 } { sa d2 } 
+original { d6 h6 d8 d9 dj da ha sa d2 s2 jo } { c4 s5 s6 h7 c8 s8 s9 ht cq hq dk } { h3 s4 d5 c6 c7 d7 h8 h9 dt c2 } { d3 h5 c9 ct hj dq sq hk sk h2 } { c3 s3 d4 h4 c5 s7 st cj sj ck ca } 
+play d-3[264925] d-5[449307] d-2[126] p[93] p[83] p[76] p[91] p[106] dhs-a[85] p[182] p[203] p[177] p[125] p[110] d-89tj(t)[118] s-2[88] p[118] p[136] p[73] p[64] p[70] dh-6[67] p[257425] p[183730] ds-q[77319] p[123] p[21789] c-t[127610] p[104886] p[195516] c-k[686159] p[106] p[69986] c-5[958015] c-9[68159] p[182845] p[233678] c-a[245106] p[70] p[70] cs-3[359417] hs-k[69201] p[76] p[55] p[179] p[202] h-j[141661] p[251496] p[307500] p[137] h-2[154] p[81] h-5[114] c-6[294728] h-7[382099] c-j[166560] c-2[164821] p[88] p[75] p[67] s-4[177638] s-6[173026] s-7[138826] p[175] s-8[122458] s-5[136451] s-t[49906] p[101] p[67] s-j[75] p[73] dh-4[79] cd-7[95] ch-q[75] p[110] p[60] c-8[76] c-4[88] h-9[71] h-t[82] p[61] p[72] d-k[93] p[83] p[84] s-9[90] 
+result 0 3 4 1 2 
+*/ 
+/* 
+game 84 
+score 
+class 0 3 4 1 2 
+seat 2 0 4 3 1 
+dealt { d3 h3 s4 c6 d6 h7 h9 s9 st ck c2 } { d4 h4 h6 s6 c7 ht cj dj hj d2 } { c3 s3 d5 d8 d9 cq sq dk sk h2 s2 } { c4 c5 s5 d7 c8 h8 s8 dt sj ca ha } { h5 s7 c9 ct dq hq hk da sa jo } 
+changed { s4 h7 } { d2 } { h2 s2 } { c4 } { } 
+original { d3 h3 c6 d6 h9 s9 st ck c2 h2 s2 } { c4 d4 h4 h6 s6 c7 ht cj dj hj } { c3 s3 s4 d5 h7 d8 d9 cq sq dk sk } { c5 s5 d7 c8 h8 s8 dt sj ca ha d2 } { h5 s7 c9 ct dq hq hk da sa jo } 
+play dh-3[161018] cs-5[3091] cs-q[1526095] p[90] p[81509] p[44702] p[69] p[87] h-7[1386646] h-t[545795] h-k[416458] h-2[150527] p[98] p[141] p[122] p[137427] p[68] cd-6[232814] cs-8[366165] d-7[374856] d-9[297249] p[296541] p[583832] p[84] d-t[293860] p[233285] d-2[370966] p[107] ch-a[386469] p[79] p[56] p[73] cs-2[229617] p[80] p[87] hs-9[254721] p[84] p[286715] p[338168] dh-q[85340] p[89] p[96158] s-7[253470] s-t[275026] s-j[320758] p[98907] p[102] s-a[94] p[70] p[80] p[80] c-89t(8)[99] d-a[154] p[107] p[90] p[78] p[129] p[153] h-5[71] c-k[173] p[91] p[145] p[96] h-8[172] d-8[249] s-4[256] c-7[220] s-k[143] p[77] p[79] d-5[152] p[172] d-k[85] p[64] cs-3[105] 
+result 1 4 3 2 0 
+*/ 
+/* 
+game 85 
+score 
+class 1 4 3 2 0 
+seat 2 0 4 3 1 
+dealt { d5 s5 d6 s7 s8 h9 s9 hj sj cq dq } { d3 h4 c6 d7 ct dt hq ck ha d2 } { c3 c4 h7 c8 h8 dk hk sk h2 jo } { d4 c5 h5 h6 c7 c9 ht cj dj da c2 } { h3 s3 s4 s6 d8 d9 st sq ca sa s2 } 
+changed { d6 } { ha d2 } { jo } { } { s6 d9 } 
+original { d5 s5 s7 s8 h9 s9 hj sj cq dq jo } { d3 h4 c6 s6 d7 d9 ct dt hq ck } { c3 c4 d6 h7 c8 h8 dk hk sk h2 } { d4 c5 h5 h6 c7 c9 ht cj dj da c2 } { h3 s3 s4 d8 st sq ca ha sa d2 s2 } 
+play d-3[485331] s-4[137783] s-7[241092] p[99] p[425939] p[84] s-t[49443] s-j[221267] s-q[45178] p[76586] p[91081] chs-a[69596] p[163] p[145] p[140] p[170] p[192] ds-2[94] p[128] p[155] p[105] p[67] p[72] d-8[133] hs-3[145] hs-9[83039] p[152] p[161834] p[76] p[15431] ds-5[62177] p[375492] ch-8[311671] c-3[362244] h-4[489229] h-j[126284] p[95] h-k[281549] p[123] jk[82] p[77] p[76] s-8[61] cd-q[94] p[74] p[155843] p[124] h-6[575360] h-7[62959] h-q[51901] p[84] p[123469] p[89] cs-6[136110] p[107140] ds-k[3516] p[108] p[69] c-4[133713] d-7[69910] c-9[43301] h-2[131] p[99] p[62] p[132] d-6[99] d-9[150] d-j[162] p[99] p[79] h-t[183] c-k[126] c-2[148] p[122] p[137] d-4[197] p[147] c-7[190] d-a[87] p[83] c-j[78] p[125] p[62] ch-5[71] 
+result 1 4 2 3 0 
+*/ 
+/* 
+game 86 
+score 
+class 1 4 2 3 0 
+seat 2 0 4 3 1 
+dealt { h3 h4 s4 h6 s7 d9 ht st cj hq dk } { d4 s6 h7 c8 c9 hj cq sq ca jo } { c3 s3 c6 c7 d8 s8 ct dj hk ha } { s5 d7 h9 s9 dt sj dq ck sk d2 h2 } { d3 c4 c5 d5 h5 d6 h8 da sa c2 s2 } 
+changed { h3 } { ca jo } { } { h2 } { c4 d6 } 
+original { h4 s4 h6 s7 d9 ht st cj hq dk h2 } { c4 d4 d6 s6 h7 c8 c9 hj cq sq } { c3 s3 c6 c7 d8 s8 ct dj hk ha } { h3 s5 d7 h9 s9 dt sj dq ck sk d2 } { d3 c5 d5 h5 h8 ca da sa c2 s2 jo } 
+play cds-a[61760] p[72] p[72] p[79] p[86] p[1303] cdh-5[38047] p[166] p[131] p[109] p[87] chs-2(h)[212] p[108] h-8[152] d-3[73] h-6[171749] d-7[200813] c-t[235037] h-j[158437] h-q[114413] p[152] h-k[121140] p[91] p[100185] p[111650] c-6[191093] c-9[187805] c-j[135397] c-k[110831] p[106] p[115] p[119] p[95] h-3[200775] c-7[140050] c-8[187492] cd-4[233967] p[188926] hs-9[144811] p[118] cs-q[49571] p[87] p[145] ds-6[88009] hs-t[116508] p[80] p[54] p[74] p[31] d-9[179484] s-k[176837] h-a[158543] p[80] p[146946] d-2[144389] p[84] p[66] s-j[148065] p[171] p[125] h-2[131533] p[123] p[98] hs-4[120192] p[79] ds-8[2693] cs-3[3978] p[117] p[72] p[96] p[175] d-j[96] p[91] d-k[125] p[132] p[136] s-7[89] d-t[149] p[104] d-q[155] p[92] s-5[86] 
+result 2 4 1 3 0 
+*/ 
+/* 
+game 87 
+score 
+class 2 4 1 3 0 
+seat 3 2 4 0 1 
+dealt { s4 c5 s8 h9 s9 ct ht dj sj hq ha } { s3 s5 h6 d7 cq dq ck dk d2 s2 jo } { d3 c4 d5 d6 d8 h8 c9 st sk h2 } { c3 h3 d4 s6 c7 d9 sq ca da c2 } { h4 h5 c6 h7 s7 c8 dt cj hj hk sa } 
+changed { } { s2 jo } { c4 } { c2 } { h4 h5 } 
+original { s4 c5 s8 h9 s9 ct ht dj sj hq ha } { s3 h4 h5 s5 h6 d7 cq dq ck dk d2 } { d3 d5 d6 d8 h8 c9 st sk c2 h2 } { c3 h3 c4 d4 s6 c7 d9 sq ca da } { c6 h7 s7 c8 dt cj hj hk sa s2 jo } 
+play d-6[200734] c-7[223745] d-t[146093] d-2[2923100] p[120] p[153] p[192] p[22875] p[106] s-5[2926850] s-8[789952] c-5[560409] c-9[1253277] p[146212] c-j[259444] p[6317959] p[149] c-2[314592] p[83477] p[82] d-5[442290] s-6[346779] s-a[299464] p[188] p[98] p[113] p[152] p[125432] c-6[290079] d-7[360465] h-q[435426] s-k[349165] p[9203] s-2[207] p[87] p[122] p[114] p[131] h-jqk(q)[122] p[142] p[61] p[116] p[69] p[81] c-8[98] hs-7[95] cd-k[206137] p[105] p[39] p[30223] p[110] h-456[128958] p[106] p[88] p[83] p[110] s-3[100677] h-a[233654] p[61911] p[86] p[77] p[86] hs-9[202217] p[102] p[154709] cd-q[75] p[160] ch-t[25254] p[183] p[90114] ds-j[115] p[79] s-4[66] h-2[222] p[131] p[146] d-3[215] d-9[151] p[137] d-a[67] p[83] ch-3[212] dh-8[169] s-t[123] 
+result 2 1 3 4 0 
+*/ 
+/* 
+game 88 
+score 
+class 2 1 3 4 0 
+seat 3 2 4 0 1 
+dealt { s3 s6 h7 c9 s9 dt ht cj sj sq sk } { d6 s7 ct st dj dq ck hk ca da jo } { c4 h4 c6 h6 d8 h9 hj hq sa s2 } { d3 h3 d5 h5 c7 h8 s8 cq dk ha } { c3 d4 s4 c5 s5 d7 c8 d9 c2 d2 h2 } 
+changed { } { d6 } { s2 } { dk ha } { c3 d7 } 
+original { s3 s6 h7 c9 s9 dt ht cj sj sq sk } { s7 ct st dj dq ck hk ca da s2 jo } { c4 h4 c6 d6 h6 d8 h9 hj hq sa } { c3 d3 h3 d5 h5 c7 d7 h8 s8 cq } { d4 s4 c5 s5 c8 d9 dk ha c2 d2 h2 } 
+play dh-5[212347] p[64206] cs-t[150492] p[349857] p[76] p[83] ch-k[123] cd-a[117] p[67] d-jqk(k)[97] p[149] p[68] p[141] p[115] p[102] s-2[71] p[75] p[70] p[56] p[78] p[132] s-7[114] c-j[208794] h-q[106369] p[106] d-k[113946] p[121] p[88610] h-a[110949] p[71695] d-9[40088] p[199450] h-j[93290] c-q[118734] c-2[116061] p[130] p[123] p[92] ds-4[129864] dh-t[196402] p[76] p[75] dh-2[98] p[110] p[108] c-8[71] cs-5[86] p[78079] p[3322] cd-7[5051] hs-8[124] cdh-3[72] p[77] cdh-6[243] p[74] ch-4[319] cs-9[109] p[79] p[103] s-6[81] d-8[107] s-a[88] p[105] p[82] h-9[92] 
+result 4 0 3 2 1 
+*/ 
+/* 
+game 89 
+score 
+class 4 0 3 2 1 
+seat 3 2 4 0 1 
+dealt { c5 c6 h6 h7 h9 hj hq ha c2 d2 s2 } { d4 s4 h5 d9 s9 ct sq ck dk da jo } { d5 s6 c8 d8 dt st dj sj cq sa h2 } { c3 d3 h3 h4 s5 c7 h8 ht cj sk } { s3 c4 d6 d7 s7 s8 c9 dq hk ca } 
+changed { d2 s2 } { h5 ct } { h2 } { } { c4 } 
+original { c5 h5 c6 h6 h7 h9 ct hj hq ha c2 } { d4 s4 d9 s9 sq ck dk da d2 s2 jo } { c4 d5 s6 c8 d8 dt st dj sj cq sa } { c3 d3 h3 h4 s5 c7 h8 ht cj sk } { s3 d6 d7 s7 s8 c9 dq hk ca h2 } 
+play h-4[533567] d-6[225637] d-a[83554] p[86] p[136] p[100] p[207] p[57035] ds-9[94575] p[77] ds-j[459210] p[74] p[208] ds-q(d)[53678] p[93] p[24627] cd-k[107171] p[188] p[116] p[118] p[79] ds-2[71] p[58] ds-4[76] ch-6[138377] cd-8[114902] c-4[166400] c-7[151960] c-9[79528] c-t[88691] c-q[64859] p[112] c-a[33105] p[148522] p[85] p[81] d-q[168658] p[167656] p[112064] s-k[164281] p[4988] p[107] s-5[209820] s-8[81073] s-3[182723] h-7[210051] p[244162] h-8[217645] cdh-3[82498] p[135] p[113] p[120] p[72] h-t[220939] h-k[10115] h-a[77464] p[222] p[117] h-2[138] p[129] p[141] ds-7[103] p[117] ds-t[70936] p[109] p[101] d-5[63960] c-j[91] h-q[168] s-a[147] c-2[112] p[168] p[116] ch-5[166] p[74] p[149] h-9[110] p[156] h-j[63] 
+result 3 0 4 2 1 
+*/ 
+/* 
+game 90 
+score 
+class 3 0 4 2 1 
+seat 1 0 4 3 2 
+dealt { d3 h3 h6 c7 h8 d9 s9 dj sj ca ha } { c3 c4 d4 s4 h5 s8 cq ck sk sa c2 } { d5 d6 s7 d8 ct st cj hj dk hk } { s3 s5 s6 h7 c8 c9 dt ht dq s2 } { h4 c5 c6 d7 h9 hq sq da d2 h2 jo } 
+changed { ha } { c3 h5 } { dk hk } { } { d7 } 
+original { d3 h3 h6 c7 d7 h8 d9 s9 dj sj ca } { c4 d4 s4 s8 cq ck dk hk sk sa c2 } { c3 d5 h5 d6 s7 d8 ct st cj hj } { s3 s5 s6 h7 c8 c9 dt ht dq s2 } { h4 c5 c6 h9 hq sq da ha d2 h2 jo } 
+play h-6[195620] h-9[64457] p[136743] p[2207216] h-k[76771] p[79] h-2[102962] p[120] p[22691] c-567(7)[147458] p[96] p[112] p[109] p[131] p[161] hs-q[44078] p[100] p[127] p[275836] p[82] dh-a[99] p[101] d-2[52] p[102] p[72] p[88] p[81] p[71] h-4[72] h-7[292711] h-j[130358] p[120] p[98] p[73] p[99] c-3[220693] c-q[146655] p[132242] p[92] p[73] c-2[123506] p[68] cds-4[34677] p[89] p[133] p[95] cds-k[123] p[104] s-8[68] s-a[78] p[77] p[123399] p[99] dh-3[137676] dh-t[72449] p[104] p[161] p[131] c-9[165374] c-j[100538] c-a[49430] p[66] p[66] p[67] ds-9[51471] p[179] cs-t[105368] ds-j[78] p[78] p[69] h-8[78] cd-7[73] p[120] p[73] s-6[85] d-8[78] dh-5[71] p[92] p[74] d-6[113] d-q[78] p[72] p[64] s-5[67] s-7[78] 
+result 2 1 3 4 0 
+*/ 
+/* 
+game 91 
+score 
+class 2 1 3 4 0 
+seat 1 0 4 3 2 
+dealt { h3 c4 d5 d6 s8 d9 s9 ht dq dk } { h4 h5 c6 h6 s6 dt hj sq hk ha } { c3 s3 s4 c7 h7 c8 d8 c9 ct c2 jo } { c5 d7 h9 cj sj cq hq sk da d2 s2 } { d3 d4 s5 s7 h8 st dj ck ca sa h2 } 
+changed { } { dt } { jo } { d2 s2 } { s5 s7 } 
+original { h3 c4 d5 d6 s8 d9 s9 ht dq dk } { h4 h5 c6 h6 s6 hj sq hk ha jo } { c3 s3 s4 c7 h7 c8 d8 c9 ct dt c2 } { c5 s5 d7 s7 h9 cj sj cq hq sk da } { d3 d4 h8 st dj ck ca sa d2 h2 s2 } 
+play d-4[148143] h-9[372700] d-t[494499] h-j[251643] d-q[465291] c-k[153378] p[3044978] c-2[999115] p[55238] p[70] p[89] p[144] s-4[986843] s-q[409983] p[137] s-a[282228] p[101] p[63] p[365309] p[264439] s-t[328824] s-k[297394] p[96] p[64781] p[82] s-2[53057] p[116] p[95] d-j[313720] p[285190] p[137] h-k[245964] p[109] c-a[85440] jk[151258] p[110] p[120] h-456[99787] p[84] p[146] p[94] c-89t[46630] cs-3[336413] cs-6[10563] p[171] p[87] cs-j[29801] p[85] p[83] p[91] cs-5[152218] ch-7[321745] p[39] ds-9[228204] dh-2[123] p[90] p[91] p[91] p[85] h-8[105] d-3[87] d-a[117] p[89] p[126] p[77] p[74] ch-q[86] p[78] p[77] p[68] p[75] ds-7[80] p[59] p[86] p[61] d-8[86] h-a[76] 
+result 4 3 2 1 0 
+*/ 
+/* 
+game 92 
+score 
+class 4 3 2 1 0 
+seat 1 0 4 3 2 
+dealt { h4 s4 c5 h6 d7 s7 s9 ct ht hk } { c4 h5 d6 h7 d8 s8 hj cq ha s2 } { d3 h3 d4 d5 c6 s6 h8 d9 dt ck jo } { c3 s5 h9 st sq dk sk ca da d2 h2 } { s3 c7 c8 c9 cj dj sj dq hq sa c2 } 
+changed { ht hk } { s2 } { } { c3 } { s3 ht } 
+original { s3 h4 s4 c5 h6 d7 s7 s9 ct ht } { c3 c4 h5 d6 h7 d8 s8 hj cq ha } { d3 h3 d4 d5 c6 s6 h8 d9 dt ck jo } { s5 h9 st sq dk sk ca da d2 h2 s2 } { c7 c8 c9 cj dj sj dq hq hk sa c2 } 
+play h-3[190449] h-5[343248] h-6[2256022] h-k[5576] h-2[197311] p[7349] p[87] p[122] p[76] p[68] h-9[318944] c-k[248415] p[229712] p[95] c-2[246851] p[123] p[33430] p[158] c-789[311378] cds-j[259734] p[114] p[76] p[61] p[106] p[82] dh-q[83773] ds-k[294239] p[110] p[76] p[120] p[105] p[295135] s-5[324652] h-8[80148] d-345[231394] p[82] p[166] p[82] p[125] d-89t(8)[106] cs-6[67] ds-8[281115] c-3[253507] c-5[196274] p[172] c-a[161840] p[79] p[122] p[114] s-q[169954] p[171350] p[88] s-a[242] s-2[145] p[88] d-a[99] p[123] p[135] d-2[158] p[91] s-t[171] c-q[72] p[118] p[73] d-6[119] s-9[163] h-j[74] p[71] p[82] h-7[200] p[173] h-a[77] p[98] c-4[121] 
+result 4 3 0 2 1 
+*/ 
+/* 
+game 93 
+score 
+class 4 3 0 2 1 
+seat 4 3 0 2 1 
+dealt { d3 h4 h7 d9 dt ht sj dq sk sa } { c4 h6 s6 h8 s8 ct cj dj hq ck } { h3 d6 d7 d8 h9 hk c2 d2 h2 s2 jo } { c5 h5 s5 c6 c7 s7 st hj cq sq ha } { c3 s3 d4 s4 d5 c8 c9 s9 dk ca da } 
+changed { sk sa } { ck } { h3 h9 } { } { d5 } 
+original { d3 h3 h4 h7 d9 h9 dt ht sj dq } { c4 d5 h6 s6 h8 s8 ct cj dj hq } { d6 d7 d8 hk sk sa c2 d2 h2 s2 jo } { c5 h5 s5 c6 c7 s7 st hj cq sq ha } { c3 s3 d4 s4 c8 c9 s9 ck dk ca da } 
+play h-4[340246] s-2[91] p[167] p[210] p[126] p[187] jk[140] p[113] d-678[108] cdh-2[125] p[80] p[100] p[72] p[74] p[72] s-a[71] p[72] p[103] p[64] p[85] p[101] hs-k[118] p[9850] p[137] p[143] p[100] ds-4[97339] cs-7[104726] hs-8[126806] c-4[183986] h-7[151148] c-8[22819] cs-9[127473] cs-q[117547] p[174] p[93] p[136] p[133] c-6[183167] c-t[197516] p[83] c-a[95] p[120] p[56] p[91] cd-k[127] p[70] p[83] p[79] p[70] d-a[101] p[63] p[72] p[86] p[77] cs-3[70] p[101709] hs-6[27796] dh-t[79528] cd-j[10869] p[82] p[152] d-5[23642] d-q[21609] p[75] p[52] p[77] dh-3[22426] p[21382] p[89] dh-9[82] p[107] s-j[64] p[71] h-q[101] 
+result 2 3 0 4 1 
+*/ 
+/* 
+game 94 
+score 
+class 2 3 0 4 1 
+seat 4 3 0 2 1 
+dealt { h4 c7 h7 d8 h8 h9 cq hk ha c2 } { h3 c4 d4 c6 d6 h6 cj h2 s2 jo } { c3 s3 s4 d7 c8 s9 hq ck ca da d2 } { d3 c5 h5 s5 s7 d9 sj dq dk sk sa } { d5 s6 s8 c9 ct dt ht st dj hj sq } 
+changed { } { jo } { s4 s9 } { sk sa } { c9 } 
+original { h4 c7 h7 d8 h8 h9 cq hk ha c2 } { h3 c4 d4 c6 d6 h6 c9 cj h2 s2 } { c3 s3 d7 c8 hq ck sk ca da sa d2 } { d3 s4 c5 h5 s5 s7 d9 s9 sj dq dk } { d5 s6 s8 ct dt ht st dj hj sq jo } 
+play d-3[523306] c-9[322300] c-q[101285] p[107575] p[32489] p[93] p[69] p[124285] h-4[238354] d-7[243811] s-8[275703] cdhs-t[147937] p[120] p[113] p[151] p[120] p[68] s-q[208449] s-j[354898] p[88] p[135] s-3[388210] p[47302] p[143] p[126] d-2[460434] s-6[434099] s-4[371434] p[91] p[101] p[64] p[78783] p[94] d-k[411199] c-j[435669] h-9[449913] c-8[237880] cds-a[444620] dhs-j(s)[318901] p[408859] cdh-6[10345] p[81] p[94] p[86] p[95] cd-4[109] p[111] p[82] p[131] p[104] p[76] h-3[87] p[96] p[111] p[79] p[92] p[88] hs-2[82] ch-7[302459] p[81] p[89] cs-5[235348] p[71] p[90] d-q[232037] d-8[243596] h-a[245751] h-q[58489] p[142] h-5[82] p[141] p[92] p[200] ds-9[118] p[61] p[58] p[94] p[186] s-7[114] p[64] c-3[70] p[101] p[167] cs-k[87] p[82] p[67] d-5[71] 
+result 4 0 2 1 3 
+*/ 
+/* 
+game 95 
+score 
+class 4 0 2 1 3 
+seat 4 3 0 2 1 
+dealt { s5 c6 h6 s6 c7 s7 st cj dj sj sa } { c3 d3 c8 h8 h9 dt dq sq dk sk jo } { h4 c5 d5 d6 d7 c9 d9 ct hj d2 h2 } { h3 s3 c4 d8 s8 s9 ht hq ca ha } { d4 s4 h5 h7 cq ck hk da c2 s2 } 
+changed { sj sa } { c3 h9 } { } { ht } { s2 } 
+original { c3 s5 c6 h6 s6 c7 s7 h9 st cj dj } { d3 c8 h8 dt sj dq sq dk sk sa jo } { h4 c5 d5 d6 d7 c9 d9 ct hj d2 h2 } { h3 s3 c4 d8 s8 s9 hq ca ha s2 } { d4 s4 h5 h7 ht cq ck hk da c2 } 
+play s-jqka[69] p[98] p[65] p[90] p[62] p[74] d-tjqk(j)[83] p[93] p[62] p[94] p[75] p[93] ch-8[88] d-3[74] s-5[252849] c-t[91883] c-q[134225] p[85665] p[100] p[107] p[100184] h-7[183159] s-9[150052] s-t[77198] p[90] p[94] s-2[18464] p[115] p[76] hs-3[173062] cs-7[127693] cd-9[166037] ch-k[151699] ch-a[43938] p[81] p[81] p[64] p[81] c-4[158158] h-9[85417] h-j[10432] p[114] h-q[169980] p[69] h-2[9298] p[90] p[68] c-5[177839] h-t[170622] p[90] p[44357] d-2[84] p[158] p[156] d-567[125] p[99] p[133] p[108] p[145] h-4[109] h-5[3397] p[92] h-6[8166] p[83] p[73] cs-6[22701] p[134] ds-8[85] cd-j[89] p[59] p[117] c-3[97] 
+result 3 0 1 2 4 
+*/ 
+/* 
+game 96 
+score 
+class 3 0 1 2 4 
+seat 4 3 0 2 1 
+dealt { h3 s3 d5 d7 h7 dt sj sq dk da c2 } { c4 c5 s5 s7 h9 s9 cj hj sa d2 h2 } { c3 d3 s4 c7 s8 ct dj ca ha s2 jo } { h4 c6 h6 c8 d8 h8 c9 cq dq ck } { d4 h5 d6 s6 d9 ht st hq hk sk } 
+changed { c2 } { c4 s7 } { s4 } { } { hk sk } 
+original { h3 s3 s4 d5 d7 h7 dt sj sq dk da } { c5 s5 h9 s9 cj hj hk sk sa d2 h2 } { c3 d3 c7 s8 ct dj ca ha c2 s2 jo } { h4 c6 h6 c8 d8 h8 c9 cq dq ck } { c4 d4 h5 d6 s6 s7 d9 ht st hq } 
+play c-7[124919] d-9[460717] c-k[168010] s-a[147037] p[96] c-2[141934] p[84] p[82] p[80] p[47105] cd-3[157956] cd-4[2703597] cd-q[467342] p[84] p[88] p[43216] p[126] p[148] c-9[561298] h-2[300660] p[141] p[55444] p[74] p[61] p[90] hs-9[335648] p[73] cd-j(c)[259568] p[107] p[77] hs-k[46495] ch-a[122] p[71] p[72] s-8[69] s-2[93] p[75] p[117] p[69] p[67] p[93] c-t[118] p[49332] p[94] c-j[95595] p[68] p[81] h-j[47971] s-q[320707] p[180] p[160] d-2[105] p[161] p[128] cs-5[111] dh-7[90117] p[53624] dh-8[87102] ch-6[88079] p[69] hs-t[22809] p[119] p[117] h-q[67855] p[127] d-k[50316] p[124] d-a[46609] p[73] d-5[47544] s-7[51140] c-8[121] h-4[107] d-t[93] p[91] p[137] s-4[126] h-5[139] s-j[150] p[137] p[161] hs-3[62] 
+result 3 1 0 2 4 
+*/ 
+/* 
+game 97 
+score 
+class 3 1 0 2 4 
+seat 4 3 0 2 1 
+dealt { d4 h4 s4 c5 s5 s6 c9 cj hj sa } { d6 h6 c7 s9 sj sq dk sk c2 jo } { d3 s3 h5 h7 dt st dj dq hq ck ha } { c3 c4 d5 c8 h8 h9 ht cq ca da s2 } { h3 c6 d7 s7 d8 s8 d9 ct hk d2 h2 } 
+changed { sa } { c7 } { h5 h7 } { } { d2 h2 } 
+original { d4 h4 s4 c5 s5 s6 c7 c9 cj hj } { d6 h6 s9 sj sq dk sk sa c2 jo } { d3 s3 dt st dj dq hq ck ha d2 h2 } { c3 c4 d5 c8 h8 h9 ht cq ca da s2 } { h3 h5 c6 d7 h7 s7 d8 s8 d9 ct hk } 
+play ds-3[142503] p[681503] cd-a[323997] p[7569] p[101] dh-2[57292] p[105] p[106] d-tjq[131097] p[114] p[174] p[28360] p[83] p[136] s-t[84526] p[177115] c-q[275742] d-k[326471] p[73] p[124772] s-2[271486] p[46359] p[85] c-4[487610] c-2[113] p[59] p[107] p[140] p[102] p[80] s-9[84] p[404575] h-q[262291] p[357294] p[179] s-a[116] p[129] jk[114] p[116] s-jqk[80] p[125] p[147] p[124] p[106] p[83] dh-6[67] p[62341] p[85] hs-7[348779] p[22860] p[56370] c-6[390147] p[221142] c-7[224657] c-k[93] p[225] p[116] p[103] h-a[103] p[68] p[83] p[151] h-5[155697] h-9[122441] p[24310] h-k[112518] p[117] p[72] h-3[127930] d-5[89056] c-9[123306] c-t[53548] p[126] c-j[2825] p[117] p[156] cs-5[47359] p[29307] p[106214] p[54] dhs-4[47683] p[81] p[69] p[85] h-j[58] p[70] p[68] p[122] s-6[113] s-8[119] d-789[106] 
+result 2 0 1 4 3 
+*/ 
+/* 
+game 98 
+score 
+class 2 0 1 4 3 
+seat 4 3 0 2 1 
+dealt { d3 c5 s7 ct cq hq sq ck da ha jo } { h3 h4 s4 h7 c9 dt ht st cj hj ca } { c3 c4 d7 h8 h9 sj dq hk sk d2 h2 } { s3 d4 d5 c6 s6 s8 d9 s9 sa c2 } { h5 s5 d6 h6 c7 c8 d8 dj dk s2 } 
+changed { } { h3 h7 } { c4 } { sa c2 } { s2 } 
+original { d3 c5 s7 ct cq hq sq ck da ha jo } { h4 s4 c9 dt ht st cj hj ca sa c2 } { c3 d7 h8 h9 sj dq hk sk d2 h2 s2 } { h3 s3 d4 d5 c6 s6 h7 s8 d9 s9 } { c4 h5 s5 d6 h6 c7 c8 d8 dj dk } 
+play c-5[164804] h-9[184867] d-j[188323] p[122] c-2[152209] p[42311] p[101] p[86] p[89] hs-4[216910] hs-q[239377] hs-k[316812] p[123] p[92] p[97] p[94222] p[49228] d-7[386916] c-8[304101] hs-5[370854] cs-6[507063] ch-j[12294] p[241872] p[401696] p[100] p[101] cs-a[9439] p[81] dhs-t[9575] p[4914] p[68136] p[88] p[184] p[110] c-9[77] c-k[186614] p[116] p[191] p[145] p[8322] s-7[200659] s-j[103916] p[81] p[208] p[73464] p[83720] d-q[54134] p[357247] p[198] h-a[189284] s-2[322934] p[121739] p[82] dh-2[35] p[101] p[112] p[85] p[108] h-8[106] c-3[89] c-4[233486] p[89] c-q[158] p[145] p[109] cd-t(d)[93] p[143] p[148] p[134] d-a[87] p[123] p[109] p[82] d-3[120] d-8[243] dh-6[223] ds-9[135] p[134] p[83] d-4[80] d-k[82] p[73] p[70] c-7[67] 
+result 2 0 1 4 3 
+*/ 
+/* 
+game 99 
+score 
+class 2 0 1 4 3 
+seat 1 3 0 4 2 
+dealt { c3 h4 d5 h8 d9 s9 cj hq sk c2 } { h3 c5 s6 c7 d8 ct hj dq ca d2 jo } { s5 c6 s7 s8 h9 dj sj dk ha h2 s2 } { d3 d4 h5 d6 c8 dt st cq ck da sa } { s3 c4 s4 h6 d7 h7 c9 ht sq hk } 
+changed { } { h3 s6 } { s7 } { da sa } { hk } 
+original { c3 h4 d5 h8 d9 s9 cj hq sk c2 } { c5 c7 d8 ct hj dq ca da sa d2 jo } { s5 c6 s8 h9 dj sj dk hk ha h2 s2 } { d3 h3 d4 h5 d6 s6 c8 dt st cq ck } { s3 c4 s4 h6 d7 h7 s7 c9 ht sq } 
+play d-4[290694] h-9[190356] h-q[227861] p[183] p[37421] p[79] h-a[114573] p[169] p[99322] c-6[193164] h-8[426591] d-5[441137] h-6[454686] h-j[317052] p[53] h-k[293685] p[111] p[217] p[150658] p[195224] d-k[356063] p[230463] p[130] d-a[294079] p[151] p[143] p[270969] c-t[303315] c-q[387322] p[93] p[384873] p[86] c-a[306012] p[96] p[59577] c-567(6)[335276] p[101] p[138] p[133] p[151] p[123] d-8[281952] d-q[281621] p[429672] h-2[327396] p[105] p[66] p[64] p[82] ds-j[238334] p[179] p[80] p[125] p[97] p[198] s-8[108] s-2[117] p[156] p[146] p[98] p[73] p[91] s-5[79] c-j[353952] p[114119] d-2[90] p[77] p[87] p[95] s-a[78] p[78] p[2785] p[102] h-5[51978] c-2[138624] p[137] p[92] p[88] h-4[142652] c-9[141927] c-k[35316] p[73] p[85] p[144] ds-6[49762] ds-9[6680] p[122] ds-t[107] p[66] p[74] c-8[60] dh-3[106] p[55] cs-4[72] p[102] s-3[124] s-k[78] p[64] p[83] c-3[95] 
+result 3 1 0 2 4 
+*/ 
