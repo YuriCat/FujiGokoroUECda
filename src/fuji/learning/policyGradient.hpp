@@ -23,7 +23,7 @@ namespace UECda{
             
             //std::map<std::string, int> teacherMap; // how many plays by each player?
             
-            template<class gameLog_t, class learningSpace_t, class threadTools_t>
+            template<int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
             int learnChangeParamsGame(const gameLog_t& gLog,
                                     const BitSet32 flags,
                                     learningSpace_t *const plearningSpace,
@@ -60,24 +60,10 @@ namespace UECda{
                      int idx = searchCards(change, NChanges, [chosenChange](const auto& ch)->bool{
                          return (ch == chosenChange);
                      });
-                                                    
-                     /*
-                     for(int m = 0; m < NMoves; ++m){
-                         bool mate;
-                         if(bd.isNF()){
-                             mate = checkHandMate<_YES, _NO>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                         }else{
-                             if(field.fInfo.isUnrivaled()){
-                                 mate = checkHandMate<_NO, _YES>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                             }else{
-                                 mate = checkHandMate<_NO, _NO>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                             }
-                         }
-                         if(mate){ return 0; }
-                     }*/
+
+                     // mate check なし
                      
                      double score[N_MAX_CHANGES + 1];
-                     const auto& policy = plearningSpace->changePolicy(from);
                      auto *const plearner = &plearningSpace->changeLearner(from);
                      
                      const int ph = (myClass == DAIFUGO) ? 0 : 1;
@@ -102,7 +88,7 @@ namespace UECda{
                          }
                      }else{
                          
-                         if(!calcChangePolicyScoreSlow<1>(score, change, NChanges, myCards, changeQty, field, policy)){
+                         if(!calcChangePolicyScoreSlow<1>(score, change, NChanges, myCards, changeQty, field, *plearner)){
                              
                              if(flags.test(1)){ // feed feature value
                                  plearner->feedFeatureValue(ph);
@@ -186,7 +172,6 @@ namespace UECda{
                      }
                      
                      double score[N_MAX_MOVES + 1];
-                     const auto& policy = plearningSpace->playPolicy(tp);
                      auto *const plearner = &plearningSpace->playLearner(tp);
                      
                      if(idx == -1){ // unfound
@@ -209,7 +194,7 @@ namespace UECda{
                          }
                      }else{
                          
-                         if(!calcPlayPolicyScoreSlow<1, MODELING>(score, buf, NMoves, field, policy)){
+                         if(!calcPlayPolicyScoreSlow<1, MODELING>(score, buf, NMoves, field, *plearner)){
                              
                              if(flags.test(1)){ // feed feature value
                                  plearner->feedFeatureValue();
@@ -262,6 +247,19 @@ namespace UECda{
                     }
                 }
                 return 0;
+            }
+            
+            template<int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
+            int learnParamsGame(const gameLog_t& gLog,
+                                const BitSet32 flags,
+                                learningSpace_t *const plearningSpace,
+                                threadTools_t *const ptools,
+                                bool change){
+                if(change){
+                    return learnChangeParamsGame<MODELING>(gLog, flags, plearningSpace, ptools);
+                }else{
+                    return learnPlayParamsGame<MODELING>(gLog, flags, plearningSpace, ptools);
+                }
             }
         }
     }

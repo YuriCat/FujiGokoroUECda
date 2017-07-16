@@ -39,7 +39,7 @@ directories  ?= $(output_dir)
 # 4. Public Targets
 #
 default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation client server pglearner policy_client maxn_test record_analyzer rating_calculator estimator_learner l2_test mate_test modeling_test policy_test value_generator dominance_test cards_test movegen_test policy_rl_client random_client human_client
+	$(MAKE) TARGET=$@ preparation client server policy_learner policy_client maxn_test record_analyzer rating_calculator estimator_learner l2_test mate_test modeling_test policy_test value_generator dominance_test cards_test movegen_test policy_rl_client random_client human_client
 
 match:
 	$(MAKE) TARGET=$@ preparation client policy_client
@@ -107,8 +107,8 @@ policy_rl_client :
 server :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)server $(sources_dir)server/daihubc.cc $(sources_dir)server/mt19937ar.c $(LIBRARIES)
 
-pglearner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)pglearner $(sources_dir)pglearner.cc $(LIBRARIES)
+policy_learner :
+	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_learner $(sources_dir)policy_learner.cc $(LIBRARIES)
 
 random_client :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)random_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DRANDOM_MODE

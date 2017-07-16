@@ -100,11 +100,8 @@ namespace UECda{
                 estimating_by_time = 0;
                 
 #if defined(RL_POLICY)
-                changeLearner.setPolicy(&baseChangePolicy);
-                playLearner.setPolicy(&basePlayPolicy);
-                
-                baseChangePolicy.setLearner(&changeLearner);
-                basePlayPolicy.setLearner(&playLearner);
+                changeLearner.setClassifier(&baseChangePolicy);
+                playLearner.setClassifier(&basePlayPolicy);
 #endif
             }
             void setMyPlayerNum(int myPlayerNum){

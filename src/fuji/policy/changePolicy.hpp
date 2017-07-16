@@ -105,8 +105,10 @@ namespace UECda{
 #undef LINEOUT
     }
         
-    using ChangePolicy = SoftmaxPolicy<ChangePolicySpace::POL_NUM_ALL, 2>;
-    using ChangePolicyLearner = SoftmaxPolicyLearner<ChangePolicy>;
+    //using ChangePolicy = SoftmaxPolicy<ChangePolicySpace::POL_NUM_ALL, 2>;
+    //using ChangePolicyLearner = SoftmaxPolicyLearner<ChangePolicy>;
+    using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::POL_NUM_ALL, 2, 1>;
+    using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy>;
     
     int foutComment(const ChangePolicy& pol, const std::string& fName){
         std::ofstream ofs(fName, std::ios::out);
@@ -114,13 +116,10 @@ namespace UECda{
     }
   
 #define Foo(i) s += pol.param(i);\
-    if(M && pol.plearner_ != nullptr){\
-        pol.plearner_->vec_.back().emplace_back(std::pair<int, double>((i), 1.0));}
+    if(M){ pol.feedFeatureScore(m, (i), 1.0); }
     
-#define FooX(i, x) s += pol.param(i) * (x);\
-    FASSERT(x,);\
-    if(M && pol.plearner_ != nullptr){\
-        pol.plearner_->vec_.back().emplace_back(std::pair<int, double>((i), (x)));}
+#define FooX(i, x) s += pol.param(i) * (x);FASSERT(x,);\
+    if(M){ pol.feedFeatureScore(m, (i), (x)); }
     
     template<int M = 1, class field_t, class policy_t>
     int calcChangePolicyScoreSlow(double *const dst,
@@ -129,11 +128,11 @@ namespace UECda{
                                   const Cards myCards,
                                   const int NChangeCards,
                                   const field_t& field,
-                                  const policy_t& pol){
+                                  policy_t& pol){ // learnerとして呼ばれうるため const なし
         
         using namespace ChangePolicySpace;
         
-        pol.template initCalculatingScore<M>(NChanges);
+        pol.template initCalculatingScore(NChanges);
         
         if(M){
             if(dst != nullptr){
@@ -147,7 +146,7 @@ namespace UECda{
         
         for(int m = 0; m < NChanges; ++m){
             
-            pol.template initCalculatingCandidateScore<M>();
+            pol.template initCalculatingCandidateScore();
             
             double s = 0;
             int i;
@@ -364,7 +363,7 @@ namespace UECda{
             
             double exps = exp(s / pol.temperature());
             
-            pol.template feedCandidateScore<M>(exps);
+            pol.template feedCandidateScore(m, exps);
             
             if(M){
                 if(dst != nullptr){

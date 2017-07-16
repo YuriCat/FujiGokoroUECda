@@ -206,8 +206,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
 #undef LINEOUT
     }
     
-    using PlayPolicy = SoftmaxPolicy<PlayPolicySpace::FEA_NUM_ALL, 1>;
-    using PlayPolicyLearner = SoftmaxPolicyLearner<PlayPolicy>;
+    //using PlayPolicy = SoftmaxPolicy<PlayPolicySpace::FEA_NUM_ALL, 1>;
+    //using PlayPolicyLearner = SoftmaxPolicyLearner<PlayPolicy>;
+    using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1>;
+    using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy>;
     
     int foutComment(const PlayPolicy& pol, const std::string& fName){
         std::ofstream ofs(fName, std::ios::out);
@@ -240,17 +242,13 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
     }
     
 #define Foo(i) s += pol.param(i);\
-    if(!MODELING && M && pol.plearner_ != nullptr){\
-        pol.plearner_->vec_.back().emplace_back(std::pair<int, double>((i), 1.0));}
+    if(!MODELING && M){ pol.feedFeatureScore(m, (i), 1.0); }
     
-#define FooX(i, x) s += pol.param(i) * (x);\
-    FASSERT(x,);\
-    if(!MODELING && M && pol.plearner_ != nullptr){\
-        pol.plearner_->vec_.back().emplace_back(std::pair<int, double>((i), (x)));}
+#define FooX(i, x) s += pol.param(i) * (x);FASSERT(x,);\
+    if(!MODELING && M){ pol.feedFeatureScore(m, (i), (x)); }
     
 #define FooM(i) s += pol.param(i);\
-    if(M && pol.plearner_ != nullptr){\
-        pol.plearner_->vec_.back().emplace_back(std::pair<int, double>((i), 1.0));}
+    if(M){ pol.feedFeatureScore(m, (i), 1.0); }
 
     struct PlayerPolicySubValue{
         // 方策計算を行うために予め計算しておく値(プレーヤーごと)
@@ -276,8 +274,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                                 move_t *const buf,
                                 const int NMoves,
                                 const field_t& field,
-                                const policy_t& pol){
-    
+                                policy_t& pol){ // learnerとして呼ばれうるため const なし
     
         using namespace PlayPolicySpace;
         
@@ -383,11 +380,11 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
         getchar();
         //tock();*/
         
-        pol.template initCalculatingScore<M>(NMoves);
+        pol.template initCalculatingScore(NMoves);
         
         for (int m = 0; m < NMoves; ++m){
             
-            pol.template initCalculatingCandidateScore<M>();
+            pol.template initCalculatingCandidateScore();
             
             MoveInfo& mv = buf[m];
             double s = 0;
@@ -1108,13 +1105,13 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 }
 #endif
             }
-            pol.template feedCandidateScore<M>(exp(s / pol.temperature()));
+            pol.template feedCandidateScore(m, exp(s / pol.temperature()));
 
             if(!M || dst != nullptr){
                 dst[m] = s;
             }
 		}
-        pol.template finishCalculatingScore<M>();
+        pol.template finishCalculatingScore();
         
         return 0;
 	}
