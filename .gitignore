@@ -5,5 +5,5 @@
 /record
 
 *.exe
-*.dat
 *.bin
+*.o
