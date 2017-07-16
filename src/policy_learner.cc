@@ -39,7 +39,7 @@ namespace LearningSettings{
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;
-    double attenuatingRate = 0.00000001; // 局面数あたり
+    double attenuatingRate = 0.000000001; // 局面数あたり
     double L1Rate = 0;
     double L2Rate = 0.0000001;
     int batchSize = 1 << 14;
@@ -296,7 +296,8 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                 cerr << "Change Training : " << masterChangeLearner.toObjValueString(ph) << endl;
             }
         }
-        if(mode & MODE_FLAG_PLAY){
+        if((mode & MODE_FLAG_PLAY) && !((mode & MODE_FLAG_CHANGE) && (j % 10 != 0))){
+            // 交換も学習する場合は10イテレーションに1回のみ
             threadPool.clear();
             for(int th = 0; th < threads; ++th){
                 threadPool.emplace_back(std::thread(learnThread, th,
@@ -328,7 +329,8 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                     cerr << "Change Test     : " << masterChangeLearner.toObjValueString(ph) << endl;
                 }
             }
-            if(mode & MODE_FLAG_PLAY){
+            if((mode & MODE_FLAG_PLAY) && !((mode & MODE_FLAG_CHANGE) && (j % 10 != 0))){
+                // 交換も学習する場合は10イテレーションに1回のみ
                 threadPool.clear();
                 for(int th = 0; th < threads; ++th){
                     threadPool.emplace_back(std::thread(learnThread, th,
