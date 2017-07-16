@@ -78,6 +78,7 @@
 #include "../CppCommon/src/hash/hashFunc.hpp"
 #include "../CppCommon/src/hash/hashBook.hpp"
 #include "../CppCommon/src/util/softmaxPolicy.hpp"
+//#include "../CppCommon/src/util/softmaxClassifier.hpp"
 #include "../CppCommon/src/util/selection.hpp"
 #include "../CppCommon/src/util/lock.hpp"
 #include "../CppCommon/src/util/io.hpp"
