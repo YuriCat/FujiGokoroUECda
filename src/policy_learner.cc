@@ -249,8 +249,8 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         }
     }
     
-    int changeTrials = 0;
-    int playTrials = 0;
+    int64_t changeTrials = 0;
+    int64_t playTrials = 0;
     for (int j = 0; j < LearningSettings::iterations; ++j){
         
         cerr << "iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
