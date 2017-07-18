@@ -25,7 +25,7 @@ make release -j4
 zip -r ${backup_dir}uecda.zip .
 
 # 学習
-./out/release/pglearner -o ${save_param_dir} -t -i 200 -ld ${learn_record_dir} 2>${save_dir}policy_learn_log.txt
+./out/release/policy_learner -o ${save_param_dir} -th 7 -t -i 1000 -ld ${learn_record_dir} 2>${save_dir}policy_learn_log.txt
 
 # 方策オンリーでの対戦実験
 ./out/release/server -g 100000 1>${save_dir}policy_game.txt &

@@ -39,10 +39,10 @@ namespace LearningSettings{
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;
-    double attenuatingRate = 0.00000000005; // 局面数あたり
+    double attenuationRate = 0.00000000005; // 局面数あたり
     double L1Rate = 0;
     double L2Rate = 0.0000001;
-    int batchSize = 1 << 14;
+    int batchSize = 1;
     int iterations = 200;
     double testRate = 0.77;
 }
@@ -238,6 +238,13 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     // learning
     cerr << "started learning." << endl;
     
+    // 学習の設定を表示
+    cerr << "learning rate = " << LearningSettings::learningRate << endl;
+    cerr << "attenuation rate = " << LearningSettings::attenuationRate << endl;
+    cerr << "L1 reguralization rate = " << LearningSettings::L1Rate << endl;
+    cerr << "L2 reguralization rate = " << LearningSettings::L2Rate << endl;
+    cerr << "batch size = " << LearningSettings::batchSize << endl;
+    
     if(mode & MODE_FLAG_CHANGE){
         for(int th = 0; th < threads; ++th){
             ls.at(th).changeLearner().finFeatureSurvey(outDirName + "change_policy_feature_survey.dat");
@@ -256,13 +263,13 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         cerr << "iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
         
         for(int th = 0; th < threads; ++th){
-            double catr = exp(-changeTrials * LearningSettings::attenuatingRate);
+            double catr = exp(-changeTrials * LearningSettings::attenuationRate);
             ls.at(th).changeLearner().setLearnParam(LearningSettings::temperature,
                                                     LearningSettings::learningRate * catr,
                                                     LearningSettings::L1Rate * catr,
                                                     LearningSettings::L2Rate * catr,
                                                     LearningSettings::batchSize);
-            double patr = exp(-playTrials * LearningSettings::attenuatingRate);
+            double patr = exp(-playTrials * LearningSettings::attenuationRate);
             ls.at(th).playLearner().setLearnParam(LearningSettings::temperature,
                                                   LearningSettings::learningRate * patr,
                                                   LearningSettings::L1Rate * patr,
@@ -386,7 +393,7 @@ int main(int argc, char* argv[]){ // For UECda
         }else if(!strcmp(argv[c], "-f")){
             mode &= (~MODE_FLAG_SHUFFLE);
         }else if(!strcmp(argv[c], "-ar")){
-            LearningSettings::attenuatingRate = atof(argv[c + 1]);
+            LearningSettings::attenuationRate = atof(argv[c + 1]);
         }else if(!strcmp(argv[c], "-lr")){
             LearningSettings::learningRate = atof(argv[c + 1]);
         }else if(!strcmp(argv[c], "-bs")){
