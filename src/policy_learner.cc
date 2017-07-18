@@ -258,9 +258,10 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     
     int64_t changeTrials = 0;
     int64_t playTrials = 0;
+    uint64_t startTime = (uint64_t)time(NULL);
     for (int j = 0; j < LearningSettings::iterations; ++j){
         
-        cerr << "iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
+        cerr << ((uint64_t)time(NULL) - startTime) << "sec. iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
         
         for(int th = 0; th < threads; ++th){
             double catr = exp(-changeTrials * LearningSettings::attenuationRate);
