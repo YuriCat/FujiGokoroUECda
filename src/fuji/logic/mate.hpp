@@ -326,13 +326,13 @@ namespace UECda{
                             Cards l = popLow(&h);
                             
                             // どちらかとndが交差しなければ勝ち
-                            if((!((h << 1) & opsHand.nd[ord])) || (!((l << 1) & opsHand.nd[ord]))){
+                            if(!((h << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[ord])){
                                 DERR << "PW1 (+JK) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
                                 return true;
                             }
                             
                             // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
-                            if(l == (CARDS_3 | PQR_1) && containsS3(myHand.cards)){
+                            if(l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)){
                                 // 3はランク最低なのでlだろう
                                 DERR << "PW1 (JK-S3) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
                                 return true;
@@ -373,9 +373,8 @@ namespace UECda{
                                     Cards l = popLow(&h);
                                     
                                     // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
-                                    if( (!((h << 1) & opsHand.nd[ord])) || (!((h << 1) & opsHand.nd[flipOrder(ord)]))
-                                       ||
-                                       (!((l << 1) & opsHand.nd[ord])) || (!((l << 1) & opsHand.nd[flipOrder(ord)]))){
+                                    if(!((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
+                                       || !((l << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[flipOrder(ord)])){
                                         DERR << "NJ_QUAD PW1 (+JK) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
                                         return true;
                                     }
@@ -409,7 +408,7 @@ namespace UECda{
                     if(quad != tmp){
                         // 革命でターンがとれる
                         // このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                        Cards ndpqr_new = ndpqr & (~((quad ^ tmp) >> 1)) & opsHand.nd[flipOrder(ord)]; // 革命の分も消しとく
+                        Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & opsHand.nd[flipOrder(ord)]; // 革命の分も消しとく
                         
                         if(!ndpqr_new){
                             //全部支配できた。勝ち
@@ -551,9 +550,9 @@ namespace UECda{
                             makeMove1stHalf(myHand, &nextHand, mv.mv());
                             
                             nbd.procOrder(mv.mv());
-                            if(0 && !depth && mv.qty() > 4){
+                            if(!depth && mv.qty() > 4){
                                 // 5枚以上の階段は支配としとく
-                                if( judgeHandPW_NF(nextHand, opsHand, argBd)
+                                if(judgeHandPW_NF(nextHand, opsHand, argBd)
                                    ||
                                    judgeHandPW_NF(nextHand, opsHand, (uint32_t)argBd ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))
                                    ){
@@ -723,14 +722,12 @@ namespace UECda{
     int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
                        const Hand& myHand, const Hand& opsHand, const Board argBd, const uint32_t al, const uint32_t aw){
         // 必勝手探し
-        //bool res;
         for(int m = NMoves - 1; m >= 0; --m){
             if(buf[m].qty() == myHand.qty){ return m; }
         }
         for(int m = NMoves - 1; m >= 0; --m){
             if(checkHandMate<IS_NF, IS_UNRIVALED>(depth, buf + NMoves, buf[m], myHand, opsHand, argBd, al, aw)){ return m; }
         }
-        //getchar();
         return -1;
     }
     

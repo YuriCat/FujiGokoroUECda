@@ -101,7 +101,6 @@ int searchCardsPWSlow(MoveInfo *const buf, const int moves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead){
-    //for(int i = moves - 1; i >= 0; --i){
     int mateIndex = -1;
     for(int i = 0; i < moves; ++i){
         if(buf[i].qty() >= countCards(myCards)){ // final move
