@@ -41,7 +41,7 @@ namespace LearningSettings{
     double learningRate = 0.000005;
     double attenuationRate = 0.00000000005; // 局面数あたり
     double L1Rate = 0;
-    double L2Rate = 0.0000001;
+    double L2Rate = 0.000000001;
     int batchSize = 1;
     int iterations = 200;
     double testRate = 0.77;
