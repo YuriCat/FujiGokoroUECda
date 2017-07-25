@@ -2253,6 +2253,11 @@ namespace UECda{
         
         constexpr bool isSingleJOKER()const noexcept{ return (((uint32_t)i_) & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
         constexpr bool isS3Flush()const noexcept{ return holdsBits<data_t>(i_, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
+        
+        constexpr bool isEqualRankSuits(uint32_t r, uint32_t s)const noexcept{
+            // rank と スートが一致するか
+            return ((uint32_t)i_ & (MOVE_FLAG_RANK | MOVE_FLAG_SUITS)) == ((r << MOVE_LCT_RANK) | (s << MOVE_LCT_SUITS));
+        }
 
         constexpr uint32_t domInevitably()const noexcept{ return i_ & MOVE_FLAG_INEVITDOM; }
         

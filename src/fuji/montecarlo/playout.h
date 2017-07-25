@@ -197,9 +197,10 @@ namespace UECda{
                 infoSpecialPlayer.replace(3, p);
             }
 
+            template<int IS_NF = _BOTH>
             uint32_t getFlushLeadPlayer()const noexcept{
                 // 全員パスの際に誰から始まるか
-                if(isNF()){ return getTurnPlayer(); }
+                if(TRI_BOOL_YES(IS_NF, isNF())){ return getTurnPlayer(); }
                 uint32_t own = getPMOwner();
                 if(!isAlive(own)){ // すでにあがっている
                     // own~tp間のaliveなプレーヤーを探す
@@ -452,9 +453,7 @@ namespace UECda{
             int procFaster(const int tp, const move_t& mv)noexcept;
 
             int procPassFaster(const int tp)noexcept{
-
                 //procBoardHash_P(tp);
-
                 if(isSoloAwake()){
                     // renew処理
                     flush();
@@ -628,22 +627,34 @@ namespace UECda{
             }
 
             void prepareForPlay()noexcept{
-                fInfo.initTmpInfo();
+                
+                int tp = getTurnPlayer();
+                
+                fInfo.init();
+                
+                fInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
+                fInfo.setMinNCards(getOpsMinNCards(tp));
+                fInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
+                fInfo.setMaxNCards(getOpsMaxNCards(tp));
+                
                 if(isNF()){
-                    fInfo.setFlushLead();
+                    if(getNAlivePlayers() == getNAwakePlayers()){ // 空場パスがない
+                        fInfo.setFlushLead();
+                    }
                 }else{
-                    if(getPMOwner() == getTurnPlayer()){ // self follow
+                    if(getPMOwner() == tp){ // セルフフォロー
                         fInfo.setSelfFollow();
                     }else{
-                        if(isSoloAwake()){ // last awake
+                        if(isSoloAwake()){ // SF ではないが LA
                             fInfo.setLastAwake();
                         }
-                        uint32_t fLPlayer = getFlushLeadPlayer();
-                        if(fLPlayer == getTurnPlayer()){
+                        uint32_t fLPlayer = getFlushLeadPlayer<_NO>();
+                        if(fLPlayer == tp){ // 全員パスしたら自分から
                             fInfo.setFlushLead();
                             if(fInfo.isLastAwake()){
                             }else{
-                                if(dominatesHand(getBoard(), opsHand[getTurnPlayer()])){ // 場の支配力
+                                if(dominatesHand(getBoard(), opsHand[tp])){
+                                    // 場が全員を支配しているので、パスをすれば自分から
                                     fInfo.setBDO();
                                     fInfo.setPassDom(); // fl && bdo ならパス支配
                                 }
@@ -694,7 +705,15 @@ namespace UECda{
             std::string toString()const{
                 std::ostringstream oss;
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    oss << p << " : " << hand[p] << endl;
+                    oss << p << (isAwake(p) ? " " : "*") << ": ";
+                    if(hand[p].qty){
+                        oss << hand[p];
+                    }else{ // qty だけ 0 にしているため
+                        Hand thand;
+                        thand.setAll(CARDS_NULL);
+                        oss << thand;
+                    }
+                    oss << endl;
                 }
                 return oss.str();
             }

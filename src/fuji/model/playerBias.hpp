@@ -99,9 +99,8 @@ namespace UECda{
                      return mv.meldPart(), chosenMove.meldPart();
                  });
                  
-                 for(int m = 0; m < NMoves; ++m){
-                     bool mate = checkHandMate(0, buf + NMoves, buf[m], myHand, opsHand, bd, field.fInfo, 1, 1);
-                     if(mate){ return 0; }
+                 if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fInfo)){
+                     return 0;
                  }
                  
                  double score[N_MAX_MOVES + 1];

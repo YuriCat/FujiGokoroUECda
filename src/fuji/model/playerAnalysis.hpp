@@ -111,7 +111,7 @@ namespace UECda{
                              mi->setDM();
                              if(fInfo.isPassDom()){ mi->setDO(); }
                          }else{
-                             if(field.fInfo.isNPDom()){
+                             if(field.fInfo.isNonPassDom()){
                                  mi->setDALL();
                              }else{
                                  if(dominatesHand(move,opsHand,bd)){
@@ -124,7 +124,7 @@ namespace UECda{
                          }
                          
                          // 必勝判定
-                         bool mate = checkHandMate(0, pmv + NMoves, *mi, myHand, opsHand, bd, fInfo, 1, 1);
+                         bool mate = checkHandMate(0, pmv + NMoves, *mi, myHand, opsHand, bd, fInfo);
                          if(mate){
                              mi->setMate(); fInfo.setMate(); isCM = true;
                          }

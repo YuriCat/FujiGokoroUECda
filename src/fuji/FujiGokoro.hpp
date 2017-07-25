@@ -220,7 +220,9 @@ namespace UECda{
 				}
 #endif
 				// 先読み用バッファはスレッド0のもの
-				MoveInfo *const search_buf = threadTools[0].buf;
+				MoveInfo *const searchBuffer = threadTools[0].buf;
+                
+                // 手札レベルで枝刈りする場合
 #ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
                 Cards tmp = hc.pruneCards(myCards, change_qty);
 #else
@@ -252,10 +254,17 @@ namespace UECda{
 					
 					// D3を持っている場合、自分からなので必勝チェック
 					if(containsD3(myCards)){
-						constexpr Board bd = OrderToNullBoard(ORDER_NORMAL); // 通常オーダーの空場
+						const Board bd = OrderToNullBoard(ORDER_NORMAL); // 通常オーダーの空場
+                        FieldAddInfo fieldInfo;
+                        fieldInfo.init();
+                        fieldInfo.setFlushLead();
+                        fieldInfo.setMinNCardsAwake(10);
+                        fieldInfo.setMinNCards(10);
+                        fieldInfo.setMaxNCardsAwake(11);
+                        fieldInfo.setMaxNCards(11);
 						Hand ops;
 						ops.set(subtrCards(CARDS_ALL, restCards));
-						if(judgeHandMate< _YES, _NO >(1, search_buf, mine, ops, bd, 10, 10)){
+						if(judgeHandMate(1, searchBuffer, mine, ops, bd, fieldInfo)){
 							// 必勝
 							CERR << "CHANGE MATE!" << endl;
 							assert(holdsCards(myCards, cand[c]) && countCards(cand[c]) == change_qty);
@@ -350,7 +359,7 @@ namespace UECda{
 				Move playMove = MOVE_NONE;
 				
 				// 先読み用バッファはスレッド0のものを使う
-				MoveInfo *const search_buf = threadTools[0].buf;
+				MoveInfo *const searchBuffer = threadTools[0].buf;
 				
 				// 生成バッファは独立なものを使う
 				MoveInfo buf[N_MAX_MOVES + 256];
@@ -444,36 +453,9 @@ namespace UECda{
                     }
 					
 					// 場の情報をまとめる
-					fInfo.init();
-					if(bd.isNF()){
-						fInfo.setFlushLead();
-					}else{
-						if(tfield.getPMOwner() == (uint32_t)myPlayerNum){ // セルフフォロー
-							fInfo.setSelfFollow();
-						}else{
-							if(tfield.getNAwakePlayers() == 1){ // LastAwake
-								fInfo.setLastAwake();
-							}
-							uint32_t fLPlayer = tfield.getFlushLeadPlayer();
-							if(fLPlayer == (uint32_t)myPlayerNum){
-								fInfo.setFlushLead();
-								if(fInfo.isLastAwake()){
-									
-								}else{
-									if(dominatesHand(bd, opsHand)){ // 場の支配力
-										fInfo.setBDO();
-										fInfo.setPassDom(); // fl && bdo ならパス支配。
-										//CERR<<"PASS DOM"<<endl;getchar();
-									}
-								}
-							}
-						}
-					}
-					
-					fInfo.setMinNCardsAwake(tfield.getOpsMinNCardsAwake(myPlayerNum));
-					fInfo.setMinNCards(tfield.getOpsMinNCards(myPlayerNum));
-					fInfo.setMaxNCardsAwake(tfield.getOpsMaxNCardsAwake(myPlayerNum));
-					fInfo.setMaxNCards(tfield.getOpsMaxNCards(myPlayerNum));
+                    assert(tfield.getTurnPlayer() == myPlayerNum);
+                    fInfo.init();
+                    tfield.prepareForPlay();
 					
 					// オーダー固定か否か
 					if(isNoBack(myCards, opsCards) && isNoRev(myCards, opsCards)){ // 革命もJバックもなし
@@ -484,7 +466,7 @@ namespace UECda{
 					// 着手追加情報を設定
 					// 自分の着手の事なので詳しく調べる
 					
-					int curMinNMelds = calcMinNMelds(search_buf, myCards);
+					int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
 					
 					setDomState(&ps, field); // 先の場も含めて支配状況をまとめて設定
 					
@@ -499,26 +481,17 @@ namespace UECda{
 						if(bd.afterSuitsLocked(move)){ mi->setSuitLock(); }
 						
                         // 必勝判定
-                        bool cjRes;
-                        if(bd.isNF()){
-                            cjRes = checkHandMate<_YES, _NO>(1, search_buf, *mi, myHand, opsHand, bd, fInfo.getMinNCards(), fInfo.getMinNCardsAwake());
-                        }else{
-                            if(fInfo.isUnrivaled()){
-                                cjRes = checkHandMate<_NO, _YES>(1, search_buf, *mi, myHand, opsHand, bd, fInfo.getMinNCards(), fInfo.getMinNCardsAwake());
-                            }else{
-                                cjRes = checkHandMate<_NO, _NO>(1, search_buf, *mi, myHand, opsHand, bd, fInfo.getMinNCards(), fInfo.getMinNCardsAwake());
-                            }
-                        }
-                        if(cjRes){
+                        if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fInfo)){
                             mi->setMate(); fInfo.setMate();
 #ifndef CHECK_ALL_MOVES
                             break;
 #endif
-                        }else if(tfield.getNAlivePlayers() == 2){
+                        }
+                        if(tfield.getNAlivePlayers() == 2){
 							// L2の場合はL2判定
-							L2Judge lj(400000, search_buf);
-							int l2Result = lj.start_check(*mi, myHand, opsHand, bd, fInfo);
-                            DERR << l2Result << endl;
+							L2Judge lj(400000, searchBuffer);
+                            int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fInfo);
+                            //cerr << l2Result << endl;
 							if(l2Result == L2_WIN){ // 勝ち
                                 DERR << "l2win!" << endl;
 								mi->setL2Mate(); fInfo.setL2Mate();
@@ -532,7 +505,7 @@ namespace UECda{
 						}
 						
 						// 最小分割数の減少量
-						mi->setIncMinNMelds(max(0, calcMinNMelds(search_buf, nextCards) - curMinNMelds + 1));
+						mi->setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
 					}
 					
 					

@@ -157,18 +157,7 @@ namespace UECda{
                          return mv.mv().meldPart() == chosenMove.meldPart();
                      });
                      
-                     for(int m = 0; m < NMoves; ++m){
-                         bool mate;
-                         if(bd.isNF()){
-                             mate = checkHandMate<_YES, _NO>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                         }else{
-                             if(field.fInfo.isUnrivaled()){
-                                 mate = checkHandMate<_NO, _YES>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                             }else{
-                                 mate = checkHandMate<_NO, _NO>(0, buf + NMoves, buf[m], myHand, opsHand, bd, 1, 1);
-                             }
-                         }
-                         if(mate){ return 0; }
+                     if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fInfo) >= 0){                         return 0;
                      }
                      
                      double score[N_MAX_MOVES + 1];

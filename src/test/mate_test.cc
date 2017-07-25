@@ -82,7 +82,20 @@ bool checkCardsPWSlow(MoveInfo *const buf,
                 if(!ps.isAllAsleepExcept(p)){
                     // 他のプレーヤーが出せるか確認
                     const int opsMoves = mgCards.genFollowExceptPASS(buf, opsCards, bd);
-                    if(opsMoves > 0){ return false; }
+                    if(opsMoves > 0){
+                        // ここからBNPW判定
+                        /*for(int m = 0; m < opsMoves; ++m){
+                            Move opsMove = buf[m].mv();
+                            Board nextBd = bd;
+                            nextBd.proc(opsMove);
+                            if(nextBd.isNF())continue; // 相手に流されたらそこで終了
+                            // ここに対して自分の必勝手があるか調べる
+                            judgeCardsPWSlow(buf + opsMoves, p,
+                                             myCards, subtrCards(opsCards, opsMove.cards()),
+                                             nextBd, ps,
+                        }*/
+                        return false;
+                    }
                     ps.setAllAsleep();
                     ps.setAwake(p);
                 }
@@ -96,7 +109,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
     return true;
 }
 
-template<int M>
+template<int M = 0>
 int searchCardsPWSlow(MoveInfo *const buf, const int moves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
@@ -164,13 +177,13 @@ int testRecordMoveMate(const logs_t& mLogs){
          judgeMatrix[pw][mate] += 1;
          
          /*if(mate != pw){
-          cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
-          cerr << move << " on " << bd << endl;
-          cerr << field.ps << " " << field.fInfo << endl;
-          cerr << Out2CardTables(myHand.getCards(), opsHand.getCards());
-          cerr << endl;
-          getchar();
-          }*/
+             cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
+             cerr << move << " on " << bd << endl;
+             cerr << field.ps << " " << field.fInfo << endl;
+             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
+             cerr << field.toString();
+             getchar();
+         }*/
          
          return 0;
      },
@@ -207,7 +220,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          }
          
          cl.start();
-         bool mate = checkHandMate(0, buffer, mi, myHand, opsHand, bd, field.fInfo, 1, 1);
+         bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fInfo);
          checkTime[0] += cl.stop();
          checkCount += 1;
 
@@ -220,11 +233,11 @@ int testRecordMoveMate(const logs_t& mLogs){
          checkMatrix[pw][mate] += 1;
          
          /*if(mate != pw){
-             cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
+             cerr << "check " << mate << " <-> " << " answer " << pw << endl;
              cerr << move << " on " << bd << endl;
              cerr << field.ps << " " << field.fInfo << endl;
-             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards());
-             cerr << endl;
+             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
+             cerr << field.toString();
              getchar();
          }*/
          
@@ -261,26 +274,50 @@ int testRecordMoveMate(const logs_t& mLogs){
          if(moves <= 1){ return 0; }
          
          cl.start();
-         int mateIndex = searchHandMate(0, buffer, moves, myHand, opsHand, bd, 1, 1);
+         int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fInfo);
          searchTime[0] += cl.stop();
          searchCount += 1;
          
+         /*for(int m = 0; m < moves; ++m){
+             bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+             cerr << buffer[m] << " : " << check << endl;
+         }*/
+         
          cl.start();
          visitedCards.clear();
-         int pwIndex = searchCardsPWSlow(buffer, turnPlayer, move,
-                                         myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fInfo.isFlushLead());
+         int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
+                                         myHand.getCards(), opsHand.getCards(),
+                                         bd, field.ps, bool(field.fInfo.isFlushLead()));
          searchTime[1] += cl.stop();
          
-         searchMatrix[(mateIndex >= 0)][(pwIndex >= 0)] += 1;
+         searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
          
-         /*if(mate != pw){
-          cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
-          cerr << move << " on " << bd << endl;
-          cerr << field.ps << " " << field.fInfo << endl;
-          cerr << Out2CardTables(myHand.getCards(), opsHand.getCards());
-          cerr << endl;
-          getchar();
-          }*/
+         /*if((mateIndex >= 0) != (pwIndex >= 0)){
+             
+             for(int m = 0; m < moves; ++m){
+                 bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+                 cerr << buffer[m] << " : " << check << endl;
+             }
+             
+             cerr << "search ";
+             if(mateIndex >= 0){
+                 cerr << buffer[mateIndex];
+             }else{
+                 cerr << "none";
+             }
+             cerr << " <-> " << " answer ";
+             if(pwIndex >= 0){
+                 cerr << buffer[pwIndex];
+             }else{
+                 cerr << "none";
+             }
+             cerr << endl;
+             cerr << move << " on " << bd << endl;
+             cerr << field.ps << " " << field.fInfo << endl;
+             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
+             cerr << field.toString();
+             getchar();
+         }*/
          
          return 0;
      },

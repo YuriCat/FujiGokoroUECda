@@ -45,25 +45,21 @@ namespace UECda{
     // check, judgeは基本的にブール関数
     
     // BNPW(unrivaledな場合はBNPWではないので指定無し)
-    template<int IS_NF = _BOTH>
-    bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo,
-                       const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw);
+    bool checkHandBNPW(const int, MoveInfo *const, const MoveInfo,
+                       const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
     // checkmate
-    template<int IS_NF = _BOTH, int IS_UNRIVALED = _NO>
-    bool judgeHandMate(const int depth, MoveInfo *const buf,
-                       const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw);
+    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    bool judgeHandMate(const int, MoveInfo *const buf,
+                       const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
-    template<int IS_NF = _BOTH, int IS_UNRIVALED = _NO>
-    bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo&,
-                       const Hand& myHand, const Hand& opsHand, const Board argBd, const uint32_t al, const uint32_t aw);
+    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    bool checkHandMate(const int, MoveInfo *const, MoveInfo&,
+                       const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
-    template<int IS_NF = _BOTH,int IS_UNRIVALED = _NO>
-    int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
-                       const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw);
+    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    int searchHandMate(const int, MoveInfo *const, const int,
+                       const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
     
     // 汎用関数
@@ -108,7 +104,8 @@ namespace UECda{
         return 0;
     }
     
-    bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const uint32_t jk, const Cards *const nd,const Board argBd){
+    bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const uint32_t jk,
+                         const Cards *const nd, const Board& argBd){
         // すでに支配的でない着手があることがわかっており、
         // それ以外が全て支配的かを確認するメソッド
         // 階段未対応
@@ -229,7 +226,7 @@ namespace UECda{
         return false;
     }
     
-    bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board argBd){
+    bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& argBd){
         // 合法着手生成を用いずに判定出来る場合
         
         // ただし、
@@ -302,6 +299,23 @@ namespace UECda{
                         return true;
                     }
                     
+                    // 階段が支配的か判断
+                    /*IntCard ic = CardsToLowestIntCard(myHand.seq);
+                    int seqRank = IntCardToRank(ic);
+                    uint32_t seqSuit = CardsRankToSuits(myHand.seq, seqRank);
+                    Hand nextHand;
+                    
+                    if(isEightSeqRank(tmpOrder, seqRank, 3)){ // 支配的
+                        // 出した後の場でもう一度必勝判定
+                        if(hand.p4 & hand.p8){ // プレーン階段
+                            makeMove1stHalf(hand, &nextHand, SequenceMove(3, r, seqSuit));
+                        }else{
+                            makeMove1stHalf(hand, &nextHand)
+                        }
+                    }else{ // 支配的でない
+                        // これを最後に出すとしてPPW判定
+                        
+                    }*/
                     // シングルやグループで出しても支配出来るランクの階段を使う場合は難しい。
                     // 3階段1つ以外の場合、合法着手生成によって確かめる(暫定的処置)
                 }else{
@@ -430,57 +444,59 @@ namespace UECda{
         return false;
     }
     
-    
-    template<int IS_NF>
     bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo mv,
-                       const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw){
-        bool res;
-        if(argBd.isNF()){
-            res = checkHandBNPW<_YES>(depth, buf, mv, myHand, opsHand, argBd, al, aw);
-        }else{
-            res = checkHandBNPW<_NO>(depth, buf, mv, myHand, opsHand, argBd, al, aw);
-        }
-        return res;
-    }
-    
-    template<>
-    bool checkHandBNPW<_YES>(const int depth, MoveInfo *const buf, const MoveInfo mv,
                              const Hand& myHand, const Hand& opsHand,
-                             const Board argBd, const uint32_t al, const uint32_t aw){
+                             const Board& argBd, const FieldAddInfo& fieldInfo){
+        // 間に他プレーヤーの着手を含んだ必勝を検討
         // 支配的でないことは前提とする
-        if(mv.isPASS()){ return false; }
-        int rank = mv.rank();
+        if(!argBd.isNF())return false; // 未実装
+        if(mv.isPASS())return false; // パスからのBNPWはない
         int curOrder = argBd.prmOrder();
         Cards ops8 = opsHand.cards & CARDS_8;
+        uint32_t aw = fieldInfo.getMinNCardsAwake();
         
         if(aw <= mv.qty()){
+            // 相手に間で上がられる可能性がある
             return false;
         }
         
-        uint32_t nfmin = min(al, aw - mv.qty());
+        FieldAddInfo nextFieldInfo;
         
         if(mv.isSingle()){
-            if(aw <= 1){ return false; }
-            if(mv.isSingleJOKER()){ return false; }
-            if(myHand.containsJOKER() && (!opsHand.containsS3())){ // まずジョーカーを検討
-                if(ops8){ if(isValidGroupRank(RANK_8, curOrder, rank)){ return false; }}
-                if(myHand.qty == mv.qty() + 1){ return true; }
+            if(mv.isSingleJOKER()){
+                // シングルジョーカーは少なくともBNPWではない
+                return false;
+            }
+            if(myHand.containsJOKER() && !opsHand.containsS3()){ // まずジョーカーを検討
+                if(ops8 && isValidGroupRank(RANK_8, curOrder, mv.rank())){
+                    // 相手に8切りで返される可能性があればだめ
+                    return false;
+                }
+                if(myHand.qty == mv.qty() + 1){
+                    // 残り1枚がジョーカーなら勝ち
+                    return true;
+                }
+                // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
                 Hand nextHand;
                 makeMove1stHalf(myHand, &nextHand, mv.mv());
                 nextHand.makeMove1stHalf(MOVE_SINGLEJOKER, CARDS_JOKER, 1);
-                if(judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nfmin, nfmin)){
+                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                nextFieldInfo.setMinNCards(aw - mv.qty());
+                nextFieldInfo.setMinNCardsAwake(aw - mv.qty());
+                if(judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)){
                     return true;
                 }
+                // ジョーカー -> S3 からの空場必勝を確認
                 if(nextHand.containsS3()){
                     if(nextHand.qty == 1){ return true; }
                     nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1);
-                    if(judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nfmin, nfmin)){
+                    if(judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)){
                         return true;
                     }
                 }
             }
             // 他のシングルを検討
+            // 現時点のオーダーで最強の
         }
         
         //ここからもう計算量度外視(暫定的処置)
@@ -504,72 +520,55 @@ namespace UECda{
         return false;
     }
     
-    
-    template<>
-    bool checkHandBNPW<_NO>(const int depth,MoveInfo *const buf,const MoveInfo mv,const Hand& myHand,const Hand& opsHand,const Board argBd,const uint32_t al,const uint32_t aw){
-        return false;
-    }
-    
-    
-    
     // 必勝判定
     
     template<int IS_NF, int IS_UNRIVALED>
     bool judgeHandMate(const int depth, MoveInfo *const buf,
                        const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw){
+                       const Board& argBd, const FieldAddInfo& fieldInfo){
         //DERR << "judge" << endl;
-        if(IS_NF == _YES && judgeMate_Easy_NF(myHand)){
+        if(TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeMate_Easy_NF(myHand)){
             return true; // 簡単詰み
-        }else{
-            // 中程度詰み
-            if(IS_NF){
-                if(judgeHandPW_NF(myHand, opsHand, argBd)){
-                    return true;
-                }
+        }
+        // 中程度詰み
+        if(TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeHandPW_NF(myHand, opsHand, argBd)){
+            return true;
+        }
+        if(TRI_BOOL_NO(IS_NF, !argBd.isNF()) || depth > 0){
+            // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
+            const int NMoves = genMove<IS_NF>(buf, myHand, argBd);
+            if(searchHandMate<IS_NF, IS_UNRIVALED>(depth, buf, NMoves,
+                                                   myHand, opsHand, argBd, fieldInfo) != -1){
+                return true;
             }
-            if(IS_NF != _YES || depth > 0){
-                int NMoves = genMove<IS_NF>(buf, myHand, argBd);
-                if(searchHandMate<IS_NF, IS_UNRIVALED>(depth, buf, NMoves, myHand, opsHand, argBd, al, aw) != -1){
-                    return true;
-                }
-                
-            }else{
-                // 階段パターンのみ検討
-                // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
-                if(myHand.seq){
-                    int NMoves = genAllSeq(buf, myHand.cards);
-                    for(int m = 0; m < NMoves; ++m){
-                        const MoveInfo& mv = buf[m];
-                        if(mv.qty() >= myHand.qty){
+        }else{
+            // 階段パターンのみ検討
+            // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
+            if(myHand.seq){
+                const int NMoves = genAllSeq(buf, myHand.cards);
+                for(int m = 0; m < NMoves; ++m){
+                    const MoveInfo& mv = buf[m];
+                    if(mv.qty() >= myHand.qty)return true; // 即上がり
+                    
+                    Board nbd = argBd;
+                    Hand nextHand;
+                    
+                    makeMove1stHalf(myHand, &nextHand, mv.mv());
+                    
+                    nbd.procOrder(mv.mv());
+                    if(!depth && mv.qty() > 4){
+                        // 5枚以上の階段は支配としとく
+                        if(judgeHandPW_NF(nextHand, opsHand, argBd)
+                           || judgeHandPW_NF(nextHand, opsHand, (uint32_t)argBd ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))
+                           ){
+                            // いずれかのオーダーで必勝ならOK
                             return true;
+                        }
+                    }else{
+                        if(dominatesHand(mv.mv(), opsHand, argBd)){
+                            if(judgeHandPW_NF(nextHand, opsHand, argBd))return true;
                         }else{
-                            Board nbd = argBd;
-                            Hand nextHand;
-                            
-                            makeMove1stHalf(myHand, &nextHand, mv.mv());
-                            
-                            nbd.procOrder(mv.mv());
-                            if(!depth && mv.qty() > 4){
-                                // 5枚以上の階段は支配としとく
-                                if(judgeHandPW_NF(nextHand, opsHand, argBd)
-                                   ||
-                                   judgeHandPW_NF(nextHand, opsHand, (uint32_t)argBd ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))
-                                   ){
-                                    // いずれかのオーダーで必勝ならOK
-                                    return true;
-                                }
-                            }else{
-                                if(dominatesHand(mv.mv(), opsHand, argBd)){
-                                    if(judgeHandPW_NF(nextHand, opsHand, argBd)){
-                                        return true;
-                                    }
-                                }else{
-                                    if(judgeHandPPW_NF(nextHand.cards, nextHand.pqr, nextHand.jk, opsHand.nd, argBd)){
-                                        return true;
-                                    }
-                                }
-                            }
+                            if(judgeHandPPW_NF(nextHand.cards, nextHand.pqr, nextHand.jk, opsHand.nd, argBd))return true;
                         }
                     }
                 }
@@ -577,19 +576,63 @@ namespace UECda{
         }
         return false;
     }
-    
+
     template<int IS_NF, int IS_UNRIVALED>
     bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                        const Hand& myHand, const Hand& opsHand,
-                       const Board argBd, const uint32_t al, const uint32_t aw){
-        if(mv.isPASS()){ return false; }
-        //DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
-        //DERR << depth << endl;
+                       const Board& argBd, const FieldAddInfo& fieldInfo){
+        
+        if(TRI_BOOL_YES(IS_UNRIVALED, fieldInfo.isUnrivaled())){
+            mv.setDO(); // 支配フラグ付加
+            if(mv.isPASS()){
+                Board bd = argBd;
+                bd.flush();
+                FieldAddInfo nextFieldInfo;
+                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand, bd, nextFieldInfo);
+            }else{
+                if(mv.qty() >= myHand.qty){ return true; }
+                Hand nextHand;
+                Board bd = argBd;
+                FieldAddInfo nextFieldInfo;
+                makeMove1stHalf(myHand, &nextHand, mv.mv());
+                if(dominatesCards(mv.mv(), nextHand.cards, argBd)){ // 自己支配
+                    mv.setDM(); // 支配フラグ付加
+                    bd.procAndFlush(mv.mv());
+                    flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                    return judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
+                }else{ // セルフフォロー必勝を判定
+                    bd.proc(mv.mv());
+                    procUnrivaled(fieldInfo, &nextFieldInfo);
+                    return judgeHandMate<_NO, _YES>(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
+                }
+            }
+            return false;
+        }
+        
+        if(mv.isPASS()){
+            if(!fieldInfo.isPassDom()){
+                // パス支配でない場合は判定終了
+                return false;
+            }else{
+                // Unrivaledでないがパス支配の場合がある?
+                // パス支配の場合, 流れてからの必勝を判定
+                mv.setDO(); // 支配フラグ付加
+                FieldAddInfo nextFieldInfo;
+                nextFieldInfo.init();
+                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand,
+                                                OrderToNullBoard(argBd.prmOrder()), nextFieldInfo);
+            }
+        }
+        // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
+        // DERR << depth << endl;
         // 通常
-        if(mv.qty() >= myHand.qty){
+        if(mv.qty() >= myHand.qty){ // 即上がり
             return true;
         }
-        if(dominatesHand(mv.mv(), opsHand, argBd)){ // 支配
+        if(dominatesHand(mv.mv(), opsHand, argBd)
+           || mv.qty() > fieldInfo.getMaxNCardsAwake()){ // 支配
             
             mv.setDO(); // 支配フラグ付加
             
@@ -601,132 +644,69 @@ namespace UECda{
             
             // セルフフォロー
             
-            
+            // 自分の出した役を流してからの必勝チェック
             // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
             bd.flush();
-            uint32_t mn = min(al, aw);
-            if(judgeHandMate<_YES, _NO>(mv.changesPrmState() ? depth : 0, buf, nextHand, opsHand, bd, mn, mn)){
+            FieldAddInfo nextFieldInfo;
+            flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+            if(judgeHandMate<_YES, _NO>(mv.changesPrmState() ? depth : 0,
+                                        buf, nextHand, opsHand, bd, nextFieldInfo)){
                 return true;
             }
+            // 自分の出したジョーカーをS3で返してからの必勝チェック
             if(mv.isSingleJOKER() && nextHand.containsS3()){
                 nextHand.makeMove1stHalf(MOVE_S3FLUSH);
-                return judgeHandMate<_YES, _NO>(0, buf, nextHand, opsHand, bd, mn, mn);
+                return judgeHandMate<_YES, _NO>(0, buf, nextHand, opsHand, bd, nextFieldInfo);
             }
         }else{ // 支配しない
             
             if(depth){
                 // S3分岐必勝を検討
                 // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
-                // ジョーカー->S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
-                if(mv.qty() == 1
-                   && aw > 1
-                   && containsS3(myHand.cards)
-                   && !containsS3(mv.cards())
-                   ){
+                // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
+                if(mv.isSingle() // シングルのみ
+                   && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
+                   && containsS3(myHand.cards) // 残り手札にS3がある
+                   && !mv.isEqualRankSuits(RANK_3, SUITS_S)){ // 今出す役がS3でない
                     Cards zone = ORToGValidZone(argBd.tmpOrder(), mv.rank());
                     if(argBd.locksSuits(mv.mv())){
                         zone &= SuitsToCards(mv.suits());
                     }
                     if(!(zone & opsHand.cards)){ // ジョーカー以外は出せない
-                        
                         Hand nextHand;
                         makeMove1stHalf(myHand, &nextHand, mv.mv());
-                        
                         if(judgeHandPW_NF(nextHand, opsHand, argBd)){ // 流れた場合
-                            
-                            nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1);
-                            
+                            nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1); // S3 で進める
                             if(judgeHandPW_NF(nextHand, opsHand, argBd)){ // S3で返した場合
                                 // 両方で勝ったので必勝
                                 DERR << "BRPW(S3)!!!" << endl;
-                                //getchar();
                                 return true;
                             }
                         }
                     }
                 }
-                
-                
-                
                 // BNPWを検討
-                if(checkHandBNPW<IS_NF>(depth - 1, buf, mv, myHand, opsHand, argBd, al, aw)){
-                    DERR << "BNPW - " << mv << " ( " << aw << " ) " << endl;
-                    //getchar();
+                if(checkHandBNPW(depth - 1, buf, mv, myHand, opsHand, argBd, fieldInfo)){
+                    DERR << "BNPW - " << mv << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
                     return true;
                 }
             }
         }
-        /*if(ret){
-         DERR << "CM" << endl << myHand << endl << opsHand << endl;
-         }*/
         return false;
     }
     
-    template<>
-    bool checkHandMate<_NO, _YES>(const int depth, MoveInfo *const buf, MoveInfo& mv,
-                                  const Hand& myHand, const Hand& opsHand,
-                                  const Board argBd, const uint32_t al, const uint32_t aw){
-        //DERR << "CHECK - " << argMove << " " << _NO << ", " << _YES << endl;
-        // セルフフォロー時
-        // 支配チェックなしでOK
-        
-        mv.setDO(); // 支配フラグ付加
-        
-        bool ret = false;
-        if(mv.isPASS()){
-            Board bd = argBd;
-            bd.flush();
-            uint32_t mn = min(al, aw);
-            ret = judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand, bd, mn, mn);
-        }else{
-            if(mv.qty() >= myHand.qty){ return true; }
-            Hand nextHand;
-            Board bd = argBd;
-            
-            makeMove1stHalf(myHand, &nextHand, mv.mv());
-            
-            if(dominatesCards(mv.mv(), nextHand.cards, argBd)){ // 自己支配
-                
-                mv.setDM(); // 支配フラグ付加
-                
-                bd.procAndFlush(mv.mv());
-                ret = judgeHandMate<_YES,_NO>(depth, buf, nextHand, opsHand, bd, al, aw);
-            }else{
-                bd.proc(mv.mv());
-                ret = judgeHandMate<_NO,_YES>(depth, buf, nextHand, opsHand, bd, al, aw);
-            }
-        }
-        
-        return ret;
-    }
     
-    bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
-                       const Hand& myHand, const Hand& opsHand,
-                       const Board bd, const FieldAddInfo& fInfo,
-                       const uint32_t al, const uint32_t aw){
-        bool mate;
-        if(bd.isNF()){
-            mate = checkHandMate<_YES, _NO>(depth, buf, mv, myHand, opsHand, bd, al, aw);
-        }else{
-            if(fInfo.isUnrivaled()){
-                mate = checkHandMate<_NO, _YES>(depth, buf, mv, myHand, opsHand, bd, al, aw);
-            }else{
-                mate = checkHandMate<_NO, _NO>(depth, buf, mv, myHand, opsHand, bd, al, aw);
-            }
-        }
-        return mate;
-    }
-    
-    
-    template<int IS_NF,int IS_UNRIVALED>
+    template<int IS_NF, int IS_UNRIVALED>
     int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
-                       const Hand& myHand, const Hand& opsHand, const Board argBd, const uint32_t al, const uint32_t aw){
+                       const Hand& myHand, const Hand& opsHand,
+                       const Board& argBd, const FieldAddInfo& fieldInfo){
         // 必勝手探し
         for(int m = NMoves - 1; m >= 0; --m){
             if(buf[m].qty() == myHand.qty){ return m; }
         }
         for(int m = NMoves - 1; m >= 0; --m){
-            if(checkHandMate<IS_NF, IS_UNRIVALED>(depth, buf + NMoves, buf[m], myHand, opsHand, argBd, al, aw)){ return m; }
+            if(checkHandMate<IS_NF, IS_UNRIVALED>(depth, buf + NMoves, buf[m],
+                                                  myHand, opsHand, argBd, fieldInfo)){ return m; }
         }
         return -1;
     }

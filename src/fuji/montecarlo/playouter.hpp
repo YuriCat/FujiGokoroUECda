@@ -151,7 +151,7 @@ namespace UECda{
                         int mates = 0;
                         for(int m = 0; m < pfield->NActiveMoves; ++m){
                             bool mate = checkHandMate(0, pfield->mv + pfield->NActiveMoves, pfield->mv[m],
-                                                      pfield->hand[tp], pfield->opsHand[tp], pfield->bd, pfield->fInfo, 1, 1);
+                                                      pfield->hand[tp], pfield->opsHand[tp], pfield->bd, pfield->fInfo);
                             if(mate){ mateIndex[mates++] = m; }
                         }
                         if(mates == 1){
