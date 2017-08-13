@@ -602,7 +602,7 @@ namespace UECda{
                             nextHand.hash = myHand.hash ^ CardsToHashKey(tmp.cards());
                             ana.restart(mode, 7);
                             
-                            res=judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, nextHand, opsHand, nextField);
+                            res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, nextHand, opsHand, nextField);
                             if(res == L2_WIN){
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;
@@ -618,7 +618,7 @@ namespace UECda{
                             ana.restart(mode, 1);
                             procAndFlushL2Field<L2_FINFO, (IS_PASS << 0)>(field, &nextField, tmp.mv());
                             ana.restart(mode, 6);
-                            res=judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, myHand, opsHand, nextField);
+                            res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, myHand, opsHand, nextField);
                             if(res == L2_WIN){
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;

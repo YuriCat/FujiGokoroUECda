@@ -488,72 +488,6 @@ namespace UECda{
         return out;
     }
     
-    /**************************プレーヤーの宣言**************************/
-    
-    class PlayerDeclarations{
-        
-        // プレーヤーの宣言
-        // 永続的情報と一時的情報がごっちゃになっている
-        // FieldAddInfoに統一して良いかも
-        
-        // とりあえず0-15永続,16-31一時
-        
-        // 8-11 宣言ランク
-        
-        // 16 NoChance(当ターンでパスしか合法着手がない)
-    public:
-        using data_t = uint32_t;
-        
-        // set
-        void setMate(){ i_.set(LCT_MATE); }
-        void setFinal(){ i_.set(LCT_FINAL,
-                               LCT_PW,
-                               LCT_MATE); }
-        void setPW(){ i_.set(LCT_PW,
-                            LCT_MATE); }
-        void setBNPW(){ i_.set(LCT_BNPW,
-                              LCT_MATE); }
-        void setBRPW(){ i_.set(LCT_BRPW,
-                              LCT_MATE); }
-        void setGiveUp(){ i_.set(LCT_GIVEUP); }
-        void setL2Mate(){ i_.set(LCT_L2MATE,
-                                LCT_MATE); }
-        void setL2GiveUp(){ i_.set(LCT_L2GIVEUP,
-                                  LCT_GIVEUP); }
-        
-        void setDclClass(const uint32_t r){ i_ |= (r << 8); }
-        void fixDclClass(const uint32_t r){ i_ = (i_ & (~((15U) << 8))) | (r << 8); }
-        
-        //get
-        uint32_t isMate()const{ return i_.test(LCT_MATE); }
-        uint32_t isFinal()const{ return i_.test(LCT_FINAL); }
-        uint32_t isPW()const{ return i_.test(LCT_FINAL); }
-        uint32_t isBNPW()const{ return i_.test(LCT_BNPW); }
-        uint32_t isBRPW()const{ return i_.test(LCT_BRPW); }
-        uint32_t isGiveUp()const{ return i_.test(LCT_GIVEUP); }
-        uint32_t isL2Mate()const{ return i_.test(LCT_L2MATE); }
-        uint32_t isL2GiveUp()const{ return i_.test(LCT_L2GIVEUP); }
-        
-        data_t getDclClass()const{ return (i_ >> 8) & 15U; }
-        
-        void init(){
-            i_ = 0U;
-        }
-        void initTmps(){ // 一時情報だけをリセット
-            i_ &= 0x0000FFFFU;
-        }
-        
-        constexpr data_t data()const noexcept{ return i_.data(); }
-        
-        constexpr PlayerDeclarations():
-        i_(){}
-        constexpr PlayerDeclarations(const PlayerDeclarations& arg):
-        i_(arg.data()){}
-        
-    protected:
-        BitSetInRegister<data_t> i_;
-    };
-    
     /**************************簡易個人スタッツ**************************/
     
     struct MiniStats{
@@ -834,7 +768,6 @@ namespace UECda{
         int activeQty;
         
         move_t playMove;
-        PlayerDeclarations dcl;
         //Stack<move_t, 6> nextMoves;
         
         move_t getMoveById(int id)const{return mv[id];}

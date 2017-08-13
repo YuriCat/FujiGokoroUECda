@@ -309,8 +309,8 @@ namespace UECda{
             }*/
 
             void procHand(int tp, Move mv, Cards dc, uint32_t dq)noexcept{
-
-                ASSERT(anyCards(dc) && countCards(dc) == dq,
+                
+                ASSERT(anyCards(dc) && mv.cards() == dc && countCards(dc) == dq,
                        cerr << mv << " " << OutCards(dc) << " " << dq << endl;
                        cerr << toDebugString(););
 
@@ -791,8 +791,7 @@ namespace UECda{
                 //procBoardHash_P(tp); // proceed hash value by pass
                 if(isSoloAwake()){
                     flush();
-                }
-                else{
+                }else{
                     setPlayerAsleep(tp);
                     rotateTurnPlayer(tp);
                 }
@@ -830,29 +829,25 @@ namespace UECda{
                 addTurnNum();
                 if(bd.isNF()){ // 流れた
                     flushState();
-                }
-                else{
+                }else{
                     if(mv.isDO()){
                         if(mv.isDM()){ // dominates all players. flushes
                             flush();
                             if(!isAwake(tp)){
                                 rotateTurnPlayer(tp);
                             }
-                        }
-                        else{ // dominates players except me.
+                        }else{ // dominates players except me.
                             if(isAwake(tp)){
                                 // set asleep except me
                                 setAllAsleep();
                                 setPlayerAwake(tp);
-                            }
-                            else{
+                            }else{
                                 // flushes
                                 flush();
                                 rotateTurnPlayer(tp);
                             }
                         }
-                    }
-                    else{ // no dominance
+                    }else{ // no dominance
                         if(ps.anyAwake()){
                             rotateTurnPlayer(tp);
                         }else{

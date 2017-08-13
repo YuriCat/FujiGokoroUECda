@@ -146,7 +146,7 @@ namespace UECda{
                     //int idxMate = searchHandMate(0, pfield->mv, pfield->NActiveMoves, pfield->hand[tp], pfield->opsHand[tp], pfield->bd, 1, 1);
                     int idxMate = -1;
 #ifdef SEARCH_LEAF_MATE
-                    if(Settings::PWSearchInSimulation){
+                    if(Settings::MateSearchInSimulation){
                         int mateIndex[N_MAX_MOVES];
                         int mates = 0;
                         for(int m = 0; m < pfield->NActiveMoves; ++m){

@@ -28,10 +28,14 @@ namespace UECda{
             MATCH_CONST double estimationTemperatureChange = SIMULATION_TEMPERATURE_CHANGE;
             MATCH_CONST double estimationTemperaturePlay = SIMULATION_TEMPERATURE_CHANGE;
             
+            // プレー設定
+            MATCH_CONST bool L2SearchOnRoot = true;
+            MATCH_CONST bool MateSearchOnRoot = true;
+            
             // シミュレーション設定
             MATCH_CONST bool L2SearchInSimulation = true;
             MATCH_CONST bool LnCISearchInSimulation = false;
-            MATCH_CONST bool PWSearchInSimulation = true;
+            MATCH_CONST bool MateSearchInSimulation = true;
             
             MATCH_CONST double simulationTemperatureChange = SIMULATION_TEMPERATURE_CHANGE;
             MATCH_CONST double simulationTemperaturePlay = SIMULATION_TEMPERATURE_PLAY;

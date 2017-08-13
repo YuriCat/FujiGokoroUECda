@@ -96,6 +96,14 @@ int main(int argc, char* argv[]){ // for UECda
             Settings::simulationPlayModel = true;
         }else if(!strcmp(argv[c], "-npm")){ // no play modeling
             Settings::simulationPlayModel = false;
+        }else if(!strcmp(argv[c], "-l2r")){ // L2 search on the root state
+            Settings::L2SearchOnRoot = true;
+        }else if(!strcmp(argv[c], "-nol2r")){ // no L2 search on the root state
+            Settings::L2SearchOnRoot = false;
+        }else if(!strcmp(argv[c], "-mater")){ // Mate search on the root state
+            Settings::MateSearchOnRoot = true;
+        }else if(!strcmp(argv[c], "-nomater")){ // no Mate search on the root state
+            Settings::MateSearchOnRoot = false;
         }else if(!strcmp(argv[c], "-t")){ // temperarure
             Settings::simulationTemperaturePlay = atof(argv[c + 1]);
             Settings::temperaturePlay = atof(argv[c + 1]);
@@ -104,14 +112,14 @@ int main(int argc, char* argv[]){ // for UECda
             Settings::simulationAmplifyCoef = atof(argv[c + 1]);
         }else if(!strcmp(argv[c], "-ae")){ // softmax amplify exponent
             Settings::simulationAmplifyExponent = atof(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-l2s")){ // L2 search in simulation
+        }else if(!strcmp(argv[c], "-l2s")){ // L2 search in simulations
             Settings::L2SearchInSimulation = true;
-        }else if(!strcmp(argv[c], "-nol2s")){ // no L2 search in simulation
+        }else if(!strcmp(argv[c], "-nol2s")){ // no L2 search in simulations
             Settings::L2SearchInSimulation = false;
-        }else if(!strcmp(argv[c], "-pws")){ // PW search in simulation
-            Settings::PWSearchInSimulation = true;
-        }else if(!strcmp(argv[c], "-nopws")){ // no PW search in simulation
-            Settings::PWSearchInSimulation = false;
+        }else if(!strcmp(argv[c], "-mates")){ // Mate search in simulations
+            Settings::MateSearchInSimulation = true;
+        }else if(!strcmp(argv[c], "-nomates")){ // no Mate search in simulations
+            Settings::MateSearchInSimulation = false;
         }else if(!strcmp(argv[c], "-ss")){ // selector in simulation
             std::string selectorName = std::string(argv[c + 1]);
             if(!strcmp(argv[c + 1], "e")){ // exp
@@ -530,7 +538,7 @@ int main(int argc, char* argv[]){ // for UECda
         
         // スタッツ進行
         field.feedResult();
-        field.feedMyStats(field.myDcl, field.myStats);
+        field.feedMyStats();
         
 #ifdef LOGGING
         game_log.infoNewClass() = field.infoNewClass;

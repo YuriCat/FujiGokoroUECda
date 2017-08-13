@@ -527,8 +527,9 @@ namespace UECda{
                        const Hand& myHand, const Hand& opsHand,
                        const Board& argBd, const FieldAddInfo& fieldInfo){
         //DERR << "judge" << endl;
+        // 簡単詰み
         if(TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeMate_Easy_NF(myHand)){
-            return true; // 簡単詰み
+            return true;
         }
         // 中程度詰み
         if(TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeHandPW_NF(myHand, opsHand, argBd)){
@@ -568,6 +569,7 @@ namespace UECda{
                         if(dominatesHand(mv.mv(), opsHand, argBd)){
                             if(judgeHandPW_NF(nextHand, opsHand, argBd))return true;
                         }else{
+                            // 支配的でない場合、この役を最後に出すことを検討
                             if(judgeHandPPW_NF(nextHand.cards, nextHand.pqr, nextHand.jk, opsHand.nd, argBd))return true;
                         }
                     }
@@ -582,7 +584,7 @@ namespace UECda{
                        const Hand& myHand, const Hand& opsHand,
                        const Board& argBd, const FieldAddInfo& fieldInfo){
         
-        if(TRI_BOOL_YES(IS_UNRIVALED, fieldInfo.isUnrivaled())){
+        if(TRI_BOOL_YES(IS_UNRIVALED, fieldInfo.isUnrivaled())){ // 独断場のとき
             mv.setDO(); // 支配フラグ付加
             if(mv.isPASS()){
                 Board bd = argBd;
@@ -591,7 +593,7 @@ namespace UECda{
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                 return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand, bd, nextFieldInfo);
             }else{
-                if(mv.qty() >= myHand.qty){ return true; }
+                if(mv.qty() >= myHand.qty){ return true; } // あがり
                 Hand nextHand;
                 Board bd = argBd;
                 FieldAddInfo nextFieldInfo;

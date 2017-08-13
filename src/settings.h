@@ -57,6 +57,10 @@ constexpr int N_REWARD_CALCULATED_GAMES = 15;
 #define USE_L2BOOK // ラスト2人置換表を使う
 //#define USE_LNCIBOOK // 3人以上の完全情報置換表を使う
 
+// プレー関数メインの設定
+#define SEARCH_ROOT_MATE // 必勝探索を行う
+#define SEARCH_ROOT_L2 // ラスト2人の全読みを行う
+
 // プレイアウト中の設定(学習時にも関係するので注意)
 #define SEARCH_LEAF_MATE // プレイアウト末端で必勝探索を行う
 #define SEARCH_LEAF_L2 // プレイアウト末端でラスト2人の全読みを行う

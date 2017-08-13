@@ -31,7 +31,7 @@ namespace UECda{
     
     enum{
         ORDER_NORMAL = 0, ORDER_REVERSED = 1,
-        ORDER_BOTH = 2// 永続的性質演算で使う
+        ORDER_BOTH = 2 // 永続的性質演算で使う
     };
     
     constexpr int flipOrder(Order ord)noexcept{ return ORDER_NORMAL + ORDER_REVERSED - ord; }
@@ -2586,6 +2586,8 @@ namespace UECda{
             }
             if(sn != SUITNUM_X){
                 s |= SuitNumToSuits(sn);
+            }else{ // クインタプル
+                jk = true;
             }
             ++ns;
         }
@@ -2618,7 +2620,21 @@ namespace UECda{
         }
         // joker
         if(jk){
-            if(mv.isSeq()){
+            if(!mv.isSeq()){
+                uint32_t jks = SUITS_NULL;
+                for(; i < str.size(); ++i){
+                    char c = str[i];
+                    if(c == ')'){ break; }
+                    int sn = CharToSuitNumM(c);
+                    if(sn == SUITNUM_NONE){
+                        CERR << "illegal joker-suit" << c << " from " << str << endl;
+                        return MOVE_NONE;
+                    }
+                    jks |= SuitNumToSuits(sn);
+                }
+                if(jks == SUITS_NULL)jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
+                mv.setJokerSuits(jks);
+            }else{
                 int jkr = RANK_NONE;
                 for(; i < str.size(); ++i){
                     char c = str[i];
@@ -2632,19 +2648,6 @@ namespace UECda{
                 }
                 mv.setJokerRank(jkr);
                 mv.setJokerSuits(mv.suits());
-            }else{
-                uint32_t jks = SUITS_NULL;
-                for(; i < str.size(); ++i){
-                    char c = str[i];
-                    if(c == ')'){ break; }
-                    int sn = CharToSuitNumM(c);
-                    if(sn == SUITNUM_NONE){
-                        CERR << "illegal joker-suit" << c << " from " << str << endl;
-                        return MOVE_NONE;
-                    }
-                    jks |= SuitNumToSuits(sn);
-                }
-                mv.setJokerSuits(jks);
             }
         }
         mv.setEffects();

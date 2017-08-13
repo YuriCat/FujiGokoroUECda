@@ -480,29 +480,39 @@ namespace UECda{
 						if(bd.afterTmpOrder(move) != ORDER_NORMAL){ mi->setTmpOrderRev(); }
 						if(bd.afterSuitsLocked(move)){ mi->setSuitLock(); }
 						
-                        // 必勝判定
-                        if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fInfo)){
-                            mi->setMate(); fInfo.setMate();
+#ifdef SEARCH_ROOT_MATE
+                        if(Settings::MateSearchOnRoot){
+                            // 必勝判定
+                            DERR << *mi << endl;
+                            if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fInfo)){
+                                mi->setMate(); fInfo.setMate();
 #ifndef CHECK_ALL_MOVES
-                            break;
+                                break;
 #endif
+                            }
                         }
-                        if(tfield.getNAlivePlayers() == 2){
-							// L2の場合はL2判定
-							L2Judge lj(400000, searchBuffer);
-                            int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fInfo);
-                            //cerr << l2Result << endl;
-							if(l2Result == L2_WIN){ // 勝ち
-                                DERR << "l2win!" << endl;
-								mi->setL2Mate(); fInfo.setL2Mate();
-                                DERR << fInfo << endl;
-#ifndef CHECK_ALL_MOVES
-								break;
 #endif
-							}else if(l2Result == L2_LOSE){
-								mi->setL2GiveUp();
-							}
-						}
+                        
+#ifdef SEARCH_ROOT_L2
+                        if(Settings::L2SearchOnRoot){
+                            if(tfield.getNAlivePlayers() == 2){
+                                // L2の場合はL2判定
+                                L2Judge lj(400000, searchBuffer);
+                                int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fInfo);
+                                //cerr << l2Result << endl;
+                                if(l2Result == L2_WIN){ // 勝ち
+                                    DERR << "l2win!" << endl;
+                                    mi->setL2Mate(); fInfo.setL2Mate();
+                                    DERR << fInfo << endl;
+#ifndef CHECK_ALL_MOVES
+                                    break;
+#endif
+                                }else if(l2Result == L2_LOSE){
+                                    mi->setL2GiveUp();
+                                }
+                            }
+                        }
+#endif
 						
 						// 最小分割数の減少量
 						mi->setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
@@ -510,20 +520,28 @@ namespace UECda{
 					
 					
 					// 結果を報告
-					if(tfield.getNAlivePlayers() == 2){
-                        // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
-                        CERR << fInfo << endl;
-						if(fInfo.isMate()){
-							field.setMyL2Mate();
-						}else{
-							fInfo.setL2GiveUp();
-							field.setMyL2GiveUp();
-						}
-					}else{
-						if(fInfo.isMate()){
-							field.setMyMate();
-						}
-					}
+#ifdef SEARCH_ROOT_L2
+                    if(Settings::L2SearchOnRoot){
+                        if(tfield.getNAlivePlayers() == 2){
+                            // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
+                            // ただしL2探索を行う場合のみ
+                            CERR << fInfo << endl;
+                            if(fInfo.isL2Mate()){
+                                field.setMyL2Mate();
+                            }else{
+                                fInfo.setL2GiveUp();
+                                field.setMyL2GiveUp();
+                            }
+                        }
+                    }
+#endif
+#ifdef SEARCH_ROOT_MATE
+                    if(Settings::MateSearchOnRoot){
+                        if(fInfo.isMate()){
+                            field.setMyMate();
+                        }
+                    }
+#endif
 					
 					// 着手候補一覧表示
 					CERR << "My Cards : " << OutCards(myCards) << endl << fInfo << endl;

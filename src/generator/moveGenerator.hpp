@@ -1208,8 +1208,13 @@ op;\
         return 1;
     }
     
-#define GEN_BASE(q, s, op) mv->setNULL();\
-    mv->setGroupByRank4x(q, r4x, s);op;if(r4x == RANK4X_8){mv->setEight();}++mv;
+#define GEN_BASE(q, s, op) {mv->setNULL();\
+mv->setGroupByRank4x(q, r4x, s);\
+op;\
+if(r4x == RANK4X_8){ mv->setEight(); }\
+if(q >= 4){ mv->setRev(); }\
+++mv;}
+
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
     
     template<class move_t>
@@ -1256,8 +1261,8 @@ op;\
                     case 1: break;
                     case 2: break;
                     case 3:{ if(bd.suitsLocked() && s != 3)break;
-                        GEN_J(2, 3, 1);
                         GEN_J(2, 3, 2);
+                        GEN_J(2, 3, 1);
                     }break;
                     case 4: break;
                     case 5:{ if(bd.suitsLocked() && s != 5)break;
@@ -1269,9 +1274,9 @@ op;\
                         GEN_J(2, 6, 4);
                     }break;
                     case 7:{ if(bd.suitsLocked() && s != 7)break;
-                        GEN_J(2, 7, 1);
-                        GEN_J(2, 7, 2);
-                        GEN_J(2, 7, 4);
+                        GEN_J(3, 7, 1);
+                        GEN_J(3, 7, 2);
+                        GEN_J(3, 7, 4);
                     }break;
                     case 8: break;
                     case 9:{ if(bd.suitsLocked() && s != 9)break;
@@ -1283,29 +1288,29 @@ op;\
                         GEN_J(2, 10, 8);
                     }break;
                     case 11:{ if(bd.suitsLocked() && s != 11)break;
-                        GEN_J(2, 11, 1);
-                        GEN_J(2, 11, 2);
-                        GEN_J(2, 11, 8);
+                        GEN_J(3, 11, 1);
+                        GEN_J(3, 11, 2);
+                        GEN_J(3, 11, 8);
                     }break;
                     case 12:{ if(bd.suitsLocked() && s != 12)break;
                         GEN_J(2, 12, 4);
                         GEN_J(2, 12, 8);
                     }break;
                     case 13:{ if(bd.suitsLocked() && s != 13)break;
-                        GEN_J(2, 13, 1);
-                        GEN_J(2, 13, 4);
-                        GEN_J(2, 13, 8);
+                        GEN_J(3, 13, 1);
+                        GEN_J(3, 13, 4);
+                        GEN_J(3, 13, 8);
                     }break;
                     case 14:{ if(bd.suitsLocked() && s != 14)break;
-                        GEN_J(2, 14, 2);
-                        GEN_J(2, 14, 4);
-                        GEN_J(2, 14, 8);
+                        GEN_J(3, 14, 2);
+                        GEN_J(3, 14, 4);
+                        GEN_J(3, 14, 8);
                     }break;
                     case 15:{ if(bd.suitsLocked() && s != 15)break;
-                        GEN_J(2, 15, 1);
-                        GEN_J(2, 15, 2);
-                        GEN_J(2, 15, 4);
-                        GEN_J(2, 15, 8);
+                        GEN_J(4, 15, 1);
+                        GEN_J(4, 15, 2);
+                        GEN_J(4, 15, 4);
+                        GEN_J(4, 15, 8);
                     }break;
                     default: UNREACHABLE; break;
                 }

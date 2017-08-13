@@ -41,7 +41,8 @@ namespace UECda{
         Cards remCards; // 全体
         
         // 宣言
-        PlayerDeclarations myDcl; // 自分の宣言。ものによっては間違っていることも許容
+        int mateClass; // 初めてMATEと判定した階級
+        int L2Class; // L2において判定した階級
         
         // 自分の決定手を記録(現在未使用)
         Stack<Move, 5> nextMoves;
@@ -52,10 +53,9 @@ namespace UECda{
         FieldAddInfo fInfo;
         
         // 以下クライアントの個人的スタッツ
-        uint32_t playRejects;
-        uint32_t changeRejects;
-        std::array<std::array<uint32_t, 2>, 3> myL2Result; // (勝利宣言, 敗戦宣言, 無宣言) × (勝利, 敗戦)
-        std::array<uint32_t, 2> myDclClassMiss; // L2以外での順位宣言失敗, 実際はもっと上 - 実際はもっと下
+        uint32_t playRejects, changeRejects; // リジェクト
+        std::array<std::array<uint32_t, 3>, 2> myL2Result; // (勝利宣言, 無宣言, 敗戦宣言) × (勝利, 敗戦)
+        std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> myMateResult; // MATEの宣言結果
         
         std::array<int, 64> myScore64; // ここ64試合の自分の得点。index は game_num % 64
         int myScore64Sum; // 合計
@@ -153,35 +153,18 @@ namespace UECda{
         
         
         void setMyMate()noexcept{ // 詰み宣言
-            if(!myDcl.isMate()){
-                myDcl.setMate();
-                myDcl.fixDclClass(getBestClass());
-            }
+            if(mateClass == -1)mateClass = getBestClass();
         }
-        void setMyL2Mate(){ // L2詰み宣言
-            if(!myDcl.isMate()){
-                myDcl.fixDclClass(getBestClass());
-            }
-            if(!myDcl.isL2GiveUp()){
-                DERR << "My L2MATE Declaration" << endl;
-                myDcl.setL2Mate();
-            }
+        void setMyL2Mate()noexcept{ // L2詰み宣言
+            if(L2Class == -1)L2Class = N_PLAYERS - 2;
         }
-        void setMyL2GiveUp(){ // L2敗北宣言
-            if(!myDcl.isL2Mate()){
-                DERR << "My L2GIVEUP Declaration" << endl;
-                myDcl.setL2GiveUp();
-            }
+        void setMyL2GiveUp()noexcept{ // L2敗北宣言
+            if(L2Class == -1)L2Class = N_PLAYERS - 1;
         }
-        
-        uint32_t isMyMate()const noexcept{ return myDcl.isMate();}
-        
-        void setMyDclClass(int cl)noexcept{ myDcl.setDclClass(cl); }
-        uint32_t getMyDclClass()const noexcept{ return myDcl.getDclClass(); }
         
         // 客観情報関連
         uint32_t getRivalPlayersFlag()const noexcept{
-            // ライバルプレーヤー集合を得る
+            // ライバルプレーヤー(自分以外のプレーヤーの中の最上位)集合を得る
             uint32_t ret = 0U;
             int best = 99999;
             for(int p = 0; p < N_PLAYERS; ++p){
@@ -329,51 +312,28 @@ namespace UECda{
         
         void feedPlayRejection()noexcept{ ++playRejects; }
         void feedChangeRejection()noexcept{ ++changeRejects; }
-        void feedL2Result(const PlayerDeclarations& dcl, bool won){
-            assert(!(dcl.isL2Mate() && dcl.isL2GiveUp())); // 2重宣言
-            if(dcl.isL2Mate()){
-                if(won){
-                    ++myL2Result[0][0];
-                }else{
-                    ++myL2Result[0][1];
-                    cerr << "L2 Miss!" << endl; //getchar();
-                }
-            }else if(dcl.isL2GiveUp()){
-                if(won){
-                    ++myL2Result[1][0];
-                    cerr << "L2 Lucky!" << endl; //getchar();
-                }else{
-                    ++myL2Result[1][1];
-                }
-            }else{
-                if(won){
-                    ++myL2Result[2][0];
-                }else{
-                    ++myL2Result[2][1];
-                }
+        void feedL2Result(int realClass){
+            int index = (L2Class == -1) ? 1 : (L2Class == N_PLAYERS - 1 ? 2 : 0);
+            if(L2Class != -1){
+                if(L2Class > realClass)cerr << "L2 Lucky!" << endl;
+                if(L2Class < realClass)cerr << "L2 Miss!" << endl;
             }
+            myL2Result[realClass - (N_PLAYERS - 2)][index] += 1;
         }
-        void feedMyDclClassMiss(int dclClass, int realClass){
-            if(dclClass != realClass){
-                if(dclClass < N_PLAYERS - 2){
-                    cerr << "Class Declaration Miss! DCL:" << dclClass << " REAL:" << realClass << endl;
-                    //getchar();
-                }
-                if(dclClass > realClass){
-                    ++myDclClassMiss[0];
-                }else{
-                    ++myDclClassMiss[1];
-                }
+        void feedMyMateClass(int realClass){
+            if(mateClass != realClass){ // MATE宣言失敗
+                cerr << "Mate Miss! DCL:" << mateClass;
+                cerr << " REAL:" << realClass << endl;
             }
+            myMateResult[realClass][mateClass] += 1;
         }
         
-        void feedMyStats(const PlayerDeclarations& dcl, const MiniStats& st){
-            if(st.getNewClass() >= N_PLAYERS - 2){
-                feedL2Result(dcl, (st.getNewClass() < N_PLAYERS - 1) ? true : false);
+        void feedMyStats(){
+            if(myStats.getNewClass() >= N_PLAYERS - 2){ // ラスト2人
+                feedL2Result(myStats.getNewClass());
             }
-            if(dcl.isMate() || dcl.isGiveUp()){
-                // 順位確定宣言あり
-                feedMyDclClassMiss(dcl.getDclClass(), st.getNewClass());
+            if(mateClass != -1){ // MATE宣言あり
+                feedMyMateClass(myStats.getNewClass());
             }
         }
         
@@ -404,14 +364,10 @@ namespace UECda{
         // 初期化
         void initMatch(){
             CommonField::initMatch();
-            playRejects = 0U;
-            changeRejects = 0U;
+            playRejects = changeRejects = 0;
             
-            for(size_t i = 0; i < myL2Result.size(); ++i){
-                myL2Result[i].fill(0);
-            }
-            
-            myDclClassMiss.fill(0);
+            for(auto& a : myMateResult)a.fill(0);
+            for(auto& a : myL2Result)a.fill(0);
             
             myScore64Sum = 0;
             myScore64.fill(-1); // 結果無しを表現
@@ -421,16 +377,12 @@ namespace UECda{
         void initGame(){
             CommonField::initGame();
             
-            myDcl.init();
-            myDcl.setDclClass(N_PLAYERS - 1);
+            mateClass = L2Class = -1;
             
             myStats.init();
 
-            myCards = CARDS_NULL;
-            sentCards = CARDS_NULL;
-            recvCards = CARDS_NULL;
-            myDealtCards = CARDS_NULL;
-            
+            myDealtCards = myCards = CARDS_NULL;
+            sentCards = recvCards = CARDS_NULL;
             remCards = CARDS_ALL;
 
             nextMoves.init();
@@ -477,19 +429,19 @@ namespace UECda{
             
             cerr << "My Stats" << endl;
             
-            cerr << "Change-Rejection by server : " << changeRejects << endl;
-            cerr << "Play-Rejection by server : " << playRejects << endl;
+            cerr << "change rejection by server : " << changeRejects << endl;
+            cerr << "play rejection by server : " << playRejects << endl;
             
-            cerr << "L2 Result : ";
-            cerr << " DCL_WIN (" << myL2Result[0][0] << "-" << myL2Result[0][1] << ")";
-            cerr << " DCL_LOSE (" << myL2Result[1][0] << "-" << myL2Result[1][1] << ")";
-            cerr << " NODCL (" << myL2Result[2][0] << "-" << myL2Result[2][1] << ")";
-            cerr << endl;
-            
-            cerr << "Declared Class Miss : ";
-            cerr << " ROSE (" << myDclClassMiss[0] << ")";
-            cerr << " FELL (" << myDclClassMiss[1] << ")";
-            cerr << endl << endl;
+            cerr << "L2 result : " << endl;
+            for(auto& a : myL2Result){
+                for(auto i : a)cerr << i << " ";
+                cerr << endl;
+            }
+            cerr << "mate result : " << endl;
+            for(auto& a : myMateResult){
+                for(auto i : a)cerr << i << " ";
+                cerr << endl;
+            }cerr << endl;
 //#endif
         }
         
@@ -561,10 +513,10 @@ namespace UECda{
     }
     
     void ClientField::broadcastBP()const{ // プレー前実況
-        cerr <<"********** Before Play **********";
-        cerr <<"<Game> " << getGameNum() << " <Turn> " << getTurnNum();
-        cerr << "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
-        cerr <<"Board : " << bd << endl;
+        cerr << "********** Before Play **********";
+        cerr << "<Game> " << getGameNum() << " <Turn> " << getTurnNum();
+        cerr <<  "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
+        cerr << "Board : " << bd << endl;
         cerr << Out2CardTables(getMyCards(), subtrCards(getRemCards(), getMyCards()));
         broadcastPlayerState();
     }
