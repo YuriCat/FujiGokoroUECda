@@ -58,12 +58,12 @@ int outputMateJudgeResult(){
         myHand.setAll(myCards);
         oppHand.setAll(oppCards);
         Board bd = OrderToNullBoard(ORDER_NORMAL);
-        FieldAddInfo fInfo;
-        fInfo.init();
-        fInfo.setFlushLead();
+        FieldAddInfo fieldInfo;
+        fieldInfo.init();
+        fieldInfo.setFlushLead();
         
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
         
         mgCards.genMove(buffer, myCards, bd);
@@ -75,12 +75,12 @@ int outputMateJudgeResult(){
         myHand.setAll(oppCards);
         oppHand.setAll(myCards);
         Board bd = OrderToNullBoard(ORDER_NORMAL);
-        FieldAddInfo fInfo;
-        fInfo.init();
-        fInfo.setFlushLead();
+        FieldAddInfo fieldInfo;
+        fieldInfo.init();
+        fieldInfo.setFlushLead();
         
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
     }
     
@@ -116,7 +116,7 @@ int testRecordL2(const logs_t& mLogs){
              
              cl.start();
              L2Judge judge(65536, buffer);
-             judgeResult = judge.start_judge(myHand, oppHand, bd, field.fInfo);
+             judgeResult = judge.start_judge(myHand, oppHand, bd, field.fieldInfo);
              judgeTime[0] += cl.stop();
              judgeCount += 1;
              
@@ -125,7 +125,7 @@ int testRecordL2(const logs_t& mLogs){
              /*if(mate != pw){
               cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
               cerr << move << " on " << bd << endl;
-              cerr << field.ps << " " << field.fInfo << endl;
+              cerr << field.ps << " " << field.fieldInfo << endl;
               cerr << Out2CardTables(myHand.getCards(), opsHand.getCards());
               cerr << endl;
               getchar();

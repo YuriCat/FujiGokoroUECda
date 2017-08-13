@@ -197,7 +197,6 @@ namespace UECda{
 			}
 			
 			Cards change(uint32_t change_qty){ // 交換関数
-                HeuristicChanger hc;
 				assert(change_qty == 1U || change_qty == 2U);
 				
 				Cards changeCards = CARDS_NULL;
@@ -224,7 +223,7 @@ namespace UECda{
                 
                 // 手札レベルで枝刈りする場合
 #ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
-                Cards tmp = hc.pruneCards(myCards, change_qty);
+                Cards tmp = Heuristics::pruneCards(myCards, change_qty);
 #else
                 Cards tmp = myCards;
 #endif
@@ -353,8 +352,6 @@ namespace UECda{
                 PlayouterField tfield;
                 
                 setSubjectiveField(field, &tfield);
-                
-				HeuristicPlayer heu;
 				
 				Move playMove = MOVE_NONE;
 				
@@ -367,7 +364,7 @@ namespace UECda{
 				const int& NMoves = ps.qty;
 				MoveInfo *const mv = ps.getMovePtr();
 				
-				FieldAddInfo& fInfo = ps.fInfo;
+				FieldAddInfo& fieldInfo = tfield.fieldInfo;
 				
                 const int myPlayerNum = field.getMyPlayerNum();
 				const Hand& myHand = tfield.getHand(myPlayerNum);
@@ -434,8 +431,7 @@ namespace UECda{
                         ex_cnt += genNullPass(ps.mv + ps.qty + ex_cnt);
                     }
 					if(containsJOKER(myCards)
-					   && containsS3(opsCards)
-					   ){
+					   && containsS3(opsCards)){
                         if(bd.isGroup()){
 							ex_cnt += genJokerGroup(ps.mv + ps.qty + ex_cnt, myCards, opsCards, bd);
 						}
@@ -454,21 +450,14 @@ namespace UECda{
 					
 					// 場の情報をまとめる
                     assert(tfield.getTurnPlayer() == myPlayerNum);
-                    fInfo.init();
-                    tfield.prepareForPlay();
-					
-					// オーダー固定か否か
-					if(isNoBack(myCards, opsCards) && isNoRev(myCards, opsCards)){ // 革命もJバックもなし
-						DERR << "ORDER SETTLED." << endl;
-						fInfo.settleTmpOrder();
-					}
+                    tfield.prepareForPlay(true);
 					
 					// 着手追加情報を設定
 					// 自分の着手の事なので詳しく調べる
 					
 					int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
 					
-					setDomState(&ps, field); // 先の場も含めて支配状況をまとめて設定
+					setDomState(&ps, tfield); // 先の場も含めて支配状況をまとめて設定
 					
 					for(int m = NMoves - 1; m >= 0; --m){
 						MoveInfo *const mi = &mv[m];
@@ -484,8 +473,8 @@ namespace UECda{
                         if(Settings::MateSearchOnRoot){
                             // 必勝判定
                             DERR << *mi << endl;
-                            if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fInfo)){
-                                mi->setMate(); fInfo.setMate();
+                            if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)){
+                                mi->setMate(); fieldInfo.setMate();
 #ifndef CHECK_ALL_MOVES
                                 break;
 #endif
@@ -496,14 +485,14 @@ namespace UECda{
 #ifdef SEARCH_ROOT_L2
                         if(Settings::L2SearchOnRoot){
                             if(tfield.getNAlivePlayers() == 2){
-                                // L2の場合はL2判定
+                                // 残り2人の場合はL2判定
                                 L2Judge lj(400000, searchBuffer);
-                                int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fInfo);
+                                int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
                                 //cerr << l2Result << endl;
                                 if(l2Result == L2_WIN){ // 勝ち
                                     DERR << "l2win!" << endl;
-                                    mi->setL2Mate(); fInfo.setL2Mate();
-                                    DERR << fInfo << endl;
+                                    mi->setL2Mate(); fieldInfo.setL2Mate();
+                                    DERR << fieldInfo << endl;
 #ifndef CHECK_ALL_MOVES
                                     break;
 #endif
@@ -525,11 +514,11 @@ namespace UECda{
                         if(tfield.getNAlivePlayers() == 2){
                             // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
                             // ただしL2探索を行う場合のみ
-                            CERR << fInfo << endl;
-                            if(fInfo.isL2Mate()){
+                            CERR << fieldInfo << endl;
+                            if(fieldInfo.isL2Mate()){
                                 field.setMyL2Mate();
                             }else{
-                                fInfo.setL2GiveUp();
+                                fieldInfo.setL2GiveUp();
                                 field.setMyL2GiveUp();
                             }
                         }
@@ -537,14 +526,14 @@ namespace UECda{
 #endif
 #ifdef SEARCH_ROOT_MATE
                     if(Settings::MateSearchOnRoot){
-                        if(fInfo.isMate()){
+                        if(fieldInfo.isMate()){
                             field.setMyMate();
                         }
                     }
 #endif
 					
 					// 着手候補一覧表示
-					CERR << "My Cards : " << OutCards(myCards) << endl << fInfo << endl;
+					CERR << "My Cards : " << OutCards(myCards) << endl << fieldInfo << endl;
 					for(int m = 0; m < NMoves; ++m){
 						Move move = mv[m].mv();
 						MoveAddInfo info = MoveAddInfo(mv[m]);
@@ -553,14 +542,14 @@ namespace UECda{
 					//getchar();
 					
 					// 必勝がある場合は必勝着手から1つ選ぶ
-					if(fInfo.isMate()){
-						Move mateMove = heu.chooseMateMove(&ps, NMoves, field, &dice);
+					if(fieldInfo.isMate()){
+                        Move mateMove = Heuristics::chooseMateMove(&ps, NMoves, field, fieldInfo, &dice);
 						playMove = mateMove;
 					}
 					
 #ifndef POLICY_ONLY
                     // モンテカルロ着手決定
-					if(playMove == MOVE_NONE && !fInfo.isGiveUp() && (tfield.getNAlivePlayers() > 2)){
+					if(playMove == MOVE_NONE && !fieldInfo.isGiveUp() && tfield.getNAlivePlayers() > 2){
 						
 						if(rp_mc == 0){
 							// 最初の場合は世界プールを整理する
@@ -570,7 +559,7 @@ namespace UECda{
 						}
 						
 						MonteCarloPlayer mcp;
-						Move MCMove = mcp.play(ps, NMoves, field, &shared, threadTools);
+						Move MCMove = mcp.play(ps, NMoves, field, fieldInfo, &shared, threadTools);
 						
 						playMove = MCMove;
 						
@@ -579,7 +568,6 @@ namespace UECda{
 #endif
                     // 方策関数による着手決定
                     if(playMove == MOVE_NONE){
-                        field.fInfo = ps.fInfo;
                         int idx = 0;
 #if defined(POLICY_ONLY) && defined(RL_POLICY)
                         idx = playWithPolicy<1>(buf, NMoves, tfield, shared.basePlayPolicy, &dice); // stock mode

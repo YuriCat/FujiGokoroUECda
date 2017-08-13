@@ -1194,13 +1194,13 @@ namespace UECda{
                          
                          if(NMoves > 1){
                              for(int m = 0; m < NMoves; ++m){
-                                 bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, bd, field.fInfo);
+                                 bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, bd, field.fieldInfo);
                                  if(mate){ mv[m].setMate(); }
                              }
                          }
                          
                          // フェーズ(空場0、通常場1、パス支配場2)
-                         const int ph = bd.isNF() ? 0 : (field.fInfo.isPassDom()? 2 : 1);
+                         const int ph = bd.isNF() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
                          
 #ifdef ESTIMATION_BY_TIME
                          if(by_time && field.getTurnNum() != 0 && ph == 1 && chosenMove.isPASS()){

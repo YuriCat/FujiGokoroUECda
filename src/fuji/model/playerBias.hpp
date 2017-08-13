@@ -99,7 +99,7 @@ namespace UECda{
                      return mv.meldPart(), chosenMove.meldPart();
                  });
                  
-                 if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fInfo)){
+                 if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo)){
                      return 0;
                  }
                  

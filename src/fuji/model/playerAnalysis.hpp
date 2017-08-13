@@ -63,7 +63,7 @@ namespace UECda{
                  const Hand& opsHand = field.opsHand[tp];
                  const Cards myCards = myHand.getCards();
                  
-                 FieldAddInfo fInfo = field.fInfo;
+                 FieldAddInfo fieldInfo = field.fieldInfo;
                  
                  if(myCards == CARDS_NULL){ return -1; } // 一応
                  
@@ -77,7 +77,7 @@ namespace UECda{
                  isCM = isL2 = false;
                  
                  // フェーズ(空場0、通常場1、セルフフォロー2)
-                 const int ph = bd.isNF() ? 0 : (fInfo.isPassDom() ? 2 : 1);
+                 const int ph = bd.isNF() ? 0 : (fieldInfo.isPassDom() ? 2 : 1);
                  
                  if(NMoves <= 1){
                      // 合法着手1のときは詳しい解析はしない
@@ -109,9 +109,9 @@ namespace UECda{
                          //支配性判定
                          if(move.isPASS()){
                              mi->setDM();
-                             if(fInfo.isPassDom()){ mi->setDO(); }
+                             if(fieldInfo.isPassDom()){ mi->setDO(); }
                          }else{
-                             if(field.fInfo.isNonPassDom()){
+                             if(field.fieldInfo.isNonPassDom()){
                                  mi->setDALL();
                              }else{
                                  if(dominatesHand(move,opsHand,bd)){
@@ -124,18 +124,18 @@ namespace UECda{
                          }
                          
                          // 必勝判定
-                         bool mate = checkHandMate(0, pmv + NMoves, *mi, myHand, opsHand, bd, fInfo);
+                         bool mate = checkHandMate(0, pmv + NMoves, *mi, myHand, opsHand, bd, fieldInfo);
                          if(mate){
-                             mi->setMate(); fInfo.setMate(); isCM = true;
+                             mi->setMate(); fieldInfo.setMate(); isCM = true;
                          }
                          
                          // L2の場合はL2判定
-                         if(isL2 && (!alrL2) && (!fInfo.isL2Mate())){
+                         if(isL2 && (!alrL2) && (!fieldInfo.isL2Mate())){
                              L2Judge lj(40000, pmv + NMoves);
                              isL2 = true;
-                             int l2Res = lj.start_check(*mi, myHand, opsHand, bd, fInfo);
+                             int l2Res = lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
                              if(l2Res == L2_WIN){//L2WIN
-                                 mi->setL2Mate(); fInfo.setL2Mate();
+                                 mi->setL2Mate(); fieldInfo.setL2Mate();
                              }else if(l2Res == L2_LOSE){
                                  mi->setL2GiveUp();
                              }

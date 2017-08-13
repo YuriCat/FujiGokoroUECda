@@ -292,7 +292,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
         const int NMyCards = myHand.getQty();
         const uint32_t oq = myHand.qty;
         const Cards curPqr = myHand.pqr;
-        const FieldAddInfo& info = field.fInfo;
+        const FieldAddInfo& fieldInfo = field.fieldInfo;
         const int NParty = calcMinNMelds(buf + NMoves, myCards);
         
         // 元々の手札の最低、最高ランク
@@ -409,7 +409,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                     int base = FEA_IDX(POL_HAND_SNOWL);
                     
                     if(!bd.isNF()){
-                        if (info.isUnrivaled()){
+                        if (fieldInfo.isUnrivaled()){
                             base += 166 * 2;
                         }else{
                             base += 166;
@@ -572,7 +572,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 {
                     constexpr int base = FEA_IDX(POL_SUITLOCK_EFFECT);
                     if(!mv.isPASS() && !bd.isNF()){
-                        if((!info.isLastAwake()) && bd.locksSuits(mv.mv())){ // LAでなく、スートロックがかかる
+                        if((!fieldInfo.isLastAwake()) && bd.locksSuits(mv.mv())){ // LAでなく、スートロックがかかる
                             if(mv.qty() > 1){
                                 // 2枚以上のロックは強力
                                 i = base + 2;
@@ -636,10 +636,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 {
                     constexpr int base = FEA_IDX(POL_PASS_DOM);
                     if (mv.isPASS()){
-                        if (info.isPassDom()){
+                        if (fieldInfo.isPassDom()){
                             i = base;
                             Foo(i);
-                            if(!info.isUnrivaled()){
+                            if(!fieldInfo.isUnrivaled()){
                                 i = base + 1;
                                 Foo(i);
                             }
@@ -651,7 +651,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // pass(owner distance)
                 {
                     constexpr int base = FEA_IDX(POL_PASS_OWNER_DISTANCE);
-                    if(mv.isPASS() && !info.isUnrivaled()){
+                    if(mv.isPASS() && !fieldInfo.isUnrivaled()){
                         i = base + (distanceToOwner - 1);
                         Foo(i);
                     }
@@ -683,7 +683,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 {
                     constexpr int base = FEA_IDX(POL_MOVE_S3);
                     if (bd.isSingleJOKER() && mv.isS3Flush()){
-                        i = base + (info.isPassDom() ? 1 : 0);
+                        i = base + (fieldInfo.isPassDom() ? 1 : 0);
                         Foo(i);
                     }
                 }
@@ -695,7 +695,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                     if (mv.isSingleJOKER()){
                         if(containsS3(afterCards)){ // 自分でS3を被せられる
                             i = base + 0;
-                        }else if (info.isLastAwake() || (!containsCard(opsCards, CARDS_S3))){ // safe
+                        }else if (fieldInfo.isLastAwake() || (!containsCard(opsCards, CARDS_S3))){ // safe
                             i = base + 1;
                         }
                         else{ // dangerous
@@ -728,7 +728,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // rf group break
                 {
                     constexpr int base = FEA_IDX(POL_MOVE_RF_GROUP_BREAK);
-                    if(!bd.isNF() && !info.isUnrivaled() && mv.isSingleOrGroup() && !mv.containsJOKER()){
+                    if(!bd.isNF() && !fieldInfo.isUnrivaled() && mv.isSingleOrGroup() && !mv.containsJOKER()){
                         if(myHand.qr[mv.rank()] != mv.qty()){ // 崩して出した
                             if(mv.domInevitably()){ // 8切り
                                 i = base;
@@ -763,7 +763,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 
                 // NF_Dominance Move On PassDom
                 {
-                    if(info.isPassDom()){
+                    if(fieldInfo.isPassDom()){
                         if(mv.domInevitably() || dominatesHand(mv.mv(), opsHand, OrderToNullBoard(order))){
                             i = FEA_IDX(POL_MOVE_NFDOM_PASSDOM);
                             Foo(i);

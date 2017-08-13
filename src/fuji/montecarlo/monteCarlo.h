@@ -123,7 +123,7 @@ namespace UECda{
             int NPlayers;
             int bestClass, worstClass;
             
-            FieldAddInfo fInfo;
+            FieldAddInfo fieldInfo;
             
             MonteCarloChild child[256];
             
@@ -163,7 +163,7 @@ namespace UECda{
             
             template<class playSpace_t, class field_t, class sharedData_t>
             void setPlay(playSpace_t& moves, const int NCands,
-                         const field_t& field, const FieldAddInfo& arg_fInfo,
+                         const field_t& field, const FieldAddInfo& argFieldInfo,
                          const unsigned int maxT,
                          const sharedData_t& shared){
                 
@@ -171,7 +171,7 @@ namespace UECda{
                 setCommon(field, shared);
                 
                 maxTrials = maxT;
-                fInfo = arg_fInfo;
+                fieldInfo = argFieldInfo;
                 
                 NChilds = min(256, NCands); // 多すぎる時はカット
                 

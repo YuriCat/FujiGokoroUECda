@@ -171,7 +171,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          cl.start();
          visitedCards.clear();
          bool pw = judgeCardsPWSlow(buffer, turnPlayer,
-                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fInfo.isFlushLead());
+                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
          judgeTime[1] += cl.stop();
          
          judgeMatrix[pw][mate] += 1;
@@ -179,7 +179,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          /*if(mate != pw){
              cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
              cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fInfo << endl;
+             cerr << field.ps << " " << field.fieldInfo << endl;
              cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
              cerr << field.toString();
              getchar();
@@ -220,14 +220,14 @@ int testRecordMoveMate(const logs_t& mLogs){
          }
          
          cl.start();
-         bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fInfo);
+         bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
          checkTime[0] += cl.stop();
          checkCount += 1;
 
          cl.start();
          visitedCards.clear();
          bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fInfo.isFlushLead());
+                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
          checkTime[1] += cl.stop();
          
          checkMatrix[pw][mate] += 1;
@@ -235,7 +235,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          /*if(mate != pw){
              cerr << "check " << mate << " <-> " << " answer " << pw << endl;
              cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fInfo << endl;
+             cerr << field.ps << " " << field.fieldInfo << endl;
              cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
              cerr << field.toString();
              getchar();
@@ -274,7 +274,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          if(moves <= 1){ return 0; }
          
          cl.start();
-         int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fInfo);
+         int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
          searchTime[0] += cl.stop();
          searchCount += 1;
          
@@ -287,7 +287,7 @@ int testRecordMoveMate(const logs_t& mLogs){
          visitedCards.clear();
          int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
                                          myHand.getCards(), opsHand.getCards(),
-                                         bd, field.ps, bool(field.fInfo.isFlushLead()));
+                                         bd, field.ps, bool(field.fieldInfo.isFlushLead()));
          searchTime[1] += cl.stop();
          
          searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
@@ -313,7 +313,7 @@ int testRecordMoveMate(const logs_t& mLogs){
              }
              cerr << endl;
              cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fInfo << endl;
+             cerr << field.ps << " " << field.fieldInfo << endl;
              cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
              cerr << field.toString();
              getchar();
@@ -353,7 +353,7 @@ int analyzeMateDistribution(const logs_t& mLogs){
          mateMoves.clear();
          visitedCards.clear();
          bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
-                                       myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fInfo.isFlushLead());
+                                       myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
          if(pw){
              mateMovesDistribution[bsf32(mateMoves.size())] += 1;
          }

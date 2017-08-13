@@ -23,6 +23,7 @@ namespace UECda{
             
             template<class playSpace_t, class field_t, class sharedData_t, class threadTools_t>
             Move playSub(playSpace_t& moves, const int NCands, field_t& field,
+                         const FieldAddInfo& fieldInfo,
                          sharedData_t *const pshared, threadTools_t threadTools[]);
             
             template<class field_t, class sharedData_t, class threadTools_t>
@@ -31,12 +32,13 @@ namespace UECda{
             
             template<class playSpace_t, class field_t, class sharedData_t, class threadTools_t>
             Move play(playSpace_t& moves, const int NCands, field_t& field,
+                      const FieldAddInfo& fieldInfo,
                       sharedData_t *const pshared, threadTools_t threadTools[]){
                 // 着手を返す
                 Move ret;
                 mode = 1;
                 ana.start();
-                ret = playSub(moves, NCands, field, pshared, threadTools);
+                ret = playSub(moves, NCands, field, fieldInfo, pshared, threadTools);
                 ana.end(mode);
                 return ret;
             }
@@ -107,13 +109,14 @@ namespace UECda{
         
         template<class playSpace_t, class field_t, class sharedData_t, class threadTools_t>
         Move MonteCarloPlayer::playSub(playSpace_t& ps, const int NCands, field_t& field,
+                                       const FieldAddInfo& fieldInfo,
                                        sharedData_t *const pshared, threadTools_t threadTools[]){
             
             int NActiveCands = NCands;
             
 #ifdef PRUNE_ROOT_PLAY_BY_HEURISTICS
             // まずはヒューリスティック機関に枝刈りを行ってもらう
-            NActiveCands = hp.pruneRoot(&ps, NCands, field);
+            NActiveCands = Heuristics::pruneRoot(&ps, NCands, field);
             if(NActiveCands == 1){
                 // 候補が1つになった
                 return ps.mv[0].mv();
@@ -125,7 +128,7 @@ namespace UECda{
             unsigned int PLAYOUT_MAX = std::min(5000, (int)(pow((double)NActiveCands, 0.8) * 700));
             
             // ルートノード設定
-            root.setPlay(ps, NActiveCands, field, ps.fInfo, PLAYOUT_MAX, *pshared);
+            root.setPlay(ps, NActiveCands, field, fieldInfo, PLAYOUT_MAX, *pshared);
             
             pshared->exp_wr = 0; // 最高報酬0
             

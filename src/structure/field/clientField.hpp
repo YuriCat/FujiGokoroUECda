@@ -50,8 +50,6 @@ namespace UECda{
         // 自分のスタッツ
         MiniStats myStats;
         
-        FieldAddInfo fInfo;
-        
         // 以下クライアントの個人的スタッツ
         uint32_t playRejects, changeRejects; // リジェクト
         std::array<std::array<uint32_t, 3>, 2> myL2Result; // (勝利宣言, 無宣言, 敗戦宣言) × (勝利, 敗戦)

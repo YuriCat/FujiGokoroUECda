@@ -85,7 +85,7 @@ namespace UECda{
                     ASSERT(pfield->isAlive(blackPlayer) && pfield->isAlive(whitePlayer),);
 
                     L2Judge l2(65536, pfield->mv);
-                    int l2Result = l2.start_judge(pfield->hand[blackPlayer], pfield->hand[whitePlayer], pfield->bd, pfield->fInfo);
+                    int l2Result = l2.start_judge(pfield->hand[blackPlayer], pfield->hand[whitePlayer], pfield->bd, pfield->fieldInfo);
 
                     //std::swap(blackPlayer, whitePlayer); <- for debug
 
@@ -151,7 +151,7 @@ namespace UECda{
                         int mates = 0;
                         for(int m = 0; m < pfield->NActiveMoves; ++m){
                             bool mate = checkHandMate(0, pfield->mv + pfield->NActiveMoves, pfield->mv[m],
-                                                      pfield->hand[tp], pfield->opsHand[tp], pfield->bd, pfield->fInfo);
+                                                      pfield->hand[tp], pfield->opsHand[tp], pfield->bd, pfield->fieldInfo);
                             if(mate){ mateIndex[mates++] = m; }
                         }
                         if(mates == 1){
@@ -164,7 +164,7 @@ namespace UECda{
                     if(idxMate != -1){ // mate
                         pfield->setPlayMove(pfield->mv[idxMate]);
                         pfield->playMove.setMate();
-                        pfield->fInfo.setMate();
+                        pfield->fieldInfo.setMate();
                     }else{
                         if (pfield->NActiveMoves <= 1){
                             pfield->setPlayMove(pfield->mv[0]);

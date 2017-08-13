@@ -753,6 +753,28 @@ namespace UECda{
         return out;
     }
     
+    /**************************ルートの手の情報**************************/
+    
+    struct RootAction{
+        
+        bool isChange;
+        Move move;
+        Cards changeCards;
+        
+        double policyScore;
+        double monteCarloScore;
+        
+        std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDistribution;
+    };
+    
+    /**************************ルートの全体の情報**************************/
+    
+    struct RootInfo{
+        std::array<RootAction, N_MAX_MOVES + 64> move;
+        int moves;
+        
+    };
+    
     /**************************着手と情報を一緒に持った集合**************************/
     
     template<class _move_t>
@@ -763,17 +785,14 @@ namespace UECda{
         //MoveInfo mv[SIZE];
         move_t *const mv;
         
-        FieldAddInfo fInfo;
         int qty;
         int activeQty;
         
         move_t playMove;
-        //Stack<move_t, 6> nextMoves;
         
         move_t getMoveById(int id)const{return mv[id];}
         move_t* getMovePtr(){return mv;}
         move_t* getMovePtr(int id){return &mv[id];}
-        FieldAddInfo getFInfo()const{return fInfo;}
         
         void swapById(int id0, int id1){
             std::swap(mv[id0], mv[id1]);

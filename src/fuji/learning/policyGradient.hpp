@@ -157,7 +157,7 @@ namespace UECda{
                          return mv.mv().meldPart() == chosenMove.meldPart();
                      });
                      
-                     if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fInfo) >= 0){                         return 0;
+                     if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0){                         return 0;
                      }
                      
                      double score[N_MAX_MOVES + 1];

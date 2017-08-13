@@ -722,7 +722,7 @@ namespace UECda{
      const Hand& myHand, 
      const Hand& posHand[N_PLAYERS],
      const Board bd,
-     const FieldAddInfo& fInfo){
+     const FieldAddInfo& fieldInfo){
      
      //着手生成
      int NMoves=genMove( buf, myHand.cards, bd );
@@ -730,7 +730,7 @@ namespace UECda{
      for( int m=NMoves-1; m>=0; --m ){
      MoveInfo& tmp=buf[m];
      
-     if( checkHandMate( buf, tmp, myHand, posHand, bd, fInfo )){
+     if( checkHandMate( buf, tmp, myHand, posHand, bd, fieldInfo )){
      return true;
      }
      }
@@ -742,12 +742,12 @@ namespace UECda{
      const Hand& myHand, 
      const Hand& posHand[N_PLAYERS],
      const Board bd,
-     const FieldAddInfo& fInfo){
+     const FieldAddInfo& fieldInfo){
      PW:
      {
      //完全勝利の判定
      int doth,dm;
-     if( fInfo.is)
+     if( fieldInfo.is)
      
      for( int p=0, p<N_PLAYERS; ++p ){
      if( p != player_num ){

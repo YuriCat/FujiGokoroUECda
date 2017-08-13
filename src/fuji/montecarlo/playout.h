@@ -66,7 +66,7 @@ namespace UECda{
             int NMoves;
             int NActiveMoves;
             MoveInfo playMove; // move chosen by player int playout
-            FieldAddInfo fInfo;
+            FieldAddInfo fieldInfo;
 
             // common information
             int turnNum;
@@ -626,40 +626,49 @@ namespace UECda{
                 flags.reset();
             }
 
-            void prepareForPlay()noexcept{
+            void prepareForPlay(bool isRoot = false)noexcept{
                 
                 int tp = getTurnPlayer();
                 
-                fInfo.init();
-                
-                fInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
-                fInfo.setMinNCards(getOpsMinNCards(tp));
-                fInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
-                fInfo.setMaxNCards(getOpsMaxNCards(tp));
+                fieldInfo.init();
+                fieldInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
+                fieldInfo.setMinNCards(getOpsMinNCards(tp));
+                fieldInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
+                fieldInfo.setMaxNCards(getOpsMaxNCards(tp));
                 
                 if(isNF()){
                     if(getNAlivePlayers() == getNAwakePlayers()){ // 空場パスがない
-                        fInfo.setFlushLead();
+                        fieldInfo.setFlushLead();
                     }
                 }else{
                     if(getPMOwner() == tp){ // セルフフォロー
-                        fInfo.setSelfFollow();
+                        fieldInfo.setSelfFollow();
                     }else{
                         if(isSoloAwake()){ // SF ではないが LA
-                            fInfo.setLastAwake();
+                            fieldInfo.setLastAwake();
                         }
                         uint32_t fLPlayer = getFlushLeadPlayer<_NO>();
                         if(fLPlayer == tp){ // 全員パスしたら自分から
-                            fInfo.setFlushLead();
-                            if(fInfo.isLastAwake()){
+                            fieldInfo.setFlushLead();
+                            if(fieldInfo.isLastAwake()){
                             }else{
                                 if(dominatesHand(getBoard(), opsHand[tp])){
                                     // 場が全員を支配しているので、パスをすれば自分から
-                                    fInfo.setBDO();
-                                    fInfo.setPassDom(); // fl && bdo ならパス支配
+                                    fieldInfo.setBDO();
+                                    fieldInfo.setPassDom(); // fl && bdo ならパス支配
                                 }
                             }
                         }
+                    }
+                }
+                
+                if(isRoot){
+                    // オーダー固定か否か
+                    if(isNoBack(getCards(tp), getOpsCards(tp))
+                       && isNoRev(getCards(tp), getOpsCards(tp))){
+                        // 革命もJバックもなし
+                        DERR << "ORDER SETTLED." << endl;
+                        fieldInfo.settleTmpOrder();
                     }
                 }
             }

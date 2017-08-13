@@ -353,13 +353,13 @@ namespace UECda{
                                             
                                             assert(newtp != opsp);
                                             
-                                            FieldAddInfo fInfo;
-                                            fInfo.init();
+                                            FieldAddInfo fieldInfo;
+                                            fieldInfo.init();
                                             
                                             // 流れたときどちらがターンを取るか等指定しておく必要がある
                                             if(nf.bd.isNF()){
                                                 // 流れている場合、newtp
-                                                fInfo.setFlushLead();
+                                                fieldInfo.setFlushLead();
                                             }else{
                                                 // 流れていないので、tpの次に来るaliveなプレーヤー
                                                 // aliveなプレーヤーを探す
@@ -374,14 +374,14 @@ namespace UECda{
                                                 }
                                                 
                                                 if(s == ss){ // sはnewtpの座席
-                                                    fInfo.setFlushLead();
+                                                    fieldInfo.setFlushLead();
                                                 }
                                                 if(nf.isSoloAwake()){
-                                                    fInfo.setLastAwake();
+                                                    fieldInfo.setLastAwake();
                                                 }
                                             }
                                             
-                                            int res = lj.start_judge(field.hand[newtp], field.hand[opsp], nf.bd, fInfo); // L2探索
+                                            int res = lj.start_judge(field.hand[newtp], field.hand[opsp], nf.bd, fieldInfo); // L2探索
                                             if(res == L2_WIN){
                                                 reward->set(newtp, (uint64_t)game_reward[N_PLAYERS - 2]);
                                             }else if(res == L2_LOSE){

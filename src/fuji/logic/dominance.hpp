@@ -297,13 +297,17 @@ namespace UECda{
         // 支配関係のパラメータを一括計算しPlaySpaceに入れる
         // クライアント用に詳しく計算。
         typedef typename playSpace_t::move_t move_t;
+        const int turnPlayer = field.getTurnPlayer();
+        const Cards myCards = field.getCards(turnPlayer);
+        const int NMyCards = field.getNCards(turnPlayer);
+        const Cards opsCards = field.getOpsCards(turnPlayer);
         
         const Board& bd = field.getBoard();
-        FieldAddInfo *const fInfo = &ps->fInfo;
+        const FieldAddInfo& fieldInfo = field.fieldInfo;
         
         const int ord = bd.tmpOrder();
         
-        if(fInfo->isTmpOrderSettled()){
+        if(fieldInfo.isTmpOrderSettled()){
             // オーダー固定
             
             // 現在オーダーについてのみ調べる
@@ -321,11 +325,11 @@ namespace UECda{
                 const uint32_t qty = mv->qty();
                 
                 // 空場
-                if((qty > fInfo->getMaxNCards())
-                   || ::dominatesCards(mv->mv(), field.getOpsCards(), OrderToNullBoard(ord))){
+                if((qty > fieldInfo.getMaxNCards())
+                   || ::dominatesCards(mv->mv(), opsCards, OrderToNullBoard(ord))){
                     mv->setP_NFDO(); // 永続的空場他支配
                 }
-                //if((qty > fInfo.getMaxNCards()) || ::dominatesCards(mv,subtrCards(myCards,mv.extract()),makeBoardNF(ord))){
+                //if((qty > fieldInfo.getMaxNCards()) || ::dominatesCards(mv,subtrCards(myCards,mv.extract()),makeBoardNF(ord))){
                 //	mInfo->setP_NFDM();//永続的空場自己支配
                 //}
             }
@@ -346,10 +350,10 @@ namespace UECda{
                 if(mv->cards() == (CARDS_S3 | CARDS_JOKER)){ mv->setP_NFDALL_only(); continue; } // 永続的完全支配と等価(特別)
                 
                 const uint32_t qty = mv->qty();
-                if(qty > fInfo->getMaxNCards()){
+                if(qty > fieldInfo.getMaxNCards()){
                     mv->setP_NFDO();
-                }else if(::dominatesCards(mv->mv(), field.getOpsCards(), OrderToNullBoard(ord))){
-                    if(::dominatesCards(mv->mv(), field.getOpsCards(), OrderToNullBoard(flipOrder(ord)))){
+                }else if(::dominatesCards(mv->mv(), opsCards, OrderToNullBoard(ord))){
+                    if(::dominatesCards(mv->mv(), opsCards, OrderToNullBoard(flipOrder(ord)))){
                         mv->setP_NFDO(); // 永続的空場他支配
                     }else{
                         mv->setE_NFDO(); // 一時的空場他支配
@@ -367,16 +371,13 @@ namespace UECda{
             
             const uint32_t qty = mv->qty();
             
-            if(qty > fInfo->getMaxNCardsAwake()
-               || dominatesCards(mv->mv(), field.getOpsCards(), bd)){
+            if(qty > fieldInfo.getMaxNCardsAwake()
+               || dominatesCards(mv->mv(), opsCards, bd)){
                 mv->setDO();//当座他支配
-                if(mv->isPASS()){
-                    fInfo->setPassDom();
-                }
             }
             if(mv->isPASS()
-               || qty > field.getNMyCards()-qty
-               || dominatesCards(mv->mv(), field.getMyCards() - mv->cards(), bd)){
+               || qty > NMyCards - qty
+               || dominatesCards(mv->mv(), myCards - mv->cards(), bd)){
                 mv->setDM();//当座自己支配
             }
         }
