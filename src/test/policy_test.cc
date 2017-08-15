@@ -20,8 +20,8 @@ using namespace UECda::Fuji;
 
 XorShift64 dice((unsigned int)time(NULL));
 
-ChangePolicy changePolicy;
-PlayPolicy playPolicy;
+ChangePolicy<policy_value_t> changePolicy;
+PlayPolicy<policy_value_t> playPolicy;
 
 using namespace UECda::PlayPolicySpace;
 using namespace UECda::ChangePolicySpace;
@@ -99,7 +99,8 @@ int testChangePolicyWithRecord(const logs_t& mLog){
         double sum = 0;
         for(int i = 0; i < 2; ++i){
             double prob = sameCount[p][i] / (double)trials[p][i];
-            cerr << " " << prob << " in " << time[p][i] / (double)trials[p][i] << " clock";
+            cerr << " " << prob << " (" << sameCount[p][i] << " / " << trials[p][i] << ")";
+            cerr << " in " << time[p][i] / (double)trials[p][i] << " clock";
             sum += prob;
         }
         sum /= 2;
@@ -144,8 +145,9 @@ int testPlayPolicyWithRecord(const logs_t& mLog){
     
     for(int p = 0; p < N_PLAYERS; ++p){
         cerr << mLog.player(p);
-        cerr << " " << sameCount[p] / (double)trials[p] << " in " << time[p] / (double)trials[p] << " clock";
-        cerr << endl;
+        double prob = sameCount[p] / (double)trials[p];
+        cerr << " " << prob << " (" << sameCount[p] << " / " << trials[p] << ")";
+        cerr << " in " << time[p] / (double)trials[p] << " clock" << endl;
     }
     return 0;
 }

@@ -49,24 +49,24 @@ namespace LearningSettings{
 
 class LearningSpace{
 private:
-    ChangePolicyLearner changeLearner_;
-    PlayPolicyLearner playLearner_;
+    ChangePolicyLearner<double> changeLearner_;
+    PlayPolicyLearner<double> playLearner_;
     
 public:
     // 相手プレーヤー別に呼び出しを分ける想定もあるので引数を取れるようにはしておく
     auto& changeLearner(int p = 0)noexcept{ return changeLearner_; }
     auto& playLearner(int p = 0)noexcept{ return playLearner_; }
     
-    LearningSpace(ChangePolicy *const pcp,
-                  PlayPolicy *const ppp){
+    LearningSpace(ChangePolicy<double> *const pcp,
+                  PlayPolicy<double> *const ppp){
         changeLearner_.setClassifier(pcp);
         playLearner_.setClassifier(ppp);
     }
 };
 
 // 重いのでグローバルに置く
-ChangePolicy changePolicy;
-PlayPolicy playPolicy;
+ChangePolicy<double> changePolicy;
+PlayPolicy<double> playPolicy;
 std::vector<ThreadTools> threadTools;
 std::vector<LearningSpace> ls;
 

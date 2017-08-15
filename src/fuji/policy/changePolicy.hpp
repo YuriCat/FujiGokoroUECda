@@ -59,7 +59,6 @@ namespace UECda{
             1,
             2,
             
-            //16 * 16 * 20,
             16 * 16 * N_PATTERNS_SUITS_SUITS,
         };
         constexpr int POL_NUM(unsigned int fea){
@@ -72,7 +71,8 @@ namespace UECda{
         
 #define LINEOUT(feature, str) {out << str << endl; int base = POL_IDX(feature); for (int i = 0; i < POL_NUM(feature); ++i){ os(base + i); }out << endl;}
         
-        int commentToPolicyParam(std::ostream& out, const double param[POL_NUM_ALL]){
+        template<typename T>
+        int commentToPolicyParam(std::ostream& out, const T param[POL_NUM_ALL]){
             auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
             
             out << "****** CHANGE POLICY ******" << endl;
@@ -107,10 +107,11 @@ namespace UECda{
         
     //using ChangePolicy = SoftmaxPolicy<ChangePolicySpace::POL_NUM_ALL, 2>;
     //using ChangePolicyLearner = SoftmaxPolicyLearner<ChangePolicy>;
-    using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::POL_NUM_ALL, 2, 1>;
-    using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy>;
+    template<typename T> using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::POL_NUM_ALL, 2, 1, T>;
+    template<typename T> using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy<T>>;
     
-    int foutComment(const ChangePolicy& pol, const std::string& fName){
+    template<class T>
+    int foutComment(const ChangePolicy<T>& pol, const std::string& fName){
         std::ofstream ofs(fName, std::ios::out);
         return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
@@ -144,11 +145,21 @@ namespace UECda{
         
         const Cards pqr = CardsToPQR(myCards);
         
+        // インデックス計算用
+        //bits256_t myCardsL = bits256_t::zero();
+        //for(int r = 0; r < 4; ++r)myCardsL[r] = pdep64(myCards >> (r * 16), 0x0F0F0F0F);
+        
+        //bits256_t ccIndex = bits256_t::zero();
+        //bits128_t dstIndex = bits256_t::filled16();
+        
+        //typename policy_t::real_t *baseAddress = pol.param_ + POL_IDX(POL_CHANGE_CC) + ;
+        
+        
         for(int m = 0; m < NChanges; ++m){
             
             pol.template initCalculatingCandidateScore();
             
-            double s = 0;
+            typename policy_t::real_t s = 0;
             int i;
             const Cards changeCards = change[m];
             const Cards changePlainCards = maskJOKER(changeCards);
@@ -315,16 +326,6 @@ namespace UECda{
                             + r * N_PATTERNS_SUITS_SUITS
                             + ((afterPqr >> (r * 4)) & SUITS_ALL));  // suits - suits のパターン数より少ないのでOK
                     }
-                    /*FooX(base
-                         + rank * 16 * N_PATTERNS_SUITS_SUITS
-                         + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                         + 1,
-                         -1);*/
-                    /*Foo(base
-                        + rank * 16 * N_PATTERNS_SUITS_SUITS
-                        + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                        + 0);*/
-                    // 他のとこでやってくれるからここではいらない
                 }
                 
                 // 交換するランクのカードと他のカードとの関係

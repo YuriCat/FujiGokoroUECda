@@ -86,21 +86,21 @@ namespace UECda{
 
             GamePhase phase;
 
-            // common information of cards
-            // Cards used[N_PLAYERS];
+            // オープンな手札情報
+            Cards usedCards[N_PLAYERS];
 
             uint32_t remQty;
             Cards remCards;
             uint64_t remHash;
 
-            // hash_value
-            //uint64_t hash_org;
-            //uint64_t hash_prc;
-            //uint64_t hash_ri;
+            // 局面ハッシュ値
+            uint64_t originalKey; // 交換後の手札配置のハッシュ値
+            uint64_t recordKey; // 着手の試合進行のハッシュ値(現在は使用済み手札集合のみ)
+            uint64_t boardKey; // 現時点の場のハッシュ値
+            uint64_t stateKey; // 現時点で誰がパスをしていて、手番が誰かを示すハッシュ値
+            uint64_t numCardsKey; // 各プレーヤーの手札枚数のハッシュ値
 
-            //uint64_t hash_bd;
-
-            // hands
+            // 手札
             Hand hand[N_PLAYERS];
             Hand opsHand[N_PLAYERS];
             
@@ -184,17 +184,14 @@ namespace UECda{
             uint32_t getPMOwner()const noexcept{ return infoSpecialPlayer[1]; }
             uint32_t getFirstTurnPlayer()const noexcept{ return infoSpecialPlayer[3]; }
 
-            void setTurnPlayer(int p)noexcept{
-                infoSpecialPlayer.replace(0, p);
-            }
-            void setPMOwner(int p)noexcept{
-                infoSpecialPlayer.replace(1, p);
-            }
-            void setL1Player(int p)noexcept{
-                infoSpecialPlayer.replace(2, p);
-            }
-            void setFirstTurnPlayer(int p)noexcept{
-                infoSpecialPlayer.replace(3, p);
+            void setTurnPlayer(int p)noexcept{ infoSpecialPlayer.assign(0, p); }
+            void setPMOwner(int p)noexcept{ infoSpecialPlayer.assign(1, p); }
+            void setL1Player(int p)noexcept{ infoSpecialPlayer.assign(2, p); }
+            void setFirstTurnPlayer(int p)noexcept{ infoSpecialPlayer.assign(3, p); }
+            
+            uint64_t getSubjectiveHashKey(int p)const{
+                // プレーヤー p から見た盤面の主観的ハッシュ値を返す
+                return hand[p].hash ^ boardKey ^ stateKey ^ recordKey;
             }
 
             template<int IS_NF = _BOTH>
@@ -217,7 +214,7 @@ namespace UECda{
             void rotateTurnPlayer(uint32_t tp)noexcept{
                 do{
                     tp = getNextSeatPlayer(tp);
-                } while (!isAwake(tp));
+                }while(!isAwake(tp));
                 setTurnPlayer(tp);
             }
 
@@ -225,8 +222,7 @@ namespace UECda{
                 uint32_t tp = getPMOwner();
                 if(isAlive(tp)){
                     setTurnPlayer(tp);
-                }
-                else{
+                }else{
                     rotateTurnPlayer(tp);
                 }
             }
@@ -237,20 +233,20 @@ namespace UECda{
             void setPlayerAwake(const int p)noexcept{ ps.setAwake(p); }
             void setPlayerAlive(const int p)noexcept{ ps.setAlive(p); }
 
-            void flushState()noexcept{
+            void flushState()noexcept{ // 場を流す ただし bd はすでに流れているとき
                 ps.flush();
                 flushTurnPlayer();
+                flushBoardStateHash(getTurnPlayer());
             }
-            void flush()noexcept{
+            void flush()noexcept{ // 場を流す
                 bd.flush();
                 flushState();
-                //flushBoardHash();
             }
             
             uint32_t searchOpsMinNCards(int pn)const{ // 自分以外の最小枚数
                 uint32_t nc = N_CARDS;
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    if(isAlive(p) && (p != pn)){
+                    if(isAlive(p) && p != pn){
                         nc = min(nc, getNCards(p));
                     }
                 }
@@ -259,7 +255,7 @@ namespace UECda{
             uint32_t searchOpsMinNCardsAwake(int pn)const{ // 自分以外のAwakeなプレーヤーの最小枚数
                 uint32_t nc = N_CARDS;
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    if(isAwake(p) && (p != pn)){
+                    if(isAwake(p) && p != pn){
                         nc = min(nc, getNCards(p));
                     }
                 }
@@ -268,7 +264,7 @@ namespace UECda{
             uint32_t searchOpsMaxNCards(int pn)const{ // 自分以外の最大枚数
                 uint32_t nc = 0;
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    if(isAlive(p) && (p != pn)){
+                    if(isAlive(p) && p != pn){
                         nc = max(nc, getNCards(p));
                     }
                 }
@@ -277,7 +273,7 @@ namespace UECda{
             uint32_t searchOpsMaxNCardsAwake(int pn)const{ // 自分以外のAwakeなプレーヤーの最小枚数
                 uint32_t nc = 0;
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    if(isAwake(p) && (p != pn)){
+                    if(isAwake(p) && p != pn){
                         nc = max(nc, getNCards(p));
                     }
                 }
@@ -290,23 +286,47 @@ namespace UECda{
             uint32_t getOpsMaxNCardsAwake(int pn)const{ return searchOpsMaxNCardsAwake(pn); }
 
             // ハッシュ値更新
-            /*void procBoardHash_NP(Move mv)noexcept{
-                hash_bd = genprocHash_Board_NP(hash_bd, bd, mv);
+            void procBoardStateHashNonPass(int p, int ntp)noexcept{
+                // bd, ps の更新後に呼ばれる必要がある
+                boardKey = BoardToHashKey(bd);
+                stateKey = procStateHashKeyNonPass(stateKey, p, ntp);
+                // 差分計算 <-> 一括計算 チェック
+                ASSERT(boardKey == BoardToHashKey(bd),
+                       cerr << std::hex << boardKey << " <-> " << BoardToHashKey(bd) << std::dec << endl;
+                       cerr << toDebugString(););
+                ASSERT(stateKey == StateToHashKey(ps, ntp),
+                       cerr << std::hex << stateKey << " <-> " << StateToHashKey(ps, ntp) << std::dec << endl;
+                       cerr << toDebugString(););
             }
-            void procBoardHash_P(int tp)noexcept{
-                ASSERT(0 <= tp && tp < N_PLAYERS,);
-                hash_bd = genprocHash_Board_P(hash_bd, tp);
+            void procBoardStateHashPass(int p, int ntp)noexcept{
+                // bd, ps の更新後に呼ばれる必要がある
+                stateKey = procStateHashKeyPass(stateKey, p, ntp);
+                // 差分計算 <-> 一括計算 チェック
+                ASSERT(stateKey == StateToHashKey(ps, ntp),
+                       cerr << std::hex << stateKey << " <-> " << StateToHashKey(ps, ntp) << std::dec << endl;
+                       cerr << toDebugString(););
             }
-            void flushBoardHash()noexcept{
-                hash_bd = genHash_Board_NF(bd);
+            void flushBoardStateHash(int ntp)noexcept{
+                // bd, ps の更新後に呼ばれる必要がある
+                boardKey = NullBoardToHashKey(bd);
+                stateKey = NullStateToHashKey(ps, ntp);
             }
-
-            void mergeProcisionHash(int tp, uint64_t hash_dist)noexcept{
-                hash_prc = mergeHash_nCards<N_PLAYERS>(hash_prc, tp, hash_dist);
+            void procRecordHash(int p, uint64_t dkey)noexcept{
+                recordKey = procCardsArrayHashKey<N_PLAYERS>(recordKey, p, dkey);
+                // 差分計算 <-> 一括計算 チェック
+                ASSERT(recordKey == CardsArrayToHashKey<N_PLAYERS>(usedCards),
+                       cerr << std::hex << recordKey << " <-> " << CardsArrayToHashKey<N_PLAYERS>(usedCards) << std::dec << endl;
+                       cerr << toDebugString(););
             }
-            void procRetInfoHash(int p)noexcept{
-                hash_ri = procHash_NCards<N_PLAYERS>(hash_ri, p, hand[p].qty);
-            }*/
+            void procNumCardsHash(int p)noexcept{
+                numCardsKey = procNumCardsHashKey<N_PLAYERS>(numCardsKey, p, hand[p].qty);
+                // 差分計算 <-> 一括計算 チェック
+                ASSERT(numCardsKey == NumCardsToHashKey<N_PLAYERS>([&](int pp)->int{ return this->hand[pp].qty; }),
+                       cerr << std::hex << numCardsKey << " <-> " << NumCardsToHashKey<N_PLAYERS>([&](int pp)->int{
+                    return this->hand[pp].qty;
+                }) << std::dec << endl;
+                       cerr << toDebugString(););
+            }
 
             void procHand(int tp, Move mv, Cards dc, uint32_t dq)noexcept{
                 
@@ -316,10 +336,13 @@ namespace UECda{
 
                 uint64_t dhash = CardsToHashKey(dc);
 
+                // 全体の残り手札の更新
+                addCards(&usedCards[tp], dc);
                 subtrCards(&remCards, dc);
                 remQty -= dq;
                 remHash ^= dhash;
-
+                
+                // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
                 for(int p = 0; p < tp; ++p){
                     if(isAlive(p)){
                         opsHand[p].makeMoveAll(mv, dc, dq, dhash);
@@ -331,21 +354,21 @@ namespace UECda{
                         opsHand[p].makeMoveAll(mv, dc, dq, dhash);
                     }
                 }
-
-                // proceed hash value
-                //mergeProcisionHash(tp, dhash);
-                //procRetInfoHash(tp);
+                procRecordHash(tp, dhash); // 棋譜ハッシュ値の更新
+                procNumCardsHash(tp); // 手札枚数ハッシュ値の更新
             }
 
             void procAndKillHand(int tp, Move mv, Cards dc, uint32_t dq)noexcept{
-
+                // あがりのときは手札を全更新しない
                 uint64_t dhash = CardsToHashKey(dc);
 
+                // 全体の残り手札の更新
+                addCards(&usedCards[tp], dc);
                 subtrCards(&remCards, dc);
                 remQty -= dq;
                 remHash ^= dhash;
 
-                hand[tp].qty = 0; // set |qty| == 0 for after management
+                hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
 
                 assert(!isAlive(tp)); // agari player is not alive
 
@@ -354,10 +377,8 @@ namespace UECda{
                         opsHand[p].makeMoveAll(mv, dc, dq, dhash);
                     }
                 }
-
-                // proceed hash value
-                //mergeProcisionHash(tp, dhash);
-                //procRetInfoHash(tp);
+                procRecordHash(tp, dhash); // 棋譜ハッシュ値の更新
+                procNumCardsHash(tp); // 手札枚数ハッシュ値の更新
             }
             
             // policy 計算
@@ -449,21 +470,6 @@ namespace UECda{
 
             // 局面更新
             // Move型以外も対応必須?
-            template<int IS_PASS = _BOTH, class move_t = Move>
-            int procFaster(const int tp, const move_t& mv)noexcept;
-
-            int procPassFaster(const int tp)noexcept{
-                //procBoardHash_P(tp);
-                if(isSoloAwake()){
-                    // renew処理
-                    flush();
-                }else{
-                    setPlayerAsleep(tp);
-                    rotateTurnPlayer(tp);
-                }
-                addTurnNum();
-                return getTurnPlayer();
-            }
             int proc(const int tp, const MoveInfo mv)noexcept;
             int proc(const int tp, const Move mv)noexcept;
             int procSlowest(const MoveInfo mv)noexcept;
@@ -473,8 +479,10 @@ namespace UECda{
                 ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
                 ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
                 ASSERT(examCards(dc), cerr << OutCards(dc) << endl;);
-                ASSERT(holdsCards(hand[from].getCards(), dc), cerr << hand[from] << " -> " << OutCards(dc) << endl;);
-                ASSERT(!anyCards(andCards(dc, hand[to].getCards())), cerr << OutCards(dc) << " -> " << hand[to] << endl;)
+                ASSERT(holdsCards(hand[from].getCards(), dc),
+                       cerr << hand[from] << " -> " << OutCards(dc) << endl;);
+                ASSERT(!anyCards(andCards(dc, hand[to].getCards())),
+                       cerr << OutCards(dc) << " -> " << hand[to] << endl;)
                 uint64_t dhash = CardsToHashKey(dc);
                 hand[from].subtrAll(dc, dq, dhash);
                 hand[to].addAll(dc, dq, dhash);
@@ -607,11 +615,9 @@ namespace UECda{
                 }
 
                 if(sum != r){
-
                     for(int p = 0; p < N_PLAYERS; ++p){
                         cerr << OutCards(hand[p].cards) << endl;
                     }
-
                     cerr << "sum cards - rem cards" << endl;
                     return false;
                 }
@@ -691,23 +697,34 @@ namespace UECda{
                 
                 phase.init();
                 
+                for(int p = 0; p < N_PLAYERS; ++p){
+                    usedCards[p] = CARDS_NULL;
+                }
+                
                 remCards = CARDS_ALL;
                 remQty = countCards(remCards);
                 remHash = HASH_CARDS_ALL;
                 
-                //hash_prc = 0ULL;
-                //hash_bd = 0ULL;
+                originalKey = 0ULL;
+                recordKey = 0ULL;
+                boardKey = 0ULL;
+                stateKey = 0ULL;
+                numCardsKey = 0ULL;
             }
             
             void prepareAfterChange()noexcept{
+                // 初手のプレーヤーを探す
                 for(int p = 0; p < N_PLAYERS; ++p){
                     if(containsD3(hand[p].getCards())){
                         setTurnPlayer(p);
                         setFirstTurnPlayer(p);
                         setPMOwner(p);
+                        stateKey = StateToHashKey(ps, p);
                         break;
                     }
                 }
+                // ハッシュ値を設定
+                numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return this->hand[p].qty; });
                 ASSERT(exam(), cerr << toDebugString() << endl;);
             }
             
@@ -717,7 +734,7 @@ namespace UECda{
                     oss << p << (isAwake(p) ? " " : "*") << ": ";
                     if(hand[p].qty){
                         oss << hand[p];
-                    }else{ // qty だけ 0 にしているため
+                    }else{ // qty だけ 0 にしているため、そのまま表示するとあがっていることがわからない
                         Hand thand;
                         thand.setAll(CARDS_NULL);
                         oss << thand;
@@ -743,83 +760,32 @@ namespace UECda{
             }
         };
 
-        template<>int PlayouterField::procFaster<_YES, MoveInfo>(const int tp, const MoveInfo& mv)noexcept{
-            return procPassFaster(tp);
-        }
-        template<>int PlayouterField::procFaster<_NO, MoveInfo>(const int tp, const MoveInfo& mv)noexcept{
-            // パスでない場合
-            Move move = mv.mv();
-
-            //procBoardHash_NP(move);
-
-            bd.proc<_BOTH, _NO>(move);
-            setPMOwner(tp);
-            addTurnNum();
-            if(bd.isNF()){ // 流れた
-                flushState();
-            }else{
-                if(mv.isDO()){
-                    if(mv.isDM()){
-                        // 全員を支配。流れる
-                        flush();
-                        if(!isAlive(tp)){
-                            rotateTurnPlayer(tp);
-                        }
-                    }else{
-                        // 自分以外は支配
-                        if(isAlive(tp)){
-                            // 自分を除いてasleepにする
-                            setAllAsleep();
-                            setPlayerAwake(tp);
-                        }else{
-                            // 流れる
-                            flush();
-                            rotateTurnPlayer(tp);
-                        }
-                    }
-                }else{
-                    // 支配してない
-                    rotateTurnPlayer(tp);
-                }
-            }
-            return getTurnPlayer();
-        }
-
-        template<>int PlayouterField::procFaster<_BOTH, MoveInfo>(const int tp, const MoveInfo& mv)noexcept{
-            if(mv.isPASS()){
-                return procFaster<_YES, MoveInfo>(tp, mv);
-            }else{
-                return procFaster<_NO, MoveInfo>(tp, mv);
-            }
-        }
-
         int PlayouterField::proc(const int tp, const MoveInfo mv)noexcept{
             // 丁寧に局面更新
             ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
             if(mv.isPASS()){
-                //procBoardHash_P(tp); // proceed hash value by pass
                 if(isSoloAwake()){
                     flush();
                 }else{
                     setPlayerAsleep(tp);
                     rotateTurnPlayer(tp);
+                    procBoardStateHashPass(tp, getTurnPlayer());
                 }
                 addTurnNum();
             }else{
-                if(mv.isMate() || mv.qty() >= hand[tp].qty){ // mate or agari
+                if(mv.isMate() || mv.qty() >= hand[tp].qty){ // 即上がりまたはMATE宣言のとき
                     if(attractedPlayers.is_only(tp)){
-                        // every atrcted player "agari"
-                        // we can finish this playout.
+                        // 結果が欲しいプレーヤーがすべて上がったので、プレイアウト終了
                         setPlayerNewClass(tp, getBestClass());
                         return -1;
                     }else if(getNAlivePlayers() == 2){
-                        // this game was finished
+                        // ゲームが終了
                         setPlayerNewClass(tp, getWorstClass() - 1);
                         setPlayerNewClass(ps.searchOpsPlayer(tp), getWorstClass());
                         return -1;
                     }else{
-                        // only mate or agari deposition
-                        if(mv.qty() >= hand[tp].qty){ // agari
+                        // 通常の上がり/MATE処理
+                        if(mv.qty() >= hand[tp].qty){ // 即上がり
                             setPlayerNewClass(tp, getBestClass());
                             ps.setDead(tp);
                             attractedPlayers.reset(tp);
@@ -831,7 +797,6 @@ namespace UECda{
                 }else{
                     procHand(tp, mv.mv(), mv.cards<_NO>(), mv.qty());
                 }
-                //procBoardHash_NP(mv.mv()); // proceed hash value by non-pass move
 
                 bd.proc<_BOTH, _NO>(mv.mv());
                 setPMOwner(tp);
@@ -839,34 +804,34 @@ namespace UECda{
                 if(bd.isNF()){ // 流れた
                     flushState();
                 }else{
-                    if(mv.isDO()){
-                        if(mv.isDM()){ // dominates all players. flushes
+                    if(mv.isDO()){ // 他人を支配
+                        if(mv.isDM()){ // 自分も支配したので流れる
                             flush();
                             if(!isAwake(tp)){
                                 rotateTurnPlayer(tp);
                             }
-                        }else{ // dominates players except me.
+                        }else{ // 他人だけ支配
                             if(isAwake(tp)){
-                                // set asleep except me
+                                // 自分以外全員をasleepにして自分の手番
                                 setAllAsleep();
                                 setPlayerAwake(tp);
+                                procBoardStateHashNonPass(tp, tp);
                             }else{
-                                // flushes
+                                // 流れる
                                 flush();
-                                rotateTurnPlayer(tp);
                             }
                         }
-                    }else{ // no dominance
+                    }else{ // 支配なし
                         if(ps.anyAwake()){
                             rotateTurnPlayer(tp);
+                            procBoardStateHashNonPass(tp, getTurnPlayer());
                         }else{
                             flush();
-                            rotateTurnPlayer(tp);
                         }
                     }
                 }
             }
-            ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid for after plays
+            ASSERT(exam(), cerr << toDebugString() << endl;);
             return getTurnPlayer();
         }
         int PlayouterField::proc(const int tp, const Move mv)noexcept{
@@ -878,12 +843,12 @@ namespace UECda{
             // 丁寧に局面更新
             ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
             if(mv.isPASS()){
-                //procBoardHash_P(tp); // proceed hash value by pass
                 if(isSoloAwake()){
                     flush();
                 }else{
                     setPlayerAsleep(tp);
                     rotateTurnPlayer(tp);
+                    procBoardStateHashPass(tp, getTurnPlayer());
                 }
                 addTurnNum();
             }else{
@@ -898,11 +863,8 @@ namespace UECda{
                 }else{
                     procHand(tp, mv, mv.cards<_NO>(), mv.qty());
                 }
-                //procBoardHash_NP(mv); // proceed hash value by non-pass move
                 
-                //CERR << bd << " -> ";
                 bd.proc<_BOTH, _NO>(mv);
-                //CERR << bd << endl;
                 setPMOwner(tp);
                 addTurnNum();
                 if(bd.isNF()){ // 流れた
@@ -910,13 +872,13 @@ namespace UECda{
                 }else{
                     if(ps.anyAwake()){
                         rotateTurnPlayer(tp);
+                        procBoardStateHashNonPass(tp, getTurnPlayer());
                     }else{
                         flush();
-                        rotateTurnPlayer(tp);
                     }
                 }
             }
-            assert(exam()); // should be valid after Play
+            ASSERT(exam(), cerr << toDebugString() << endl;);
             return getTurnPlayer();
         }
         int PlayouterField::procSlowest(const MoveInfo mv)noexcept{
@@ -1000,15 +962,18 @@ namespace UECda{
             dst->phase = arg.phase;
 
             // copy hash_value
-            //dst->hash_org = arg.hash_org;
-            //dst->hash_prc = arg.hash_prc;
-            //dst->hash_ri = arg.hash_ri;
-            //dst->hash_bd = arg.hash_bd;
+            dst->originalKey = arg.originalKey;
+            dst->recordKey = arg.recordKey;
+            dst->numCardsKey = arg.numCardsKey;
+            dst->boardKey = arg.boardKey;
+            dst->stateKey = arg.stateKey;
 
             // we don't have to copy each player's hand,
             // because card-position will be set in the opening of playout.
 
-            // in UECda, remained cards is knowable.
+            for(int p = 0; p < N_PLAYERS; ++p){
+                dst->usedCards[p] = arg.usedCards[p];
+            }
             dst->remCards = arg.remCards;
             dst->remQty = arg.remQty;
             dst->remHash = arg.remHash;
@@ -1043,12 +1008,15 @@ namespace UECda{
             dst->phase = arg.phase;
             
             // copy hash_value
-            //dst->hash_org = arg.hash_org;
-            //dst->hash_prc = arg.hash_prc;
-            //dst->hash_ri = arg.hash_ri;
-            //dst->hash_bd = arg.hash_bd;
+            dst->originalKey = CardsToHashKey(arg.myOrgCards);
+            dst->recordKey = CardsArrayToHashKey<N_PLAYERS>(arg.usedCards.data());
+            dst->numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return arg.getNCards(p); });
+            dst->boardKey = BoardToHashKey(arg.bd);
+            dst->stateKey = StateToHashKey(arg.ps, arg.getTurnPlayer());
             
-            // in UECda, remained cards is knowable.
+            for(int p = 0; p < N_PLAYERS; ++p){
+                dst->usedCards[p] = arg.getUsedCards(p);
+            }
             dst->remCards = arg.getRemCards();
             dst->remQty = arg.getNRemCards();
             dst->remHash = CardsToHashKey(arg.getRemCards());

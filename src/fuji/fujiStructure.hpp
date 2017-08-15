@@ -69,16 +69,16 @@ namespace UECda{
             uint32_t game_reward[N_PLAYERS];
             
             // 基本方策
-            ChangePolicy baseChangePolicy;
-            PlayPolicy basePlayPolicy;
+            ChangePolicy<policy_value_t> baseChangePolicy;
+            PlayPolicy<policy_value_t> basePlayPolicy;
             
             MinMatchLog<MinClientGameLog<MinClientPlayLog<N_PLAYERS>>> matchLog;
             MinClientGameLog<MinClientPlayLog<N_PLAYERS>> gameLog;
             
 #if defined(RL_POLICY)
             // 方策学習
-            ChangePolicyLearner changeLearner;
-            PlayPolicyLearner playLearner;
+            ChangePolicyLearner<policy_value_t> changeLearner;
+            PlayPolicyLearner<policy_value_t> playLearner;
 #endif
             
 #ifndef POLICY_ONLY
@@ -87,8 +87,8 @@ namespace UECda{
             MyTimeAnalyzer timeAnalyzer;
             
             // 推定用方策
-            ChangePolicy estimationChangePolicy;
-            PlayPolicy estimationPlayPolicy;
+            ChangePolicy<policy_value_t> estimationChangePolicy;
+            PlayPolicy<policy_value_t> estimationPlayPolicy;
             
             // 相手方策モデリング
             PlayerModelSpace playerModelSpace;

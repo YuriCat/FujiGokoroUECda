@@ -2118,6 +2118,7 @@ namespace UECda{
     constexpr uint32_t MOVE_FLAG_MELD      = MOVE_FLAG_CHARA     | MOVE_FLAG_JK;
     constexpr uint32_t MOVE_FLAG_DOM       = MOVE_FLAG_CONDDOM   | MOVE_FLAG_INEVITDOM;
     
+    constexpr uint32_t MOVE_FLAG_STATUS    = MOVE_FLAG_ORD | MOVE_FLAG_LOCK;
     constexpr uint32_t MOVE_FLAG_EFFECTS   = MOVE_FLAG_ORD | MOVE_FLAG_LOCK | MOVE_FLAG_DOM;
     
     constexpr uint32_t MOVE_SINGLEJOKER    = (1U << MOVE_LCT_QTY) | MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM | (SUITS_ALL << MOVE_LCT_JKSUITS);

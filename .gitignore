@@ -3,6 +3,7 @@
 /param_out
 /dump
 /record
+/opponents
 
 *.exe
 *.bin

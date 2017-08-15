@@ -32,8 +32,8 @@ using namespace UECda::Fuji;
 XorShift64 dice((unsigned int)time(NULL));
 
 ThreadTools threadTools;
-ChangePolicy baseChangePolicy;
-PlayPolicy basePlayPolicy;
+ChangePolicy<policy_value_t> baseChangePolicy;
+PlayPolicy<policy_value_t> basePlayPolicy;
 
 template<class logs_t>
 int testPlayPolicyModeling(const logs_t& mLog){

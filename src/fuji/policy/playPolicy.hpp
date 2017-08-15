@@ -152,8 +152,9 @@ namespace UECda{
         
 #define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
 for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out << endl; }} out << endl; }
-        
-        int commentToPolicyParam(std::ostream& out, const double param[FEA_NUM_ALL]){
+    
+        template<typename T>
+        int commentToPolicyParam(std::ostream& out, const T param[FEA_NUM_ALL]){
             auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
 
             out << "****** MOVE POLICY ******" << endl;
@@ -208,14 +209,14 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
     
     //using PlayPolicy = SoftmaxPolicy<PlayPolicySpace::FEA_NUM_ALL, 1>;
     //using PlayPolicyLearner = SoftmaxPolicyLearner<PlayPolicy>;
-    using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1>;
-    using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy>;
+    template<typename T> using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1, T>;
+    template<typename T> using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy<T>>;
     
-    int foutComment(const PlayPolicy& pol, const std::string& fName){
+    template<typename T>
+    int foutComment(const PlayPolicy<T>& pol, const std::string& fName){
         std::ofstream ofs(fName, std::ios::out);
         return PlayPolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
-    
     
     double calcRankScore(Cards pqr, int jk, int ord){
         // 階級平均点を計算
@@ -387,7 +388,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
             pol.template initCalculatingCandidateScore();
             
             MoveInfo& mv = buf[m];
-            double s = 0;
+            typename policy_t::real_t s = 0;
             
             if(mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))){
                 s += 8;
@@ -816,26 +817,6 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 }
                 FASSERT(s,);
                 
-                /*
-                //mate-stop
-                if(!bd.isNF() && mv.isPASS() && owner != tp && field.isAwake(owner)){
-                    Board nextbd = bd;
-                    nextbd.flush();
-                    if(judgeHandPW_NF(field.getHand(owner), field.getOpsHand(owner), nextbd)){
-                        i = FEA_IDX(POL_STOP_OWNER_MATE);
-                        Foo(i);
-                        //i=FEA_IDX(POL_STOP_OWNER_MATE) + field.getNAwakePlayers()-2;
-                        //Foo(i);
-                        i = FEA_IDX(POL_STOP_OWNER_MATE) + 1;
-                        FooX(i, sqrt(double(field.getNAwakePlayers() - 2)));
-                        //i=FEA_IDX(POL_STOP_OWNER_MATE)+4 + min(field.getNCards(owner),8U)-1;
-                        //Foo(i);
-                        i = FEA_IDX(POL_STOP_OWNER_MATE) + 2;
-                        FooX(i, sqrt(double(field.getNCards(owner) - 1)));
-                    }
-                }
-                 */
-                
                 // dom prob
                 
                 // mate prob by tagashira's score
@@ -914,130 +895,132 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 }*/
                 
                 // MCパターン
-                if(mv.isSeq()){
-                    // 階段
-                    constexpr int base = FEA_IDX(POL_SEQ_CARDS);
-                    for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                        if((afterCards >> (f * 4)) & SUITS_ALL){
-                            i = base
-                            + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                            + f * N_PATTERNS_SUIT_SUITS
-                            + getSuitSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
-                            Foo(i);
-                        }
-                    }
-                    if(containsJOKER(afterCards)){
-                        i = base
-                        + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                        + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                        + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                        + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
-                        + 0;
-                        Foo(i);
-                    }
-                }else if(!mv.isPASS()){
-                    // グループ
-                    constexpr int base = FEA_IDX(POL_GR_CARDS);
-                    if(mv.isSingleJOKER()){
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((afterCards >> (f * 4)) & SUITS_ALL){
-                                i = base
-                                + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + f * N_PATTERNS_SUITS_SUITS
-                                + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
-                                Foo(i);
+                if(!mv.isPASS()){
+                    if(!mv.isSeq()){
+                        // グループ
+                        constexpr int base = FEA_IDX(POL_GR_CARDS);
+                        if(mv.isSingleJOKER()){
+                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                                if((afterCards >> (f * 4)) & SUITS_ALL){
+                                    i = base
+                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + f * N_PATTERNS_SUITS_SUITS
+                                    + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
+                                    Foo(i);
+                                }
                             }
-                        }
-                    }else{
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((afterCards >> (f * 4)) & SUITS_ALL){
+                        }else{
+                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                                if((afterCards >> (f * 4)) & SUITS_ALL){
+                                    i = base
+                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + f * N_PATTERNS_SUITS_SUITS
+                                    + getSuitsSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
+                                    Foo(i);
+                                }
+                            }
+                            if(containsJOKER(afterCards)){
                                 i = base
                                 + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
                                 + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
                                 + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                + f * N_PATTERNS_SUITS_SUITS
-                                + getSuitsSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
+                                + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
+                                + mv.qty(); // suits - suits のパターン数より少ないのでOK
+                                Foo(i);
+                            }
+                        }
+                    }else{
+                        // 階段
+                        constexpr int base = FEA_IDX(POL_SEQ_CARDS);
+                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                            if((afterCards >> (f * 4)) & SUITS_ALL){
+                                i = base
+                                + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
+                                + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
+                                + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
+                                + f * N_PATTERNS_SUIT_SUITS
+                                + getSuitSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
                                 Foo(i);
                             }
                         }
                         if(containsJOKER(afterCards)){
                             i = base
-                            + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                            + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                            + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                            + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                            + mv.qty(); // suits - suits のパターン数より少ないのでOK
-                            Foo(i);
-                        }
-                    }
-                }
-                FASSERT(s,);
-                
-                // MOパターン
-                if(mv.isSeq()){
-                    // 階段
-                    constexpr int base = FEA_IDX(POL_SEQ_MO);
-                    for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                        if((opsCards >> (f * 4)) & SUITS_ALL){
-                            i = base
                             + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                             + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
                             + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                            + f * N_PATTERNS_SUIT_SUITS
-                            + getSuitSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
+                            + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
+                            + 0;
                             Foo(i);
                         }
                     }
-                    if(containsJOKER(opsCards)){
-                        i = base
-                        + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                        + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                        + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                        + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
-                        + 0;
-                        Foo(i);
-                    }
-                }else if(!mv.isPASS()){
-                    // グループ
-                    constexpr int base = FEA_IDX(POL_GR_MO);
-                    if(mv.isSingleJOKER()){
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((opsCards >> (f * 4)) & SUITS_ALL){
-                                i = base
-                                + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + f * N_PATTERNS_SUITS_SUITS
-                                + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
-                                Foo(i);
+                    FASSERT(s,);
+                    
+                    // MOパターン
+                    if(!mv.isSeq()){
+                        // グループ
+                        constexpr int base = FEA_IDX(POL_GR_MO);
+                        if(mv.isSingleJOKER()){
+                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                                if((opsCards >> (f * 4)) & SUITS_ALL){
+                                    i = base
+                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + f * N_PATTERNS_SUITS_SUITS
+                                    + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
+                                    Foo(i);
+                                }
                             }
-                        }
-                    }else{
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((opsCards >> (f * 4)) & SUITS_ALL){
+                        }else{
+                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                                if((opsCards >> (f * 4)) & SUITS_ALL){
+                                    i = base
+                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
+                                    + f * N_PATTERNS_SUITS_SUITS
+                                    + getSuitsSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
+                                    Foo(i);
+                                }
+                            }
+                            if(containsJOKER(opsCards)){
                                 i = base
                                 + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
                                 + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
                                 + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                + f * N_PATTERNS_SUITS_SUITS
-                                + getSuitsSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
+                                + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
+                                + mv.qty(); // suits - suits のパターン数より少ないのでOK
+                                Foo(i);
+                            }
+                        }
+                    }else{
+                        // 階段
+                        constexpr int base = FEA_IDX(POL_SEQ_MO);
+                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                            if((opsCards >> (f * 4)) & SUITS_ALL){
+                                i = base
+                                + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
+                                + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
+                                + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
+                                + f * N_PATTERNS_SUIT_SUITS
+                                + getSuitSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
                                 Foo(i);
                             }
                         }
                         if(containsJOKER(opsCards)){
                             i = base
-                            + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                            + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                            + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                            + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                            + mv.qty(); // suits - suits のパターン数より少ないのでOK
+                            + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
+                            + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
+                            + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
+                            + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
+                            + 0;
                             Foo(i);
                         }
                     }
+                    FASSERT(s,);
                 }
-                FASSERT(s,);
                 
                 // CCパターン
                 /*{

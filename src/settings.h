@@ -16,7 +16,7 @@
 #define MY_POL_NAME "kleinBlauw"
 #define MY_POL_RL_NAME "kleinBlauwRL"
 
-#define MY_VERSION "20170527"
+#define MY_VERSION "20170813"
 #define MY_COACH "KatsukiOhto"
 
 // 重要な設定
@@ -87,6 +87,10 @@ constexpr int N_REWARD_CALCULATED_GAMES = 15;
 // レアプレー(有効である可能性は低いが、見せプレーとして行うプレー)
 // オンにして自己対戦するとバグが発見出来るかも
 //#define RARE_PLAY
+
+// 方策の計算設定
+using policy_value_t = float;
+//using policy_value_t = double;
 
 // softmax方策の温度設定
 constexpr double SIMULATION_TEMPERATURE_CHANGE = 1.0;//DBL_MAX;
