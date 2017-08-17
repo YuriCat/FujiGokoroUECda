@@ -118,30 +118,44 @@ namespace UECda{
     constexpr uint64_t NullBoardToHashKey(Board bd)noexcept{
         return (uint64_t)bd;
     }
-    constexpr uint64_t NullStateToHashKey(PlayersState ps, int ntp)noexcept{
-        return ntp;
+    constexpr uint64_t NullStateToHashKey(uint64_t aliveKey, uint64_t fullAwakeKey,
+                                          PlayersState ps, int ntp)noexcept{
+        return aliveKey ^ fullAwakeKey ^ ntp;
     }
     
     // 通常場
     // パスをしたプレーヤーの分のハッシュを加算
-    constexpr uint64_t passHashKeyTable[8] = {
-        0x53a3c531204f44cd,
-        0x6c8928b9fde6ffe2,
-        0x5896fab81fa48c9e,
-        0x721fa3f0d39cdbe3,
-        0x19bdf3ac3a750ce7,
-        0x79bf388066e9db41,
-        0xc15d97a4586c07e8,
-        0x45c2bb247f4ecf6e,
+    constexpr uint64_t awakeHashKeyTable[8] = {
+        0x53a3c531204f44cd, 0x6c8928b9fde6ffe2, 0x5896fab81fa48c9e, 0x721fa3f0d39cdbe3,
+        0x19bdf3ac3a750ce7, 0x79bf388066e9db41, 0xc15d97a4586c07e8, 0x45c2bb247f4ecf6e,
+    };
+    // 上がったプレーヤーの分のハッシュを加算
+    constexpr uint64_t deadHashKeyTable[8] = {
+        0x9fc68859bb0b6965, 0xfdd58e05463f7894, 0xbd2e7d5e7d71521c, 0xeb3669cb8f72e2aa,
+        0x237395283fc3e25a, 0x56564d4dda42ec2a, 0x7786549ce8365630, 0x0e338bf62ab5547e,
     };
     
     uint64_t BoardToHashKey(Board bd)noexcept{
         return (uint32_t)bd & (MOVE_FLAG_CHARA | MOVE_FLAG_STATUS);
     }
-    uint64_t StateToHashKey(PlayersState ps, int ntp)noexcept{
+    uint64_t StateToAliveHashKey(PlayersState ps)noexcept{
         uint64_t key = 0;
         for(int p = 0; p < N_PLAYERS; ++p){
-            if(ps.isAlive(p) && !ps.isAwake(p))key ^= passHashKeyTable[p];
+            if(!ps.isAlive(p))key ^= deadHashKeyTable[p];
+        }
+        return key;
+    }
+    uint64_t StateToFullAwakeHashKey(PlayersState ps)noexcept{
+        uint64_t key = 0;
+        for(int p = 0; p < N_PLAYERS; ++p){
+            if(ps.isAlive(p))key ^= awakeHashKeyTable[p];
+        }
+        return key;
+    }
+    uint64_t StateToHashKey(uint64_t aliveKey, PlayersState ps, int ntp)noexcept{
+        uint64_t key = aliveKey;
+        for(int p = 0; p < N_PLAYERS; ++p){
+            if(ps.isAwake(p))key ^= awakeHashKeyTable[p];
         }
         return key ^ ntp;
     }
@@ -150,7 +164,7 @@ namespace UECda{
     }
     uint64_t procStateHashKeyPass(uint64_t okey, int p, int ntp)noexcept{
         assert(0 <= p && p < N_PLAYERS);
-        return okey ^ passHashKeyTable[p] ^ p ^ ntp;
+        return okey ^ awakeHashKeyTable[p] ^ p ^ ntp;
     }
     
     /**************************カード枚数**************************/
@@ -330,5 +344,4 @@ namespace UECda{
      return hash^(genHash_Cards(c) & genCrossNumber<N>(p)) ^ genHash_Board(lastB) ^ genHash_Board(newB);
      }
      */
-    
 }
