@@ -28,7 +28,7 @@ using namespace UECda::ChangePolicySpace;
 
 int outputParams(){
     // 方策関数中で気になるパラメータを出力
-    cerr << playPolicy.param(FEA_IDX(POL_GR_CARDS)
+    /*cerr << playPolicy.param(FEA_IDX(POL_GR_CARDS)
                              + ORDER_NORMAL * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_6 * (2) * (16) * N_PATTERNS_SUITS_SUITS
                              + 1 * (16) * N_PATTERNS_SUITS_SUITS
@@ -50,7 +50,7 @@ int outputParams(){
                              + min(int(4) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
                              + getSuitSuitsIndex(SUITS_H, SUITS_C)
-                             ) << endl;
+                             ) << endl;*/
     
     return 0;
 }

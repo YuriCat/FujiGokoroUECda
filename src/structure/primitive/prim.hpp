@@ -281,19 +281,23 @@ namespace UECda{
     }
     
     // (スート, スート)のパターン
+    BitArray64<4, 16> suitSuitsIndexTable[16];
     uint8_t suitsSuitsIndexTable[16][16];
     uint8_t twoSuitsIndexTable[16][16];
-    BitArray64<4, 16> suitSuitsIndexTable[16];
     
     // (スート, スート, スート)のパターン
+    uint8_t suitSuitsSuitsIndexTable[16][16][16];
     uint16_t suitsSuitsSuitsIndexTable[16][16][16];
-    uint16_t suitSuitsSuitsIndexTable[16][16][16];
+    uint8_t suitSuitsISuitsIndexTable[16][16][16];
+    uint8_t suitsSuitsISuitsIndexTable[16][16][16];
     
     constexpr int N_PATTERNS_SUIT_SUITS = 8;
     constexpr int N_PATTERNS_2SUITS = 22;
     constexpr int N_PATTERNS_SUITS_SUITS = 35;
-    constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
     constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
+    constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
+    constexpr int N_PATTERNS_SUIT_SUITS_ISUITS = 30;
+    constexpr int N_PATTERNS_SUITS_SUITS_ISUITS = 126;
     
     int getSuitSuitsIndex(uint32_t s0, uint32_t s1){
         return suitSuitsIndexTable[s0][s1];
@@ -304,11 +308,17 @@ namespace UECda{
     int get2SuitsIndex(uint32_t s0, uint32_t s1){
         return twoSuitsIndexTable[s0][s1];
     }
+    int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
+        return suitSuitsSuitsIndexTable[s0][s1][s2];
+    }
     int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
         return suitsSuitsSuitsIndexTable[s0][s1][s2];
     }
-    int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
-        return suitsSuitsSuitsIndexTable[s0][s1][s2];
+    int getSuitSuitsISuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
+        return suitSuitsISuitsIndexTable[s0][s1][s2];
+    }
+    int getSuitsSuitsISuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
+        return suitsSuitsISuitsIndexTable[s0][s1][s2];
     }
     
     void initSuits(){
@@ -409,6 +419,7 @@ namespace UECda{
         ASSERT(sssMap.size() == N_PATTERNS_SUITS_SUITS_SUITS,
                cerr << sssMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_SUITS << endl;);
         
+        // (suit, suits, suits) pattern index
         int suitSuitsSuitsCountIndex[5][5][5][5][5]= {0};
         std::map<std::array<uint32_t, ipow(2, 3) - 3>, int> s1ssMap;
         for(uint32_t s0 = 1; s0 < 16; s0 <<= 1){
@@ -432,6 +443,62 @@ namespace UECda{
                 }
             }
         }
+        
+        // (suits, suits-a, suits-~a) pattern index
+        // 2番目と3番目が排他的である場合
+        int suitsSuitsISuitsCountIndex[5][5][5][5][5] = {0};
+        std::map<std::array<uint32_t, ipow(2, 3) - 3>, int> ssisMap;
+        for(uint32_t s0 = 0; s0 < 16; ++s0){
+            for(uint32_t s1 = 0; s1 < 16; ++s1){
+                for(uint32_t s2 = 0; s2 < 16; ++s2){
+                    if(s1 & s2)continue;
+                    const uint32_t s01 = s0 & s1, s02 = s0 & s2;
+                    const uint32_t c0 = countBits(s0), c1 = countBits(s1), c2 = countBits(s2);
+                    const uint32_t c01 = countBits(s01), c02 = countBits(s02);
+                    std::array<uint32_t, ipow(2, 3) - 3> pattern = {c0, c1, c2, c01, c02};
+                    int cnt;
+                    if(ssisMap.count(pattern) == 0){
+                        cnt = ssisMap.size();
+                        ssisMap[pattern] = cnt;
+                        DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << endl;
+                    }else{
+                        cnt = ssisMap[pattern];
+                    }
+                    suitsSuitsISuitsCountIndex[c0][c1][c2][c01][c02] = cnt;
+                    suitsSuitsISuitsIndexTable[s0][s1][s2] = cnt;
+                }
+            }
+        }
+        ASSERT(ssisMap.size() == N_PATTERNS_SUITS_SUITS_ISUITS,
+               cerr << ssisMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_ISUITS << endl;);
+        
+        // (suit, suits-a, suits-~a) pattern index
+        // 2番目と3番目が排他的である場合
+        int suitSuitsISuitsCountIndex[5][5][5][5] = {0};
+        std::map<std::array<uint32_t, ipow(2, 3) - 4>, int> s1sisMap;
+        for(uint32_t s0 = 1; s0 < 16; s0 <<= 1){
+            for(uint32_t s1 = 0; s1 < 16; ++s1){
+                for(uint32_t s2 = 0; s2 < 16; ++s2){
+                    if(s1 & s2)continue;
+                    const uint32_t s01 = s0 & s1, s02 = s0 & s2;
+                    const uint32_t c1 = countBits(s1), c2 = countBits(s2);
+                    const uint32_t c01 = countBits(s01), c02 = countBits(s02);
+                    std::array<uint32_t, ipow(2, 3) - 4> pattern = {c1, c2, c01, c02};
+                    int cnt;
+                    if(s1sisMap.count(pattern) == 0){
+                        cnt = s1sisMap.size();
+                        s1sisMap[pattern] = cnt;
+                        DERR << "pattern " << cnt << " = " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << endl;
+                    }else{
+                        cnt = s1sisMap[pattern];
+                    }
+                    suitSuitsISuitsCountIndex[c1][c2][c01][c02] = cnt;
+                    suitSuitsISuitsIndexTable[s0][s1][s2] = cnt;
+                }
+            }
+        }
+        ASSERT(s1sisMap.size() == N_PATTERNS_SUIT_SUITS_ISUITS,
+               cerr << s1sisMap.size() << " <-> " << N_PATTERNS_SUIT_SUITS_ISUITS << endl;);
     }
     
     struct SuitsInitializer{

@@ -143,11 +143,9 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     
     // トレーニングとテストの試合数を決める
     const double learnGameRate = games / (games + pow((double)games, LearningSettings::testRate));
-    const int64_t learnGames = (mode & MODE_FLAG_TEST) ? min((int64_t)(games * learnGameRate), games) : games;
+    const int64_t learnGames = (mode & MODE_FLAG_TEST) ? min((int64_t)(games * learnGameRate), games - 1) : games;
     const int64_t testGames = games - learnGames;
-    if(mode & MODE_FLAG_SHUFFLE){
-        mLogs.shuffleRandomList(0, games, mt);
-    }
+    if(mode & MODE_FLAG_SHUFFLE)mLogs.shuffleRandomList(0, games, mt);
     
     cerr << learnGames << " games for learning, " << testGames << " games for test." << endl;
     
@@ -180,57 +178,69 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     std::vector<std::thread> threadPool;
     
     if(mode & MODE_FLAG_CHANGE){
-        // 交換学習データ
-        threadPool.clear();
-        for(int th = 0; th < threads; ++th){
-            threadPool.emplace_back(std::thread(analyzeThread, th,
-                                                eachLearnGames[th], eachLearnGames[th + 1],
-                                                flag, &mLogs, true));
+        if(learnGames > 0){ // 交換学習データ
+            if(threads > 1){
+                threadPool.clear();
+                for(int th = 0; th < threads; ++th){
+                    threadPool.emplace_back(std::thread(analyzeThread, th,
+                                                        eachLearnGames[th], eachLearnGames[th + 1],
+                                                        flag, &mLogs, true));
+                }
+                for(auto& t : threadPool)t.join();
+            }else
+                analyzeThread(0, eachLearnGames[0], eachLearnGames[1], flag, &mLogs, true);
+            for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
+            masterChangeLearner.foutFeatureSurvey(outDirName + "change_policy_feature_survey.dat"); // 学習時に見るので出力
+            for(int ph = 0; ph < 2; ++ph)
+                cerr << "change - training record : " << masterChangeLearner.toRecordString(ph) << endl;
         }
-        for(auto& t : threadPool)t.join();
-        for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
-        masterChangeLearner.foutFeatureSurvey(outDirName + "change_policy_feature_survey.dat"); // 学習時に見るので出力
-        for(int ph = 0; ph < 2; ++ph){
-            cerr << "change - training record : " << masterChangeLearner.toRecordString(ph) << endl;
-        }
-        
-        // 交換テストデータ
-        threadPool.clear();
-        for(int th = 0; th < threads; ++th){
-            threadPool.emplace_back(std::thread(analyzeThread, th,
-                                                eachTestGames[th], eachTestGames[th + 1],
-                                                flag, &mLogs, true));
-        }
-        for(auto& t : threadPool)t.join();
-        for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
-        for(int ph = 0; ph < 2; ++ph){
-            cerr << "change - test     record : " << masterChangeLearner.toRecordString(ph) << endl;
+        if(testGames > 0){ // 交換テストデータ
+            if(threads > 1){
+                threadPool.clear();
+                for(int th = 0; th < threads; ++th){
+                    threadPool.emplace_back(std::thread(analyzeThread, th,
+                                                        eachTestGames[th], eachTestGames[th + 1],
+                                                        flag, &mLogs, true));
+                }
+                for(auto& t : threadPool)t.join();
+            }else
+                analyzeThread(0, eachLearnGames[0], eachLearnGames[1], flag, &mLogs, true);
+            for(int th = 1; th < threads; ++th)masterChangeLearner.mergeFeatureValue(ls.at(th).changeLearner());
+            for(int ph = 0; ph < 2; ++ph)
+                cerr << "change - test     record : " << masterChangeLearner.toRecordString(ph) << endl;
         }
     }
     
     if(mode & MODE_FLAG_PLAY){
-        // 着手学習データ
-        threadPool.clear();
-        for(int th = 0; th < threads; ++th){
-            threadPool.emplace_back(std::thread(analyzeThread, th,
-                                                eachLearnGames[th], eachLearnGames[th + 1],
-                                                flag, &mLogs, false));
+        if(learnGames > 0){ // 交換学習データ
+            if(threads > 1){
+                threadPool.clear();
+                for(int th = 0; th < threads; ++th){
+                    threadPool.emplace_back(std::thread(analyzeThread, th,
+                                                        eachLearnGames[th], eachLearnGames[th + 1],
+                                                        flag, &mLogs, false));
+                }
+                for(auto& t : threadPool)t.join();
+            }else
+                analyzeThread(0, eachLearnGames[0], eachLearnGames[1], flag, &mLogs, false);
+            for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
+            masterPlayLearner.foutFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
+            cerr << "play   - training record : " << masterPlayLearner.toRecordString() << endl;
         }
-        for(auto& t : threadPool)t.join();
-        for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
-        masterPlayLearner.foutFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
-        cerr << "play   - training record : " << masterPlayLearner.toRecordString() << endl;
-        
-        // 着手テストデータ
-        threadPool.clear();
-        for(int th = 0; th < threads; ++th){
-            threadPool.emplace_back(std::thread(analyzeThread, th,
-                                                eachTestGames[th], eachTestGames[th + 1],
-                                                flag, &mLogs, false));
+        if(testGames > 0){ // 交換テストデータ
+            if(threads > 1){
+                threadPool.clear();
+                for(int th = 0; th < threads; ++th){
+                    threadPool.emplace_back(std::thread(analyzeThread, th,
+                                                        eachTestGames[th], eachTestGames[th + 1],
+                                                        flag, &mLogs, false));
+                }
+                for(auto& t : threadPool)t.join();
+            }else
+                analyzeThread(0, eachTestGames[0], eachTestGames[1], flag, &mLogs, false);
+            for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
+            cerr << "play   - test     record : " << masterPlayLearner.toRecordString() << endl;
         }
-        for(auto& t : threadPool)t.join();
-        for(int th = 1; th < threads; ++th)masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
-        cerr << "play   - test     record : " << masterPlayLearner.toRecordString() << endl;
     }
     
     cerr << "finished analyzing feature." << endl;
@@ -246,14 +256,12 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     cerr << "batch size = " << LearningSettings::batchSize << endl;
     
     if(mode & MODE_FLAG_CHANGE){
-        for(int th = 0; th < threads; ++th){
+        for(int th = 0; th < threads; ++th)
             ls.at(th).changeLearner().finFeatureSurvey(outDirName + "change_policy_feature_survey.dat");
-        }
     }
     if(mode & MODE_FLAG_PLAY){
-        for(int th = 0; th < threads; ++th){
+        for(int th = 0; th < threads; ++th)
             ls.at(th).playLearner().finFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
-        }
     }
     
     int64_t changeTrials = 0;
@@ -287,37 +295,44 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         flag.set(2);
         
         // 学習フェーズ
-        if(mode & MODE_FLAG_CHANGE){
-            threadPool.clear();
-            for(int th = 0; th < threads; ++th){
-                threadPool.emplace_back(std::thread(learnThread, th,
-                                                    eachLearnGames[th], eachLearnGames[th + 1],
-                                                    flag, &mLogs, true));
+        if(learnGames > 0){
+            if(mode & MODE_FLAG_CHANGE){
+                if(threads > 1){
+                    threadPool.clear();
+                    for(int th = 0; th < threads; ++th){
+                        threadPool.emplace_back(std::thread(learnThread, th,
+                                                            eachLearnGames[th], eachLearnGames[th + 1],
+                                                            flag, &mLogs, true));
+                    }
+                    for(auto& t : threadPool)t.join();
+                }else
+                    learnThread(0, eachLearnGames[0], eachLearnGames[1], flag, &mLogs, true); // 0番スレッドはメインスレッド
+                for(int th = 1; th < threads; ++th)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
+                changeTrials += masterChangeLearner.trials(0);
+                changeTrials += masterChangeLearner.trials(1);
+                changePolicy.fout(outDirName + "change_policy_param.dat");
+                foutComment(changePolicy, outDirName + "change_policy_comment.txt");
+                for(int ph = 0; ph < 2; ++ph)
+                    cerr << "Change Training : " << masterChangeLearner.toObjValueString(ph) << endl;
             }
-            for(auto& t : threadPool)t.join();
-            for(int th = 1; th < threads; ++th)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
-            changeTrials += masterChangeLearner.trials(0);
-            changeTrials += masterChangeLearner.trials(1);
-            changePolicy.fout(outDirName + "change_policy_param.dat");
-            foutComment(changePolicy, outDirName + "change_policy_comment.txt");
-            for(int ph = 0; ph < 2; ++ph){
-                cerr << "Change Training : " << masterChangeLearner.toObjValueString(ph) << endl;
+            if((mode & MODE_FLAG_PLAY) && !((mode & MODE_FLAG_CHANGE) && (j % 5 != 0))){
+                // 交換も学習する場合は複数イテレーションに1回のみ
+                if(threads > 1){
+                    threadPool.clear();
+                    for(int th = 0; th < threads; ++th){
+                        threadPool.emplace_back(std::thread(learnThread, th,
+                                                            eachLearnGames[th], eachLearnGames[th + 1],
+                                                            flag, &mLogs, false));
+                    }
+                    for(auto& t : threadPool)t.join();
+                }else
+                    learnThread(0, eachLearnGames[0], eachLearnGames[1], flag, &mLogs, false);
+                for(int th = 1; th < threads; ++th)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
+                playTrials += masterPlayLearner.trials();
+                playPolicy.fout(outDirName + "play_policy_param.dat");
+                foutComment(playPolicy, outDirName + "play_policy_comment.txt");
+                cerr << "Play   Training : " << masterPlayLearner.toObjValueString() << endl;
             }
-        }
-        if((mode & MODE_FLAG_PLAY) && !((mode & MODE_FLAG_CHANGE) && (j % 5 != 0))){
-            // 交換も学習する場合は複数イテレーションに1回のみ
-            threadPool.clear();
-            for(int th = 0; th < threads; ++th){
-                threadPool.emplace_back(std::thread(learnThread, th,
-                                                    eachLearnGames[th], eachLearnGames[th + 1],
-                                                    flag, &mLogs, false));
-            }
-            for(auto& t : threadPool)t.join();
-            for(int th = 1; th < threads; ++th)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
-            playTrials += masterPlayLearner.trials();
-            playPolicy.fout(outDirName + "play_policy_param.dat");
-            foutComment(playPolicy, outDirName + "play_policy_comment.txt");
-            cerr << "Play   Training : " << masterPlayLearner.toObjValueString() << endl;
         }
         
         if(testGames > 0){
@@ -325,27 +340,32 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             flag.reset(0);
             
             if(mode & MODE_FLAG_CHANGE){
-                threadPool.clear();
-                for(int th = 0; th < threads; ++th){
-                    threadPool.emplace_back(std::thread(learnThread, th,
-                                                        eachTestGames[th], eachTestGames[th + 1],
-                                                        flag, &mLogs, true));
-                }
-                for(auto& t : threadPool)t.join();
+                if(threads > 1){
+                    threadPool.clear();
+                    for(int th = 0; th < threads; ++th){
+                        threadPool.emplace_back(std::thread(learnThread, th,
+                                                            eachTestGames[th], eachTestGames[th + 1],
+                                                            flag, &mLogs, true));
+                    }
+                    for(auto& t : threadPool)t.join();
+                }else
+                    learnThread(0, eachTestGames[0], eachTestGames[1], flag, &mLogs, true);
                 for(int th = 1; th < threads; ++th)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
-                for(int ph = 0; ph < 2; ++ph){
+                for(int ph = 0; ph < 2; ++ph)
                     cerr << "Change Test     : " << masterChangeLearner.toObjValueString(ph) << endl;
-                }
             }
             if((mode & MODE_FLAG_PLAY) && !((mode & MODE_FLAG_CHANGE) && (j % 5 != 0))){
                 // 交換も学習する場合は複数イテレーションに1回のみ
-                threadPool.clear();
-                for(int th = 0; th < threads; ++th){
-                    threadPool.emplace_back(std::thread(learnThread, th,
-                                                        eachTestGames[th], eachTestGames[th + 1],
-                                                        flag, &mLogs, false));
-                }
-                for(auto& t : threadPool)t.join();
+                if(threads > 1){
+                    threadPool.clear();
+                    for(int th = 0; th < threads; ++th){
+                        threadPool.emplace_back(std::thread(learnThread, th,
+                                                            eachTestGames[th], eachTestGames[th + 1],
+                                                            flag, &mLogs, false));
+                    }
+                    for(auto& t : threadPool)t.join();
+                }else
+                    learnThread(0, eachTestGames[0], eachTestGames[1], flag, &mLogs, false);
                 for(int th = 1; th < threads; ++th)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
                 cerr << "Play   Test     : " << masterPlayLearner.toObjValueString() << endl;
             }

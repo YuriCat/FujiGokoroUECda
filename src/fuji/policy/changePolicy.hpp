@@ -36,6 +36,7 @@ namespace UECda{
             POL_CHANGE_PART_SEQ, // 2枚捨ての場合に3階段の部分集合をあげるかどうか
             
             POL_CHANGE_CC,
+            //POL_CHANGE_CONV,
             
             POL_ALL,
         };
@@ -60,6 +61,7 @@ namespace UECda{
             2,
             
             16 * 16 * N_PATTERNS_SUITS_SUITS,
+            //16 * 16 * N_PATTERNS_SUITS_SUITS_SUITS
         };
         constexpr int POL_NUM(unsigned int fea){
             return polNumTable[fea];
@@ -336,7 +338,7 @@ namespace UECda{
                     unsigned int r4x = IntCardToRank4x(ic);
                     unsigned int rank = r4x / 4;
                     // プレーンカード同士の関係
-                    for(int r = RANK_MIN; r <= RANK_MAX; ++r){
+                    /*for(int r = RANK_MIN; r <= RANK_MAX; ++r){
                         FooX(base
                              + rank * 16 * N_PATTERNS_SUITS_SUITS
                              + r * N_PATTERNS_SUITS_SUITS
@@ -348,7 +350,8 @@ namespace UECda{
                             + r * N_PATTERNS_SUITS_SUITS
                             + getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL,
                                                  (afterCards >> (r * 4)) & SUITS_ALL));
-                    }
+                    }*/
+                    
                     // ジョーカーとの関係
                     FooX(base
                          + rank * 16 * N_PATTERNS_SUITS_SUITS

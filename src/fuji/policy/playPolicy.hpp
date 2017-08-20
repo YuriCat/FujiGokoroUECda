@@ -32,7 +32,6 @@ namespace UECda{
             POL_HAND_P8_JOKER, // ジョーカーと飛ばし重合
             
             // 着手パラメータ
-            POL_MOVE_QTY, // 着手の枚数、空場のみ
             //POL_DOM, // 予測支配率
             POL_SUITLOCK_EFFECT, // スートロックの後自分がターンを取れそうか?
             POL_SAME_QR, // 同じ枚数組の多さに応じた加点
@@ -63,11 +62,9 @@ namespace UECda{
             // 以下、シミュレーション中には差分計算しておくパラメータ
             
             //POL_HAND_2PQR, // 2分割相関
-            POL_GR_CARDS, // MC関係(グループ)
-            POL_SEQ_CARDS, // MC関係(階段)
             
-            POL_GR_MO, // MO関係(グループ)
-            POL_SEQ_MO, // MO関係(グループ)
+            POL_GR_MCO, // MCO関係(グループ)
+            POL_SEQ_MCO, // MCO関係(階段)
             
             //POL_GR_MCC, // MCC関係
             //POL_GR_MCO, // MCO関係
@@ -93,25 +90,24 @@ namespace UECda{
             
             1,
             
-            4,
             //2 * (4 + 4),
             3,
             3,
             5,//N_PLAYERS,
             
-            3,
+            53,
             2,
             5 - 1, //N_PLAYERS - 1,
             (5 - 1) * 8, //(N_PLAYERS - 1) * 8,
             
             2,
-            3,
+            5,
             3,
             3,
             
             1,
             1,
-            2,
+            16,
             
             //0,//3,
             
@@ -121,16 +117,8 @@ namespace UECda{
             
             1,
             
-            //2 * 16 * 16 * 16 * 16,
-            //2 * (16 * 16 * 2) * (16 * 16),
-            //2 * (16 * 4 * 3) * (16 * 16),
-            
-            2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
-            2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS, // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
-            
-            2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
-            2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS, // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
-            
+            2 * (16 * 2) * 16 * N_PATTERNS_SUITS_SUITS_ISUITS,
+            2 * (16 * 3) * 16 * N_PATTERNS_SUIT_SUITS_ISUITS,
             //2 * (16 * 2) * (16) * (16) * N_PATTERNS_SUITS_SUITS_SUITS, // オーダー x 着手R x スートロック x 手札1R x 手札2R x (Suits, Suits, Suits)パターン
             
             //2 * 16 * 16 * 35, // オーダー x 変化カードランク x 手札カードランク x (Suits, Suits)パターン
@@ -140,6 +128,8 @@ namespace UECda{
             12,
 #endif
         };
+        static_assert(sizeof(numTable) / sizeof(int) == POL_ALL, "");
+        
         constexpr int FEA_NUM(unsigned int fea){
             return numTable[fea];
         }
@@ -185,7 +175,6 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
             LINEOUT(POL_HAND_S3, "JK_S3");
             LINEOUT(POL_HAND_PQR_RANK, "AVG_PQR");
             LINEOUT(POL_HAND_NF_PARTY, "NF_PARTY");
-            LINEOUT(POL_MOVE_QTY, "QTY");
             LINEOUT(POL_SUITLOCK_EFFECT, "SUITLOCK_EFFECT");
             LINEOUT(POL_SAME_QR, "SAME_QR");
             LINEOUT(POL_REV_CLASS, "REV_CLASS");
@@ -242,14 +231,14 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
         return r / (double)cnt;
     }
     
-#define Foo(i) s += pol.param(i);\
-    if(!MODELING && M){ pol.feedFeatureScore(m, (i), 1.0); }
+#define Foo(i) s += pol.param(i);FASSERT(s,);\
+if(!MODELING && M){ pol.feedFeatureScore(m, (i), 1.0); }
     
-#define FooX(i, x) s += pol.param(i) * (x);FASSERT(x,);\
-    if(!MODELING && M){ pol.feedFeatureScore(m, (i), (x)); }
+#define FooX(i, x) s += pol.param(i) * (x);FASSERT(x,);FASSERT(s,);\
+if(!MODELING && M){ pol.feedFeatureScore(m, (i), (x)); }
     
-#define FooM(i) s += pol.param(i);\
-    if(M){ pol.feedFeatureScore(m, (i), 1.0); }
+#define FooM(i) s += pol.param(i);FASSERT(s,);\
+if(M){ pol.feedFeatureScore(m, (i), 1.0); }
 
     struct PlayerPolicySubValue{
         // 方策計算を行うために予め計算しておく値(プレーヤーごと)
@@ -387,7 +376,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
             
             pol.template initCalculatingCandidateScore();
             
-            MoveInfo& mv = buf[m];
+            const MoveInfo mv = buf[m];
             typename policy_t::real_t s = 0;
             
             if(mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))){
@@ -410,13 +399,13 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                     int base = FEA_IDX(POL_HAND_SNOWL);
                     
                     if(!bd.isNF()){
-                        if (fieldInfo.isUnrivaled()){
+                        if(fieldInfo.isUnrivaled()){
                             base += 166 * 2;
                         }else{
                             base += 166;
                         }
                     }
-                    if (afterOrder != ORDER_NORMAL){ base += 83; }
+                    if(afterOrder != ORDER_NORMAL){ base += 83; }
                     
                     if(containsJOKER(afterCards)){
                         i = base + 82;
@@ -492,74 +481,42 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 {
                     constexpr int base = FEA_IDX(POL_HAND_S3);
                     if(containsS3(afterCards) && containsJOKER(afterCards)){
+                        // ジョーカーとS3を両方持っている
                         i = base + 0;
                         Foo(i);
                     }else if(containsS3(afterCards) && containsJOKER(opsCards)){
+                        // S3を持っていて、相手がジョーカーを持っている
                         i = base + 1;
                         Foo(i);
                     }else if (containsS3(opsCards) && containsJOKER(afterCards)){
+                        // ジョーカーを持っていて、相手がS3を持っている
                         i = base + 2;
                         Foo(i);
                     }
                 }
-                FASSERT(s,);
                 
-                // avg pqr rank
-                {
-                    constexpr int base = FEA_IDX(POL_HAND_PQR_RANK);
-                    double rs = calcRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
-                    i = base;
-                    FooX(i, (((double)oq) * log (max(rs / nowRS, 0.000001))));
-                    //FooX(i, rs);
-                    //cerr<<pol.param(i)<<" "<<(((double)oq) * log (max(rs/nowRS,0.000001)))<<endl;
-                    //cerr << "Cards = "<<OutCards(myCards)<<" Move = "<<mv<<" nowRS = " << nowRS << " rs = " << rs << endl;
-                }
-                FASSERT(s,);
+                // PQRの平均ランク
+                const double rs = calcRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
+                FooX(FEA_IDX(POL_HAND_PQR_RANK), (((double)oq) * log (max(rs / nowRS, 0.000001))));
                 
-                // nf min party
-                {
-                    /*constexpr int base = FEA_IDX(POL_HAND_NF_PARTY);
-                    if(bd.isNF()){
-                        i = base + calcMinNMelds(buf + NMoves, c);
-                        Foo(i);
-                    }*/
-                    const int base = FEA_IDX(POL_HAND_NF_PARTY);
-                    if(bd.isNF()){
-                        i = base;
-                        FooX(i, calcMinNMelds(buf + NMoves, afterCards) - NParty);
-                    }else{
-                        i = base + 1;
-                        FooX(i, calcMinNMelds(buf + NMoves, afterCards) - NParty);
-                    }
-                }
-                FASSERT(s,);
+                // 最小分割数
+                FooX(FEA_IDX(POL_HAND_NF_PARTY) + bd.isNF() ? 0 : 1,
+                     calcMinNMelds(buf + NMoves, afterCards) - NParty);
                 
-                // after hand joker - p8
+                // ジョーカーと飛ばし重合
                 if(polymJump(maskJOKER(afterCards)) && containsJOKER(afterCards)){
-                    Foo(POL_HAND_P8_JOKER);
+                    Foo(FEA_IDX(POL_HAND_P8_JOKER));
                 }
-                FASSERT(s,);
                 
-                // qty
-                {
-                    constexpr int base = FEA_IDX(POL_MOVE_QTY);
-                    if(bd.isNF()){
-                        i = base + q4 - 1;
-                        Foo(i);
-                    }
-                }
-                FASSERT(s,);
-                
-                //same qr
+                // same qr
                 {
                     constexpr int base = FEA_IDX(POL_SAME_QR);
                     if(bd.isNF() && !mv.isSeq()){
                         i = base;
                         int sameQ = countCards(curPqr & (PQR_1 << (q4 - 1)));
-                        if (!mv.containsJOKER()){
+                        if(!mv.containsJOKER()){
                             FooX(i, sameQ);
-                        }
-                        else{
+                        }else{
                             FooX(i + 1, sameQ);
                             if(q4 > 0){ // シングルジョーカーで無い
                                 FooX(i + 2, countCards(curPqr & (PQR_1 << (q4 - 2))));
@@ -573,12 +530,11 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 {
                     constexpr int base = FEA_IDX(POL_SUITLOCK_EFFECT);
                     if(!mv.isPASS() && !bd.isNF()){
-                        if((!fieldInfo.isLastAwake()) && bd.locksSuits(mv.mv())){ // LAでなく、スートロックがかかる
+                        if(!fieldInfo.isLastAwake() && bd.locksSuits(mv.mv())){ // LAでなく、スートロックがかかる
                             if(mv.qty() > 1){
                                 // 2枚以上のロックは強力
                                 i = base + 2;
-                            }
-                            else{
+                            }else{
                                 // 最強のを自分が持っているか??
                                 Cards lockedSuitCards = SuitsToCards(bd.suits());
                                 Cards mine = maskJOKER(afterCards) & lockedSuitCards;
@@ -589,7 +545,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                                 }else{
                                     Cards ops = maskJOKER(opsCards) & lockedSuitCards;
                                     bool hasStrong = (afterOrder == ORDER_NORMAL) ? (mine > ops) : (pickLow(mine) < pickLow(ops));
-                                    if (hasStrong){
+                                    if(hasStrong){
                                         i = base + 0;
                                     }else{
                                         if(!containsS3(opsCards)
@@ -612,10 +568,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // rev(only normal order)
                 {
                     constexpr int base = FEA_IDX(POL_REV_CLASS);
-                    if ((!bd.isPrmOrderRev()) && mv.flipsPrmOrder()){
+                    if(!bd.isPrmOrderRev() && mv.flipsPrmOrder()){
                         int relativeClass = field.getPlayerClass(tp);
-                        for (int r = 0; r < (int)field.getPlayerClass(tp); ++r){
-                            if (!field.isAlive(field.getClassPlayer(r))){ --relativeClass; }
+                        for(int r = 0; r < (int)field.getPlayerClass(tp); ++r){
+                            if(!field.isAlive(field.getClassPlayer(r))){ --relativeClass; }
                         }
                         i = base + relativeClass;
                         Foo(i);
@@ -624,49 +580,19 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 FASSERT(s,);
                 
                 // pass(game phase)
-                {
-                    constexpr int base = FEA_IDX(POL_PASS_PHASE);
-                    if (mv.isPASS()){
-                        i = base + ((field.getNRemCards() > 30) ? 0 : ((field.getNRemCards() > 15) ? 1 : 2));
-                        Foo(i);
-                    }
+                if(mv.isPASS()){
+                    Foo(FEA_IDX(POL_PASS_PHASE) + field.getNRemCards());
                 }
-                FASSERT(s,);
                 
                 // pass(unrivaled)
-                {
-                    constexpr int base = FEA_IDX(POL_PASS_DOM);
-                    if (mv.isPASS()){
-                        if (fieldInfo.isPassDom()){
-                            i = base;
-                            Foo(i);
-                            if(!fieldInfo.isUnrivaled()){
-                                i = base + 1;
-                                Foo(i);
-                            }
-                        }
-                    }
+                if(mv.isPASS() && fieldInfo.isPassDom()){
+                    Foo(FEA_IDX(POL_PASS_DOM) + fieldInfo.isUnrivaled() ? 1 : 0);
                 }
-                FASSERT(s,);
                 
                 // pass(owner distance)
-                {
-                    constexpr int base = FEA_IDX(POL_PASS_OWNER_DISTANCE);
-                    if(mv.isPASS() && !fieldInfo.isUnrivaled()){
-                        i = base + (distanceToOwner - 1);
-                        Foo(i);
-                    }
-                    /*if(field.isAlive(owner)){
-                     i = base + 3 + (N_PLAYERS - 2) + (field.getNAwakePlayers() - 2);
-                     FooX(i, sqrt((double)field.getNCards(owner)));
-                     }*/
-                    /*if(field.isAlive(owner)){
-                        i = base + field.getNAwakePlayers() - 2;
-                        //FooX(i, sqrt((double)field.getNCards(owner)));
-                        Foo(i);
-                    }*/
+                if(mv.isPASS() && !fieldInfo.isUnrivaled()){
+                    Foo(FEA_IDX(POL_PASS_OWNER_DISTANCE) + (distanceToOwner - 1));
                 }
-                FASSERT(s,);
                 
                 // pass nawake and qty
                 {
@@ -681,50 +607,40 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 FASSERT(s,);
                 
                 // s3(move)
-                {
-                    constexpr int base = FEA_IDX(POL_MOVE_S3);
-                    if (bd.isSingleJOKER() && mv.isS3Flush()){
-                        i = base + (fieldInfo.isPassDom() ? 1 : 0);
-                        Foo(i);
-                    }
+                if(bd.isSingleJOKER() && mv.isS3Flush()){
+                    Foo(FEA_IDX(POL_MOVE_S3) + (fieldInfo.isPassDom() ? 1 : 0));
                 }
-                FASSERT(s,);
                 
                 // joker against S3
                 {
                     constexpr int base = FEA_IDX(POL_MOVE_JOKER_AGAINST_S3);
-                    if (mv.isSingleJOKER()){
+                    if(mv.isSingleJOKER()){
                         if(containsS3(afterCards)){ // 自分でS3を被せられる
                             i = base + 0;
-                        }else if (fieldInfo.isLastAwake() || (!containsCard(opsCards, CARDS_S3))){ // safe
-                            i = base + 1;
-                        }
-                        else{ // dangerous
-                            i = base + 2;
+                        }else if(fieldInfo.isLastAwake()){
+                            if(containsS3(opsCards)){
+                                i = base + 1;
+                            }else{
+                                i = base + 2;
+                            }
+                        }else if(!containsS3(opsCards)){ // safe
+                            i = base + 3;
+                        }else{ // dangerous
+                            i = base + 4;
                         }
                         Foo(i);
                     }
                 }
-                FASSERT(s,);
                 
                 // sequence
-                {
-                    constexpr int base = FEA_IDX(POL_MOVE_SEQ);
+                if(mv.isSeq()){
                     if(bd.isNF()){
-                        if (mv.isSeq()){
-                            i = base;
-                            Foo(i);
-                            i = base + 2;
-                            FooX(i, NMyCards);
-                        }
+                        Foo(FEA_IDX(POL_MOVE_SEQ));
+                        FooX(FEA_IDX(POL_MOVE_SEQ) + 2, NMyCards);
                     }else{
-                        if(bd.isSeq()){
-                            i = base + 1;
-                            Foo(i);
-                        }
+                        Foo(FEA_IDX(POL_MOVE_SEQ) + 1);
                     }
                 }
-                FASSERT(s,);
                 
                 // rf group break
                 {
@@ -762,16 +678,12 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 }
                 FASSERT(s,);
                 
-                // NF_Dominance Move On PassDom
-                {
-                    if(fieldInfo.isPassDom()){
-                        if(mv.domInevitably() || dominatesHand(mv.mv(), opsHand, OrderToNullBoard(order))){
-                            i = FEA_IDX(POL_MOVE_NFDOM_PASSDOM);
-                            Foo(i);
-                        }
+                // 空場で支配できる役をパス支配の場で出す
+                if(fieldInfo.isPassDom()){
+                    if(mv.domInevitably() || dominatesHand(mv.mv(), opsHand, OrderToNullBoard(order))){
+                        Foo(FEA_IDX(POL_MOVE_NFDOM_PASSDOM));
                     }
                 }
-                FASSERT(s,);
                 
                 // NF_EIGHT
                 if(bd.isNF()){
@@ -789,25 +701,16 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 }
                 FASSERT(s,);
                 
-                // eight
-                {
-                    if(mv.domInevitably()){
-                        i = FEA_IDX(POL_MOVE_EIGHT_QTY);
-                        FooX(i, (oq - mv.qty()) * (oq - mv.qty()));
-                        i = FEA_IDX(POL_MOVE_EIGHT_QTY) + 1;
-                        FooX(i, oq - mv.qty());
-                    }
+                // 8切りのときの残り枚数
+                if(mv.domInevitably()){
+                    Foo(FEA_IDX(POL_MOVE_EIGHT_QTY) + oq - mv.qty());
                 }
-                FASSERT(s,);
                 
-                // min rank
+                // 最弱札を出すかどうか
                 {
                     constexpr int base = FEA_IDX(POL_MOVE_MIN_RANK);
-                    if(bd.tmpOrder() == ORDER_NORMAL){
-                        if(mv.rank() == myLR){
-                            i = base;
-                            Foo(i);
-                        }
+                    if(bd.tmpOrder() == ORDER_NORMAL && mv.rank() == myLR){
+                        Foo(FEA_IDX(POL_MOVE_MIN_RANK));
                     }else{
                         if(mv.rank() == myHR){
                             i = base + 1;
@@ -839,216 +742,32 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // min2DRが大きいことを評価
                 FooX(POL_ALMOST_MATE, min2DR);*/
                 
-                // 2pqr
-                /*if(!PRECALC){
-                    // その場計算
-                    const int base = FEA_IDX(POL_HAND_2PQR);
-                    for(int f = 0; f < 16; ++f){
-                        for(int j = f + 1; j < 16; ++j){
-                            if(((c >> (f * 4)) & 15) && ((c >> (j * 4)) & 15)){
-                                i = base
-                                + 16 * 16 * 16 * 16 * afterOrder
-                                + f * 16 * 16 * 16
-                                + j * 16 * 16
-                                + ((c >> (f * 4)) & 15) * 16
-                                + ((c >> (j * 4)) & 15);
-                                Foo(i);
-                            }
-                        }
-                    }
-                }else{
-                    // 差分計算
-                    
-                }*/
-                
-                /*if(mv.isSeq()){
-                    // 階段
-                    constexpr int base = FEA_IDX(POL_SEQ_CARDS);
-                    for(int f = 0; f < 16; ++f){
-                        if((c >> (f * 4)) & 15){
-                            i = base
-                            + order * (16 * 4 * 3) * (16 * 16)
-                            + mv.rank() * (4 * 3) * (16 * 16)
-                            + SuitToSuitNum(mv.suits()) * (3) * (16 * 16)
-                            + min(int(mv.qty()) - 3, 2) * (16 * 16)
-                            + f * (16)
-                            + ((c >> (f * 4)) & 15);
-                            
-                            Foo(i);
-                        }
-                    }
-                }else if(!mv.isPASS()){
-                    // グループ
-                    constexpr int base = FEA_IDX(POL_GR_CARDS);
-                    for(int f = 0; f < 16; ++f){
-                        if((c >> (f * 4)) & 15){
-                            i = base
-                            + order * (16 * 16 * 2) * (16 * 16)
-                            + mv.rank() * (16 * 2) * (16 * 16)
-                            + mv.suits() * (2) * (16 * 16)
-                            + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16 * 16)
-                            + f * (16)
-                            + ((c >> (f * 4)) & 15);
-                            Foo(i);
-                        }
-                    }
-                }*/
-                
                 // MCパターン
-                if(!mv.isPASS()){
+                if(1 || !mv.isPASS()){
+                    // MCOパターン
                     if(!mv.isSeq()){
                         // グループ
-                        constexpr int base = FEA_IDX(POL_GR_CARDS);
-                        if(mv.isSingleJOKER()){
-                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                if((afterCards >> (f * 4)) & SUITS_ALL){
-                                    i = base
-                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + f * N_PATTERNS_SUITS_SUITS
-                                    + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
-                                    Foo(i);
-                                }
-                            }
-                        }else{
-                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                if((afterCards >> (f * 4)) & SUITS_ALL){
-                                    i = base
-                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + f * N_PATTERNS_SUITS_SUITS
-                                    + getSuitsSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
-                                    Foo(i);
-                                }
-                            }
-                            if(containsJOKER(afterCards)){
-                                i = base
-                                + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                                + mv.qty(); // suits - suits のパターン数より少ないのでOK
-                                Foo(i);
-                            }
+                        constexpr int base = FEA_IDX(POL_GR_MCO);
+                        TensorIndex<5> ti(2, 16, 2, 16, N_PATTERNS_SUITS_SUITS_ISUITS);
+                        for(int f = RANK_MIN; f < 16; ++f){
+                            uint32_t c = (afterCards >> (f * 4)) & SUITS_ALL;
+                            uint64_t o = (opsCards >> (f * 4)) & SUITS_ALL;
+                            i = base + ti.get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
+                                              f, getSuitsSuitsISuitsIndex(mv.suits(), c, o));
+                            Foo(i);
                         }
                     }else{
-                        // 階段
-                        constexpr int base = FEA_IDX(POL_SEQ_CARDS);
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((afterCards >> (f * 4)) & SUITS_ALL){
-                                i = base
-                                + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                                + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                                + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                                + f * N_PATTERNS_SUIT_SUITS
-                                + getSuitSuitsIndex(mv.suits(), (afterCards >> (f * 4)) & SUITS_ALL);
-                                Foo(i);
-                            }
-                        }
-                        if(containsJOKER(afterCards)){
-                            i = base
-                            + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                            + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
-                            + 0;
+                        constexpr int base = FEA_IDX(POL_SEQ_MCO);
+                        TensorIndex<5> ti(2, 16, 3, 16, N_PATTERNS_SUIT_SUITS_ISUITS);
+                        for(int f = RANK_MIN; f < 16; ++f){
+                            uint32_t c = (afterCards >> (f * 4)) & SUITS_ALL;
+                            uint64_t o = (opsCards >> (f * 4)) & SUITS_ALL;
+                            i = base + ti.get(order, mv.rank(), min(int(mv.qty()) - 3, 2), f,
+                                              getSuitSuitsISuitsIndex(mv.suits(), c, o));
                             Foo(i);
                         }
                     }
-                    FASSERT(s,);
-                    
-                    // MOパターン
-                    if(!mv.isSeq()){
-                        // グループ
-                        constexpr int base = FEA_IDX(POL_GR_MO);
-                        if(mv.isSingleJOKER()){
-                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                if((opsCards >> (f * 4)) & SUITS_ALL){
-                                    i = base
-                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + (RANK_MAX + 2) * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + f * N_PATTERNS_SUITS_SUITS
-                                    + ((afterPqr >> (f * 4)) & SUITS_ALL); // suits - suits のパターン数より少ないのでOK
-                                    Foo(i);
-                                }
-                            }
-                        }else{
-                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                if((opsCards >> (f * 4)) & SUITS_ALL){
-                                    i = base
-                                    + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                    + f * N_PATTERNS_SUITS_SUITS
-                                    + getSuitsSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
-                                    Foo(i);
-                                }
-                            }
-                            if(containsJOKER(opsCards)){
-                                i = base
-                                + order * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + mv.rank() * (2) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16) * N_PATTERNS_SUITS_SUITS
-                                + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                                + mv.qty(); // suits - suits のパターン数より少ないのでOK
-                                Foo(i);
-                            }
-                        }
-                    }else{
-                        // 階段
-                        constexpr int base = FEA_IDX(POL_SEQ_MO);
-                        for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            if((opsCards >> (f * 4)) & SUITS_ALL){
-                                i = base
-                                + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                                + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                                + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                                + f * N_PATTERNS_SUIT_SUITS
-                                + getSuitSuitsIndex(mv.suits(), (opsCards >> (f * 4)) & SUITS_ALL);
-                                Foo(i);
-                            }
-                        }
-                        if(containsJOKER(opsCards)){
-                            i = base
-                            + order * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + mv.rank() * (3) * (16) * N_PATTERNS_SUIT_SUITS
-                            + min(int(mv.qty()) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
-                            + (RANK_MAX + 2) * N_PATTERNS_SUIT_SUITS
-                            + 0;
-                            Foo(i);
-                        }
-                    }
-                    FASSERT(s,);
                 }
-                
-                // CCパターン
-                /*{
-                    constexpr int base = POL_IDX(POL_PLAY_CC);
-                    const Cards diffRanks = gatherAll4Bits(myCards ^ afterCards);
-                    Cards tmp = diffRanks;
-                    while(tmp){
-                        IntCard ic = popIntCard(&tmp);
-                        unsigned int rx4 = getIntCard_Rankx4(ic);
-                        unsigned int rank = rx4 / 4;
-                        uint32_t suits = (myCards >> rx4) & SUITS_ALL;
-                        for(int r = RANK_MIN; r <= RANK_MAX + 2; ++r){
-                            FooX(base
-                                 + ord * 16 * 16 * 35
-                                 + rank * 16 * 35
-                                 + r * 35
-                                 + getSuitsSuitsIndex((myCards >> rx4) & SUITS_ALL,
-                                                      (myCards >> (r * 4)) & SUITS_ALL),
-                                 -1);
-                            Foo(base
-                                + afterOrd * 16 * 16 * 35
-                                + rank * 16 * 35 + r * 35 + getSuitsSuitsIndex((afterCards >> rx4) & SUITS_ALL,
-                                                                                    (afterCards >> (r * 4)) & SUITS_ALL));
-                        }
-                    }
-                }*/
-                FASSERT(s,);
-                
                 
 #ifdef MODELING_PLAY
             MODEL:
