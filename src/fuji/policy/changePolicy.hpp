@@ -293,28 +293,6 @@ namespace UECda{
             { // 2 CARDS
                 constexpr int base = POL_IDX(POL_CHANGE_CC);
                 
-                /*const Cards changeRankCards = gatherAll4Bits(changeCards);
-                if(!any2Cards(changeCards)){
-                    IntCard ic = CardsToLowestIntCard(changeRankCards);
-                    unsigned int r4x = IntCardToRank4x(ic);
-                    unsigned int rank = r4x / 4;
-                    uint32_t suits = (myCards >> r4x) & SUITS_ALL;
-                    for(int r = RANK_MIN; r <= RANK_MAX + 2; ++r){
-                        FooX(base + rank * 16 * 20 + r * 20 + get2SuitsIndex(suits, (myCards >> (r * 4)) & SUITS_ALL), -1);
-                    }
-                    
-                    suits = (afterCards >> r4x) & SUITS_ALL;
-                    for(int r = RANK_MIN; r <= RANK_MAX + 2; ++r){
-                        Foo(base + rank * 16 * 20 + r * 20 + get2SuitsIndex(suits, (afterCards >> (r * 4)) & SUITS_ALL));
-                    }
-                }else{
-                    
-                 
-                }*/
-
-                //Cards addPqr = maskCards(afterPqr | (afterCards & CARDS_JOKER), pqr | (myCards & CARDS_JOKER));
-                //Cards subPqr = maskCards(pqr | (myCards & CARDS_JOKER), afterPqr | (afterCards & CARDS_JOKER));
-                
                 //assert(countCards(addPqr) <= NChangeCards);
                 if(containsJOKER(changeCards)){
                     for(int r = RANK_MIN; r <= RANK_MAX; ++r){
@@ -338,7 +316,7 @@ namespace UECda{
                     unsigned int r4x = IntCardToRank4x(ic);
                     unsigned int rank = r4x / 4;
                     // プレーンカード同士の関係
-                    /*for(int r = RANK_MIN; r <= RANK_MAX; ++r){
+                    for(int r = RANK_MIN; r <= RANK_MAX; ++r){
                         FooX(base
                              + rank * 16 * N_PATTERNS_SUITS_SUITS
                              + r * N_PATTERNS_SUITS_SUITS
@@ -350,7 +328,7 @@ namespace UECda{
                             + r * N_PATTERNS_SUITS_SUITS
                             + getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL,
                                                  (afterCards >> (r * 4)) & SUITS_ALL));
-                    }*/
+                    }
                     
                     // ジョーカーとの関係
                     FooX(base
