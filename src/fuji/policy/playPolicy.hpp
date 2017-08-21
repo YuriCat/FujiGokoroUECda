@@ -581,7 +581,7 @@ if(M){ pol.feedFeatureScore(m, (i), 1.0); }
                 
                 // pass(game phase)
                 if(mv.isPASS()){
-                    Foo(FEA_IDX(POL_PASS_PHASE) + field.getNRemCards());
+                    Foo(FEA_IDX(POL_PASS_PHASE) + field.getNRemCards() - 1);
                 }
                 
                 // pass(unrivaled)
