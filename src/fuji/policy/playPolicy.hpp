@@ -500,7 +500,7 @@ if(M){ pol.feedFeatureScore(m, (i), 1.0); }
                 FooX(FEA_IDX(POL_HAND_PQR_RANK), (((double)oq) * log (max(rs / nowRS, 0.000001))));
                 
                 // 最小分割数
-                FooX(FEA_IDX(POL_HAND_NF_PARTY) + bd.isNF() ? 0 : 1,
+                FooX(FEA_IDX(POL_HAND_NF_PARTY) + (bd.isNF() ? 0 : 1),
                      calcMinNMelds(buf + NMoves, afterCards) - NParty);
                 
                 // ジョーカーと飛ばし重合
@@ -586,7 +586,7 @@ if(M){ pol.feedFeatureScore(m, (i), 1.0); }
                 
                 // pass(unrivaled)
                 if(mv.isPASS() && fieldInfo.isPassDom()){
-                    Foo(FEA_IDX(POL_PASS_DOM) + fieldInfo.isUnrivaled() ? 1 : 0);
+                    Foo(FEA_IDX(POL_PASS_DOM) + (fieldInfo.isUnrivaled() ? 1 : 0));
                 }
                 
                 // pass(owner distance)
