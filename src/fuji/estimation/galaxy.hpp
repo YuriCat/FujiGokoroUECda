@@ -10,7 +10,7 @@
 
 namespace UECda{
     
-    constexpr int MAX_N_WORLDS = 512;
+    constexpr int MAX_N_WORLDS = 128;
     
     template<class wrd_t, int SIZE = (MAX_N_WORLDS / N_THREADS)>
     struct Galaxy{
