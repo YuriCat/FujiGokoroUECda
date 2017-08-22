@@ -911,10 +911,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                             }
                         }else{
                             for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                uint32_t s = (afterCards >> (f * 4)) & SUITS_ALL;
-                                if(s){
+                                uint32_t as = (afterCards >> (f * 4)) & SUITS_ALL;
+                                if(as){
                                     i = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
-                                                          f, getSuitsSuitsIndex(mv.suits(), s));
+                                                          f, getSuitsSuitsIndex(mv.suits(), as));
                                     Foo(i);
                                 }
                             }
@@ -930,10 +930,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                         constexpr int base = FEA_IDX(POL_SEQ_CARDS);
                         using Index = TensorIndexType<2, 16, 3, 16, N_PATTERNS_SUIT_SUITS>;
                         for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            uint32_t s = (afterCards >> (f * 4)) & SUITS_ALL;
-                            if(s){
+                            uint32_t as = (afterCards >> (f * 4)) & SUITS_ALL;
+                            if(as){
                                 i = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                      f, getSuitSuitsIndex(mv.suits(), s));
+                                                      f, getSuitSuitsIndex(mv.suits(), as));
                                 Foo(i);
                             }
                         }
@@ -952,8 +952,8 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                         if(mv.isSingleJOKER()){
                             for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                uint32_t s = (opsCards >> (f * 4)) & SUITS_ALL;
-                                if(s){
+                                uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                                if(os){
                                     i = base + Index::get(order, RANK_MAX + 2, 0, f,
                                                           (afterPqr >> (f * 4)) & SUITS_ALL);
                                     // suits - suits のパターン数より少ないのでOK
@@ -962,10 +962,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                             }
                         }else{
                             for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                uint32_t s = (opsCards >> (f * 4)) & SUITS_ALL;
-                                if(s){
+                                uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                                if(os){
                                     i = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
-                                                          f, getSuitsSuitsIndex(mv.suits(), s));
+                                                          f, getSuitsSuitsIndex(mv.suits(), os));
                                     Foo(i);
                                 }
                             }
@@ -981,10 +981,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                         constexpr int base = FEA_IDX(POL_SEQ_MO);
                         using Index = TensorIndexType<2, 16, 3, 16, N_PATTERNS_SUIT_SUITS>;
                         for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                            uint32_t s = (opsCards >> (f * 4)) & SUITS_ALL;
-                            if(s){
+                            uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                            if(os){
                                 i = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                      f, getSuitSuitsIndex(mv.suits(), s));
+                                                      f, getSuitSuitsIndex(mv.suits(), os));
                                 Foo(i);
                             }
                         }
