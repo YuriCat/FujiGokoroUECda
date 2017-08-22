@@ -290,6 +290,7 @@ namespace UECda{
             
             { // 2 CARDS
                 constexpr int base = POL_IDX(POL_CHANGE_CC);
+                using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
                 
                 /*const Cards changeRankCards = gatherAll4Bits(changeCards);
                 if(!any2Cards(changeCards)){
@@ -316,15 +317,9 @@ namespace UECda{
                 //assert(countCards(addPqr) <= NChangeCards);
                 if(containsJOKER(changeCards)){
                     for(int r = RANK_MIN; r <= RANK_MAX; ++r){
-                        FooX(base
-                             + (RANK_MAX + 2) * 16 * N_PATTERNS_SUITS_SUITS
-                             + r * N_PATTERNS_SUITS_SUITS
-                             + ((pqr >> (r * 4)) & SUITS_ALL),
-                             -1);
-                        Foo(base
-                            + (RANK_MAX + 2) * 16 * N_PATTERNS_SUITS_SUITS
-                            + r * N_PATTERNS_SUITS_SUITS
-                            + ((afterPqr >> (r * 4)) & SUITS_ALL));  // suits - suits のパターン数より少ないのでOK
+                        FooX(base + Index::get(RANK_MAX + 2, r, (pqr >> (r * 4)) & SUITS_ALL), -1);
+                        Foo(base + Index::get(RANK_MAX + 2, r, (afterPqr >> (r * 4)) & SUITS_ALL));
+                        // suits - suits のパターン数より少ないのでOK
                     }
                 }
                 
@@ -337,28 +332,12 @@ namespace UECda{
                     unsigned int rank = r4x / 4;
                     // プレーンカード同士の関係
                     for(int r = RANK_MIN; r <= RANK_MAX; ++r){
-                        FooX(base
-                             + rank * 16 * N_PATTERNS_SUITS_SUITS
-                             + r * N_PATTERNS_SUITS_SUITS
-                             + getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL,
-                                                  (myCards >> (r * 4)) & SUITS_ALL),
-                             -1);
-                        Foo(base
-                            + rank * 16 * N_PATTERNS_SUITS_SUITS
-                            + r * N_PATTERNS_SUITS_SUITS
-                            + getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL,
-                                                 (afterCards >> (r * 4)) & SUITS_ALL));
+                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL, (myCards >> (r * 4)) & SUITS_ALL)), -1);
+                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL, (afterCards >> (r * 4)) & SUITS_ALL)));
                     }
                     // ジョーカーとの関係
-                    FooX(base
-                         + rank * 16 * N_PATTERNS_SUITS_SUITS
-                         + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                         + ((pqr >> r4x) & SUITS_ALL),
-                         -1);
-                    Foo(base
-                        + rank * 16 * N_PATTERNS_SUITS_SUITS
-                        + (RANK_MAX + 2) * N_PATTERNS_SUITS_SUITS
-                        + ((afterPqr >> r4x) & SUITS_ALL));
+                    FooX(base + Index::get(rank, RANK_MAX + 2, (pqr >> r4x) & SUITS_ALL), -1);
+                    Foo(base + Index::get(rank, RANK_MAX + 2, (afterPqr >> r4x) & SUITS_ALL));
                 }
             }
             
