@@ -328,6 +328,9 @@ int main(int argc, char* argv[]){
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
         }else if(!strcmp(argv[c], "-l")){ // log path
             logFileNames.push_back(std::string(argv[c + 1]));
+        }else if(!strcmp(argv[c], "-ld")){ // log directory path
+            std::vector<std::string> tmpLogFileNames = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
+            logFileNames.insert(logFileNames.end(), tmpLogFileNames.begin(), tmpLogFileNames.end());
         }
     }
     
