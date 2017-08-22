@@ -84,6 +84,7 @@
 #include "../CppCommon/src/util/io.hpp"
 #include "../CppCommon/src/util/pd.hpp"
 #include "../CppCommon/src/util/statistics.hpp"
+#include "../CppCommon/src/util/index.hpp"
 #include "../CppCommon/src/analyze/analyzer.hpp"
 
 // ゲームデータ
