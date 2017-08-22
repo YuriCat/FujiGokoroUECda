@@ -1,11 +1,14 @@
 /*
- esimation_test.cc
+ simulation_test.cc
  Katsuki Ohto
  */
 
-// オンラインでの相手手札推定のテスト
+// シミュレーションの性能諸々チェック
 
 #include "../include.h"
+#include "../fuji/fuji.h"
+//#include "../fuji/fujiStructure.hpp"
+
 #include "../structure/log/minLog.hpp"
 #include "../generator/changeGenerator.hpp"
 #include "../generator/moveGenerator.hpp"
@@ -46,23 +49,8 @@ Clock cl;
 ThreadTools threadTools;
 PlayerModelSpace playerModelSpace;
 
-// 指標
-template<hand_t>
-double simpleConcordance(const hand_t& answer[], const Cards estimated[], const int myPlayerNum){
-    int sum = 0;
-    int same = 0;
-    for(int p = 0; p < N_PLAYERS; ++p){
-        if(p != myPlayerNum){
-            Cards a = Cards(answer[p]), e = estimated[p];
-            sum += countCards(a);
-            same += countCards(a & e);
-        }
-    }
-    return same / (double)sum;
-}
-
-int testEstimation(const logs_t& mLog){
-    // 棋譜を読んで主観的な情報から不完全情報を推定する
+int testSimulations(const logs_t& mLog){
+    // 棋譜を読んでシミュレーションを行う
     
     uint64_t dealTime[4] = {0};
     uint64_t dealCount[4] = {0};
@@ -152,6 +140,12 @@ int testEstimationWithModeling(const logs_t& mLog){
         (gLog,
          [](const auto& field)->void{}, // first callback
          [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+             // この局面からシミュレーションを行い、
+             // 結果がどの程度近いか、ばらけるか見る
+             for(int i = 0; i < 1000; ++i){
+                 PlayouterField tfield = field;
+                 startS
+             }
              return 0;
          },
          [](const auto& field)->void{ // last callback
