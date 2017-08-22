@@ -11,7 +11,7 @@ UECda2014, 2015, 2016 無差別級で優勝しています。
 ## 注意
 過去に大会出場したバージョンは
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2016/downloads.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
 
 からダウンロードできます。
 
@@ -21,4 +21,18 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2016/downloads.html
 
 ## ルール等 公式のドキュメント
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2016/document.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/document.html
+
+## 今年度の大会
+
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/
+
+今年度の大会は2017/11/25(土)に開催される予定だそうです。
+
+大会では基本的に公開されている過去の出場プログラムを自由に改変して出場可能のはずですが、
+
+特に私の製作プログラムについては、こちらの開発版コードの利用しての出場も許可します。
+
+（出場申し込みの際に、コード利用の由を運営方に伝えたほうがよいかとは思います）
+
+ただし、大会出場以外での利用は要相談でお願い致します。
