@@ -952,10 +952,9 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                         if(mv.isSingleJOKER()){
                             for(int f = RANK_MIN; f <= RANK_MAX; ++f){
-                                uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
-                                if(os){
-                                    i = base + Index::get(order, RANK_MAX + 2, 0, f,
-                                                          (afterPqr >> (f * 4)) & SUITS_ALL);
+                                uint32_t qb = (opsHand.pqr >> (f * 4)) & SUITS_ALL;
+                                if(qb){
+                                    i = base + Index::get(order, RANK_MAX + 2, 0, f, qb);
                                     // suits - suits のパターン数より少ないのでOK
                                     Foo(i);
                                 }
