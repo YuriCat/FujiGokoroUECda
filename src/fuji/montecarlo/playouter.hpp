@@ -183,7 +183,9 @@ namespace UECda{
                                                                   Settings::simulationAmplifyCoef,
                                                                   1 / log(Settings::simulationAmplifyExponent));
                                 if(Settings::simulationPlayModel){
+#ifdef MODELING_PLAY
                                     addPlayerPlayBias(score, pfield->mv, pfield->NActiveMoves, *pfield, pshared->playerModelSpace.model(tp), Settings::playerBiasCoef * progress);
+#endif
                                 }
                                 selector.amplify();
                                 selector.to_prob();
@@ -195,7 +197,9 @@ namespace UECda{
                                                                Settings::simulationAmplifyCoef,
                                                                Settings::simulationAmplifyExponent);
                                 if(Settings::simulationPlayModel){
+#ifdef MODELING_PLAY
                                     addPlayerPlayBias(score, pfield->mv, pfield->NActiveMoves, *pfield, pshared->playerModelSpace.model(tp), Settings::playerBiasCoef * progress);
+#endif
                                 }
                                 selector.amplify();
                                 selector.to_prob();
