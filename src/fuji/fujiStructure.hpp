@@ -66,7 +66,10 @@ namespace UECda{
             
             volatile double exp_wr; // 今ターンの期待報酬(0~1)
             
-            uint32_t game_reward[N_PLAYERS];
+            uint32_t gameReward[N_CLASSES];
+            
+            // 着手決定のために一時的に参照できるようにしておくデータ
+            FieldAddInfo fieldInfo;
             
             // 基本方策
             ChangePolicy<policy_value_t> baseChangePolicy;
@@ -204,6 +207,284 @@ namespace UECda{
             
             FujiField(){}
             ~FujiField(){}
+        };
+        
+        /**************************ルートの手の情報**************************/
+        
+        struct RootActionInfo{
+            
+            MoveInfo move;
+            Cards changeCards;
+            
+            // 方策関数出力
+            double policyScore;
+            double policyProb;
+            
+            // モンテカルロ結果
+            BetaDistribution monteCarloScore;
+            
+            // モンテカルロの詳細な結果
+            BetaDistribution myScore;
+            BetaDistribution rivalScore;
+            uint64_t simulations;
+            std::array<std::array<int64_t, N_CLASSES>, N_PLAYERS> classDistribution;
+            uint64_t turnSum;
+            
+            double mean()const{ return monteCarloScore.mean(); }
+            double size()const{ return monteCarloScore.size(); }
+            double mean_var()const{ return monteCarloScore.var(); }
+            double var()const{ return monteCarloScore.var() * size(); }
+            
+            void setChange(Cards cc){
+                clear();
+                changeCards = cc;
+            }
+            void setPlay(MoveInfo mi){
+                clear();
+                move = mi;
+            }
+            
+            void clear(){
+                move = MOVEINFO_NONE;
+                changeCards = CARDS_NULL;
+                simulations = 0;
+                turnSum = 0;
+                for(int p = 0; p < N_PLAYERS; ++p)
+                    for(int cl = 0; cl < N_CLASSES; ++cl)
+                        classDistribution[p][cl] = 0;
+                monteCarloScore.set(1, 1);
+                myScore.set(1, 1);
+                rivalScore.set(1, 1);
+                policyScore = 0;
+            }
+            
+            std::string toString()const{
+                std::ostringstream oss;
+                oss << "size = " << size();
+                oss << " mean = " << mean();
+                oss << " var = " << var();
+                return oss.str();
+            }
+        };
+        
+        /**************************ルートの全体の情報**************************/
+        
+        struct RootInfo{
+            std::array<RootActionInfo, N_MAX_MOVES + 64> child;
+            int actions; // 全候補行動数
+            int candidates; // 選択の候補とする数
+            bool isChange;
+            
+            // 雑多な情報
+            int myPlayerNum, rivalPlayerNum;
+            int bestReward, worstReward;
+            int rewardGap;
+            int bestClass, worstClass;
+            
+            // モンテカルロ用の情報
+            bool exitFlag;
+            uint64_t limitSimulations;
+            //uint64_t limitTime;
+            BetaDistribution monteCarloAllScore;
+            uint64_t allSimulations;
+#ifdef MULTI_THREADING
+            SpinLock<int> lock_;
+            void lock()noexcept{ lock_.lock(); }
+            void unlock()noexcept{ lock_.unlock(); }
+#else
+            void lock()const noexcept{}
+            void unlock()const noexcept{}
+#endif
+            template<class field_t, class shared_t>
+            void setCommonInfo(int num, const field_t& field, const shared_t& shared, int limSim){
+                actions = candidates = num;
+                for(int m = 0; m < actions; ++m)
+                    monteCarloAllScore += child[m].monteCarloScore;
+                myPlayerNum = field.getMyPlayerNum();
+                bestClass = field.getBestClass();
+                worstClass = field.getWorstClass();
+                bestReward = shared.gameReward[bestClass];
+                worstReward = shared.gameReward[worstClass];
+                rewardGap = bestReward - worstReward;
+                uint32_t rivals = field.getRivalPlayersFlag();
+                if(countBits(rivals) == 1){
+                    int rnum = bsf(rivals);
+                    if(field.isAlive(rnum)){
+                        rivalPlayerNum = rnum;
+                    }
+                }
+                limitSimulations = (limSim < 0) ? 100000 : limSim;
+            }
+            
+            template<class field_t, class shared_t>
+            void setChange(const Cards *const a, int num,
+                           const field_t& field, const shared_t& shared, int limSim = -1){
+                isChange = true;
+                for(int m = 0; m < num; ++m)
+                    child[m].setChange(a[m]);
+                setCommonInfo(num, field, shared, limSim);
+            }
+            template<class field_t, class shared_t>
+            void setPlay(const MoveInfo *const a, int num,
+                         const field_t& field, const shared_t& shared, int limSim = -1){
+                isChange = false;
+                for(int m = 0; m < actions; ++m)
+                    child[m].setPlay(a[m]);
+                setCommonInfo(num, field, shared, limSim);
+            }
+            
+            void prune(int m){
+                // m番目の候補を除外し、空いた位置に末尾の候補を代入
+                std::swap(child[m], child[--candidates]);
+            }
+            void addPolicyScoreToMonteCarloScore(){
+                // 方策関数の出力をモンテカルロ結果の事前分布として加算
+                // 0 ~ 1 の値にする
+                double maxScore = -DBL_MAX, minScore = DBL_MAX;
+                for(int m = 0; m < candidates; ++m){
+                    maxScore = max(maxScore, child[m].policyScore + 0.000001);
+                    minScore = min(minScore, child[m].policyScore);
+                }
+                // 初期値として加算
+                double n = 0;
+                if(isChange)
+                    n = Settings::rootChangePriorCoef * pow(double(candidates - 1), Settings::rootChangePriorExponent);
+                else
+                    n = Settings::rootPlayPriorCoef * pow(double(candidates - 1), Settings::rootPlayPriorExponent);
+                for(int m = 0; m < candidates; ++m){
+                    double r = (child[m].policyScore - minScore) / (maxScore - minScore);
+                    child[m].monteCarloScore += BetaDistribution(r, 1 - r) * n;
+                }
+                for(int m = 0; m < candidates; ++m)
+                    monteCarloAllScore += child[m].monteCarloScore;
+            }
+            
+            void feedPolicyScore(const double *const score){
+                // 方策関数の出力得点と選択確率を記録
+                assert(actions > 0);
+                double tscore[N_MAX_MOVES + 64];
+                for(int m = 0; m < actions; ++m)
+                    child[m].policyScore = tscore[m] = score[m];
+                SoftmaxSelector selector(tscore, actions, 1);
+                selector.to_prob();
+                for(int m = 0; m < actions; ++m)
+                    child[m].policyProb = selector.prob(m);
+            }
+            
+            template<class shared_t>
+            void feedSimulationResult(int triedIndex, const PlayouterField& field, shared_t *const pshared){
+                // シミュレーション結果を記録
+                // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
+                
+                // 新たに得た証拠分布
+                int myRew = field.infoReward[myPlayerNum];
+                ASSERT(0 <= myRew && myRew <= bestReward, cerr << myRew << endl;);
+                
+                // 自分のシミュレーション結果を分布に変換
+                BetaDistribution mySc = BetaDistribution((myRew - worstReward) / (double)rewardGap,
+                                                         (bestReward - myRew) / (double)rewardGap);
+                
+#ifdef DEFEAT_RIVAL_MC
+                if(rivalPlayerNum < 0){ // 自分の結果だけ考えるとき
+                    lock();
+                    child[triedIndex].monteCarloScore += mySc;
+                    monteCarloAllScore += mySc;
+                }else{
+                    // ライバルの結果も考えるとき
+                    int rivalRew = field.infoReward[rivalPlayerNum];
+                    ASSERT(0 <= rivalRew && rivalRew <= bestReward, cerr << rivalRew << endl;);
+                    
+                    BetaDistribution rivalSc = BetaDistribution((rivalRew - worstReward) / (double)rewardGap,
+                                                                (bestReward - rivalRew) / (double)rewardGap);
+                    
+                    constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
+                    
+                    lock();
+                    child[triedIndex].myScore += mySc);
+                    child[triedIndex].rivalScore += rivalSc;
+                    
+                    mySc *= 1 - RIVAL_RATE;
+                    rivalSc.mul(RIVAL_RATE).rev();
+                    
+                    child[triedIndex].monteCarloScore += mySc + rivalSc;
+                    monteCarloAllScore += mySc + rivalSc;
+                }
+#else
+                lock();
+                child[triedIndex].monteCarloScore += mySc;
+                monteCarloAllScore += mySc;
+#endif
+                
+                child[triedIndex].simulations += 1;
+                allSimulations += 1;
+                
+                // 以下参考にする統計量
+                child[triedIndex].turnSum += field.getTurnNum();
+                
+                if(allSimulations > limitSimulations){
+                    exitFlag = true;
+                }
+                unlock();
+                
+                if(child[triedIndex].mean() > pshared->exp_wr){
+                    pshared->exp_wr = child[triedIndex].mean();
+                }
+            }
+            void sortWithScore(){ // 評価が高い順に候補行動をソート
+                std::sort(child.begin(), child.begin() + candidates,
+                          [](const RootActionInfo& a, const RootActionInfo& b)->bool{
+                              // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
+                              if(a.mean() > b.mean())return true;
+                              if(a.mean() < b.mean())return false;
+                              return a.policyScore > b.policyScore;
+                          });
+            }
+            
+            std::string toString(int num = -1)const{
+                if(num == -1)num = actions; // numで表示最大数を設定
+                std::ostringstream oss;
+                // 先にソートしておく必要あり
+                oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ]" << endl;
+                for(int m = 0; m < min(actions, num); ++m){
+                    const int rg = (int)(child[m].mean() * (double)rewardGap);
+                    const int rew = rg + worstReward;
+                    double sem = sqrt(child[m].mean_var());
+                    const int rewZone[2] = {rew - (int)(sem * rewardGap), rew + (int)(sem * rewardGap)};
+                    
+                    if(m == 0)oss << "\033[1m";
+                    oss << m << " ";
+                    
+                    if(isChange)oss << OutCards(child[m].changeCards);
+                    else oss << child[m].move.mv();
+                    
+                    // まず総合評価点を表示
+                    oss << " : " << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
+#ifdef DEFEAT_RIVAL_MC
+                    if(rivalPlayerNum >= 0){
+                        // 自分とライバルの評価点を表示
+                        oss << child[m].myScore;
+                        oss << " [mine = " << (worstReward + (int)(child[m].myScore.mean() * (double)rewardGap)) << "] ";
+                        oss << child[m].rivalScore;
+                        oss << " [rival's = ~" << (bestReward - (int)(child[m].rivalScore.mean() * (double)rewardGap)) << "] ";
+                    }
+#endif
+                    oss << "pol = " << child[m].policyScore << " "; // 方策関数のスコアを表示
+                    oss << "t = " << child[m].turnSum / (double)child[m].simulations << " "; // 統計量を表示
+                    oss << child[m].simulations << " trials." << endl;
+                    
+                    if(m == 0)oss << "\033[0m";
+                }
+                return oss.str();
+            }
+            
+            RootInfo(){
+                actions = candidates = -1;
+                monteCarloAllScore.set(0, 0);
+                allSimulations = 0;
+                rivalPlayerNum = -1;
+                exitFlag = false;
+                unlock();
+            }
         };
     }
 }

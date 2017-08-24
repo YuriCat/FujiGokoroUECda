@@ -87,11 +87,7 @@ namespace UECda{
             double mean_var()const{ return score.var(); }
             double var()const{ return score.var() * size(); }
             
-            std::string toString()const{
-                std::ostringstream oss;
-                oss << "size = " << size() << " mean = " << mean() << " var = " << var();
-                return oss.str();
-            }
+            
         };
         
         struct MonteCarloRootNode{
@@ -127,7 +123,6 @@ namespace UECda{
             
             MonteCarloChild child[256];
             
-            
 #ifdef MULTI_THREADING
             void lock()noexcept{ lock_.lock(); }
             void unlock()noexcept{ lock_.unlock(); }
@@ -145,8 +140,8 @@ namespace UECda{
                 
                 // 報酬設定
                 {
-                    bestReward = shared.game_reward[bestClass];
-                    worstReward = shared.game_reward[worstClass];
+                    bestReward = shared.gameReward[bestClass];
+                    worstReward = shared.gameReward[worstClass];
                     rewardGap = bestReward - worstReward;
                 }
                 

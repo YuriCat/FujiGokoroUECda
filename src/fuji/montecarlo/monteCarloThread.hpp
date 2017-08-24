@@ -40,19 +40,12 @@ namespace UECda{
             
             const int NPlayers = pfield->getNAlivePlayers();
             
-            const int bestClass = N_PLAYERS - NPlayers;
-            constexpr int worstClass = N_PLAYERS - 1;
-            
-            int bestReward;
-            int worstReward;
-            int rewardGap;
-            
-            const int NChilds = proot->NChilds; // 候補数
+            const int candidates = proot->candidates; // 候補数
             
             int threadNTrials[256]; // 当スレッドでのトライ数(候補ごと)
             int threadNTrialsSum = 0; // 当スレッドでのトライ数(合計)
             
-            for(int c = 0; c < NChilds; ++c){
+            for(int c = 0; c < candidates; ++c){
                 threadNTrials[c] = 0;
             }
             
@@ -89,30 +82,50 @@ namespace UECda{
             uint64_t poTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
             uint64_t estTime = 0ULL; // 局面推定にかかった時間
             
-            // 報酬設定
-            {
-                bestReward = pshared->game_reward[bestClass];
-                worstReward = pshared->game_reward[worstClass];
-                rewardGap = bestReward - worstReward;
-                
-                DERR << "bestClass : " << bestClass << " worstClass : " << worstClass << endl;
-                DERR << "bestRew : " << bestReward << " worstRew : " << worstReward << " gap : " << rewardGap << endl;
-            }
-            
             // 諸々の準備が終わったので時間計測開始
             clock.start();
             
-            while(!proot->ex){ // 最大で最高回数までプレイアウトを繰り返す
+            while(!proot->exitFlag){ // 最大で最高回数までプレイアウトを繰り返す
                 
                 world_t *pWorld = nullptr;
                 
                 //サンプル着手決定
-                int tryId = proot->chooseBestUCB(&dice);
-                ASSERT(0 <= tryId && tryId < proot->NChilds, cerr << tryId << " in " << proot->NChilds << endl;);
+                int tryingIndex = -1;
+                if(proot->candidates == 2){
+                    // 2つの時は同数(分布サイズ単位)に割り振る
+                    if(proot->child[0].size() == proot->child[1].size())
+                        tryingIndex = dice->rand() % 2;
+                    else
+                        tryingIndex = proot->child[0].size() < proot->child[1].size()
+                        ? 0 : 1;
+                }else{
+                    // UCB-root アルゴリズムに変更
+                    double bestScore = -DBL_MAX;
+                    const double allSize = proot->monteCarloAllScore.size();
+                    for(int c = 0; c < proot->candidates; ++c){
+                        double tmpScore;
+                        double size = proot->child[c].size();
+                        if(child[c].trials < MonteCarlo::MINNEC_N_TRIALS){
+                            // 最低プレイアウト数をこなしていないものは、大きな値にする
+                            // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
+                            tmpScore = (double)((1U << 16) - (child[c].trials << 8) + (dice->rand() % (1U << 6)));
+                        }else{
+                            ASSERT(size, cerr << child[c].toString() << endl;);
+                            tmpScore = child[c].mean() + 0.7 * sqrt(sqrt(allSize) / size); // ucbr値
+                        }
+                        if(tmpScore > bestScore){
+                            bestScore = tmpScore;
+                            bestId = c;
+                        }
+                    }
+                }
+                int tryingIndex = tryingIndex;
+                ASSERT(0 <= tryingIndex && tryingIndex < proot->candidates,
+                       cerr << tryingIndex << " in " << proot->candidates << endl;);
                 
-                //DERR << "SAMPLE MOVE..." << ps->getMoveById(tryId) << endl;
+                //DERR << "SAMPLE MOVE..." << ps->getMoveById(tryingIndex) << endl;
                 
-                const int pastNTrials = threadNTrials[tryId]++; // 選ばれたもののこれまでのトライアル数
+                const int pastNTrials = threadNTrials[tryingIndex]++; // 選ばれたもののこれまでのトライアル数
                 threadNTrialsSum++;
                 
                 //cerr<<threadNTrialsSum<<",";
@@ -177,8 +190,8 @@ namespace UECda{
                     }
                 }
                 
-                if(threadNTrials[tryId] > threadMaxNTrials){
-                    threadMaxNTrials = threadNTrials[tryId];
+                if(threadNTrials[tryingIndex] > threadMaxNTrials){
+                    threadMaxNTrials = threadNTrials[tryingIndex];
                 }
                 
                 // この時点で世界が決まっていない場合はランダムに選ぶ
@@ -205,22 +218,22 @@ namespace UECda{
                 if(proot->isChange){
                     copyField(pf, &f);
                     setWorld(pf, *pWorld, &f);
-                    ASSERT(examCards(proot->child[tryId].c), cerr << OutCards(proot->child[tryId].c) << endl;);
-                    po.startChange(&f, myPlayerNum, proot->child[tryId].c, pshared, ptools);
+                    ASSERT(examCards(proot->child[tryingIndex].c), cerr << OutCards(proot->child[tryingIndex].c) << endl;);
+                    po.startChange(&f, myPlayerNum, proot->child[tryingIndex].c, pshared, ptools);
                 }else{
-                    //po.startRoot(&score,root->child[tryId],*pWorld,*field);
+                    //po.startRoot(&score,root->child[tryingIndex],*pWorld,*field);
                     copyField(pf, &f);
                     //CERR << f.phase << endl;
                     setWorld(pf, *pWorld, &f);
                     //CERR << f.phase << endl;
-                    po.startRoot(&f, proot->child[tryId].mi, pshared, ptools);
+                    po.startRoot(&f, proot->child[tryingIndex].mi, pshared, ptools);
                 }
                 //int r = std::rand() % 5;
                 
-                //CERR << "TRIAL : " << i << " " << moves.getMoveById(tryId) << " : " << r << endl;
+                //CERR << "TRIAL : " << i << " " << moves.getMoveById(tryingIndex) << " : " << r << endl;
                 
-                proot->feedResult(tryId, f, pshared); // 結果をセット(排他制御は関数内で)
-                if(proot->ex){
+                proot->feedResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
+                if(proot->exitFlag){
                     goto THREAD_EXIT;
                 }
                 
@@ -230,7 +243,7 @@ namespace UECda{
                 if(threadId == 0
                    && threadNTrialsSum % max(4, 32 / N_THREADS) == 0
                    //root->trials % 32 == 0
-                   && proot->trials > NChilds * MonteCarlo::MINNEC_N_TRIALS
+                   && proot->trials > candidates * MonteCarlo::MINNEC_N_TRIALS
                    ){
                     
                     //cerr<<"cut ";
@@ -240,11 +253,11 @@ namespace UECda{
                     // time
                     const double tmpClock = (double)poTime;
                     
-                    const double line = -1600.0 * ((double)(2 * tmpClock * VALUE_PER_CLOCK)) / (double)rewardGap;
+                    const double line = -1600.0 * ((double)(2 * tmpClock * VALUE_PER_CLOCK)) / (double)proot->rewardGap;
                     
                     // regret check
-                    Dist d[256];
-                    for(int m = 0; m < NChilds; ++m){
+                    Dist d[N_MAX_MOVES + 64];
+                    for(int m = 0; m < proot->candidates; ++m){
                         d[m].reg = 0.0;
                         d[m].mean = proot->child[m].mean();
                         
@@ -256,7 +269,7 @@ namespace UECda{
                     for(int t = 0; t < 1600; ++t){
                         double tmpBest = -1.0;
                         double tmpScore[256];
-                        for(int m = 0; m < NChilds; ++m){
+                        for(int m = 0; m < candidates; ++m){
                             const Dist& tmpD = d[m];
                             NormalDistribution<double> norm(tmpD.mean, tmpD.sem);
                             double tmpDBL = norm.rand(&dice);
@@ -265,15 +278,15 @@ namespace UECda{
                                 tmpBest = tmpDBL;
                             }
                         }
-                        for(int m = 0; m < NChilds; ++m){
+                        for(int m = 0; m < candidates; ++m){
                             d[m].reg += (tmpScore[m] - tmpBest);
                         }
                     }
                     
-                    for(int m = 0; m < NChilds; ++m){
+                    for(int m = 0; m < candidates; ++m){
                         if(d[m].reg > line){
-                            /*cerr<<"trials = " << proot->trials << " childs = "<<NChilds<<" line = "<<line<<endl;
-                             for(int mm=0;mm<NChilds;mm++){
+                            /*cerr<<"trials = " << proot->trials << " childs = "<<candidates<<" line = "<<line<<endl;
+                             for(int mm=0;mm<candidates;mm++){
                              cerr<<d[mm].reg<<endl;
                              }
                              getchar();*/

@@ -168,7 +168,7 @@ namespace UECda{
                 // N_REWARD_CALCULATED_GAMES 試合前より以前は同じ報酬とする
 				bIG = min(bIG, N_REWARD_CALCULATED_GAMES - 1);
 				for(int r = 0; r < N_PLAYERS; ++r){
-					shared.game_reward[r] = iReward[bIG][r];
+					shared.gameReward[r] = iReward[bIG][r];
 				}
 				
 				// 前の試合の順位から予測される期待報酬
@@ -176,7 +176,7 @@ namespace UECda{
 				double last_er = 0;
 				for(int r = 0; r < N_PLAYERS; ++r){
 					dist_sum += seni_dist[field.getMyClass()][r];
-					last_er += seni_dist[field.getMyClass()][r] * (double)shared.game_reward[r];
+					last_er += seni_dist[field.getMyClass()][r] * (double)shared.gameReward[r];
 				}
 				if(dist_sum > 0){
 					last_er /= dist_sum;

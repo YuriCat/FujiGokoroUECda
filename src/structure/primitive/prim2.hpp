@@ -734,7 +734,7 @@ namespace UECda{
         constexpr PlayersState(const PlayersState& arg) : i(arg.i){}
     };
     
-    std::ostream& operator<<(std::ostream& out, const PlayersState& arg){//出力
+    std::ostream& operator<<(std::ostream& out, const PlayersState& arg){ // 出力
         // 勝敗
         out << "al{";
         for(int i = 0; i < PlayersState::N; ++i){
@@ -752,28 +752,6 @@ namespace UECda{
         out << "}";
         return out;
     }
-    
-    /**************************ルートの手の情報**************************/
-    
-    struct RootAction{
-        
-        bool isChange;
-        Move move;
-        Cards changeCards;
-        
-        double policyScore;
-        double monteCarloScore;
-        
-        std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDistribution;
-    };
-    
-    /**************************ルートの全体の情報**************************/
-    
-    struct RootInfo{
-        std::array<RootAction, N_MAX_MOVES + 64> move;
-        int moves;
-        
-    };
     
     /**************************着手と情報を一緒に持った集合**************************/
     
