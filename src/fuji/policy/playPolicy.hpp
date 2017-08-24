@@ -185,6 +185,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
             LINEOUT(POL_HAND_S3, "JK_S3");
             LINEOUT(POL_HAND_PQR_RANK, "AVG_PQR");
             LINEOUT(POL_HAND_NF_PARTY, "NF_PARTY");
+            LINEOUT(POL_HAND_P8_JOKER, "P8_JOKER");
             LINEOUT(POL_MOVE_QTY, "QTY");
             LINEOUT(POL_SUITLOCK_EFFECT, "SUITLOCK_EFFECT");
             LINEOUT(POL_SAME_QR, "SAME_QR");
@@ -536,7 +537,8 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 
                 // after hand joker - p8
                 if(polymJump(maskJOKER(afterCards)) && containsJOKER(afterCards)){
-                    Foo(POL_HAND_P8_JOKER);
+                    i = FEA_IDX(POL_HAND_P8_JOKER);
+                    Foo(i);
                 }
                 FASSERT(s,);
                 
