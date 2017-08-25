@@ -161,8 +161,8 @@ namespace UECda{
 #endif // SEARCH_LEAF_MATE
                     if(idxMate != -1){ // mate
                         pfield->setPlayMove(pfield->mv[idxMate]);
-                        pfield->playMove.setMate();
-                        pfield->fieldInfo.setMate();
+                        pfield->playMove.setMPMate();
+                        pfield->fieldInfo.setMPMate();
                     }else{
                         if (pfield->NActiveMoves <= 1){
                             pfield->setPlayMove(pfield->mv[0]);

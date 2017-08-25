@@ -63,7 +63,7 @@
 #ifndef POLICY_ONLY
 
 // モンテカルロ
-#include "montecarlo/monteCarloPlayer.hpp"
+#include "montecarlo/monteCarlo.hpp"
 
 // 相手の行動解析
 #include "model/playerAnalysis.hpp"
@@ -199,11 +199,12 @@ namespace UECda{
 			Cards change(uint32_t change_qty){ // 交換関数
 				assert(change_qty == 1U || change_qty == 2U);
 				
+                RootInfo root;
 				Cards changeCards = CARDS_NULL;
 				const Cards myCards = field.getMyDealtCards();
 				
 #ifdef MONITOR
-				CERR << "My Cards : " << OutCards(myCards) << endl;
+				cerr << "My Cards : " << OutCards(myCards) << endl;
 #endif
 				
 #ifdef RARE_PLAY
@@ -288,34 +289,65 @@ namespace UECda{
 #endif
 					++c;	
 				}
-				CERR << "for Change MC" << endl;
-				
+                
+                // ルートノード設定
+                int limitSimulations = std::min(10000, (int)(pow((double)NCands, 0.8) * 700));
+                root.setChange(cand, NCands, field, shared, limitSimulations);
+
+                // 方策関数による評価
+                double escore[N_MAX_CHANGES + 1], score[N_MAX_CHANGES];
+                calcChangePolicyScoreSlow(escore, cand, NCands, myCards, change_qty, field,
+                                          shared.baseChangePolicy);
+                // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
+                for(int m = 0; m < NCands; ++m)
+                    score[m] = log(max(escore[m + 1] - escore[m], 0.000001)) * Settings::temperatureChange;
+                root.feedPolicyScore(score, NCands);
+                
 #ifndef POLICY_ONLY
+                // モンテカルロ法による評価
 				if(changeCards == CARDS_NULL){
 					// 世界プールを整理する
-					for(int th = 0; th < N_THREADS; ++th){
-						threadTools[th].gal.clear();
-					}
-					MonteCarloPlayer mcp;
-					int MCId = mcp.change(cand, NCands, field, &shared, threadTools);
-					assert(0 <= MCId && MCId < NCands);
-					changeCards = cand[MCId];
+					for(int th = 0; th < N_THREADS; ++th)threadTools[th].gal.clear();
+                    shared.exp_wr = 0; // 最高報酬0
+#ifdef USE_POLICY_TO_ROOT
+                    root.addPolicyScoreToMonteCarloScore();
+#endif
+                    // モンテカルロ開始
+                    if(Settings::NChangeThreads > 1){
+                        std::vector<std::thread> thr;
+                        for(int ith = 0; ith < Settings::NChangeThreads; ++ith)
+                            thr.emplace_back(std::thread(&MonteCarloThread<FujiField, RootInfo, SharedData, ThreadTools>,
+                                                         ith, &root, &field, &shared, &threadTools[ith]));
+                        for(auto& th : thr)th.join();
+                    }else{
+                        MonteCarloThread<FujiField, RootInfo, SharedData, ThreadTools>(0, &root, &field, &shared, &threadTools[0]);
+                    }
 				}
-                
 #endif // POLICY_ONLY
-				
-				// 方策関数による交換決定
-				if(changeCards == CARDS_NULL){
-                    int idx = changeWithBestPolicy(cand, NCands, myCards, change_qty, field,
-                                                   shared.baseChangePolicy, &dice);
-                    assert(0 <= idx && idx < NCands);
-                    changeCards = cand[idx];
-				}
+                root.sort();
+                field.last_exp_reward = root.getExpReward(0);
+                
+#ifdef POLICY_ONLY
+                if(changeCards ==CARDS_NULL && Settings::temperatureChange > 0){
+                    // 確率的に選ぶ場合
+                    BiasedSoftmaxSelector selector(score, root.candidates,
+                                                   Settings::simulationTemperatureChange,
+                                                   Settings::simulationAmplifyCoef,
+                                                   Settings::simulationAmplifyExponent);
+                    // rootは着手をソートしているので元の着手生成バッファから選ぶ
+                    changeCards = cand[selector.run_all(dice.drand())];
+                }
+#endif
+                if(changeCards == CARDS_NULL){
+                    // 最高評価の交換を選ぶ
+                    changeCards = root.child[0].changeCards;
+                }
                 
             DECIDED_CHANGE:
                 assert(countCards(changeCards) == change_qty);
                 assert(holdsCards(myCards, changeCards));
 #ifdef MONITOR
+                cerr << root.toString();
                 cerr << "\033[1m";
                 cerr << "\033[" << 34 << "m";
                 cerr << "Best Change : " << OutCards(changeCards) << endl;
@@ -350,19 +382,16 @@ namespace UECda{
                 
                 // 思考用の局面表現に変換
                 PlayouterField tfield;
-                
                 setSubjectiveField(field, &tfield);
-				
 				Move playMove = MOVE_NONE;
-				
+                
+                RootInfo root;
+                
 				// 先読み用バッファはスレッド0のものを使う
 				MoveInfo *const searchBuffer = threadTools[0].buf;
 				
-				// 生成バッファは独立なものを使う
-				MoveInfo buf[N_MAX_MOVES + 256];
-				PlaySpace<MoveInfo> ps(buf);
-				const int& NMoves = ps.qty;
-				MoveInfo *const mv = ps.getMovePtr();
+				// ルート合法手生成バッファ
+				MoveInfo mv[N_MAX_MOVES + 256];
 				
 				FieldAddInfo& fieldInfo = tfield.fieldInfo;
 				
@@ -402,10 +431,8 @@ namespace UECda{
 				for(rp = 0; rp < 1 ; ++rp){
 					
 					// 合法着手生成
-					ps.qty = ps.activeQty = genMove(ps.mv, myCards, bd);
-					
-					if(NMoves <= 0){
-						// 合法着手なし
+					int NMoves = genMove(mv, myCards, bd);
+					if(NMoves <= 0){ // 合法着手なし
 						cerr << "No valid move." << endl;
 						return MOVE_PASS;
 					}
@@ -419,34 +446,23 @@ namespace UECda{
                             cerr << "no chance. PASS" << endl;
                         }
 #endif
-                        
-						if(!mv[0].isPASS()){ field.setMyMate(); }
+						if(!mv[0].isPASS())field.setMyMate(); // 上がり
 						return (Move)mv[0];
 					}
-					
-					
+
 					// 合法着手生成(特別着手)
-                    int ex_cnt = 0;
-                    if(bd.isNF()){
-                        ex_cnt += genNullPass(ps.mv + ps.qty + ex_cnt);
-                    }
-					if(containsJOKER(myCards)
-					   && containsS3(opsCards)){
-                        if(bd.isGroup()){
-							ex_cnt += genJokerGroup(ps.mv + ps.qty + ex_cnt, myCards, opsCards, bd);
-						}
+                    int NSpecialMoves = 0;
+                    if(bd.isNF())
+                        NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
+                    if(containsJOKER(myCards) && containsS3(opsCards)){
+                        if(bd.isGroup())
+                            NSpecialMoves += genJokerGroup(mv + NMoves + NSpecialMoves, myCards, opsCards, bd);
 					}
-					
-					if(ex_cnt > 0){
-						ps.qty += ex_cnt;
-						ps.activeQty += ex_cnt;
-					}
+                    NMoves += NSpecialMoves;
                     
                     // 着手多様性確保のため着手をランダムシャッフル
-                    for(int i = NMoves; i > 1; --i){
-                        int idx = dice.rand() % i;
-                        std::swap(ps.mv[idx], ps.mv[i - 1]);
-                    }
+                    for(int i = NMoves; i > 1; --i)
+                        std::swap(mv[dice.rand() % i], mv[i - 1]);
 					
 					// 場の情報をまとめる
                     assert(tfield.getTurnPlayer() == myPlayerNum);
@@ -457,9 +473,9 @@ namespace UECda{
 					
 					int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
 					
-					setDomState(&ps, tfield); // 先の場も含めて支配状況をまとめて設定
+					setDomState(mv, NMoves, tfield); // 先の場も含めて支配状況をまとめて設定
 					
-					for(int m = NMoves - 1; m >= 0; --m){
+                    for(int m = 0; m < NMoves; ++m){
 						MoveInfo *const mi = &mv[m];
 						const Move move = mi->mv();
 						
@@ -469,23 +485,13 @@ namespace UECda{
 						if(bd.afterTmpOrder(move) != ORDER_NORMAL){ mi->setTmpOrderRev(); }
 						if(bd.afterSuitsLocked(move)){ mi->setSuitLock(); }
 						
-#ifdef SEARCH_ROOT_MATE
-                        if(Settings::MateSearchOnRoot){
-                            // 必勝判定
-                            DERR << *mi << endl;
+                        if(Settings::MateSearchOnRoot){ // 多人数必勝判定
                             if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)){
-                                mi->setMate(); fieldInfo.setMate();
-#ifndef CHECK_ALL_MOVES
-                                break;
-#endif
+                                mi->setMPMate(); fieldInfo.setMPMate();
                             }
                         }
-#endif
-                        
-#ifdef SEARCH_ROOT_L2
                         if(Settings::L2SearchOnRoot){
-                            if(tfield.getNAlivePlayers() == 2){
-                                // 残り2人の場合はL2判定
+                            if(tfield.getNAlivePlayers() == 2){ // 残り2人の場合はL2判定
                                 L2Judge lj(400000, searchBuffer);
                                 int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
                                 //cerr << l2Result << endl;
@@ -493,23 +499,16 @@ namespace UECda{
                                     DERR << "l2win!" << endl;
                                     mi->setL2Mate(); fieldInfo.setL2Mate();
                                     DERR << fieldInfo << endl;
-#ifndef CHECK_ALL_MOVES
-                                    break;
-#endif
                                 }else if(l2Result == L2_LOSE){
                                     mi->setL2GiveUp();
                                 }
                             }
                         }
-#endif
-						
 						// 最小分割数の減少量
 						mi->setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
 					}
 					
-					
-					// 結果を報告
-#ifdef SEARCH_ROOT_L2
+					// 判定結果を報告
                     if(Settings::L2SearchOnRoot){
                         if(tfield.getNAlivePlayers() == 2){
                             // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
@@ -523,84 +522,127 @@ namespace UECda{
                             }
                         }
                     }
-#endif
-#ifdef SEARCH_ROOT_MATE
                     if(Settings::MateSearchOnRoot){
-                        if(fieldInfo.isMate()){
-                            field.setMyMate();
-                        }
+                        if(fieldInfo.isMPMate())field.setMyMate();
                     }
-#endif
 					
+#ifdef MONITOR
 					// 着手候補一覧表示
-					CERR << "My Cards : " << OutCards(myCards) << endl << fieldInfo << endl;
+                    cerr << "My Cards : " << OutCards(myCards) << endl;
+                    cerr << bd << " " << fieldInfo << endl;
 					for(int m = 0; m < NMoves; ++m){
 						Move move = mv[m].mv();
 						MoveAddInfo info = MoveAddInfo(mv[m]);
-						CERR << move << info << endl;
-					}
-					//getchar();
-					
-					// 必勝がある場合は必勝着手から1つ選ぶ
-					if(fieldInfo.isMate()){
-                        Move mateMove = Heuristics::chooseMateMove(&ps, NMoves, field, fieldInfo, &dice);
-						playMove = mateMove;
-					}
-					
-#ifndef POLICY_ONLY
-                    // モンテカルロ着手決定
-					if(playMove == MOVE_NONE && !fieldInfo.isGiveUp() && tfield.getNAlivePlayers() > 2){
-						
-						if(rp_mc == 0){
-							// 最初の場合は世界プールを整理する
-							for(int th = 0; th < N_THREADS; ++th){
-								threadTools[th].gal.clear();
-							}
-						}
-						
-						MonteCarloPlayer mcp;
-						Move MCMove = mcp.play(ps, NMoves, field, fieldInfo, &shared, threadTools);
-						
-						playMove = MCMove;
-						
-						++rp_mc;
+						cerr << move << info << endl;
 					}
 #endif
-                    // 方策関数による着手決定
-                    if(playMove == MOVE_NONE){
-                        int idx = 0;
-#if defined(POLICY_ONLY) && defined(RL_POLICY)
-                        idx = playWithPolicy<1>(buf, NMoves, tfield, shared.basePlayPolicy, &dice); // stock mode
-                        shared.playLearner.feedChosenActionIndexToLatestStock(idx, 0); // feed chosen action
+					//getchar();
+                    
+                    // ルートノード設定
+                    int limitSimulations = std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
+                    root.setPlay(mv, NMoves, field, shared, limitSimulations);
+                    
+                    // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
+                    double score[N_MAX_MOVES + 256];
+#ifdef RL_POLICY
+                    // 強化学習する場合には学習器を裏で動かす
+                    calcPlayPolicyScoreSlow<1>(score, mv, NMoves, tfield, shared.basePlayPolicy);
 #else
-                        if(Settings::temperaturePlay <= 0){
-                            idx = playWithBestPolicy<0>(buf, NMoves, tfield, shared.basePlayPolicy, &dice);
+                    calcPlayPolicyScoreSlow<0>(score, mv, NMoves, tfield, shared.basePlayPolicy);
+#endif
+                    root.feedPolicyScore(score, NMoves);
+                    
+#ifndef POLICY_ONLY
+                    // モンテカルロ法による評価(結果確定のとき以外)
+					if(!fieldInfo.isMate() && !fieldInfo.isGiveUp()){
+						if(rp_mc == 0) // 最初の場合は世界プールを整理する
+							for(int th = 0; th < N_THREADS; ++th)threadTools[th].gal.clear();
+                        shared.exp_wr = 0; // 最高報酬0
+#ifdef USE_POLICY_TO_ROOT
+                        root.addPolicyScoreToMonteCarloScore();
+#endif
+                        // モンテカルロ開始
+                        if(Settings::NPlayThreads > 1){
+                            std::vector<std::thread> thr;
+                            for(int ith = 0; ith < Settings::NPlayThreads; ++ith)
+                                thr.emplace_back(std::thread(&MonteCarloThread<FujiField, RootInfo, SharedData, ThreadTools>,
+                                                             ith, &root, &field, &shared, &threadTools[ith]));
+                            for(auto& th : thr)th.join();
                         }else{
-                            //double entropy = 0;
-                            
-                            //idx = playWithPolicy<0>(buf, NMoves, field, shared.basePlayPolicy, &dice, &entropy);
-                            //field.playEntropySum += entropy;
-                            field.fuzzyPlayTimes += 1;
-                            
-                            double score[N_MAX_MOVES];
-                            calcPlayPolicyScoreSlow<0>(score, buf, NMoves, tfield, shared.basePlayPolicy);
-                            BiasedSoftmaxSelector selector(score, NMoves,
-                                                           Settings::simulationTemperaturePlay,
-                                                           Settings::simulationAmplifyCoef,
-                                                           Settings::simulationAmplifyExponent);
-                            idx = selector.run_all(dice.drand());
+                            MonteCarloThread<FujiField, RootInfo, SharedData, ThreadTools>(0, &root, &field, &shared, &threadTools[0]);
+                        }
+                        rp_mc++;
+					}
+#endif
+                    // 着手決定のための情報が揃ったので着手を決定する
+                    
+                    // 方策とモンテカルロの評価
+                    root.sort();
+                    field.last_exp_reward = root.getExpReward(0);
+
+                    // 以下必勝を判定したときのみ
+                    if(fieldInfo.isMate()){
+                        int next = root.candidates;
+                        // 1. 必勝判定で勝ちのものに限定
+                        next = root.binary_sort(next, [](const RootAction& a){ return a.move.isMate(); });
+                        assert(next > 0);
+                        // 2. 即上がり
+                        next = root.binary_sort(next, [](const RootAction& a){ return a.move.isFinal(); });
+                        // 3. 完全勝利
+                        next = root.binary_sort(next, [](const RootAction& a){ return a.move.isPW(); });
+                        // 4. 多人数判定による勝ち
+                        next = root.binary_sort(next, [](const RootAction& a){ return a.move.isMPMate(); });
+#ifdef DEFEAT_RIVAL_MATE
+                        if(next > 1 && !isNoRev(myCards)){
+                            // 5. ライバルに不利になるように革命を起こすかどうか
+                            int prefRev = Heuristics::preferRev(field);
+                            if(prefRev > 0) // 革命優先
+                                next = root.sort(next, [myCards](const RootAction& a){
+                                    return a.move.flipsPrmOrder() ? 2 :
+                                    (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
+                                });
+                            if(prefRev < 0) // 革命しないことを優先
+                                next = root.sort(next, [myCards](const RootAction& a){
+                                    return a.move.flipsPrmOrder() ? -2 :
+                                    (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
+                                });
                         }
 #endif
-                        //cerr << idx << endl;
-                        playMove = buf[idx].mv();
+                        // 必勝時の出し方の見た目をよくする
+                        if(fieldInfo.isUnrivaled()){
+                            // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
+                            //    そうでなければパスを優先
+                            next = root.sort(next, [](const RootAction& a){ return -(int)a.move.getIncMinNMelds(); });
+                            if(root.child[0].move.getIncMinNMelds() > 0)
+                                next = root.binary_sort(next, [](const RootAction& a){ return a.move.isPASS(); });
+                        }
+                        // 7. 枚数が大きいものを優先
+                        next = root.sort(next, [](const RootAction& a){ return a.move.qty(); });
+                        // 8. 即切り役を優先
+                        next = root.binary_sort(next, [](const RootAction& a){ return a.move.domInevitably(); });
+                        // 9. 自分を支配していないものを優先
+                        next = root.binary_sort(next, [](const RootAction& a){ return !a.move.isDM(); });
+                        
+                        playMove = root.child[0].move.mv(); // 必勝手から選ぶ
                     }
-                    
-					// ランダム着手決定(ここまで来ないはずだが)
-					if(playMove == MOVE_NONE){
-						playMove = mv[dice.rand() % NMoves].mv();
-					}
-					
+
+#ifdef POLICY_ONLY
+                    if(playMove == MOVE_NONE && Settings::temperaturePlay > 0){
+                        // 確率的に選ぶ場合
+                        BiasedSoftmaxSelector selector(score, root.candidates,
+                                                       Settings::simulationTemperaturePlay,
+                                                       Settings::simulationAmplifyCoef,
+                                                       Settings::simulationAmplifyExponent);
+                        // rootは着手をソートしているので元の着手生成バッファから選ぶ
+                        playMove = mv[selector.run_all(dice.drand())].mv();
+                    }
+#endif
+                    if(playMove == MOVE_NONE){
+                        // 最高評価の着手を選ぶ
+                        playMove = root.child[0].move.mv();
+                    }
 #ifdef MONITOR
+                    cerr << root.toString();
                     cerr << "\033[1m";
                     cerr << "\033[" << 31 << "m";
 					cerr << "Best Move : " << playMove << endl;

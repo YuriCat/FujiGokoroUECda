@@ -211,10 +211,11 @@ namespace UECda{
         
         /**************************ルートの手の情報**************************/
         
-        struct RootActionInfo{
+        struct RootAction{
             
             MoveInfo move;
             Cards changeCards;
+            bool pruned;
             
             // 方策関数出力
             double policyScore;
@@ -222,6 +223,7 @@ namespace UECda{
             
             // モンテカルロ結果
             BetaDistribution monteCarloScore;
+            BetaDistribution naiveScore;
             
             // モンテカルロの詳細な結果
             BetaDistribution myScore;
@@ -234,6 +236,7 @@ namespace UECda{
             double size()const{ return monteCarloScore.size(); }
             double mean_var()const{ return monteCarloScore.var(); }
             double var()const{ return monteCarloScore.var() * size(); }
+            double naive_mean()const{ return naiveScore.mean(); }
             
             void setChange(Cards cc){
                 clear();
@@ -253,9 +256,11 @@ namespace UECda{
                     for(int cl = 0; cl < N_CLASSES; ++cl)
                         classDistribution[p][cl] = 0;
                 monteCarloScore.set(1, 1);
+                naiveScore.set(0, 0);
                 myScore.set(1, 1);
                 rivalScore.set(1, 1);
                 policyScore = 0;
+                policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
             }
             
             std::string toString()const{
@@ -270,7 +275,7 @@ namespace UECda{
         /**************************ルートの全体の情報**************************/
         
         struct RootInfo{
-            std::array<RootActionInfo, N_MAX_MOVES + 64> child;
+            std::array<RootAction, N_MAX_MOVES + 64> child;
             int actions; // 全候補行動数
             int candidates; // 選択の候補とする数
             bool isChange;
@@ -328,7 +333,7 @@ namespace UECda{
             void setPlay(const MoveInfo *const a, int num,
                          const field_t& field, const shared_t& shared, int limSim = -1){
                 isChange = false;
-                for(int m = 0; m < actions; ++m)
+                for(int m = 0; m < num; ++m)
                     child[m].setPlay(a[m]);
                 setCommonInfo(num, field, shared, limSim);
             }
@@ -359,15 +364,15 @@ namespace UECda{
                     monteCarloAllScore += child[m].monteCarloScore;
             }
             
-            void feedPolicyScore(const double *const score){
+            void feedPolicyScore(const double *const score, int num){
                 // 方策関数の出力得点と選択確率を記録
-                assert(actions > 0);
+                assert(num <= actions && actions > 0 && num > 0);
                 double tscore[N_MAX_MOVES + 64];
-                for(int m = 0; m < actions; ++m)
+                for(int m = 0; m < num; ++m)
                     child[m].policyScore = tscore[m] = score[m];
-                SoftmaxSelector selector(tscore, actions, 1);
+                SoftmaxSelector selector(tscore, num, 1);
                 selector.to_prob();
-                for(int m = 0; m < actions; ++m)
+                for(int m = 0; m < num; ++m)
                     child[m].policyProb = selector.prob(m);
             }
             
@@ -412,6 +417,7 @@ namespace UECda{
 #else
                 lock();
                 child[triedIndex].monteCarloScore += mySc;
+                child[triedIndex].naiveScore += mySc;
                 monteCarloAllScore += mySc;
 #endif
                 
@@ -421,33 +427,68 @@ namespace UECda{
                 // 以下参考にする統計量
                 child[triedIndex].turnSum += field.getTurnNum();
                 
-                if(allSimulations > limitSimulations){
-                    exitFlag = true;
-                }
+#ifdef FIXED_N_PLAYOUTS
+                if(allSimulations >= (FIXED_N_PLAYOUTS))exitFlag = true;
+#else
+                if(allSimulations >= limitSimulations)exitFlag = true;
+#endif
                 unlock();
                 
                 if(child[triedIndex].mean() > pshared->exp_wr){
                     pshared->exp_wr = child[triedIndex].mean();
                 }
             }
-            void sortWithScore(){ // 評価が高い順に候補行動をソート
-                std::sort(child.begin(), child.begin() + candidates,
-                          [](const RootActionInfo& a, const RootActionInfo& b)->bool{
-                              // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
-                              if(a.mean() > b.mean())return true;
-                              if(a.mean() < b.mean())return false;
-                              return a.policyScore > b.policyScore;
-                          });
+            
+            void sort(){ // 評価が高い順に候補行動をソート
+                std::stable_sort(child.begin(), child.begin() + actions,
+                                 [](const RootAction& a, const RootAction& b)->bool{
+                                     // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
+                                     // いちおう除外されたものに方策の点がついた場合にはその中で並べ替える
+                                     if(a.pruned && !b.pruned)return false;
+                                     if(!a.pruned && b.pruned)return true;
+                                     if(a.mean() > b.mean())return true;
+                                     if(a.mean() < b.mean())return false;
+                                     if(a.policyProb > b.policyProb)return true;
+                                     if(a.policyProb < b.policyProb)return false;
+                                     return a.policyScore > b.policyScore;
+                                 });
+            }
+            template<class callback_t>
+            int sort(int ed, const callback_t& callback){ // 数値基準を定義して候補行動をソート
+                const int num = min(ed, candidates);
+                std::stable_sort(child.begin(), child.begin() + num,
+                                 [&](const RootAction& a, const RootAction& b)->bool{
+                                     return callback(a) > callback(b);
+                                 });
+                // 最高評価なものの個数を返す
+                for(int m = 0; m < num; ++m)
+                    if(callback(child[m]) < callback(child[0]))return m;
+                return num;
+            }
+            template<class callback_t>
+            int binary_sort(int ed, const callback_t& callback){ // ブール値を定義して候補行動をソート
+                const int num = min(ed, candidates);
+                std::stable_sort(child.begin(), child.begin() + num,
+                                 [&](const RootAction& a, const RootAction& b)->bool{
+                                     return (callback(a) ? 1 : 0) > (callback(b) ? 1 : 0);
+                                 });
+                // 最高評価なものの個数を返す
+                for(int m = 0; m < num; ++m)
+                    if((callback(child[m]) ? 1 : 0) < (callback(child[0]) ? 1 : 0))return m;
+                return num;
             }
             
             std::string toString(int num = -1)const{
                 if(num == -1)num = actions; // numで表示最大数を設定
                 std::ostringstream oss;
                 // 先にソートしておく必要あり
-                oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ]" << endl;
+                oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
+                oss << allSimulations << " trials." << endl;
                 for(int m = 0; m < min(actions, num); ++m){
-                    const int rg = (int)(child[m].mean() * (double)rewardGap);
+                    const int rg = (int)(child[m].mean() * rewardGap);
                     const int rew = rg + worstReward;
+                    const int nrg = (int)(child[m].naive_mean() * rewardGap);
+                    const int nrew = nrg + worstReward;
                     double sem = sqrt(child[m].mean_var());
                     const int rewZone[2] = {rew - (int)(sem * rewardGap), rew + (int)(sem * rewardGap)};
                     
@@ -457,24 +498,37 @@ namespace UECda{
                     if(isChange)oss << OutCards(child[m].changeCards);
                     else oss << child[m].move.mv();
                     
-                    // まず総合評価点を表示
-                    oss << " : " << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
+                    oss << " : ";
+                    
+                    if(child[m].simulations > 0){
+                        // まず総合評価点を表示
+                        oss << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
+                        oss << "{mc: " << nrg << "} ";
 #ifdef DEFEAT_RIVAL_MC
-                    if(rivalPlayerNum >= 0){
-                        // 自分とライバルの評価点を表示
-                        oss << child[m].myScore;
-                        oss << " [mine = " << (worstReward + (int)(child[m].myScore.mean() * (double)rewardGap)) << "] ";
-                        oss << child[m].rivalScore;
-                        oss << " [rival's = ~" << (bestReward - (int)(child[m].rivalScore.mean() * (double)rewardGap)) << "] ";
-                    }
+                        if(rivalPlayerNum >= 0){
+                            // 自分とライバルの評価点を表示
+                            oss << child[m].myScore;
+                            oss << " [mine = " << (worstReward + (int)(child[m].myScore.mean() * (double)rewardGap)) << "] ";
+                            oss << child[m].rivalScore;
+                            oss << " [rival's = ~" << (bestReward - (int)(child[m].rivalScore.mean() * (double)rewardGap)) << "] ";
+                        }
 #endif
-                    oss << "pol = " << child[m].policyScore << " "; // 方策関数のスコアを表示
-                    oss << "t = " << child[m].turnSum / (double)child[m].simulations << " "; // 統計量を表示
+                    }
+                    oss << "prob = " << child[m].policyProb; // 方策関数の確率出力
+                    oss << " (pol = " << child[m].policyScore << ") "; // 方策関数のスコア
+                    if(child[m].simulations > 0){
+                        oss << "t = " << child[m].turnSum / (double)child[m].simulations << " "; // 統計量
+                    }
                     oss << child[m].simulations << " trials." << endl;
                     
                     if(m == 0)oss << "\033[0m";
                 }
                 return oss.str();
+            }
+            int getExpReward(int idx)const{
+                const int rg = (int)(child[idx].mean() * (double)rewardGap);
+                const int rew = rg + worstReward;
+                return rew;
             }
             
             RootInfo(){

@@ -1,16 +1,12 @@
 /*
- monteCarloThread.hpp
+ monteCarlo.hpp
  Katsuki Ohto
  */
 
-#ifndef UECDA_MONTECARLO_THREAD_HPP_
-#define UECDA_MONTECARLO_THREAD_HPP_
+#pragma once
 
 #include "../../settings.h"
-
-#include "monteCarlo.h"
 #include "../estimation/worldCreator.hpp"
-
 #include "playouter.hpp"
 
 // マルチスレッディングのときはスレッド、
@@ -26,6 +22,8 @@ namespace UECda{
          sharedData_t *const pshared,
          threadTools_t *const ptools){
             
+            constexpr uint32_t MINNEC_N_TRIALS = 4; // 全体での最小限のトライ数。UCB-Rootにしたので実質不要になった
+            
             // プレー用
             using dice64_t = ThreadTools::dice64_t;
             using galaxy_t = ThreadTools::galaxy_t;
@@ -37,10 +35,8 @@ namespace UECda{
             Clock clock;
             
             const int myPlayerNum = pfield->getMyPlayerNum();
-            
-            const int NPlayers = pfield->getNAlivePlayers();
-            
             const int candidates = proot->candidates; // 候補数
+            auto& child = proot->child;
             
             int threadNTrials[256]; // 当スレッドでのトライ数(候補ごと)
             int threadNTrialsSum = 0; // 当スレッドでのトライ数(合計)
@@ -56,7 +52,7 @@ namespace UECda{
             
             assert(threadMaxNWorlds > 0);
             
-            //const int threadMinNecNTrials=min( 1, MonteCarlo::MINNEC_N_TRIALS / N_THREADS ); // 当スレッドで1つの候補に対して最低割り振るべきトライ数
+            //const int threadMinNecNTrials = min(1, MINNEC_N_TRIALS / N_THREADS); // 当スレッドで1つの候補に対して最低割り振るべきトライ数
             
             // 世界創世者
             // 連続作成のためここに置いておく
@@ -91,37 +87,36 @@ namespace UECda{
                 
                 //サンプル着手決定
                 int tryingIndex = -1;
-                if(proot->candidates == 2){
+                if(candidates == 2){
                     // 2つの時は同数(分布サイズ単位)に割り振る
-                    if(proot->child[0].size() == proot->child[1].size())
-                        tryingIndex = dice->rand() % 2;
+                    if(child[0].size() == child[1].size())
+                        tryingIndex = dice.rand() % 2;
                     else
-                        tryingIndex = proot->child[0].size() < proot->child[1].size()
+                        tryingIndex = child[0].size() < child[1].size()
                         ? 0 : 1;
                 }else{
                     // UCB-root アルゴリズムに変更
                     double bestScore = -DBL_MAX;
                     const double allSize = proot->monteCarloAllScore.size();
-                    for(int c = 0; c < proot->candidates; ++c){
+                    for(int c = 0; c < candidates; ++c){
                         double tmpScore;
-                        double size = proot->child[c].size();
-                        if(child[c].trials < MonteCarlo::MINNEC_N_TRIALS){
+                        double size = child[c].size();
+                        if(child[c].simulations < MINNEC_N_TRIALS){
                             // 最低プレイアウト数をこなしていないものは、大きな値にする
                             // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                            tmpScore = (double)((1U << 16) - (child[c].trials << 8) + (dice->rand() % (1U << 6)));
+                            tmpScore = (double)((1U << 16) - (child[c].simulations << 8) + (dice.rand() % (1U << 6)));
                         }else{
                             ASSERT(size, cerr << child[c].toString() << endl;);
                             tmpScore = child[c].mean() + 0.7 * sqrt(sqrt(allSize) / size); // ucbr値
                         }
                         if(tmpScore > bestScore){
                             bestScore = tmpScore;
-                            bestId = c;
+                            tryingIndex = c;
                         }
                     }
                 }
-                int tryingIndex = tryingIndex;
-                ASSERT(0 <= tryingIndex && tryingIndex < proot->candidates,
-                       cerr << tryingIndex << " in " << proot->candidates << endl;);
+                ASSERT(0 <= tryingIndex && tryingIndex < candidates,
+                       cerr << tryingIndex << " in " << candidates << endl;);
                 
                 //DERR << "SAMPLE MOVE..." << ps->getMoveById(tryingIndex) << endl;
                 
@@ -218,21 +213,22 @@ namespace UECda{
                 if(proot->isChange){
                     copyField(pf, &f);
                     setWorld(pf, *pWorld, &f);
-                    ASSERT(examCards(proot->child[tryingIndex].c), cerr << OutCards(proot->child[tryingIndex].c) << endl;);
-                    po.startChange(&f, myPlayerNum, proot->child[tryingIndex].c, pshared, ptools);
+                    ASSERT(examCards(child[tryingIndex].changeCards),
+                           cerr << OutCards(child[tryingIndex].changeCards) << endl;);
+                    po.startChange(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
                 }else{
                     //po.startRoot(&score,root->child[tryingIndex],*pWorld,*field);
                     copyField(pf, &f);
                     //CERR << f.phase << endl;
                     setWorld(pf, *pWorld, &f);
                     //CERR << f.phase << endl;
-                    po.startRoot(&f, proot->child[tryingIndex].mi, pshared, ptools);
+                    po.startRoot(&f, child[tryingIndex].move, pshared, ptools);
                 }
                 //int r = std::rand() % 5;
                 
                 //CERR << "TRIAL : " << i << " " << moves.getMoveById(tryingIndex) << " : " << r << endl;
                 
-                proot->feedResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
+                proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
                 if(proot->exitFlag){
                     goto THREAD_EXIT;
                 }
@@ -242,8 +238,8 @@ namespace UECda{
 #ifndef FIXED_N_PLAYOUTS
                 if(threadId == 0
                    && threadNTrialsSum % max(4, 32 / N_THREADS) == 0
-                   //root->trials % 32 == 0
-                   && proot->trials > candidates * MonteCarlo::MINNEC_N_TRIALS
+                   //root->simulations % 32 == 0
+                   && proot->allSimulations > candidates * MINNEC_N_TRIALS
                    ){
                     
                     //cerr<<"cut ";
@@ -257,13 +253,13 @@ namespace UECda{
                     
                     // regret check
                     Dist d[N_MAX_MOVES + 64];
-                    for(int m = 0; m < proot->candidates; ++m){
+                    for(int m = 0; m < candidates; ++m){
                         d[m].reg = 0.0;
-                        d[m].mean = proot->child[m].mean();
+                        d[m].mean = child[m].mean();
                         
-                        ASSERT(proot->child[m].size(), cerr << proot->child[m].toString() << endl;);
+                        ASSERT(child[m].size(), cerr << child[m].toString() << endl;);
                         
-                        d[m].sem = sqrt(proot->child[m].mean_var()); // 推定平均値の分散
+                        d[m].sem = sqrt(child[m].mean_var()); // 推定平均値の分散
                         //cerr << d[m].sem << endl;
                     }
                     for(int t = 0; t < 1600; ++t){
@@ -285,12 +281,12 @@ namespace UECda{
                     
                     for(int m = 0; m < candidates; ++m){
                         if(d[m].reg > line){
-                            /*cerr<<"trials = " << proot->trials << " childs = "<<candidates<<" line = "<<line<<endl;
+                            /*cerr<<"simulations = " << proot->simulations << " childs = "<<candidates<<" line = "<<line<<endl;
                              for(int mm=0;mm<candidates;mm++){
                              cerr<<d[mm].reg<<endl;
                              }
                              getchar();*/
-                            proot->ex = 1;
+                            proot->exitFlag = 1;
                             goto THREAD_EXIT;
                         }
                     }
@@ -301,5 +297,3 @@ namespace UECda{
         }
     }
 }
-#endif // UECDA_MONTECARLO_THREAD_HPP_
-
