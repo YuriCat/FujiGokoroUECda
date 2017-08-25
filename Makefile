@@ -10,6 +10,10 @@ LIBRARIES = -lpthread
 #
 # 2. Target Specific Settings
 #
+ifeq ($(TARGET),teacher)
+	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
+        output_dir := out/teacher/
+endif
 ifeq ($(TARGET),match)
 	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
         output_dir := out/match/
@@ -43,6 +47,9 @@ default release debug development profile test coverage:
 
 match:
 	$(MAKE) TARGET=$@ preparation client policy_client
+
+teacher:
+	$(MAKE) TARGET=$@ preparation client
 
 run-coverage: coverage
 	out/coverage --gtest_output=xml
