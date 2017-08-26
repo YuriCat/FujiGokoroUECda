@@ -22,7 +22,7 @@
 // 重要な設定
 
 //#define MINIMUM // 本番用
-#define MONITOR // 着手決定関連の表示
+//#define MONITOR // 着手決定関連の表示
 //#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
@@ -125,6 +125,33 @@ constexpr DealType MONTECARLO_DEAL_TYPE = DealType::REJECTION;
 #define N_NORMAL_PLAYERS (5)
 
 /**************************以下は直接変更しない**************************/
+
+// 大会用ビルドでは MATCH_CONST変数 は定数とする
+#ifdef MATCH
+#define MATCH_CONST constexpr
+#else
+#define MATCH_CONST
+#endif
+
+// 教師用ビルドでは1スレッドでルートでの方策の利用はなし
+#ifdef TEACHER
+#ifdef N_THREADS
+#undef N_THREADS
+#endif
+#define N_THREADS (1)
+
+#undef THINKING_LEVEL
+#define THINKING_LEVEL (40)
+
+#ifdef USE_POLICY_TO_ROOT
+#undef USE_POLICY_TO_ROOT
+#endif
+
+#ifdef FIXED_N_PLAYOUTS
+#undef FIXED_N_PLAYOUTS
+#endif
+
+#endif
 
 // ルール設定
 #ifndef _PLAYERS
@@ -232,11 +259,5 @@ constexpr DealType MONTECARLO_DEAL_TYPE = DealType::REJECTION;
 #undef MY_NAME
 #define MY_NAME "Random"
 #endif // RANDOM_MODE
-
-#ifdef MATCH
-#define MATCH_CONST constexpr
-#else
-#define MATCH_CONST
-#endif
 
 #endif // UECDA_SETTINGS_H_
