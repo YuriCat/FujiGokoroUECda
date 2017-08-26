@@ -15,17 +15,7 @@ namespace UECda{
     /**************************着手決定のための基本追加場情報**************************/
     
     // 試合結果の宣言情報
-    
-    // 情報の基本的な並び
-    // 0 MATE (L2の際も含む)
-    // 1 FINAL
-    // 2 PW
-    // 3 BNPW
-    // 4 BRPW
-    // 5 GIVEUP
-    // 6 L2WIN
-    // 7 L2GIVEUP
-    
+
     // 結果宣言
     constexpr int LCT_FINAL = 0;
     constexpr int LCT_PW = 1;
@@ -33,7 +23,7 @@ namespace UECda{
     constexpr int LCT_BRPW = 3;
     constexpr int LCT_MPMATE = 4;
     constexpr int LCT_L2MATE = 5;
-    constexpr int LCT_GIVEUP = 6;
+    constexpr int LCT_MPGIVEUP = 6;
     constexpr int LCT_L2GIVEUP = 7;
     
     // 場の一時状況に対するする宣言情報
@@ -722,48 +712,6 @@ namespace UECda{
         out << "}";
         return out;
     }
-    
-    /**************************着手と情報を一緒に持った集合**************************/
-    
-    template<class _move_t>
-    struct PlaySpace{
-        
-        using move_t = _move_t;
-        
-        //MoveInfo mv[SIZE];
-        move_t *const mv;
-        
-        int qty;
-        int activeQty;
-        
-        move_t playMove;
-        
-        move_t getMoveById(int id)const{return mv[id];}
-        move_t* getMovePtr(){return mv;}
-        move_t* getMovePtr(int id){return &mv[id];}
-        
-        void swapById(int id0, int id1){
-            std::swap(mv[id0], mv[id1]);
-        }
-        
-        void pruneById(int id){
-            assert(id < activeQty);
-            --activeQty;
-            if(id != activeQty){
-                std::swap(mv[id], mv[activeQty]);
-            }
-        }
-        
-        int getNMoves()const{return qty;}
-        int getNActiveMoves()const{return activeQty;}
-        
-        void setPlayMove(move_t arg){
-            playMove = arg;
-        }
-        
-        PlaySpace(move_t *const buf):mv(buf){}
-    };
-    
 }
 
 #endif // UECDA_STRUCTURE_PRIMITIVE2_HPP_
