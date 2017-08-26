@@ -35,6 +35,35 @@ namespace UECda{
                 return tmp;
             }
             
+            template<class field_t>
+            int preferRev(const field_t& field){
+                
+                uint32_t rivals = field.getRivalPlayersFlag();
+                int allClassSum = 0;
+                int rivalClassSum = 0;
+                int numRivals = 0;
+                
+                for(int p = 0; p < N_PLAYERS; ++p){
+                    if(field.isAlive(p) && (int)field.getMyPlayerNum() != p){
+                        int cl = field.getPlayerClass(p);
+                        allClassSum += cl;
+                        if(rivals & (1U << p)){
+                            rivalClassSum += cl;
+                            ++numRivals;
+                        }
+                    }
+                }
+                if(numRivals > 0){ // ライバルプレーヤーがもういないときはどうでも良い
+                    // 革命優先かの判断
+                    int rivalBetter = (rivalClassSum * field.getNAlivePlayers()
+                                       < allClassSum * numRivals) ? 1 : 0;
+                    
+                    // オーダー通常 & RPが良い階級　またはその逆の時革命優先
+                    return (rivalBetter ^ field.getBoard().tmpOrder()) ? 1 : -1;
+                }
+                return 0;
+            }
+            
             template<class playSpace_t, class sbjField_t, class dice_t>
             Move chooseMateMove(playSpace_t *const ps, int NCands,
                                 const sbjField_t& field,

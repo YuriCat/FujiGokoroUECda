@@ -292,11 +292,10 @@ namespace UECda{
         UNREACHABLE;
     }
     
-    template<class playSpace_t, class sbjField_t>
-    void setDomState(playSpace_t *const ps, const sbjField_t& field){
+    template<class move_t, class sbjField_t>
+    void setDomState(move_t *const buf, const int candidates, const sbjField_t& field){
         // 支配関係のパラメータを一括計算しPlaySpaceに入れる
         // クライアント用に詳しく計算。
-        typedef typename playSpace_t::move_t move_t;
         const int turnPlayer = field.getTurnPlayer();
         const Cards myCards = field.getCards(turnPlayer);
         const int NMyCards = field.getNCards(turnPlayer);
@@ -311,8 +310,8 @@ namespace UECda{
             // オーダー固定
             
             // 現在オーダーについてのみ調べる
-            for(int m = ps->getNActiveMoves() - 1; m >= 0; --m){
-                move_t *const mv = ps->getMovePtr(m);
+            for(int m = candidates - 1; m >= 0; --m){
+                move_t *const mv = &buf[m];
                 
                 // 無条件
                 if(mv->domInevitably()){ // 永続的完全支配
@@ -338,8 +337,8 @@ namespace UECda{
             // オーダー固定でない
             
             // 現在オーダーと逆転オーダーの両方を調べる
-            for(int m = ps->getNActiveMoves() - 1; m >= 0; --m){
-                move_t *const mv = ps->getMovePtr(m);
+            for(int m = candidates - 1; m >= 0; --m){
+                move_t *const mv = &buf[m];
                 
                 // 無条件
                 if(mv->domInevitably()){ // 永続的完全支配
@@ -366,8 +365,8 @@ namespace UECda{
         
         // 当座
         // 他の情報と被るので無駄がある
-        for(int m = ps->getNActiveMoves() - 1; m >= 0; --m){
-            move_t *const mv = ps->getMovePtr(m);
+        for(int m = candidates - 1; m >= 0; --m){
+            move_t *const mv = &buf[m];
             
             const uint32_t qty = mv->qty();
             

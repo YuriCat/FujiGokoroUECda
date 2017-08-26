@@ -148,7 +148,8 @@ namespace UECda{
         }
         constexpr int FEA_NUM_ALL = FEA_IDX(POL_ALL);
  
-#define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature); for (int i = 0; i < FEA_NUM(feature); ++i){os(base + i); } out << endl; }
+#define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature);\
+for (int i = 0; i < FEA_NUM(feature); ++i){os(base + i); } out << endl; }
         
 #define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
 for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out << endl; }} out << endl; }
@@ -392,9 +393,8 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
             typename policy_t::real_t s = 0;
             
             if(mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))){
-                s += 8;
+                s -= 1000; // Mateのときは低い点にする
             }else{
-                
                 // 着手パラメータ
                 const int aftOrd = bd.afterTmpOrder(mv.mv());
                 const int q4 = min(mv.qty(), 4U);

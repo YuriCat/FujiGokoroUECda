@@ -3,10 +3,8 @@
  Katsuki Ohto
  */
 
-// ランダムプレイアウト
-//#ifndef UECDA_FUJI_MONTECARLO_PLAYOUTER_HPP_
-//#define UECDA_FUJI_MONTECARLO_PLAYOUTER_HPP_
 #pragma once
+// ランダムプレイアウト
 
 #include "../fuji.h"
 
@@ -115,7 +113,7 @@ namespace UECda{
 
                     //cerr<<pfield->toDebugString();
                     
-                    uint32_t bestReward = pshared->game_reward[pfield->getBestClass()];
+                    uint32_t bestReward = pshared->gameReward[pfield->getBestClass()];
                     
                     if(search(pfield->attractedPlayers, [reward, bestReward](uint32_t pn)->bool{
                         if (reward[pn] > bestReward){
@@ -163,8 +161,8 @@ namespace UECda{
 #endif // SEARCH_LEAF_MATE
                     if(idxMate != -1){ // mate
                         pfield->setPlayMove(pfield->mv[idxMate]);
-                        pfield->playMove.setMate();
-                        pfield->fieldInfo.setMate();
+                        pfield->playMove.setMPMate();
+                        pfield->fieldInfo.setMPMate();
                     }else{
                         if (pfield->NActiveMoves <= 1){
                             pfield->setPlayMove(pfield->mv[0]);
@@ -233,7 +231,7 @@ namespace UECda{
         GAME_END:
             //getchar();
             for(int p = 0; p < N_PLAYERS; ++p){
-                pfield->infoReward.replace(p, pshared->game_reward[pfield->getPlayerNewClass(p)]);
+                pfield->infoReward.replace(p, pshared->gameReward[pfield->getPlayerNewClass(p)]);
             }
             return 0;
         }
@@ -301,5 +299,3 @@ namespace UECda{
 
     }
 }
-
-//#endif // UECDA_FUJI_MONTECARLO_PLAYOUTER_HPP_

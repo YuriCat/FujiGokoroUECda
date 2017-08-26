@@ -27,13 +27,13 @@ namespace UECda{
     // 7 L2GIVEUP
     
     // 結果宣言
-    constexpr int LCT_MATE = 0;
-    constexpr int LCT_FINAL = 1;
-    constexpr int LCT_PW = 2;
-    constexpr int LCT_BNPW = 3;
-    constexpr int LCT_BRPW = 4;
-    constexpr int LCT_GIVEUP = 5;
-    constexpr int LCT_L2MATE = 6;
+    constexpr int LCT_FINAL = 0;
+    constexpr int LCT_PW = 1;
+    constexpr int LCT_BNPW = 2;
+    constexpr int LCT_BRPW = 3;
+    constexpr int LCT_MPMATE = 4;
+    constexpr int LCT_L2MATE = 5;
+    constexpr int LCT_GIVEUP = 6;
     constexpr int LCT_L2GIVEUP = 7;
     
     // 場の一時状況に対するする宣言情報
@@ -46,14 +46,17 @@ namespace UECda{
     constexpr int LCT_BDOMOTHERS = 22;
     constexpr int LCT_BDOMME = 23; // <-NoChanceのこと
     
-    constexpr int LCT64_MATE = 32 + 0;
-    constexpr int LCT64_FINAL = 32 + 1;
-    constexpr int LCT64_PW = 32 + 2;
-    constexpr int LCT64_BNPW = 32 + 3;
-    constexpr int LCT64_BRPW = 32 + 4;
-    constexpr int LCT64_GIVEUP = 32 + 5;
-    constexpr int LCT64_L2MATE = 32 + 6;
+    constexpr int LCT64_FINAL    = 32 + 0;
+    constexpr int LCT64_PW       = 32 + 1;
+    constexpr int LCT64_BNPW     = 32 + 2;
+    constexpr int LCT64_BRPW     = 32 + 3;
+    constexpr int LCT64_MPMATE   = 32 + 4;
+    constexpr int LCT64_L2MATE   = 32 + 5;
+    constexpr int LCT64_MPGIVEUP = 32 + 6;
     constexpr int LCT64_L2GIVEUP = 32 + 7;
+    
+    constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
+    constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
     
     constexpr int LCT64_MINNMELDS = 32 + 8;
     
@@ -110,21 +113,14 @@ namespace UECda{
         using data_t = uint64_t;
         
         // set
-        void setMate()noexcept{ i_.set(LCT64_MATE); }
-        void setFinal()noexcept{ i_.set(LCT64_FINAL,
-                                       LCT64_PW,
-                                       LCT64_MATE); }
-        void setPW()noexcept{ i_.set(LCT64_PW,
-                                    LCT64_MATE); }
-        void setBNPW()noexcept{ i_.set(LCT64_BNPW,
-                                      LCT64_MATE); }
-        void setBRPW()noexcept{ i_.set(LCT64_BRPW,
-                                      LCT64_MATE); }
-        void setGiveUp()noexcept{ i_.set(LCT64_GIVEUP); }
-        void setL2Mate()noexcept{ i_.set(LCT64_L2MATE,
-                                        LCT64_MATE); }
-        void setL2GiveUp()noexcept{ i_.set(LCT64_L2GIVEUP,
-                                          LCT64_GIVEUP); }
+        void setFinal()noexcept{    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW()noexcept{       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW()noexcept{     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW()noexcept{     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate()noexcept{   i_.set(LCT64_MPMATE); }
+        void setL2Mate()noexcept{   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp()noexcept{ i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp()noexcept{ i_.set(LCT64_L2GIVEUP); }
         
         void setSelfFollow()noexcept{ i_.set(LCT64_SELFFOLLOW,
                                             LCT64_UNRIVALED,
@@ -165,14 +161,16 @@ namespace UECda{
         
         // get
         // 一時情報
-        uint64_t isMate()const noexcept{ return test(LCT64_MATE); }
-        uint64_t isFinal()const noexcept{ return test(LCT64_FINAL); }
-        uint64_t isPW()const noexcept{ return test(LCT64_PW); }
-        uint64_t isBNPW()const noexcept{ return test(LCT64_BNPW); }
-        uint64_t isBRPW()const noexcept{ return test(LCT64_BRPW); }
-        uint64_t isGiveUp()const noexcept{ return test(LCT64_GIVEUP); }
-        uint64_t isL2Mate()const noexcept{ return test(LCT64_L2MATE); }
+        uint64_t isFinal()const noexcept{    return test(LCT64_FINAL); }
+        uint64_t isPW()const noexcept{       return test(LCT64_PW); }
+        uint64_t isBNPW()const noexcept{     return test(LCT64_BNPW); }
+        uint64_t isBRPW()const noexcept{     return test(LCT64_BRPW); }
+        uint64_t isMPMate()const noexcept{   return test(LCT64_MPMATE); }
+        uint64_t isMPGiveUp()const noexcept{ return test(LCT64_MPGIVEUP); }
+        uint64_t isL2Mate()const noexcept{   return test(LCT64_L2MATE); }
         uint64_t isL2GiveUp()const noexcept{ return test(LCT64_L2GIVEUP); }
+        uint64_t isMate()const noexcept{     return i_ & FLAG64_MATE; }
+        uint64_t isGiveUp()const noexcept{   return i_ & FLAG64_GIVEUP; }
         
         uint64_t isSelfFollow()const noexcept{ return test(LCT64_SELFFOLLOW); }
         uint64_t isUnrivaled()const noexcept{ return test(LCT64_UNRIVALED); }
@@ -226,42 +224,24 @@ namespace UECda{
     
     ostream& operator <<(ostream& out, const FieldAddInfo& i){ // 出力
         out << "Field :";
-        if(i.isFinal()){
-            out << " -FIN";
-        }else if(i.isPW()){
-            out << " -PW";
-        }else if(i.isBNPW()){
-            out << " -BNPW";
-        }else if(i.isBRPW()){
-            out << " -BRPW";
-        }else if(i.isL2Mate()){
-            out << " -L2MATE";
-        }else if(i.isMate()){
-            out << " -MATE";
-        }else if(i.isL2GiveUp()){
-            out << " -L2GIVEUP";
-        }else if(i.isGiveUp()){
-            out << " -GIVEUP";
-        }
+        if(i.isFinal())out << " -FIN";
+        else if(i.isPW())out << " -PW";
+        else if(i.isBNPW())out << " -BNPW";
+        else if(i.isBRPW())out << " -BRPW";
+        else if(i.isMPMate())out << " -MPMATE";
         
-        if(i.isSelfFollow()){
-            out << " -SFOL";
-        }
-        if(i.isUnrivaled()){
-            out << " -UNRIV";
-        }
-        if(i.isLastAwake()){
-            out << " -LA";
-        }
-        if(i.isFlushLead()){
-            out << " -FLEAD";
-        }
-        if(i.isNonPassDom()){
-            out << " -NPD";
-        }
-        if(i.isPassDom()){
-            out << " -PD";
-        }
+        if(i.isL2Mate())out << " -L2MATE";
+        
+        if(i.isMPGiveUp())out << " -MPGIVEUP";
+        if(i.isL2GiveUp())out << " -L2GIVEUP";
+        
+        if(i.isSelfFollow())out << " -SFOL";
+        if(i.isUnrivaled())out << " -UNRIV";
+        if(i.isLastAwake())out << " -LA";
+        if(i.isFlushLead())out << " -FLEAD";
+        if(i.isNonPassDom())out << " -NPD";
+        if(i.isPassDom())out << " -PD";
+        
         if(i.isBDALL()){
             out << " -BDALL";
         }else{
@@ -307,6 +287,8 @@ namespace UECda{
         using data_t = uint64_t;
         using move_t = Move;
         
+        uint64_t test(int n)const{ return i_.test(n); }
+        
         constexpr MoveInfo(): MoveInRegister<data_t>(){}
         constexpr MoveInfo(uint64_t arg): MoveInRegister<data_t>(arg){}
         constexpr move_t mv()const{ return Move((uint32_t)data()); }
@@ -319,21 +301,14 @@ namespace UECda{
         
         // MoveAddInfo
         // 上位32ビットの演算
-        void setMate()noexcept{i_.set(LCT64_MATE);}
-        void setFinal()noexcept{i_.set(LCT64_FINAL,
-                                       LCT64_PW,
-                                       LCT64_MATE);}
-        void setPW()noexcept{i_.set(LCT64_PW,
-                                    LCT64_MATE);}
-        void setBNPW()noexcept{i_.set(LCT64_BNPW,
-                                      LCT64_MATE);}
-        void setBRPW()noexcept{i_.set(LCT64_BRPW,
-                                      LCT64_MATE);}
-        void setGiveUp()noexcept{i_.set(LCT64_GIVEUP);}
-        void setL2Mate()noexcept{i_.set(LCT64_L2MATE,
-                                        LCT64_MATE);}
-        void setL2GiveUp()noexcept{i_.set(LCT64_L2GIVEUP,
-                                          LCT64_GIVEUP);}
+        void setFinal()noexcept{    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW()noexcept{       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW()noexcept{     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW()noexcept{     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate()noexcept{   i_.set(LCT64_MPMATE); }
+        void setL2Mate()noexcept{   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp()noexcept{ i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp()noexcept{ i_.set(LCT64_L2GIVEUP); }
         
         // 当座支配
         void setDO()noexcept{i_ |= 1ULL<<(32+12);}
@@ -388,14 +363,16 @@ namespace UECda{
         void init()noexcept{i_&=0x00000000FFFFFFFF;}
         
         // get
-        uint64_t isMate()const noexcept{return i_.test(LCT64_MATE);}
-        uint64_t isFinal()const noexcept{return i_.test(LCT64_FINAL);}
-        uint64_t isPW()const noexcept{return i_.test(LCT64_PW);}
-        uint64_t isBNPW()const noexcept{return i_.test(LCT64_BNPW);}
-        uint64_t isBRPW()const noexcept{return i_.test(LCT64_BRPW);}
-        uint64_t isGiveUp()const noexcept{return i_.test(LCT64_GIVEUP);}
-        uint64_t isL2Mate()const noexcept{return i_.test(LCT64_L2MATE);}
-        uint64_t isL2GiveUp()const noexcept{return i_.test(LCT64_L2GIVEUP);}
+        uint64_t isFinal()const noexcept{    return test(LCT64_FINAL); }
+        uint64_t isPW()const noexcept{       return test(LCT64_PW); }
+        uint64_t isBNPW()const noexcept{     return test(LCT64_BNPW); }
+        uint64_t isBRPW()const noexcept{     return test(LCT64_BRPW); }
+        uint64_t isMPMate()const noexcept{   return test(LCT64_MPMATE); }
+        uint64_t isMPGiveUp()const noexcept{ return test(LCT64_MPGIVEUP); }
+        uint64_t isL2Mate()const noexcept{   return test(LCT64_L2MATE); }
+        uint64_t isL2GiveUp()const noexcept{ return test(LCT64_L2GIVEUP); }
+        uint64_t isMate()const noexcept{     return i_ & FLAG64_MATE; }
+        uint64_t isGiveUp()const noexcept{   return i_ & FLAG64_GIVEUP; }
         
         uint64_t isDO()const noexcept{return i_&(1ULL<<(32+12));}
         uint64_t isDM()const noexcept{return i_&(1ULL<<(32+13));}
@@ -436,27 +413,20 @@ namespace UECda{
     ostream& operator <<(ostream& out, const MoveAddInfo& i){ // 出力
         
         // 勝敗
-        if(i.isFinal()){
-            out << " -FIN";
-        }else if(i.isPW()){
-            out << " -PW";
-        }else if(i.isBNPW()){
-            out << " -BNPW";
-        }else if(i.isBRPW()){
-            out << " -BRPW";
-        }else if(i.isL2Mate()){
-            out << " -L2MATE";
-        }else if(i.isMate()){
-            out << " -MATE";
-        }else if(i.isL2GiveUp()){
-            out << " -L2GIVEUP";
-        }else if(i.isGiveUp()){
-            out << " -GIVEUP";
-        }
+        if(i.isFinal())out << " -FIN";
+        else if(i.isPW())out << " -PW";
+        else if(i.isBNPW())out << " -BNPW";
+        else if(i.isBRPW())out << " -BRPW";
+        else if(i.isMPMate())out << " -MPMATE";
+        
+        if(i.isL2Mate())out << " -L2MATE";
+        
+        if(i.isMPGiveUp())out << " -MPGIVEUP";
+        if(i.isL2GiveUp())out << " -L2GIVEUP";
         
         // 後場
-        if(i.isTmpOrderRev()){out<<" -TREV";}
-        if(i.isSuitLock()){out<<" -SLOCK";}
+        if(i.isTmpOrderRev())out << " -TREV";
+        if(i.isSuitLock())out << " -SLOCK";
         
         // パラメータ
         out << " -MNM(" << i.getIncMinNMelds() << ")";
@@ -734,7 +704,7 @@ namespace UECda{
         constexpr PlayersState(const PlayersState& arg) : i(arg.i){}
     };
     
-    std::ostream& operator<<(std::ostream& out, const PlayersState& arg){//出力
+    std::ostream& operator<<(std::ostream& out, const PlayersState& arg){ // 出力
         // 勝敗
         out << "al{";
         for(int i = 0; i < PlayersState::N; ++i){
@@ -752,28 +722,6 @@ namespace UECda{
         out << "}";
         return out;
     }
-    
-    /**************************ルートの手の情報**************************/
-    
-    struct RootAction{
-        
-        bool isChange;
-        Move move;
-        Cards changeCards;
-        
-        double policyScore;
-        double monteCarloScore;
-        
-        std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDistribution;
-    };
-    
-    /**************************ルートの全体の情報**************************/
-    
-    struct RootInfo{
-        std::array<RootAction, N_MAX_MOVES + 64> move;
-        int moves;
-        
-    };
     
     /**************************着手と情報を一緒に持った集合**************************/
     

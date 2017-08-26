@@ -1331,7 +1331,7 @@ namespace UECda{
                          if(NMoves > 1){
                              for(int m = 0; m < NMoves; ++m){
                                  bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, bd, field.fInfo, 1, 1);
-                                 if(mate){ mv[m].setMate(); }
+                                 if(mate){ mv[m].setMPMate(); }
                              }
                          }
                          

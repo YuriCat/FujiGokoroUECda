@@ -126,7 +126,7 @@ namespace UECda{
                          // 必勝判定
                          bool mate = checkHandMate(0, pmv + NMoves, *mi, myHand, opsHand, bd, fieldInfo);
                          if(mate){
-                             mi->setMate(); fieldInfo.setMate(); isCM = true;
+                             mi->setMPMate(); fieldInfo.setMPMate(); isCM = true;
                          }
                          
                          // L2の場合はL2判定

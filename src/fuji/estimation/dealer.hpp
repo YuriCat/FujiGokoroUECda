@@ -1195,7 +1195,7 @@ namespace UECda{
                          if(NMoves > 1){
                              for(int m = 0; m < NMoves; ++m){
                                  bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, bd, field.fieldInfo);
-                                 if(mate){ mv[m].setMate(); }
+                                 if(mate){ mv[m].setMPMate(); }
                              }
                          }
                          
@@ -1228,11 +1228,15 @@ namespace UECda{
                                  playLH += log(1 / (double)(NMoves + 1));
                              }else{
                                  
-                                 double score[N_MAX_MOVES + 1];
-                                 calcPlayPolicyScoreSlow<0>(score, mv, NMoves, field, shared.estimationPlayPolicy);
-                                 SoftmaxSelector selector(score, NMoves, Settings::simulationTemperaturePlay);
+                                 std::array<double, N_MAX_MOVES> score;
+                                 calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.estimationPlayPolicy);
+                                 // Mateの手のスコアを設定
+                                 double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
+                                 for(int m = 0; m < NMoves; ++m)
+                                     if(mv[m].isMate())score[m] = maxScore + 4;
+                                 SoftmaxSelector selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
                                  if(Settings::simulationPlayModel){
-                                     addPlayerPlayBias(score, mv, NMoves, field, *ppm, Settings::playerBiasCoef);
+                                     addPlayerPlayBias(score.data(), mv, NMoves, field, *ppm, Settings::playerBiasCoef);
                                  }
                                  selector.to_prob();
                                  if(selector.sum != 0){

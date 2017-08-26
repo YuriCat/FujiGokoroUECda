@@ -22,7 +22,7 @@
 // 重要な設定
 
 //#define MINIMUM // 本番用
-//#define MONITOR // 着手決定関連の表示
+#define MONITOR // 着手決定関連の表示
 //#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
