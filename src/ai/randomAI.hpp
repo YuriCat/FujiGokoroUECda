@@ -33,24 +33,24 @@ namespace UECda{
 #endif
 
 namespace UECda{
-	namespace RandomAI{
-		class Client{
-		private:
+    namespace RandomAI{
+        class Client{
+        private:
             XorShift64 dice;
-		public:
+        public:
             ClientField field;
             
             void setRandomSeed(uint64_t s)noexcept{
                 // 乱数系列を初期化
                 dice.srand(s);
             }
-			
-			void initMatch(){
-				dice.srand((uint64_t)time(NULL) + 123ULL);
-			}
-			void initGame(){}
-			
-			Cards change(uint32_t change_qty){ // 交換関数
+            
+            void initMatch(){
+                dice.srand((uint64_t)time(NULL) + 123ULL);
+            }
+            void initGame(){}
+            
+            Cards change(uint32_t change_qty){ // 交換関数
                 // 合法交換候補生成
                 const Cards myCards = field.getMyDealtCards();
                 Cards cand[N_MAX_CHANGES]; // 最大候補数
@@ -64,13 +64,13 @@ namespace UECda{
                 }else{
                     return cand[dice.rand() % NCands];
                 }
-			}
+            }
             
-			void afterChange(){}
-			void waitChange(){}
-			void prepareForGame(){}
+            void afterChange(){}
+            void waitChange(){}
+            void prepareForGame(){}
             
-			Move play(){ // プレー関数
+            Move play(){ // プレー関数
                 MoveInfo buf[1024];
                 const int NMoves = genMove(buf, field.getMyCards(), field.getBoard());
                 
@@ -85,20 +85,20 @@ namespace UECda{
                 }
                 CERR << mv << " by " << OutCards(field.getMyCards()) << endl;
                 return mv.mv();
-			}
+            }
             
-			void afterMyPlay(){}
-			void afterOthersPlay(){}
-			void waitBeforeWon(){}
-			void waitAfterWon(){}
-			void tellOpponentsCards(){}
-			void closeGame(){}
-			void closeMatch(){}
-			~Client(){
-				closeMatch();
-			}
-		};
-	}
+            void afterMyPlay(){}
+            void afterOthersPlay(){}
+            void waitBeforeWon(){}
+            void waitAfterWon(){}
+            void tellOpponentsCards(){}
+            void closeGame(){}
+            void closeMatch(){}
+            ~Client(){
+                closeMatch();
+            }
+        };
+    }
 }
 
 #endif // UECDA_HUMAN_HPP_

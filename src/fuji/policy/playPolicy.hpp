@@ -17,7 +17,7 @@
 #include "../logic/appliedLogic.hpp"
 
 namespace UECda{
-
+    
     /**************************着手方策点**************************/
     
     namespace PlayPolicySpace{
@@ -147,17 +147,17 @@ namespace UECda{
             return (fea == 0) ? 0 : (FEA_IDX(fea - 1) + FEA_NUM(fea - 1));
         }
         constexpr int FEA_NUM_ALL = FEA_IDX(POL_ALL);
- 
+        
 #define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature);\
 for (int i = 0; i < FEA_NUM(feature); ++i){os(base + i); } out << endl; }
         
 #define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
 for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out << endl; }} out << endl; }
-    
+        
         template<typename T>
         int commentToPolicyParam(std::ostream& out, const T param[FEA_NUM_ALL]){
             auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
-
+            
             out << "****** MOVE POLICY ******" << endl;
             
             {
@@ -252,7 +252,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
     
 #define FooM(i) s += pol.param(i);\
     if(M){ pol.feedFeatureScore(m, (i), 1.0); }
-
+    
     struct PlayerPolicySubValue{
         // 方策計算を行うために予め計算しておく値(プレーヤーごと)
         double twoMeldsValue[2]; // 2役スコア(オーダー通常, 反転)
@@ -263,11 +263,11 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
     };
     
     /*double calcTwoMeldsValueDiff(int afterOrder){
-        // 元の手札の2役点のスコアから、検討する着手における2役点の差分値を
-        // 後場のオーダーに対して計算する
-        
-    }*/
-
+     // 元の手札の2役点のスコアから、検討する着手における2役点の差分値を
+     // 後場のオーダーに対して計算する
+     
+     }*/
+    
     template<
     int M = 1, // 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存
     int MODELING = 0, // 相手モデル化項追加
@@ -278,7 +278,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                                 const int NMoves,
                                 const field_t& field,
                                 policy_t& pol){ // learnerとして呼ばれうるため const なし
-    
+        
         using namespace PlayPolicySpace;
         
         // 速度不問で計算
@@ -305,7 +305,7 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
         const int order = bd.tmpOrder();
         
         const double nowRS = calcRankScore(curPqr, containsJOKER(myCards) ? 1 : 0, bd.tmpOrder());
-
+        
         // 場役主から自分が何人目か数える
         int distanceToOwner = 0;
         if (owner != tp){
@@ -324,64 +324,64 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
         
         // 各階級の予測支配率（tagashira's score）
         /*int domProb[2][16][4]; // オーダー x ランク x 枚数
-        //tick();
-        for(int o = 0; o < 2; ++o){
-            for(int r = myLR; r <= myHR; ++r){
-                const Cards strongerMsk = strongerMask(r, o);
-                for(int q = 1; q <= 4; ++q){
-                    domProb[o][r][q - 1] = 100;
-                }
-                if(r != RANK_8){
-                    // シングル
-                    domProb[o][r][0] = max(0, int(domProb[o][r][0] - 30 * countCards(opsHand.nd[o] & genSinglePQR(1) & strongerMsk)));
-                    // 複数枚
-                    for(int q = 2; q <= 4; ++q){
-                        if(opsHand.nd[o] & strongerMsk){ // 支配できない可能性がある
-                            if(o == ORDER_NORMAL){
-                                for(int rr = r + 1; rr <= RANK_2; ++rr){
-                                    int oq = opsHand.qr[rr] + opsHand.jk;
-                                    int k = oq - q - field.ps.getNAlive() + N_PLAYERS;
-                                    if(k <= 0){
-                                        domProb[o][r][q - 1] -= 4;
-                                    }else if(k == 1){
-                                        domProb[o][r][q - 1] -= 9;
-                                    }else if(k == 2){
-                                        domProb[o][r][q - 1] -= 15;
-                                    }else{
-                                        domProb[o][r][q - 1] -= 24;
-                                    }
-                                }
-                            }else{
-                                for(int rr = r - 1; rr >= RANK_3; --rr){
-                                    int oq = opsHand.qr[rr] + opsHand.jk;
-                                    int k = oq - q - field.ps.getNAlive() + N_PLAYERS;
-                                    if(k <= 0){
-                                        domProb[o][r][q - 1] -= 4;
-                                    }else if(k == 1){
-                                        domProb[o][r][q - 1] -= 9;
-                                    }else if(k == 2){
-                                        domProb[o][r][q - 1] -= 15;
-                                    }else{
-                                        domProb[o][r][q - 1] -= 24;
-                                    }
-                                }
-                            }
-                            domProb[o][r][q - 1] = max(0, domProb[o][r][q - 1]);
-                        }
-                    }
-                }
-            }
-        }
-        
-        for(int o = 0; o < 2; ++o){
-            for(int q = 1; q <= 4; ++q){
-                for(int r = 0; r < 16; ++r){
-                    cerr << std::setw(3) << domProb[o][r][q - 1] << " ";
-                }cerr << endl;
-            }cerr <<endl;
-        }
-        getchar();
-        //tock();*/
+         //tick();
+         for(int o = 0; o < 2; ++o){
+         for(int r = myLR; r <= myHR; ++r){
+         const Cards strongerMsk = strongerMask(r, o);
+         for(int q = 1; q <= 4; ++q){
+         domProb[o][r][q - 1] = 100;
+         }
+         if(r != RANK_8){
+         // シングル
+         domProb[o][r][0] = max(0, int(domProb[o][r][0] - 30 * countCards(opsHand.nd[o] & genSinglePQR(1) & strongerMsk)));
+         // 複数枚
+         for(int q = 2; q <= 4; ++q){
+         if(opsHand.nd[o] & strongerMsk){ // 支配できない可能性がある
+         if(o == ORDER_NORMAL){
+         for(int rr = r + 1; rr <= RANK_2; ++rr){
+         int oq = opsHand.qr[rr] + opsHand.jk;
+         int k = oq - q - field.ps.getNAlive() + N_PLAYERS;
+         if(k <= 0){
+         domProb[o][r][q - 1] -= 4;
+         }else if(k == 1){
+         domProb[o][r][q - 1] -= 9;
+         }else if(k == 2){
+         domProb[o][r][q - 1] -= 15;
+         }else{
+         domProb[o][r][q - 1] -= 24;
+         }
+         }
+         }else{
+         for(int rr = r - 1; rr >= RANK_3; --rr){
+         int oq = opsHand.qr[rr] + opsHand.jk;
+         int k = oq - q - field.ps.getNAlive() + N_PLAYERS;
+         if(k <= 0){
+         domProb[o][r][q - 1] -= 4;
+         }else if(k == 1){
+         domProb[o][r][q - 1] -= 9;
+         }else if(k == 2){
+         domProb[o][r][q - 1] -= 15;
+         }else{
+         domProb[o][r][q - 1] -= 24;
+         }
+         }
+         }
+         domProb[o][r][q - 1] = max(0, domProb[o][r][q - 1]);
+         }
+         }
+         }
+         }
+         }
+         
+         for(int o = 0; o < 2; ++o){
+         for(int q = 1; q <= 4; ++q){
+         for(int r = 0; r < 16; ++r){
+         cerr << std::setw(3) << domProb[o][r][q - 1] << " ";
+         }cerr << endl;
+         }cerr <<endl;
+         }
+         getchar();
+         //tock();*/
         
         pol.template initCalculatingScore(NMoves);
         
@@ -520,10 +520,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // nf min party
                 {
                     /*constexpr int base = FEA_IDX(POL_HAND_NF_PARTY);
-                    if(bd.isNF()){
-                        i = base + calcMinNMelds(buf + NMoves, c);
-                        Foo(i);
-                    }*/
+                     if(bd.isNF()){
+                     i = base + calcMinNMelds(buf + NMoves, c);
+                     Foo(i);
+                     }*/
                     const int base = FEA_IDX(POL_HAND_NF_PARTY);
                     if(bd.isNF()){
                         i = base;
@@ -663,10 +663,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                      FooX(i, sqrt((double)field.getNCards(owner)));
                      }*/
                     /*if(field.isAlive(owner)){
-                        i = base + field.getNAwakePlayers() - 2;
-                        //FooX(i, sqrt((double)field.getNCards(owner)));
-                        Foo(i);
-                    }*/
+                     i = base + field.getNAwakePlayers() - 2;
+                     //FooX(i, sqrt((double)field.getNCards(owner)));
+                     Foo(i);
+                     }*/
                 }
                 FASSERT(s,);
                 
@@ -824,77 +824,77 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 // mate prob by tagashira's score
                 // 残りカードが必勝である確率を求める
                 /*int minDR = 100, min2DR = 100;
-                iterateIntCard(afterPqr & (~CARDS_8), [&](IntCard ic)->void{
-                    int r = getIntCard_Rank(ic);
-                    int q = ic % 4;
-                    
-                    int tmpDR = domProb[afterOrder][r][q - 1];
-                    if(tmpDR < min2DR){
-                        if(tmpDR < minDR){
-                            min2DR = minDR;
-                            minDR = tmpDR;
-                        }else{
-                            min2DR = tmpDR;
-                        }
-                    }
-                });
-                // min2DRが大きいことを評価
-                FooX(POL_ALMOST_MATE, min2DR);*/
+                 iterateIntCard(afterPqr & (~CARDS_8), [&](IntCard ic)->void{
+                 int r = getIntCard_Rank(ic);
+                 int q = ic % 4;
+                 
+                 int tmpDR = domProb[afterOrder][r][q - 1];
+                 if(tmpDR < min2DR){
+                 if(tmpDR < minDR){
+                 min2DR = minDR;
+                 minDR = tmpDR;
+                 }else{
+                 min2DR = tmpDR;
+                 }
+                 }
+                 });
+                 // min2DRが大きいことを評価
+                 FooX(POL_ALMOST_MATE, min2DR);*/
                 
                 // 2pqr
                 /*if(!PRECALC){
-                    // その場計算
-                    const int base = FEA_IDX(POL_HAND_2PQR);
-                    for(int f = 0; f < 16; ++f){
-                        for(int j = f + 1; j < 16; ++j){
-                            if(((c >> (f * 4)) & 15) && ((c >> (j * 4)) & 15)){
-                                i = base
-                                + 16 * 16 * 16 * 16 * afterOrder
-                                + f * 16 * 16 * 16
-                                + j * 16 * 16
-                                + ((c >> (f * 4)) & 15) * 16
-                                + ((c >> (j * 4)) & 15);
-                                Foo(i);
-                            }
-                        }
-                    }
-                }else{
-                    // 差分計算
-                    
-                }*/
+                 // その場計算
+                 const int base = FEA_IDX(POL_HAND_2PQR);
+                 for(int f = 0; f < 16; ++f){
+                 for(int j = f + 1; j < 16; ++j){
+                 if(((c >> (f * 4)) & 15) && ((c >> (j * 4)) & 15)){
+                 i = base
+                 + 16 * 16 * 16 * 16 * afterOrder
+                 + f * 16 * 16 * 16
+                 + j * 16 * 16
+                 + ((c >> (f * 4)) & 15) * 16
+                 + ((c >> (j * 4)) & 15);
+                 Foo(i);
+                 }
+                 }
+                 }
+                 }else{
+                 // 差分計算
+                 
+                 }*/
                 
                 /*if(mv.isSeq()){
-                    // 階段
-                    constexpr int base = FEA_IDX(POL_SEQ_CARDS);
-                    for(int f = 0; f < 16; ++f){
-                        if((c >> (f * 4)) & 15){
-                            i = base
-                            + order * (16 * 4 * 3) * (16 * 16)
-                            + mv.rank() * (4 * 3) * (16 * 16)
-                            + SuitToSuitNum(mv.suits()) * (3) * (16 * 16)
-                            + min(int(mv.qty()) - 3, 2) * (16 * 16)
-                            + f * (16)
-                            + ((c >> (f * 4)) & 15);
-                            
-                            Foo(i);
-                        }
-                    }
-                }else if(!mv.isPASS()){
-                    // グループ
-                    constexpr int base = FEA_IDX(POL_GR_CARDS);
-                    for(int f = 0; f < 16; ++f){
-                        if((c >> (f * 4)) & 15){
-                            i = base
-                            + order * (16 * 16 * 2) * (16 * 16)
-                            + mv.rank() * (16 * 2) * (16 * 16)
-                            + mv.suits() * (2) * (16 * 16)
-                            + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16 * 16)
-                            + f * (16)
-                            + ((c >> (f * 4)) & 15);
-                            Foo(i);
-                        }
-                    }
-                }*/
+                 // 階段
+                 constexpr int base = FEA_IDX(POL_SEQ_CARDS);
+                 for(int f = 0; f < 16; ++f){
+                 if((c >> (f * 4)) & 15){
+                 i = base
+                 + order * (16 * 4 * 3) * (16 * 16)
+                 + mv.rank() * (4 * 3) * (16 * 16)
+                 + SuitToSuitNum(mv.suits()) * (3) * (16 * 16)
+                 + min(int(mv.qty()) - 3, 2) * (16 * 16)
+                 + f * (16)
+                 + ((c >> (f * 4)) & 15);
+                 
+                 Foo(i);
+                 }
+                 }
+                 }else if(!mv.isPASS()){
+                 // グループ
+                 constexpr int base = FEA_IDX(POL_GR_CARDS);
+                 for(int f = 0; f < 16; ++f){
+                 if((c >> (f * 4)) & 15){
+                 i = base
+                 + order * (16 * 16 * 2) * (16 * 16)
+                 + mv.rank() * (16 * 2) * (16 * 16)
+                 + mv.suits() * (2) * (16 * 16)
+                 + (bd.locksSuits(mv.mv()) ? 1 : 0) * (16 * 16)
+                 + f * (16)
+                 + ((c >> (f * 4)) & 15);
+                 Foo(i);
+                 }
+                 }
+                 }*/
                 
                 // MCパターン
                 if(!mv.isPASS()){
@@ -1000,29 +1000,29 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
                 
                 // CCパターン
                 /*{
-                    constexpr int base = POL_IDX(POL_PLAY_CC);
-                    const Cards diffRanks = gatherAll4Bits(myCards ^ afterCards);
-                    Cards tmp = diffRanks;
-                    while(tmp){
-                        IntCard ic = popIntCard(&tmp);
-                        unsigned int rx4 = getIntCard_Rankx4(ic);
-                        unsigned int rank = rx4 / 4;
-                        uint32_t suits = (myCards >> rx4) & SUITS_ALL;
-                        for(int r = RANK_MIN; r <= RANK_MAX + 2; ++r){
-                            FooX(base
-                                 + ord * 16 * 16 * 35
-                                 + rank * 16 * 35
-                                 + r * 35
-                                 + getSuitsSuitsIndex((myCards >> rx4) & SUITS_ALL,
-                                                      (myCards >> (r * 4)) & SUITS_ALL),
-                                 -1);
-                            Foo(base
-                                + afterOrd * 16 * 16 * 35
-                                + rank * 16 * 35 + r * 35 + getSuitsSuitsIndex((afterCards >> rx4) & SUITS_ALL,
-                                                                                    (afterCards >> (r * 4)) & SUITS_ALL));
-                        }
-                    }
-                }*/
+                 constexpr int base = POL_IDX(POL_PLAY_CC);
+                 const Cards diffRanks = gatherAll4Bits(myCards ^ afterCards);
+                 Cards tmp = diffRanks;
+                 while(tmp){
+                 IntCard ic = popIntCard(&tmp);
+                 unsigned int rx4 = getIntCard_Rankx4(ic);
+                 unsigned int rank = rx4 / 4;
+                 uint32_t suits = (myCards >> rx4) & SUITS_ALL;
+                 for(int r = RANK_MIN; r <= RANK_MAX + 2; ++r){
+                 FooX(base
+                 + ord * 16 * 16 * 35
+                 + rank * 16 * 35
+                 + r * 35
+                 + getSuitsSuitsIndex((myCards >> rx4) & SUITS_ALL,
+                 (myCards >> (r * 4)) & SUITS_ALL),
+                 -1);
+                 Foo(base
+                 + afterOrd * 16 * 16 * 35
+                 + rank * 16 * 35 + r * 35 + getSuitsSuitsIndex((afterCards >> rx4) & SUITS_ALL,
+                 (afterCards >> (r * 4)) & SUITS_ALL));
+                 }
+                 }
+                 }*/
                 FASSERT(s,);
                 
                 
@@ -1065,16 +1065,16 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
 #endif
             }
             pol.template feedCandidateScore(m, exp(s / pol.temperature()));
-
+            
             if(!M || dst != nullptr){
                 dst[m] = s;
             }
-		}
+        }
         pol.template finishCalculatingScore();
         
         return 0;
-	}
-	
+    }
+    
 #undef FooX
 #undef Foo
     template<int M = 1, class field_t, class policy_t>
@@ -1087,10 +1087,10 @@ for (int i = 0;;){os(base + i); ++i; if(i >= num)break; if(i % (x) == 0){ out <<
     }
     template<int M = 1, class move_t, class field_t, class policy_t>
     double calcPlayPolicyExpScoreSlow(double *const dst,
-                                   move_t *const buf,
-                                   const int NMoves,
-                                   const field_t& field,
-                                   const policy_t& pol){
+                                      move_t *const buf,
+                                      const int NMoves,
+                                      const field_t& field,
+                                      const policy_t& pol){
         // 指数をかけるところまで計算したsoftmax policy score
         // 指数を掛けた後の合計値を返す
         calcPlayPolicyScoreSlow<M>(dst, buf, NMoves, field, pol);

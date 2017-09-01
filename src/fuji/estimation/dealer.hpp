@@ -19,10 +19,10 @@
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace UECda{
-	namespace Fuji{
+    namespace Fuji{
         
-		namespace Deal{
-			
+        namespace Deal{
+            
             constexpr uint64_t CPTable_afterChange[INTCARD_MAX + 1][5] =
             {
                 {0, 0, 0, 0, 0},
@@ -87,13 +87,13 @@ namespace UECda{
                 {0, 0, 0, 0, 0},
                 {129187, 132712, 65779, 1, 1},
             };
-		}
+        }
         
         // 拘束条件分割
         template<int N_REST, class dice64_t>
         int dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
-                     const uint64_t arg, int N0, int N1,
-                     const uint64_t rest0, const uint64_t rest1, dice64_t *const pdice){
+                         const uint64_t arg, int N0, int N1,
+                         const uint64_t rest0, const uint64_t rest1, dice64_t *const pdice){
             
             // 0が交換上手側、1が下手側
             // カードのビットが高い順、低い順のどちらに並んでいるかが重要
@@ -145,6 +145,26 @@ namespace UECda{
             
             RandomDealer(){}
             ~RandomDealer(){}
+            
+            template<class field_t, class world_t, class sharedData_t, class threadTools_t>
+            int create(world_t *const dst, DealType type, const field_t& field,
+                       const sharedData_t& shared, threadTools_t *const ptools){
+                Cards c[N_PLAYERS];
+                // レベル指定からカード分配
+                switch(type){
+                    case DealType::RANDOM: // 残りカードを完全ランダム分配
+                        dealAllRand(c, &ptools->dice); break;
+                    case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
+                        dealWithAbsSbjInfo(c, &ptools->dice); break;
+                    case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
+                        dealWithBias(c, &ptools->dice); break;
+                    case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
+                        dealWithRejection(c, shared, ptools); break;
+                    default: UNREACHABLE; break;
+                }
+                dst->set(field, c);
+                return 0;
+            }
             
             template<class dice64_t>
             void dealAllRand(Cards *const dst, dice64_t *const pdice)const{
@@ -361,20 +381,21 @@ namespace UECda{
                 flag.reset();
             }
             
-            template<class sbjField_t>
-            void set(const sbjField_t& field){
+            template<class field_t, class sharedData_t>
+            void set(const field_t& field, const sharedData_t& shared){
                 init();
                 
                 // 連続分配のために情報をセット(主観情報から)
-                myNum = field.getMyPlayerNum();
+                myNum = shared.myPlayerNum;;
+                const auto& gLog = shared.gameLog;
                 
-                myCards = field.getMyCards();
-                myDealtCards = field.getMyDealtCards();
+                myCards = field.getCards(myNum);
+                myDealtCards = gLog.dealtCards(myNum);
                 remCards = field.getRemCards();
                 
                 phase = field.phase;
                 
-                if(field.isInitGame()){
+                if(phase.isInitGame()){
                     myClass = myNum; // このときだけ、ランクの情報がプレーヤー番号そのまま
                     flag.set(0);
                     
@@ -382,11 +403,10 @@ namespace UECda{
                         infoClassPlayer.assign(p, p);
                         infoClass.assign(p, p);
                         
-                        uint32_t org = field.getNOrgCards(p);
+                        uint32_t org = field.getNCards(p) + countCards(field.getUsedCards(p));
                         uint32_t own = field.getNCards(p);
                         
                         // 交換が無いので枚数調整無し
-                        
                         NOwn.assign(p, own);
                         NOrg.assign(p, org);
                         NDet.assign(p, org - own);
@@ -394,7 +414,7 @@ namespace UECda{
                     }
                     firstTurnPlayerClass = field.getFirstTurnPlayer();
                 }else{
-                    myClass = field.getMyClass();
+                    myClass = field.getPlayerClass(myNum);
                     
                     for(int p = 0; p < N; ++p){
                         int r = field.getPlayerClass(p);
@@ -402,22 +422,23 @@ namespace UECda{
                         infoClassPlayer.assign(r, p);
                         infoClass.assign(p, r);
                         
-                        uint32_t org = field.getNOrgCards(p);
+                        uint32_t org = field.getNCards(p) + countCards(field.getUsedCards(p));
                         uint32_t own = field.getNCards(p);
+                        /*ASSERT(org == gLog.getNOrgCards(p),
+                               cerr << field.getNCards(p) << " " << OutCards(field.getUsedCards(p));
+                               cerr << " <-> " << gLog.getNOrgCards(p) << " " << gLog.NOrgCards() << endl;);*/
                         
-                        //交換中は枚数調整
+                        // 交換中は枚数調整
                         if(phase.isInChange()){
                             if(p == myNum){
-                                //自分の枚数を増やす
+                                // 自分の枚数を増やす
                                 uint32_t nch = N_CHANGE_CARDS(r);
-                                org += nch;
-                                own += nch;
-                            }else{
-                                if(r == getChangePartnerClass(myClass)){ // 自分の交換相手のカードの枚数は引いておく
-                                    uint32_t nch = N_CHANGE_CARDS(r);
-                                    org -= nch;
-                                    own -= nch;
-                                }
+                                //org += nch;
+                                //own += nch;
+                            }else if(r == getChangePartnerClass(myClass)){ // 自分の交換相手のカードの枚数は引いておく
+                                uint32_t nch = N_CHANGE_CARDS(r);
+                                org -= nch;
+                                own -= nch;
                             }
                         }
                         
@@ -428,10 +449,10 @@ namespace UECda{
                     }
                     
                     if(!phase.isInChange() // 交換中でない
-                       && field.isMyImpChange() // カード交換に関与した
+                       && myClass != MIDDLE // カード交換に関与した
                        ){
-                        sentCards = field.getMySentCards();
-                        recvCards = field.getMyRecvCards();
+                        sentCards = field.getSentCards(myNum);
+                        recvCards = field.getRecvCards(myNum);
                         
                         assert((int)countCards(sentCards) == N_CHANGE_CARDS(myClass));
                         
@@ -877,29 +898,29 @@ namespace UECda{
             }
             
             /*template<class sharedData_t, class threadTools_t>
-            int dealWithLikelifood(Cards *const dst, const sharedData_t& shared,
-                                    threadTools_t *const ptools){
-                // 尤度計算
-                // 主観的情報で明らかな矛盾のない配り方
-                dealWithAbsSbjInfo(dst, &ptools->dice);
-                PlayouterField field;
-                
-                double logLHSum = 0, logLHOK = 0;
-                // カード交換前の手札をすべて生成
-                Cards thrownCards[N_MAX_CHANGES];
-                const int throwns = genChange(thrownCards, dst[infoClassPlayer[DAIHINMIN]] | usedCards[DAIHINMIN], N_CHANGE_CARDS(DAIFUGO));
-                for(int i = 0; i < throwns; ++i){
-                    // 交換前の大富豪の手札
-                    Cards dealtCards = dst[infoClassPlayer[DAIFUGO]] | usedCards[DAIFUGO] | thrownCards[i];
-                    Cards changeCards[N_MAX_CHANGES];
-                    double score[N_MAX_CHANGES + 1];
-                    const int changes = genChange(changeCards, dealtCards, N_CHANGE_CARDS(DAIFUGO));
-                    calcChangePolicyScoreSlow<>(score, changes, )
-                    
-                }
-                    
-                return 0;
-            }*/
+             int dealWithLikelifood(Cards *const dst, const sharedData_t& shared,
+             threadTools_t *const ptools){
+             // 尤度計算
+             // 主観的情報で明らかな矛盾のない配り方
+             dealWithAbsSbjInfo(dst, &ptools->dice);
+             PlayouterField field;
+             
+             double logLHSum = 0, logLHOK = 0;
+             // カード交換前の手札をすべて生成
+             Cards thrownCards[N_MAX_CHANGES];
+             const int throwns = genChange(thrownCards, dst[infoClassPlayer[DAIHINMIN]] | usedCards[DAIHINMIN], N_CHANGE_CARDS(DAIFUGO));
+             for(int i = 0; i < throwns; ++i){
+             // 交換前の大富豪の手札
+             Cards dealtCards = dst[infoClassPlayer[DAIFUGO]] | usedCards[DAIFUGO] | thrownCards[i];
+             Cards changeCards[N_MAX_CHANGES];
+             double score[N_MAX_CHANGES + 1];
+             const int changes = genChange(changeCards, dealtCards, N_CHANGE_CARDS(DAIFUGO));
+             calcChangePolicyScoreSlow<>(score, changes, )
+             
+             }
+             
+             return 0;
+             }*/
             
             // 採択棄却法のためのカード交換モデル
             template<int C_QTY, class sharedData_t, class threadTools_t>
@@ -925,7 +946,7 @@ namespace UECda{
                     return distCardsOverInWA[k];
                 }
             }
-        
+            
             void setWeightInWA(){
                 std::vector<double> tmpProb;
                 const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
@@ -1010,61 +1031,61 @@ namespace UECda{
                 }
             }
             /*
-            void setWeight(){
-                const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
-                int j = 1; // ic より下の自分の初期カードの数
-                int underJ = 0; // ic より下の配布カードの数
-                double tmpCW = 1.0; // 配布パターン数
-                const int NMyDC = countCards(myDealtCards);
-                if(T > 0){
-                    for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-                        weight[ic] = 0;
-                        dWeight[ic] = 0.0;
-                    }
-                    for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-                        Cards c = IntCardToCards(ic);
-                        if(myDealtCards & c){ // 自分の初期カードと一致
-                            // ICがもらったカードの下界だと仮定
-                            if(underJ >= T){ // ここまでにT以上のカードがあった
-                                double tmpDWeight = tmpCW;
-                                tmpDWeight *= (T / (double)underJ); // 実際にその札が選ばれる確率
-                                tmpDWeight *= ((myClass == DAIFUGO) ? (NMyDC - j) : 1); // 下界以外の献上札のパターン数
-                                
-                                //cerr << tmpDWeight << endl;
-                                
-                                for(IntCard ic2 = INTCARD_MIN; ic2 < ic; ++ic2){
-                                    if(distCards & IntCardToCards(ic2)){ // それ以下のカードを持つ重みを加算
-                                        dWeight[ic2] += tmpDWeight;
-                                    }
-                                }
-                            }
-                            j++;
-                        }else if(distCards & c){ // 配布カードに該当
-                            underJ++; // 配布カード枚数更新
-                            if(underJ > T){
-                                // underJ未満の配布カードの組み合わせ数更新
-                                tmpCW *= (((double)underJ) / (double)(underJ - T));
-                                
-                                ASSERT(underJ == countCards(distCards & pickLower(c)) + 1,
-                                       cerr << underJ << "<->" << countCards(distCards & pickLower(c)) + 1;);
-                                //cerr << tmpCW << " <-> " << dCombination(countCards(distCards & pickLower(c)) + 1, T) << endl;
-                            }
-                        }
-                    }
-                    // 重み和計算
-                    dWeightSum = 0;
-                    for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-                        dWeightSum += dWeight[ic];
-                    }
-                    double bai = ((double)(1 << 20)) / dWeightSum;
-                    weightSum = 0;
-                    for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-                        weight[ic] = (int)(bai * dWeight[ic]);
-                        weightSum += weight[ic];
-                    }
-                }
-            }*/
-        
+             void setWeight(){
+             const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
+             int j = 1; // ic より下の自分の初期カードの数
+             int underJ = 0; // ic より下の配布カードの数
+             double tmpCW = 1.0; // 配布パターン数
+             const int NMyDC = countCards(myDealtCards);
+             if(T > 0){
+             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
+             weight[ic] = 0;
+             dWeight[ic] = 0.0;
+             }
+             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
+             Cards c = IntCardToCards(ic);
+             if(myDealtCards & c){ // 自分の初期カードと一致
+             // ICがもらったカードの下界だと仮定
+             if(underJ >= T){ // ここまでにT以上のカードがあった
+             double tmpDWeight = tmpCW;
+             tmpDWeight *= (T / (double)underJ); // 実際にその札が選ばれる確率
+             tmpDWeight *= ((myClass == DAIFUGO) ? (NMyDC - j) : 1); // 下界以外の献上札のパターン数
+             
+             //cerr << tmpDWeight << endl;
+             
+             for(IntCard ic2 = INTCARD_MIN; ic2 < ic; ++ic2){
+             if(distCards & IntCardToCards(ic2)){ // それ以下のカードを持つ重みを加算
+             dWeight[ic2] += tmpDWeight;
+             }
+             }
+             }
+             j++;
+             }else if(distCards & c){ // 配布カードに該当
+             underJ++; // 配布カード枚数更新
+             if(underJ > T){
+             // underJ未満の配布カードの組み合わせ数更新
+             tmpCW *= (((double)underJ) / (double)(underJ - T));
+             
+             ASSERT(underJ == countCards(distCards & pickLower(c)) + 1,
+             cerr << underJ << "<->" << countCards(distCards & pickLower(c)) + 1;);
+             //cerr << tmpCW << " <-> " << dCombination(countCards(distCards & pickLower(c)) + 1, T) << endl;
+             }
+             }
+             }
+             // 重み和計算
+             dWeightSum = 0;
+             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
+             dWeightSum += dWeight[ic];
+             }
+             double bai = ((double)(1 << 20)) / dWeightSum;
+             weightSum = 0;
+             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
+             weight[ic] = (int)(bai * dWeight[ic]);
+             weightSum += weight[ic];
+             }
+             }
+             }*/
+            
             void dealPart_AbsSbjInfo(){
                 // 自分以外の未使用カード
                 distCards = maskCards(remCards, myCards);
@@ -1259,8 +1280,8 @@ namespace UECda{
             }
         };
         
-		template<>AtomicAnalyzer<5, 1, 0> RandomDealer<N_PLAYERS>::ana("RandomDealer");
-	}
+        template<>AtomicAnalyzer<5, 1, 0> RandomDealer<N_PLAYERS>::ana("RandomDealer");
+    }
 }
 
 #endif // UECDA_FUJI_DEALER_HPP_

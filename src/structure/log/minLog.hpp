@@ -19,6 +19,7 @@ namespace UECda{
     
     template<int _ARGN>
     class MinPlayLog{
+        // 1つの着手の記録
     private:
         constexpr static int N_ = _ARGN;
     public:
@@ -49,6 +50,7 @@ namespace UECda{
     
     template<int _ARGN>
     class MinClientPlayLog : public MinPlayLog<_ARGN>{
+        // クライアント用の着手記録
     public:
         constexpr MinClientPlayLog():
         MinPlayLog<_ARGN>(), sbjTime_(){}
@@ -56,7 +58,7 @@ namespace UECda{
         constexpr MinClientPlayLog(const Move amove, const uint32_t atime, const uint32_t asbjTime):
         MinPlayLog<_ARGN>(amove, atime), sbjTime_(asbjTime){}
         
-        uint32_t sbjTime()const noexcept{return sbjTime_;}
+        uint32_t sbjTime()const noexcept{ return sbjTime_; }
         
         void set(const Move amove, const uint32_t atime, const uint32_t asbjTime)noexcept{
             MinPlayLog<_ARGN>::set(amove, atime); sbjTime_ = asbjTime;
@@ -67,6 +69,7 @@ namespace UECda{
     
     template<int _ARGN>
     class MinChangeLog{
+        // 交換の記録
     public:
         constexpr MinChangeLog():
         from_(), to_(), c_(){}
@@ -122,6 +125,7 @@ namespace UECda{
         
         void setTerminated()noexcept{ flags_.set(0); }
         void setInitGame()noexcept{ flags_.set(1); }
+        void resetInitGame()noexcept{ flags_.reset(0); }
         
         auto isTerminated()const noexcept{ return flags_.test(0); }
         auto isInitGame()const noexcept{ return flags_.test(1); }
@@ -135,6 +139,9 @@ namespace UECda{
         const BitArray32<4, N_>& infoClass()const noexcept{ return infoClass_; }
         const BitArray32<4, N_>& infoSeat()const noexcept{ return infoSeat_; }
         const BitArray32<4, N_>& infoNewClass()const noexcept{ return infoNewClass_; }
+        
+        void setPlayerClass(int p, int cl)noexcept{ infoClass_.assign(p, cl); }
+        void setPlayerSeat(int p, int s)noexcept{ infoSeat_.assign(p, s); }
         
     protected:
         int changes_;
@@ -155,6 +162,11 @@ namespace UECda{
     private:
         using base = MinCommonGameLog<_playLog_t>;
     public:
+        void init(){
+            base::init();
+            dealtCards_.fill(CARDS_NULL);
+            orgCards_.fill(CARDS_NULL);
+        }
         
         Cards dealtCards(int p)const{ return dealtCards_[p]; }
         void setDealtCards(int p, Cards c){ dealtCards_[p] = c; }
@@ -232,54 +244,28 @@ namespace UECda{
     };
     
     template<class _playLog_t>
-    class MinClientGameLog : public MinCommonGameLog<_playLog_t>{
+    class MinClientGameLog : public MinGameLog<_playLog_t>{
     private:
-        using base = MinCommonGameLog<_playLog_t>;
+        using base = MinGameLog<_playLog_t>;
     public:
-        void setDealtCards(int p, Cards c){}
-        
-        Cards orgCards(int p)const{ return orgCards_[p]; }
-        void setOrgCards(int p, Cards c){ orgCards_[p] = c; }
-        void addOrgCards(int p, Cards c){ addCards(&orgCards_[p], c); }
-        
-        std::string toString(int gn)const{
-            std::ostringstream oss;
-            
-            oss << "/* " << endl;
-            oss << "game " << gn << " " << endl;
-            oss << "score " << endl;
-            oss << "class ";
-            for(int p = 0; p < base::players(); ++p){
-                oss << base::infoClass().at(p) << " ";
-            }
-            oss << endl;
-            oss << "seat ";
-            for(int p = 0; p < base::players(); ++p){
-                oss << base::infoSeat().at(p) << " ";
-            }
-            oss << endl;
-            oss << "original ";
-            for(int p = 0; p < base::players(); ++p){
-                oss << OutCardsM(orgCards(p)) << " ";
-            }
-            oss << endl;
-            oss << "play ";
-            for(int t = 0; t < base::plays(); ++t){
-                oss << base::play(t).toString() << " ";
-            }
-            oss << endl;
-            oss << "result ";
-            for(int p = 0; p < base::players(); ++p){
-                oss << base::infoNewClass().at(p) << " ";
-            }
-            oss << endl;
-            oss << "*/ " << endl;
-            
-            return oss.str();
+        void init(){
+            base::init();
+            NOrgCards_.clear();
+            sentCards_ = recvCards_ = CARDS_NULL;
         }
+        void setNOrgCards(int p, int n){ NOrgCards_.assign(p, n); }
+        void setSentCards(int p, Cards c){ sentCards_ = c; }
+        void setRecvCards(int p, Cards c){ recvCards_ = c; }
         
+        int getNOrgCards(int p)const{ return NOrgCards_[p]; }
+        Cards getSentCards(int p)const{ return sentCards_; }
+        Cards getRecvCards(int p)const{ return recvCards_; }
+        
+        BitArray32<4, base::players()>& NOrgCards(){ return NOrgCards_; }
+        const BitArray32<4, base::players()>& NOrgCards()const{ return NOrgCards_; }
     protected:
-        std::array<Cards, MinCommonGameLog<_playLog_t>::players()> orgCards_;
+        BitArray32<4, base::players()> NOrgCards_;
+        Cards sentCards_, recvCards_; // 本当はchangeにいれたいけど
     };
     
     template<class _gameLog_t>
@@ -418,7 +404,7 @@ namespace UECda{
         }
         return 0;
     }
-
+    
     template<class _matchLog_t, int N>
     class MinMatchLogAccessor{
         // ランダム順なアクセス用
@@ -551,7 +537,7 @@ namespace UECda{
     }
     template<class _matchLog_t, int N, typename callback_t>
     void iterateGameRandomlyWithIndex(const MinMatchLogAccessor<_matchLog_t, N>& mLogs,
-                             int first, int end, const callback_t& callback){
+                                      int first, int end, const callback_t& callback){
         for(int i = max(0, first); i < min(mLogs.games(), end); ++i){
             callback(mLogs.accessIndex(i), mLogs.access(i), mLogs.accessMatch(i));
         }

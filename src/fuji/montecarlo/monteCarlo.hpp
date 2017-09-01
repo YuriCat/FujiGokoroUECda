@@ -6,7 +6,7 @@
 #pragma once
 
 #include "../../settings.h"
-#include "../estimation/worldCreator.hpp"
+#include "../estimation/dealer.hpp"
 #include "playouter.hpp"
 
 // マルチスレッディングのときはスレッド、
@@ -15,7 +15,7 @@
 namespace UECda{
     namespace Fuji{
         
-        template<class field_t, class root_t, class sharedData_t, class threadTools_t>
+        template<class root_t, class field_t, class sharedData_t, class threadTools_t>
         void MonteCarloThread
         (const int threadId, root_t *const proot,
          const field_t *const pfield,
@@ -25,7 +25,6 @@ namespace UECda{
             constexpr uint32_t MINNEC_N_TRIALS = 4; // 全体での最小限のトライ数。UCB-Rootにしたので実質不要になった
             
             // プレー用
-            using dice64_t = ThreadTools::dice64_t;
             using galaxy_t = ThreadTools::galaxy_t;
             using world_t = galaxy_t::world_t;
             
@@ -34,16 +33,14 @@ namespace UECda{
             
             Clock clock;
             
-            const int myPlayerNum = pfield->getMyPlayerNum();
+            const int myPlayerNum = pshared->myPlayerNum;
             const int candidates = proot->candidates; // 候補数
             auto& child = proot->child;
             
             int threadNTrials[256]; // 当スレッドでのトライ数(候補ごと)
             int threadNTrialsSum = 0; // 当スレッドでのトライ数(合計)
             
-            for(int c = 0; c < candidates; ++c){
-                threadNTrials[c] = 0;
-            }
+            for(int c = 0; c < candidates; ++c)threadNTrials[c] = 0;
             
             int threadMaxNTrials = 0; // 当スレッドで現時点で最大のトライ数
             
@@ -52,24 +49,18 @@ namespace UECda{
             
             assert(threadMaxNWorlds > 0);
             
-            //const int threadMinNecNTrials = min(1, MINNEC_N_TRIALS / N_THREADS); // 当スレッドで1つの候補に対して最低割り振るべきトライ数
-            
             // 世界創世者
             // 連続作成のためここに置いておく
-            WorldCreator<dice64_t> wc;
+            RandomDealer<N_PLAYERS> estimator;
             
-            wc.prepare(*pfield);
+            estimator.set(*pfield, *pshared);
             
             Playouter po; // プレイアウタ
             
-            PlayouterField pf;
-            setSubjectiveField(*pfield, &pf);
+            PlayouterField pf = *pfield;
             pf.attractedPlayers.set(myPlayerNum);
             pf.dice = &ptools->dice;
             pf.mv = ptools->buf;
-            
-            //CERR << pfield->phase << endl;
-            //CERR << pf.phase << endl;
             
             if(proot->rivalPlayerNum >= 0){
                 pf.attractedPlayers.set(proot->rivalPlayerNum);
@@ -158,20 +149,11 @@ namespace UECda{
                         
                         if(pWorld != nullptr){
                             // 世界作成スペースが見つかった
-                            
                             poTime += clock.restart();
                             
                             // 世界作成
-                            if(Settings::monteCarloDealType == DealType::REJECTION){
-                                wc.create<DealType::REJECTION>(pWorld, *pfield, *pshared, ptools);
-                            }else if(Settings::monteCarloDealType == DealType::BIAS){
-                                wc.create<DealType::BIAS>(pWorld, *pfield, *pshared, ptools);
-                            }else if(Settings::monteCarloDealType == DealType::SBJINFO){
-                                wc.create<DealType::SBJINFO>(pWorld, *pfield, *pshared, ptools);
-                            }else{
-                                wc.create<DealType::RANDOM>(pWorld, *pfield, *pshared, ptools);
-                            }
-                            
+                            estimator.create(pWorld, Settings::monteCarloDealType,
+                                             *pfield, *pshared, ptools);
                             
                             estTime += clock.restart();
                             
@@ -234,7 +216,7 @@ namespace UECda{
                 }
                 
                 poTime += clock.restart();
-  
+                
 #ifndef FIXED_N_PLAYOUTS
                 if(threadId == 0
                    && threadNTrialsSum % max(4, 32 / N_THREADS) == 0

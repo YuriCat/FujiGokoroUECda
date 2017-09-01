@@ -18,7 +18,7 @@
 
 namespace UECda{
     namespace Fuji{
-
+        
         // Field以外のデータ構造
         // Fieldは基本盤面情報+盤面を進めたり戻したりするときに値が変化するもの
         // それ以外の重目のデータ構造は SharedData
@@ -59,13 +59,11 @@ namespace UECda{
         
         struct SharedData{
             // 全体で共通のデータ
+            int myPlayerNum;
             
             // 計算量解析
             int modeling_time;
             int estimating_by_time;
-            
-            volatile double exp_wr; // 今ターンの期待報酬(0~1)
-            
             uint32_t gameReward[N_CLASSES];
             
             // 着手決定のために一時的に参照できるようにしておくデータ
@@ -107,9 +105,10 @@ namespace UECda{
                 playLearner.setClassifier(&basePlayPolicy);
 #endif
             }
-            void setMyPlayerNum(int myPlayerNum){
+            void setMyPlayerNum(int p){
+                myPlayerNum = p;
 #ifndef POLICY_ONLY
-                playerModelSpace.init(myPlayerNum);
+                playerModelSpace.init(p);
 #endif
             }
             void initGame(){
@@ -188,7 +187,7 @@ namespace UECda{
                 changeEntropySum = playEntropySum = 0;
                 fuzzyChangeTimes = fuzzyPlayTimes = 0;
             }
-
+            
             void initGame(){
                 ClientField::initGame();
             }
@@ -261,6 +260,7 @@ namespace UECda{
                 rivalScore.set(1, 1);
                 policyScore = 0;
                 policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
+                pruned = false;
             }
             
             std::string toString()const{
@@ -341,6 +341,7 @@ namespace UECda{
             void prune(int m){
                 // m番目の候補を除外し、空いた位置に末尾の候補を代入
                 std::swap(child[m], child[--candidates]);
+                child[candidates].pruned = true;
             }
             void addPolicyScoreToMonteCarloScore(){
                 // 方策関数の出力をモンテカルロ結果の事前分布として加算
@@ -433,10 +434,6 @@ namespace UECda{
                 if(allSimulations >= limitSimulations)exitFlag = true;
 #endif
                 unlock();
-                
-                if(child[triedIndex].mean() > pshared->exp_wr){
-                    pshared->exp_wr = child[triedIndex].mean();
-                }
             }
             
             void sort(){ // 評価が高い順に候補行動をソート

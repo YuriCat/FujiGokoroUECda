@@ -329,7 +329,7 @@ namespace UECda{
                     mv->setP_NFDO(); // 永続的空場他支配
                 }
                 //if((qty > fieldInfo.getMaxNCards()) || ::dominatesCards(mv,subtrCards(myCards,mv.extract()),makeBoardNF(ord))){
-                //	mInfo->setP_NFDM();//永続的空場自己支配
+                // mInfo->setP_NFDM();//永続的空場自己支配
                 //}
             }
             
@@ -372,12 +372,12 @@ namespace UECda{
             
             if(qty > fieldInfo.getMaxNCardsAwake()
                || dominatesCards(mv->mv(), opsCards, bd)){
-                mv->setDO();//当座他支配
+                mv->setDO(); // 当座他支配
             }
             if(mv->isPASS()
                || qty > NMyCards - qty
                || dominatesCards(mv->mv(), myCards - mv->cards(), bd)){
-                mv->setDM();//当座自己支配
+                mv->setDM(); // 当座自己支配
             }
         }
     }

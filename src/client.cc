@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){ // for UECda
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-
+    
     // ファイルパスの取得
     {
         std::ifstream ifs("./blauweregen_config.txt");
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]){ // for UECda
     match_log.init();
 #endif
 #endif
-   
+    
     auto& field = client.field;
     
     field.initMatch();
@@ -181,6 +181,12 @@ int main(int argc, char* argv[]){ // for UECda
         field.initGame();
         client.initGame();
         
+        // ログ準備
+#ifdef _ENGINE_FUJI_
+        auto& game_log = client.gameLog;
+#endif
+        game_log.init();
+        
         startGame(recv_table); // 自分のカード、初期情報受け取り
         
         // 自分のプレーヤー番号設定（初期化されて消えてもいいように毎試合やる）
@@ -191,13 +197,16 @@ int main(int argc, char* argv[]){ // for UECda
         
         // 席順設定
         for(int s = 0; s < N_PLAYERS; ++s){
-            field.setPlayerSeat(getSeatPlayer(recv_table, s), s);
+            int p = getSeatPlayer(recv_table, s);
+            field.setPlayerSeat(p, s);
+            game_log.setPlayerSeat(p, s);
         }
         field.shiftSeats(); // 自分が0になるように座席番号を付け替える
         
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
         field.setMyDealtCards(c);
+        game_log.setDealtCards(my_player_num, c);
         field.setMyCards(c);
         
         // 階級設定
@@ -209,15 +218,20 @@ int main(int argc, char* argv[]){ // for UECda
             // init gameは全員平民としておく
             CERR << "main() : probed init game from table" << endl;
             field.setInitGame();
+            game_log.setInitGame();
             for(int p = 0; p < N_PLAYERS; ++p){
                 field.setPlayerClass(p, MIDDLE);
+                game_log.setPlayerClass(p, MIDDLE);
             }
             field.setMyClass(MIDDLE);
         }else{
             CERR << "main() : probed change game from table" << endl;
             field.resetInitGame();
+            game_log.resetInitGame();
             for(int p = 0; p < N_PLAYERS; ++p){
-                field.setPlayerClass(p, getPlayerClass(recv_table, p));
+                int cl = getPlayerClass(recv_table, p);
+                field.setPlayerClass(p, cl);
+                game_log.setPlayerClass(p, cl);
             }
             field.setMyClass(getPlayerClass(recv_table, my_player_num));
         }
@@ -228,7 +242,7 @@ int main(int argc, char* argv[]){ // for UECda
         bool is_java;
         
         if(!field.isInitGame()
-           && getNCards(recv_table, field. getClassPlayer(DAIFUGO)) == 13U
+           && getNCards(recv_table, field.getClassPlayer(DAIFUGO)) == 13U
            ){
             is_java = true;
             CERR << "main() : This is java server." << endl;
@@ -236,43 +250,17 @@ int main(int argc, char* argv[]){ // for UECda
             is_java = false;
         }
         
-        if(is_java){
-            
-            for(int p = 0; p < N_PLAYERS; ++p){
-                int NCards = getNCards(recv_table, p);
+        for(int p = 0; p < N_PLAYERS; ++p){
+            int NCards = getNCards(recv_table, p);
+            if(is_java){
                 // 高位者は引く
                 int cl = field.getPlayerClass(p);
-                if(cl <= FUGO){
-                    NCards -= N_CHANGE_CARDS(cl);
-                }
-                field.setNOrgCards(p, NCards);
-                field.setNCards(p, NCards);
+                if(cl <= FUGO)NCards -= N_CHANGE_CARDS(cl);
             }
-            
-        }else{
-            
-            for(int p = 0; p < N_PLAYERS; ++p){
-                int NCards = getNCards(recv_table, p);
-                // そのまま
-                field.setNOrgCards(p, NCards);
-                field.setNCards(p, NCards);
-            }
-            
+            field.setNOrgCards(p, NCards);
+            game_log.setNOrgCards(p, NCards);
+            field.setNCards(p, NCards);
         }
-        
-        // ログ準備
-#ifdef LOGGING
-        
-#ifdef _ENGINE_FUJI_
-        auto& game_log = client.gameLog;
-#endif
-        game_log.init();
-        game_log.infoClass() = field.infoClass;
-        game_log.infoSeat() = field.infoSeat;
-        if(field.isInitGame()){
-            game_log.setInitGame();
-        }
-#endif
         
 #ifdef BROADCAST
         field.broadcastBGame();
@@ -285,14 +273,14 @@ int main(int argc, char* argv[]){ // for UECda
             field.setInChange();
             
             // 順位との関係から自分の交換への関与をまとめる
-            if(field.getMyClass() != HEIMIN){//平民でない
+            if(field.getMyClass() != HEIMIN){ // 平民でない
                 int change_qty = N_CHANGE_CARDS(field.getMyClass());
                 
                 DERR << change_qty << endl;
                 DERR << field.getMyClass() << endl;
                 
                 field.setMyChangeImpQty(change_qty);
-                if(field.getMyClass() <= FUGO){//上位
+                if(field.getMyClass() <= FUGO){ // 上位
                     field.setMyChangeReqQty(change_qty);
                 }
             }
@@ -373,8 +361,10 @@ int main(int argc, char* argv[]){ // for UECda
             if(field.isFirstTurn()){ // 初手の特別な処理
                 // 局面をサーバーからの情報通りに設定する
                 for(int p = 0; p < N_PLAYERS; ++p){
-                    field.setNOrgCards(p, getNCards(recv_table, p));
-                    field.setNCards(p, getNCards(recv_table, p));
+                    int n = getNCards(recv_table, p);
+                    field.setNOrgCards(p, n);
+                    field.setNCards(p, n);
+                    game_log.setNOrgCards(p, n);
                 }
                 field.setFirstTurnPlayer(turnPlayer);
                 field.setPMOwner(turnPlayer); // 初期オーナーは初手プレーヤーとしておく
@@ -420,13 +410,18 @@ int main(int argc, char* argv[]){ // for UECda
                     field.setMyRecvCards(recvCards);
                     field.setMySentCards(sentCards);
                     
+                    game_log.setRecvCards(my_player_num, recvCards);
+                    game_log.setSentCards(my_player_num, sentCards);
+                    
                     client.afterChange();
                     client.prepareForGame();
                     
                     field.setMyOrgCards(newCards);
+                    game_log.setOrgCards(my_player_num, newCards);
                     
                 }else{ // 自分がカード交換に関与していない
                     field.setMyOrgCards(field.getMyDealtCards());
+                    game_log.setOrgCards(my_player_num, field.getMyDealtCards());
                 }
             }
             
@@ -500,11 +495,9 @@ int main(int argc, char* argv[]){ // for UECda
             //    cerr << toString(recv_table) << endl;
             //}
             
-#ifdef LOGGING
             MinClientPlayLog<N_PLAYERS> playLog;
             playLog.set(serverMove, tmpTime, myPlayTime);
             game_log.push_play(playLog);
-#endif
             
             if(myTurn){
                 client.afterMyPlay(); // 自分のプレー後の処理
@@ -540,7 +533,6 @@ int main(int argc, char* argv[]){ // for UECda
         field.feedResult();
         field.feedMyStats();
         
-#ifdef LOGGING
         game_log.infoNewClass() = field.infoNewClass;
         for(int p = 0; p < game_log.players(); ++p){
             game_log.setOrgCards(p, field.getUsedCards(p));
@@ -552,7 +544,6 @@ int main(int argc, char* argv[]){ // for UECda
         }
 #ifdef LOGGING_FILE
         match_log.push_game(game_log);
-#endif
 #endif
         field.closeGame();
         client.closeGame(); // 相手の分析等はここで
