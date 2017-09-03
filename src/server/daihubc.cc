@@ -64,8 +64,8 @@ const char* one_to_yes(int n){
 std::string DIR_IN(""), DIR_OUT(""), DIR_LOG("");
 std::string record_file = "";
 
-MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>> match_log;
-MinGameLog<MinPlayLog<N_PLAYERS>> game_log;
+MinMatchLog<MinGameLog<MinPlayLog>> match_log;
+MinGameLog<MinPlayLog> game_log;
 Fuji::SharedData shared;
 Fuji::ThreadTools threadTools[N_THREADS];
 
@@ -588,12 +588,12 @@ int main(int argc, char *argv[]){
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 1]]);
                 c=pickHigh<2>(c);
                 //cerr<<mibun[4]<<OutCards(pickHigh<2>(c))<<endl;
-                game_log.push_change(MinChangeLog<N_PLAYERS>(mibun[N_PLAYERS - 1],mibun[0],c));
+                game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 1],mibun[0],c));
             }
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 2]]);
                 c=pickHigh<1>(c);
-                game_log.push_change(MinChangeLog<N_PLAYERS>(mibun[N_PLAYERS - 2],mibun[1],c));
+                game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 2],mibun[1],c));
             }
             
             for(int cl = 0; cl <= FUGO; ++cl){ //search strong card
@@ -642,7 +642,7 @@ int main(int argc, char *argv[]){
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(MinChangeLog<N_PLAYERS>(mibun[0],mibun[N_PLAYERS - 1],c));
+            game_log.push_change(MinChangeLog(mibun[0],mibun[N_PLAYERS - 1],c));
             
         }// fi
         if(debug){printf("change daihugou - OK\n");} //DEBUG
@@ -663,7 +663,7 @@ int main(int argc, char *argv[]){
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(MinChangeLog<N_PLAYERS>(mibun[1], mibun[N_PLAYERS - 2], c));
+            game_log.push_change(MinChangeLog(mibun[1], mibun[N_PLAYERS - 2], c));
             
         }// fi
         if(debug){printf("change hugou - OK\n");} //DEBUG
@@ -1021,7 +1021,7 @@ int main(int argc, char *argv[]){
             }
             
             //CERR<<mv<<endl;
-            game_log.push_play(MinPlayLog<N_PLAYERS>(mv, tmpTime));
+            game_log.push_play(MinPlayLog(mv, tmpTime));
             
             //convert status to table
             work_card[5][0] = 0;

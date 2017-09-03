@@ -11,7 +11,7 @@
 #include "../structure/log/minLog.hpp"
 #include "../fuji/rating.hpp"
 
-MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 8192> mLogs;
+MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs;
 
 Fuji::SharedData shared;
 Fuji::ThreadTools threadTools[N_THREADS];

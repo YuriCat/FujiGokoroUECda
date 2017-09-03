@@ -12,7 +12,6 @@
 #include "../fuji/logic/mate.hpp"
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 MoveInfo buffer[8192];
 MoveGenerator<MoveInfo, Cards> mgCards;
@@ -149,9 +148,10 @@ int testRecordMoveMate(const logs_t& mLogs){
     uint64_t judgeTime[2] = {0};
     uint64_t judgeCount = 0;
     uint64_t judgeMatrix[2][2] = {0};
+    Field field;
     
-    iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    iterateGameLogAfterChange
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
@@ -206,7 +206,7 @@ int testRecordMoveMate(const logs_t& mLogs){
     uint64_t checkMatrix[2][2] = {0};
     
     iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
@@ -262,7 +262,7 @@ int testRecordMoveMate(const logs_t& mLogs){
     uint64_t searchMatrix[2][2] = {0};
     
     iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
@@ -341,9 +341,10 @@ int analyzeMateDistribution(const logs_t& mLogs){
     
     // search
     std::array<uint64_t, 12> mateMovesDistribution = {0};
+    Field field;
     
     iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
@@ -382,7 +383,7 @@ int main(int argc, char* argv[]){
     }
     cerr << "passed case test." << endl;
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 256> mLogs(logFileNames);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
     
     if(testRecordMoveMate(mLogs)){
         cerr << "failed record move mate judge test." << endl;

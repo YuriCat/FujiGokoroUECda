@@ -69,9 +69,10 @@ namespace UECda{
             // 1試合の結果からバイアスをアップデート
             
             MoveInfo *const buf = ptools->buf;
-            
-            iterateGameLogAfterChange<PlayouterField>
-            (gLog,
+            Field field;
+
+            iterateGameLogAfterChange
+            (field, gLog,
              // after change callback
              [](const auto& field)->void{},
              // play callback

@@ -73,8 +73,8 @@ namespace UECda{
             ChangePolicy<policy_value_t> baseChangePolicy;
             PlayPolicy<policy_value_t> basePlayPolicy;
             
-            MinMatchLog<MinClientGameLog<MinClientPlayLog<N_PLAYERS>>> matchLog;
-            MinClientGameLog<MinClientPlayLog<N_PLAYERS>> gameLog;
+            MinMatchLog<MinClientGameLog<MinClientPlayLog>> matchLog;
+            MinClientGameLog<MinClientPlayLog> gameLog;
             
 #if defined(RL_POLICY)
             // 方策学習

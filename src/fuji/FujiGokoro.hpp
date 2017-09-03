@@ -98,9 +98,10 @@ namespace UECda{
                 // 乱数系列を初期化
                 XorShift64 tdice;
                 tdice.srand(s);
-                for(int th = 0; th < N_THREADS; ++th)
+                for(int th = 0; th < N_THREADS; ++th){
                     threadTools[th].dice.srand(tdice.rand() * (th + 111));
-                    }
+                }
+            }
             
             void initMatch(){
                 // field にプレーヤー番号が入っている状態で呼ばれる
@@ -160,7 +161,7 @@ namespace UECda{
                 // 汎用変数の設定
 #ifndef POLICY_ONLY
                 // 報酬設定
-                int bIG = getNGamesForIG(field.getGameNum());
+                int bIG = getNGamesForClassInitGame(field.getGameNum());
                 // ランク初期化まで残り何試合か
                 // 公式には未定だが、多くの場合100試合だろうから100試合としておく
                 

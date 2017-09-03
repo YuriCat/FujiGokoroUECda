@@ -31,7 +31,7 @@ enum{
     MODE_FLAG_SHUFFLE = 8,
 };
 
-using matchRecords_t = MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 4096>;
+using matchRecords_t = MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 4096>;
 
 namespace LearningSettings{
     // 学習用パラメータの設定

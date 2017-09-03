@@ -16,7 +16,6 @@
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 XorShift64 dice((unsigned int)time(NULL));
 
@@ -66,8 +65,9 @@ int testChangePolicyWithRecord(const logs_t& mLog){
     
     cerr << "change policy : " << endl;
     
-    iterateGameLogBeforePlay<PlayouterField>
-    (mLog,
+    Field field;
+    iterateGameLogBeforePlay
+    (field, mLog,
      [](const auto& field)->void{}, // first callback
      [](const auto& field)->void{}, // dealt callback
      [&](const auto& field, int from, int to, Cards ch)->int{ // change callback
@@ -119,8 +119,9 @@ int testPlayPolicyWithRecord(const logs_t& mLog){
     
     cerr << "play policy : " << endl;
     
-    iterateGameLogAfterChange<PlayouterField>
-    (mLog,
+    Field field;
+    iterateGameLogAfterChange
+    (field, mLog,
      [](const auto& field)->void{}, // first callback
      [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
          MoveInfo play[N_MAX_MOVES];
@@ -161,8 +162,9 @@ int testSelector(const logs_t& mLog){
     
     cerr << "play policy with selector : " << endl;
     
-    iterateGameLogAfterChange<PlayouterField>
-    (mLog,
+    Field field;
+    iterateGameLogAfterChange
+    (field, mLog,
      [](const auto& field)->void{}, // first callback
      [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
          MoveInfo play[N_MAX_MOVES];
@@ -340,7 +342,7 @@ int main(int argc, char* argv[]){
     outputParams();
     
     for(const std::string& log : logFileNames){
-        MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>> mLog(log);
+        MinMatchLog<MinGameLog<MinPlayLog>> mLog(log);
         
         testChangePolicyWithRecord(mLog);
         testPlayPolicyWithRecord(mLog);

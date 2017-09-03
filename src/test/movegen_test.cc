@@ -18,7 +18,6 @@
 #include "../fuji/montecarlo/playout.h"
 
 using namespace UECda;
-using namespace Fuji;
 
 MoveInfo buffer[8192];
 MoveGenerator<MoveInfo, Cards> mgCards;
@@ -90,15 +89,16 @@ int testMoveValidity(const move_t *const mv0, const int moves, const field_t& fi
 
 int testRecordMoves(const std::vector<std::string>& logs){
     // 棋譜中の局面においてテスト
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 256> mLogs(logs);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logs);
     
     uint64_t genTime[2] = {0};
     uint64_t genCount[2] = {0};
     uint64_t genHolded[2] = {0};
+    Field field;
     
     // プリミティブ型での着手生成
-    if(iterateGameLogAfterChange<PlayouterField>
-       (mLogs,
+    if(iterateGameLogAfterChange
+       (field, mLogs,
         [&](const auto& field){}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();
@@ -134,8 +134,8 @@ int testRecordMoves(const std::vector<std::string>& logs){
        }
     
     // より複雑なデータ構造を用いた着手生成
-    if(iterateGameLogAfterChange<PlayouterField>
-       (mLogs,
+    if(iterateGameLogAfterChange
+       (field, mLogs,
         [&](const auto& field){}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();
@@ -177,8 +177,8 @@ int testRecordMoves(const std::vector<std::string>& logs){
     cerr << "generation time (hand)  = " << genTime[1] / (double)genCount[1] << endl;
     
     // 着手生成の一貫性
-    if(iterateGameLogAfterChange<PlayouterField>
-       (mLogs,
+    if(iterateGameLogAfterChange
+       (field, mLogs,
         [&](const auto& field){}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();

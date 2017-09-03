@@ -13,18 +13,12 @@
 
 #include "../primitive/prim.hpp"
 #include "minLogIO.hpp"
-#include "logIteration.hpp"
 
 namespace UECda{
     
-    template<int _ARGN>
     class MinPlayLog{
         // 1つの着手の記録
-    private:
-        constexpr static int N_ = _ARGN;
     public:
-        constexpr static int players()noexcept{ return N_; }
-        
         constexpr MinPlayLog():
         move_(), time_(){}
         
@@ -48,26 +42,24 @@ namespace UECda{
         uint32_t time_;
     };
     
-    template<int _ARGN>
-    class MinClientPlayLog : public MinPlayLog<_ARGN>{
+    class MinClientPlayLog : public MinPlayLog{
         // クライアント用の着手記録
     public:
         constexpr MinClientPlayLog():
-        MinPlayLog<_ARGN>(), sbjTime_(){}
+        MinPlayLog(), sbjTime_(){}
         
         constexpr MinClientPlayLog(const Move amove, const uint32_t atime, const uint32_t asbjTime):
-        MinPlayLog<_ARGN>(amove, atime), sbjTime_(asbjTime){}
+        MinPlayLog(amove, atime), sbjTime_(asbjTime){}
         
         uint32_t sbjTime()const noexcept{ return sbjTime_; }
         
         void set(const Move amove, const uint32_t atime, const uint32_t asbjTime)noexcept{
-            MinPlayLog<_ARGN>::set(amove, atime); sbjTime_ = asbjTime;
+            MinPlayLog::set(amove, atime); sbjTime_ = asbjTime;
         }
     protected:
         uint32_t sbjTime_;
     };
     
-    template<int _ARGN>
     class MinChangeLog{
         // 交換の記録
     public:
@@ -82,26 +74,21 @@ namespace UECda{
         Cards cards()const noexcept{ return c_; }
         
     protected:
-        constexpr static int N_=_ARGN;
         uint32_t from_, to_; Cards c_;
     };
     
     template<class _playLog_t>
     class MinCommonGameLog{
-    private:
-        constexpr static int N_ = _playLog_t::players();
     public:
         
         using playLog_t = _playLog_t;
-        using changeLog_t = MinChangeLog<N_>;
+        using changeLog_t = MinChangeLog;
         
         void init()noexcept{
             changes_ = 0; plays_ = 0;
             flags_.reset();
             infoClass_.clear(); infoSeat_.clear(); infoNewClass_.clear();
         }
-        
-        constexpr static int players()noexcept{ return N_; }
         int plays()const noexcept{ return plays_; }
         int changes()const noexcept{ return changes_; }
         
@@ -109,7 +96,7 @@ namespace UECda{
         const changeLog_t& change(int c)const{ return change_[c]; }
         
         void push_change(const changeLog_t& change){
-            if(changes_ < N_){
+            if(changes_ < N_CHANGES){
                 change_[changes_++] = change;
             }else{
                 flags_.set(2);
@@ -132,29 +119,33 @@ namespace UECda{
         auto isChangeOver()const noexcept{ return flags_.test(2); }
         auto isPlayOver()const noexcept{ return flags_.test(3); }
         
-        BitArray32<4, N_>& infoClass()noexcept{ return infoClass_; }
-        BitArray32<4, N_>& infoSeat()noexcept{ return infoSeat_; }
-        BitArray32<4, N_>& infoNewClass()noexcept{ return infoNewClass_; }
+        BitArray32<4, N_PLAYERS>& infoClass()noexcept{ return infoClass_; }
+        BitArray32<4, N_PLAYERS>& infoSeat()noexcept{ return infoSeat_; }
+        BitArray32<4, N_PLAYERS>& infoNewClass()noexcept{ return infoNewClass_; }
         
-        const BitArray32<4, N_>& infoClass()const noexcept{ return infoClass_; }
-        const BitArray32<4, N_>& infoSeat()const noexcept{ return infoSeat_; }
-        const BitArray32<4, N_>& infoNewClass()const noexcept{ return infoNewClass_; }
+        const BitArray32<4, N_PLAYERS>& infoClass()const noexcept{ return infoClass_; }
+        const BitArray32<4, N_PLAYERS>& infoSeat()const noexcept{ return infoSeat_; }
+        const BitArray32<4, N_PLAYERS>& infoNewClass()const noexcept{ return infoNewClass_; }
         
         void setPlayerClass(int p, int cl)noexcept{ infoClass_.assign(p, cl); }
         void setPlayerSeat(int p, int s)noexcept{ infoSeat_.assign(p, s); }
         
     protected:
+        static constexpr int N_CHANGES = (N_PLAYERS / 2) * 2; // TODO: まあ5人以下だからいいのか?
         int changes_;
-        std::array<changeLog_t, N_> change_;
+        std::array<changeLog_t, N_CHANGES> change_;
         
         int plays_;
+        
+        // 128手を超えることは滅多にないので強制打ち切り
+        // ここをvectorとかにすると連続対戦棋譜がvector<vector>みたいになって死ぬ
         std::array<playLog_t, 128> play_;
         
         BitSet32 flags_;
         
-        BitArray32<4, N_> infoClass_;
-        BitArray32<4, N_> infoSeat_;
-        BitArray32<4, N_> infoNewClass_; // 先日手でサーバーが順位決定した場合に必要なデータ
+        BitArray32<4, N_PLAYERS> infoClass_;
+        BitArray32<4, N_PLAYERS> infoSeat_;
+        BitArray32<4, N_PLAYERS> infoNewClass_; // 先日手でサーバーが順位決定した場合に必要なデータ
     };
     
     template<class _playLog_t>
@@ -176,6 +167,9 @@ namespace UECda{
         void setOrgCards(int p, Cards c){ orgCards_[p] = c; }
         void addOrgCards(int p, Cards c){ addCards(&orgCards_[p], c); }
         
+        const std::array<Cards, N_PLAYERS>& orgCards()const{ return orgCards_; }
+        const std::array<Cards, N_PLAYERS>& dealtCards()const{ return dealtCards_; }
+        
         std::string toString(int gn)const{
             std::ostringstream oss;
             
@@ -183,35 +177,35 @@ namespace UECda{
             oss << "game " << gn << " " << endl;
             oss << "score " << endl;
             oss << "class ";
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << base::infoClass().at(p) << " ";
             }
             oss << endl;
             oss << "seat ";
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << base::infoSeat().at(p) << " ";
             }
             oss << endl;
             oss << "dealt ";
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << OutCardsM(dealtCards(p)) << " ";
             }
             oss << endl;
             oss << "changed ";
             
-            Cards changeCards[base::players()];
-            for(int p = 0; p < base::players(); ++p){
+            Cards changeCards[N_PLAYERS];
+            for(int p = 0; p < N_PLAYERS; ++p){
                 changeCards[p] = CARDS_NULL;
             }
             for(int c = 0; c < base::changes(); ++c){
                 changeCards[base::change(c).from()] = base::change(c).cards();
             }
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << OutCardsM(changeCards[p]) << " ";
             }
             oss << endl;
             oss << "original ";
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << OutCardsM(orgCards(p)) << " ";
             }
             oss << endl;
@@ -221,7 +215,7 @@ namespace UECda{
             }
             oss << endl;
             oss << "result ";
-            for(int p = 0; p < base::players(); ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << base::infoNewClass().at(p) << " ";
             }
             oss << endl;
@@ -239,8 +233,8 @@ namespace UECda{
         }
         
     protected:
-        std::array<Cards, MinCommonGameLog<_playLog_t>::players()> dealtCards_;
-        std::array<Cards, MinCommonGameLog<_playLog_t>::players()> orgCards_;
+        std::array<Cards, N_PLAYERS> dealtCards_;
+        std::array<Cards, N_PLAYERS> orgCards_;
     };
     
     template<class _playLog_t>
@@ -261,21 +255,17 @@ namespace UECda{
         Cards getSentCards(int p)const{ return sentCards_; }
         Cards getRecvCards(int p)const{ return recvCards_; }
         
-        BitArray32<4, base::players()>& NOrgCards(){ return NOrgCards_; }
-        const BitArray32<4, base::players()>& NOrgCards()const{ return NOrgCards_; }
+        BitArray32<4, N_PLAYERS>& NOrgCards(){ return NOrgCards_; }
+        const BitArray32<4, N_PLAYERS>& NOrgCards()const{ return NOrgCards_; }
     protected:
-        BitArray32<4, base::players()> NOrgCards_;
+        BitArray32<4, N_PLAYERS> NOrgCards_;
         Cards sentCards_, recvCards_; // 本当はchangeにいれたいけど
     };
     
     template<class _gameLog_t>
     class MinMatchLog{
-        constexpr static int N_ = _gameLog_t::players();
-        
     public:
         using gameLog_t = _gameLog_t;
-        
-        constexpr static int players()noexcept{ return N_; }
         
         int games()const noexcept{ return game_.size(); }
         
@@ -295,7 +285,7 @@ namespace UECda{
         
         void init()noexcept{
             game_.clear();
-            for(int p = 0; p < N_; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 player_[p] = "";
             }
         }
@@ -304,7 +294,7 @@ namespace UECda{
             // ヘッダ部分の出力
             std::ostringstream oss;
             oss << "player";
-            for(int p = 0; p < N_; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p){
                 oss << " " << player_[p];
             }
             oss << endl;
@@ -349,61 +339,9 @@ namespace UECda{
         }
     protected:
         std::string fileName_;
-        std::array<std::string, N_> player_;
+        std::array<std::string, N_PLAYERS> player_;
         std::vector<gameLog_t> game_;
-        
     };
-    
-    // 1ゲームずつ順番に読む
-    template<
-    class field_t,
-    class gameLog_t,
-    typename firstCallback_t,
-    typename dealtCallback_t,
-    typename changeCallback_t,
-    typename lastCallback_t>
-    int iterateGameLogBeforePlay
-    (const MinMatchLog<gameLog_t>& mLog,
-     const firstCallback_t& firstCallback = [](const field_t&)->void{},
-     const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
-     const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
-     const lastCallback_t& lastCallback = [](const field_t&)->void{}
-     ){
-        for(int g = 0; g < mLog.games(); ++g){
-            const auto& gLog = mLog.game(g);
-            int err = iterateGameLogBeforePlay<field_t>
-            (gLog, firstCallback, dealtCallback, changeCallback, lastCallback);
-            if(err <= -3){
-                cerr << "error on game " << g << endl;
-                return err;
-            }
-        }
-        return 0;
-    }
-    
-    template<
-    class field_t,
-    class gameLog_t,
-    typename firstCallback_t,
-    typename playCallback_t,
-    typename lastCallback_t>
-    int iterateGameLogAfterChange
-    (const MinMatchLog<gameLog_t>& mLog,
-     const firstCallback_t& firstCallback = [](const field_t&)->void{},
-     const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
-     const lastCallback_t& lastCallback = [](const field_t&)->void{}
-     ){
-        for(int g = 0; g < mLog.games(); ++g){
-            const auto& gLog = mLog.game(g);
-            int err = iterateGameLogAfterChange<field_t>
-            (gLog, firstCallback, playCallback, lastCallback);
-            if(err <= -3){
-                cerr << "error on game " << g << endl;
-                return err;
-            }
-        }
-        return 0;
-    }
     
     template<class _matchLog_t, int N>
     class MinMatchLogAccessor{
@@ -543,26 +481,227 @@ namespace UECda{
         }
     }
     
-    // 1ゲームずつ順番に読む
-    template<
-    class field_t,
-    class matchLog_t,
-    int N,
-    typename firstCallback_t,
-    typename dealtCallback_t,
-    typename changeCallback_t,
-    typename lastCallback_t>
+    // ここからログから局面を正方向に読む関数たち
+    
+    // 交換やプレー時のコールバッックには返り値を要求する
+    // 0 が通常
+    // -1 でそのフェーズ終了
+    // -2 で試合ログ読み終了
+    // -3 で1マッチ(連続対戦)終了
+    // -4 で全マッチ終了
+    
+    template<class field_t, class gameLog_t>
+    void setFieldBeforeAll(field_t& field, const gameLog_t& gLog){
+        // 棋譜を読んでの初期設定
+        field.init1G();
+        field.setMoveBuffer(nullptr);
+        field.setDice(nullptr);
+        if(gLog.isInitGame()){
+            field.setInitGame();
+            field.infoClass.fill(Class::MIDDLE);
+        }else{
+            field.infoClass = gLog.infoClass();
+            field.infoClassPlayer = invert(gLog.infoClass());
+        }
+        field.infoSeat = gLog.infoSeat();
+        field.infoSeatPlayer = invert(gLog.infoSeat());
+    }
+    
+    template<class field_t, class gameLog_t,
+    typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t, typename lastCallback_t>
     int iterateGameLogBeforePlay
-    (const MinMatchLogAccessor<matchLog_t, N>& mLogs,
+    (field_t& field, const gameLog_t& gLog,
      const firstCallback_t& firstCallback = [](const field_t&)->void{},
      const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
      const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
-     const lastCallback_t& lastCallback = [](const field_t&)->void{}
-     ){
-        for(int m = 0; m < mLogs.matches(); ++m){
-            const auto& mLog = mLogs.match(m);
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
+        setFieldBeforeAll(field, gLog);
+        firstCallback(field);
+        
+        // deal cards
+        for(int p = 0; p < N_PLAYERS; ++p){
+            Cards tmp = gLog.dealtCards(p);
+            field.hand[p].cards = tmp; // とりあえずcardsだけセットしておく
+        }
+        // present
+        for(int t = 0, tend = gLog.changes(); t < tend; ++t){
+            const typename gameLog_t::changeLog_t& change = gLog.change(t);
+            if(field.getPlayerClass(change.to()) <= FUGO){
+                Cards present = change.cards();
+                addCards(&field.hand[change.to()].cards, present);
+            }
+        }
+        // set card info
+        for(int p = 0; p < N_PLAYERS; ++p){
+            Cards c = field.hand[p].cards;
+            field.hand[p].setAll(c);
+            field.opsHand[p].set(subtrCards(CARDS_ALL, c));
+            field.opsHand[p].setHash(HASH_CARDS_ALL ^ field.hand[p].hash);
+            field.addAttractedPlayer(p);
+        }
+        field.fillRemHand(CARDS_ALL);
+        
+        dealtCallback(field);
+        
+        // change
+        for(int t = 0, tend = gLog.changes(); t < tend; ++t){
+            const typename gameLog_t::changeLog_t& change = gLog.change(t);
+            if(field.getPlayerClass(change.from()) >= HINMIN){
+                // subtr present cards
+                field.hand[change.from()].subtrAll(change.cards());
+                field.opsHand[change.from()].addAll(change.cards());
+            }else{
+                int ret = changeCallback(field, change.from(), change.to(), change.cards());
+                if(ret <= -2){
+                    cerr << "error on change "
+                    << change.from() << " -> " << change.to() << endl;
+                    return ret;
+                }else if(ret == -1){
+                    break;
+                }
+                // proceed field
+                field.makeChange(change.from(), change.to(), change.cards());
+            }
+        }
+        lastCallback(field);
+        return 0;
+    }
+    
+    template<class field_t, class gameLog_t, class hand_t>
+    void setFieldAfterChange(field_t& field, const gameLog_t& gLog,
+                             const std::array<hand_t, N_PLAYERS>& hand){
+        // カード交換が終わった後から棋譜を読み始める時の初期設定
+        for(int p = 0; p < N_PLAYERS; ++p){
+            Cards tmp = Cards(hand[p]);
+            field.hand[p].setAll(tmp);
+            field.opsHand[p].set(subtrCards(CARDS_ALL, tmp));
+            field.opsHand[p].setHash(HASH_CARDS_ALL ^ field.hand[p].hash);
+            field.addAttractedPlayer(p);
+        }
+        field.fillRemHand(CARDS_ALL);
+        field.prepareAfterChange();
+    }
+    
+    // 試合中のプレーヤーがこれまでの試合(交換後)を振り返る場合
+    // 相手手札がわからないのでhandとして外部から与える
+    template<class field_t, class gameLog_t, class hand_t,
+    typename firstCallback_t, typename playCallback_t>
+    int iterateGameLogInGame
+    (field_t& field, const gameLog_t& gLog, const std::array<hand_t, N_PLAYERS>& hand,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
+     bool initialized = false){
+        if(!initialized){
+            setFieldBeforeAll(field, gLog);
+            setFieldAfterChange(field, gLog, hand); // 交換後まで進める
+        }
+        field.prepareAfterChange();
+        firstCallback(field);
+        // play
+        for(int t = 0; t < gLog.plays(); ++t){
+            field.prepareForPlay();
+            const typename gameLog_t::playLog_t& play = gLog.play(t);
+            int ret = playCallback(field, play.move(), play.time());
+            if(ret <= -2){
+                cerr << "error on play turn " << t << endl;
+                return ret;
+            }else if(ret == -1){
+                break;
+            }
+            // proceed field
+            field.procSlowest(play.move());
+        }
+        return 0;
+    }
+    
+    template<class field_t, class gameLog_t,
+    typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
+    int iterateGameLogAfterChange
+    (field_t& field, const gameLog_t& gLog,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
+     const lastCallback_t& lastCallback = [](const field_t&)->void{},
+     bool initialized = false){
+        int ret = iterateGameLogInGame(field, gLog, gLog.orgCards(),
+                                       firstCallback, playCallback, initialized);
+        if(ret <= -2)return ret; // この試合もう進めない
+        field.infoNewClass = gLog.infoNewClass();
+        field.infoNewClassPlayer = invert(gLog.infoNewClass());
+        lastCallback(field);
+        return 0;
+    }
+    
+    // 1試合全体
+    template<class field_t, class gameLog_t,
+    typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t,
+    typename afterChangeCallback_t, typename playCallback_t, typename lastCallback_t>
+    int iterateGameLog
+    (field_t& field, const gameLog_t& gLog,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
+     const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
+     const afterChangeCallback_t& afterChangeCallback = [](const field_t&)->void{},
+     const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
+        // 交換
+        int ret = iterateGameLogBeforePlay(field, gLog, firstCallback, dealtCallback, changeCallback);
+        if(ret <= -2)return ret; // この試合もう進めない
+        // 役提出
+        return iterateGameLogAfterChange(field, gLog, afterChangeCallback, playCallback, lastCallback, true);
+    }
+    
+    // 1ゲームずつ順番に読む
+    template<class field_t, class gameLog_t,
+    typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t, typename lastCallback_t>
+    int iterateGameLogBeforePlay
+    (field_t& field, const MinMatchLog<gameLog_t>& mLog,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
+     const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
+        for(int g = 0; g < mLog.games(); ++g){
+            const auto& gLog = mLog.game(g);
             int err = iterateGameLogBeforePlay<field_t>
-            (mLog, firstCallback, dealtCallback, changeCallback, lastCallback);
+            (field, gLog, firstCallback, dealtCallback, changeCallback, lastCallback);
+            if(err <= -3){
+                cerr << "error on game " << g << endl;
+                return err;
+            }
+        }
+        return 0;
+    }
+    
+    template<class field_t, class gameLog_t,
+    typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
+    int iterateGameLogAfterChange
+    (field_t& field, const MinMatchLog<gameLog_t>& mLog,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
+        for(int g = 0; g < mLog.games(); ++g){
+            const auto& gLog = mLog.game(g);
+            int err = iterateGameLogAfterChange<field_t>
+            (field, gLog, firstCallback, playCallback, lastCallback);
+            if(err <= -3){
+                cerr << "error on game " << g << endl;
+                return err;
+            }
+        }
+        return 0;
+    }
+    
+    // 1ゲームずつ順番に読む
+    template<class field_t, class matchLog_t, int N,
+    typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t, typename lastCallback_t>
+    int iterateGameLogBeforePlay
+    (field_t& field, const MinMatchLogAccessor<matchLog_t, N>& mLogs,
+     const firstCallback_t& firstCallback = [](const field_t&)->void{},
+     const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
+     const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
+        for(int m = 0; m < mLogs.matches(); ++m){
+            int err = iterateGameLogBeforePlay<field_t>
+            (field, mLogs.match(m), firstCallback, dealtCallback, changeCallback, lastCallback);
             if(err <= -4){
                 cerr << "error on match " << m << endl;
                 return err;
@@ -571,23 +710,16 @@ namespace UECda{
         return 0;
     }
     
-    template<
-    class field_t,
-    class matchLog_t,
-    int N,
-    typename firstCallback_t,
-    typename playCallback_t,
-    typename lastCallback_t>
+    template<class field_t, class matchLog_t, int N,
+    typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
     int iterateGameLogAfterChange
-    (const MinMatchLogAccessor<matchLog_t, N>& mLogs,
+    (field_t& field, const MinMatchLogAccessor<matchLog_t, N>& mLogs,
      const firstCallback_t& firstCallback = [](const field_t&)->void{},
      const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
-     const lastCallback_t& lastCallback = [](const field_t&)->void{}
-     ){
+     const lastCallback_t& lastCallback = [](const field_t&)->void{}){
         for(int m = 0; m < mLogs.matches(); ++m){
-            const auto& mLog = mLogs.match(m);
             int err = iterateGameLogAfterChange<field_t>
-            (mLog, firstCallback, playCallback, lastCallback);
+            (field, mLogs.match(m), firstCallback, playCallback, lastCallback);
             if(err <= -4){
                 cerr << "error on match " << m << endl;
                 return err;

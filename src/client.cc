@@ -495,7 +495,7 @@ int main(int argc, char* argv[]){ // for UECda
             //    cerr << toString(recv_table) << endl;
             //}
             
-            MinClientPlayLog<N_PLAYERS> playLog;
+            MinClientPlayLog playLog;
             playLog.set(serverMove, tmpTime, myPlayTime);
             game_log.push_play(playLog);
             
@@ -534,7 +534,7 @@ int main(int argc, char* argv[]){ // for UECda
         field.feedMyStats();
         
         game_log.infoNewClass() = field.infoNewClass;
-        for(int p = 0; p < game_log.players(); ++p){
+        for(int p = 0; p < N_PLAYERS; ++p){
             game_log.setOrgCards(p, field.getUsedCards(p));
         }
         if(field.getNAlivePlayers() == 0){ // 先日手でなく通常の終了

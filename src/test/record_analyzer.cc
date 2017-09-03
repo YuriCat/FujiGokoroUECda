@@ -9,10 +9,8 @@
 #include "../generator/moveGenerator.hpp"
 #include "../structure/log/minLog.hpp"
 #include "../fuji/montecarlo/playout.h"
-//#include "../fuji/logic/dominance.hpp"
 
 using namespace UECda;
-using namespace Fuji;
 
 MoveGenerator<MoveInfo, Cards> mgCards;
 MoveGenerator<MoveInfo, Hand> mgHand;
@@ -20,35 +18,28 @@ Clock cl;
 
 int analyzeRecords(const std::vector<std::string>& logs){
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 16384> mLogs(logs);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 16384> mLogs(logs);
     
     int64_t fields = 0;
-    std::array<int64_t, N_PLAYERS> fieldsPerNAlive;
-    std::array<int64_t, N_PLAYERS> fieldsPerNAsleep;
+    std::array<int64_t, N_PLAYERS> fieldsPerNAlive, fieldsPerNAsleep;
     
     int64_t nullFields = 0;
-    std::array<int64_t, N_PLAYERS> nullFieldsPerNAlive;
-    std::array<int64_t, N_PLAYERS> nullFieldsPerNAsleep;
+    std::array<int64_t, N_PLAYERS> nullFieldsPerNAlive, nullFieldsPerNAsleep;
     
     int64_t nullPass = 0;
-    std::array<int64_t, N_PLAYERS> nullPassPerNAlive;
-    std::array<int64_t, N_PLAYERS> nullPassPerNAsleep;
+    std::array<int64_t, N_PLAYERS> nullPassPerNAlive, nullPassPerNAsleep;
     
     int64_t normalFields = 0;
-    std::array<int64_t, N_PLAYERS> normalFieldsPerNAlive;
-    std::array<int64_t, N_PLAYERS> normalFieldsPerNAsleep;
+    std::array<int64_t, N_PLAYERS> normalFieldsPerNAlive, normalFieldsPerNAsleep;
     
     int64_t normalPass = 0;
-    std::array<int64_t, N_PLAYERS> normalPassPerNAlive;
-    std::array<int64_t, N_PLAYERS> normalPassPerNAsleep;
+    std::array<int64_t, N_PLAYERS> normalPassPerNAlive, normalPassPerNAsleep;
     
     int64_t normalUnforcedFields = 0;
-    std::array<int64_t, N_PLAYERS> normalUnforcedFieldsPerNAlive;
-    std::array<int64_t, N_PLAYERS> normalUnforcedFieldsPerNAsleep;
+    std::array<int64_t, N_PLAYERS> normalUnforcedFieldsPerNAlive, normalUnforcedFieldsPerNAsleep;
     
     int64_t normalUnforcedPass = 0;
-    std::array<int64_t, N_PLAYERS> normalUnforcedPassPerNAlive;
-    std::array<int64_t, N_PLAYERS> normalUnforcedPassPerNAsleep;
+    std::array<int64_t, N_PLAYERS> normalUnforcedPassPerNAlive, normalUnforcedPassPerNAsleep;
     
     fieldsPerNAlive.fill(0);
     fieldsPerNAsleep.fill(0);
@@ -76,11 +67,11 @@ int analyzeRecords(const std::vector<std::string>& logs){
     }
     
     int64_t turns = 0;
-    double turns2 = 0;
+    long double turns2 = 0;
     int maxTurns = 0;
     int minTurns = std::numeric_limits<int>::max();
     int64_t games = 0;
-    double games2 = 0;
+    long double games2 = 0;
     int maxGames = 0;
     int minGames = std::numeric_limits<int>::max();
     int64_t matches = mLogs.matches();
@@ -104,8 +95,9 @@ int analyzeRecords(const std::vector<std::string>& logs){
             maxTurns = max(maxTurns, gLog.plays());
             minTurns = min(minTurns, gLog.plays());
             
+            Field field;
             iterateGameLogAfterChange<PlayouterField>
-            (gLog,
+            (field, gLog,
              [&](const auto& field){ // first callback
                  nullPassTemp = 0;
              },
@@ -173,13 +165,15 @@ int analyzeRecords(const std::vector<std::string>& logs){
     cerr << "games = " << games << endl;
     cerr << "min games per match = " << minGames << endl;
     cerr << "max games per match = " << maxGames << endl;
-    cerr << "avg games per match = " << games / double(matches) << endl;
-    cerr << "std games per match = " << sqrt(games2 / double(matches) - pow(games / double(matches), 2)) << endl;
+    cerr << "avg games per match = " << (long double)games / matches << endl;
+    cerr << "std games per match = " << sqrtl((long double)games2 / matches
+                                              - powl((long double)games / matches, 2)) << endl;
     cerr << "turns = " << turns << endl;
     cerr << "min turns per game = " << minTurns << endl;
     cerr << "max turns per game = " << maxTurns << endl;
-    cerr << "avg turns per game = " << turns / double(games) << endl;
-    cerr << "std turns per game = " << sqrt(turns2 / double(games) - pow(turns / double(games), 2)) << endl;
+    cerr << "avg turns per game = " << (long double)turns / games << endl;
+    cerr << "std turns per game = " << sqrtl((long double)turns2 / games
+                                             - powl((long double)turns / games, 2)) << endl;
     cerr << "fields = " << fields << endl;
     cerr << "(per num alive) = " << fieldsPerNAlive << endl;
     cerr << "(per num asleep) = " << fieldsPerNAsleep << endl;

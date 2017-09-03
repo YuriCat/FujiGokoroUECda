@@ -77,8 +77,8 @@ namespace UECda{
 #endif
     constexpr int N_SEATS = N_PLAYERS;
     
-    constexpr int INIT_CYCLE = 100; // 階級リセット試合数(変更の可能性ありだが、一応)
-    
+    constexpr int CLASS_INIT_CYCLE = 100; // 階級リセット試合数(変更の可能性あり)
+    constexpr int SEAT_INIT_CYCLE = 3; // 席順リセット試合数(変更の可能性あり)
     
     //const int N_GAMES; // 総試合数
     
@@ -95,10 +95,15 @@ namespace UECda{
         return N_CLASSES - 1 - acl;
     }
     
-    constexpr int getNGamesForIG(int gn)noexcept{
-        // 試合番号から、初期化ゲームへの残り試合数に変換
-        return INIT_CYCLE - 1 - (gn % INIT_CYCLE);
+    constexpr int getNGamesForClassInitGame(int gn)noexcept{
+        // 試合番号から、階級初期化ゲームへの残り試合数に変換
+        return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
     }
+    constexpr int getNGamesForSeatInitGame(int gn)noexcept{
+        // 試合番号から、席順初期化ゲームへの残り試合数に変換
+        return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
+    }
+    
     
     template<int N = N_PLAYERS>
     constexpr unsigned int getNextSeat(unsigned int s)noexcept{

@@ -25,9 +25,9 @@ namespace UECda{
         uint32_t my_plays = 0U;
         
 #ifdef LOGGING_FILE
-        MinMatchLog<MinClientGameLog<MinClientPlayLog<N_PLAYERS>>> match_log;
+        MinMatchLog<MinClientGameLog<MinClientPlayLog>> match_log;
 #endif
-        MinClientGameLog<MinClientPlayLog<N_PLAYERS>> game_log;
+        MinClientGameLog<MinClientPlayLog> game_log;
     }
 }
 #endif

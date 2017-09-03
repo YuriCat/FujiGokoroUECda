@@ -10,7 +10,7 @@
 
 #include "../../structure/primitive/prim.hpp"
 #include "../../structure/hand.hpp"
-#include "../../structure/log/logIteration.hpp"
+#include "../../structure/log/minLog.hpp"
 
 #include "../logic/mate.hpp"
 
@@ -30,9 +30,9 @@ namespace UECda{
                                     threadTools_t *const ptools){
                 
                 MoveInfo *const buf = ptools->buf;
-                
-                iterateGameLogBeforePlay<PlayouterField>
-                (gLog,
+                Field field;
+                iterateGameLogBeforePlay
+                (field, gLog,
                  [](const auto& field)->void{}, // first callback
                  [](const auto& field)->void{}, // dealt callback
                  // change callback
@@ -128,9 +128,9 @@ namespace UECda{
                                     threadTools_t *const ptools){
                 
                 MoveInfo *const buf = ptools->buf;
-                
-                iterateGameLogAfterChange<PlayouterField>
-                (gLog,
+                Field field;
+                iterateGameLogAfterChange
+                (field, gLog,
                  //after change callback
                  [](const auto& field)->void{},
                  //play callback

@@ -43,8 +43,9 @@ namespace UECda{
             
             if(!pshared->gameLog.isTerminated()){ return; } // 試合が普通に終了した場合のみ解析
             
-            iterateGameLogAfterChange<PlayouterField>
-            (pshared->gameLog,
+            Field field;
+            iterateGameLogAfterChange
+            (field, pshared->gameLog,
              // first callback
              [](const auto& field)->void{},
              // play callback

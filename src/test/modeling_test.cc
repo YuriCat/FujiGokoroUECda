@@ -44,6 +44,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
     
     PlayerModelSpace playerModelSpace;
     playerModelSpace.init(0);
+    Field field;
     
     for(int p = 0; p < N_PLAYERS; ++p){
         cerr << mLog.player(p) << " ";
@@ -67,7 +68,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
                 const auto& ggLog = mLog.game(gg);
                 
                 iterateGameLogAfterChange<PlayouterField>
-                (ggLog,
+                (field, ggLog,
                  [](const auto& field)->void{}, // first callback
                  [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
                      
@@ -125,7 +126,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
         
         const auto& gLog = mLog.game(g);
         iterateGameLogAfterChange<PlayouterField>
-        (gLog,
+        (field, gLog,
          [](const auto& field)->void{}, // first callback
          [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
              return 0;
@@ -163,7 +164,7 @@ int main(int argc, char* argv[]){
     basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
     
     for(const std::string& log : logFileNames){
-        MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>> mLog(log);
+        MinMatchLog<MinGameLog<MinPlayLog>> mLog(log);
         testPlayPolicyModeling(mLog);
     }
     

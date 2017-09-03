@@ -9,7 +9,7 @@
 #include "../fuji.h"
 
 #include "../montecarlo/playout.h"
-#include "../../structure/log/logIteration.hpp"
+#include "../../structure/log/minLog.hpp"
 
 #include "../model/playerBias.hpp"
 
@@ -1184,8 +1184,9 @@ namespace UECda{
                     orgCards[p] = c[p] | detCards[infoClass[p]];
                 }
                 
-                iterateGameLogInGame<PlayouterField>
-                (shared.gameLog, orgCards,
+                PlayouterField field;
+                iterateGameLogInGame
+                (field, shared.gameLog, orgCards,
                  // after change callback
                  [](const auto& field)->void{},
                  // play callback
@@ -1269,10 +1270,7 @@ namespace UECda{
                          }
                      }
                      return 0;
-                 },
-                 //after callback
-                 [](const auto& field)->void{}
-                 );
+                 });
                 
                 //cerr<<" play: "<<playLH<<" time: "<<timeLH<<endl;
                 

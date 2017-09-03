@@ -137,7 +137,7 @@ namespace UECda{
         using playLog_t = typename gameLog_t::playLog_t;
         using changeLog_t = typename gameLog_t::changeLog_t;
         
-        constexpr int N = gameLog_t::players();
+        constexpr int N = N_PLAYERS;
         
         initCommandMap();
         

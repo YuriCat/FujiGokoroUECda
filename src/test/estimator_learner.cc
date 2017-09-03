@@ -49,9 +49,10 @@ template<class logs_t>
 int makeCardPriorTable(const logs_t& mLogs, const uint64_t N){
     // Card 単体での事前分布テーブルを作る
     double table[INTCARD_MAX + 1][N_PLAYERS] = {0};
-    
-    iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+
+    Field field;
+    iterateGameLogAfterChange
+    (field, mLogs,
      [&](const auto& field){ // first callback
          // 交換の無い試合はとばす
          if(!field.isInitGame()){
@@ -102,8 +103,9 @@ int makeRankSuitsPriorTable(const logs_t& mLogs, const uint64_t N){
     // Rank x Suits の事前分布テーブルを作る
     double table[N_PLAYERS][16][16] = {0};
     
-    iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    Field field;
+    iterateGameLogAfterChange
+    (field, mLogs,
      [&](const auto& field){ // first callback
          // 交換の無い試合はとばす
          if(!field.isInitGame()){
@@ -169,7 +171,7 @@ int main(int argc, char* argv[]){
         }
     }
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 256> mLogs(logFileNames);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
     makeCardPriorTable(mLogs, 1ULL << 16);
     
     return 0;

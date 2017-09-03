@@ -101,8 +101,10 @@ int testRecordL2(const logs_t& mLogs){
     
     int judgeResult = -1;
     int l2TurnPlayer = -1;
-    iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    Field field;
+    
+    iterateGameLogAfterChange
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          
@@ -171,7 +173,7 @@ int main(int argc, char* argv[]){
     }
     cerr << "passed case test." << endl;
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 256> mLogs(logFileNames);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
     
     if(testRecordL2(mLogs)){
         cerr << "failed record L2 judge test." << endl;

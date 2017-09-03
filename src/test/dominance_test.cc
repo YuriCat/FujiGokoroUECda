@@ -12,7 +12,6 @@
 #include "../fuji/logic/dominance.hpp"
 
 using namespace UECda;
-using namespace Fuji;
 
 MoveInfo buffer[8192];
 MoveGenerator<MoveInfo, Cards> mgCards;
@@ -42,16 +41,17 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
     // 棋譜中の局面において支配性判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>>, 256> mLogs(logs);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logs);
     
     uint64_t judgeTime[3] = {0};
     uint64_t judgeCount[2] = {0};
     
     uint64_t judgeMatrix[2][2][2] = {0};
+    Field field;
     
     // プリミティブ型での支配性判定
-    iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    iterateGameLogAfterChange
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
@@ -83,7 +83,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
     
     // より複雑な型での支配性判定
     iterateGameLogAfterChange<PlayouterField>
-    (mLogs,
+    (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();

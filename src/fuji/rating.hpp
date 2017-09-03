@@ -8,7 +8,7 @@
 #ifndef UECDA_RATING_HPP_
 #define UECDA_RATING_HPP_
 
-#include "../structure/log/logIteration.hpp"
+#include "../structure/log/minLog.hpp"
 #include "montecarlo/playouter.hpp"
 
 namespace UECda{
@@ -79,8 +79,9 @@ namespace UECda{
                                      RateCalculationData *const presult,
                                      sharedData_t *const pshared,
                                      threadTools_t tools[]){
-            iterateGameLogBeforePlay<PlayouterField>
-            (gLog,
+            Field field;
+            iterateGameLogBeforePlay
+            (field, gLog,
              [](const auto& field)->void{}, // first callback
              [&](const auto& field)->void{ // dealt callback
                  // シミュレーションにより結果を予測

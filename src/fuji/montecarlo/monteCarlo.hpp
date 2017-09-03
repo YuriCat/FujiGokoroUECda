@@ -114,8 +114,6 @@ namespace UECda{
                 const int pastNTrials = threadNTrials[tryingIndex]++; // 選ばれたもののこれまでのトライアル数
                 threadNTrialsSum++;
                 
-                //cerr<<threadNTrialsSum<<",";
-                
                 if(threadNWorlds >= threadMaxNWorlds){
                     // このとき、世界作成は既に終わっている
                     if(pastNTrials < threadMaxNWorlds){

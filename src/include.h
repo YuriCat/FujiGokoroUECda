@@ -104,7 +104,6 @@ using namespace UECda;
 // ログ
 #ifdef LOGGING
 #include "structure/log/minLog.hpp"
-#include "structure/log/logIteration.hpp"
 #endif
 
 // 状態表現
