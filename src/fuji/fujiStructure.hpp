@@ -64,7 +64,10 @@ namespace UECda{
             // 計算量解析
             int modeling_time;
             int estimating_by_time;
-            uint32_t gameReward[N_CLASSES];
+            
+            // 毎回報酬テーブルから持ってこなくてもいいようにこの試合の報酬を置いておくテーブル
+            uint16_t gameReward[N_CLASSES];
+            uint16_t daifugoSeatGameReward[N_PLAYERS][N_CLASSES];
             
             // 着手決定のために一時的に参照できるようにしておくデータ
             FieldAddInfo fieldInfo;

@@ -68,11 +68,14 @@ void calcDaifugoSeatValue(const double transProbMatrix[N_PLAYERS][N_PLAYERS][N_P
                 }
             }
         }
+        for(int k = 0; k < S; ++k)cerr << svalue[g][k][0][0] << " ";
+        cerr << endl;
         // 状態価値計算
         for(int k = 0; k < S; ++k){ // 席替えまでの試合数
             for(int s = 0; s < N; ++s){ // 次の試合の大富豪からの相対席順
                 for(int i = 0; i < N; ++i){ // 次の試合の階級
                     svalue[g + 1][k][s][i] = 0;
+                    double probSum = 0;
                     for(int ss = 0; ss < N; ++ss){ // 次の試合の1位の相対席順
                         for(int j = 0; j < N; ++j){ // 次の試合の順位
                             int nrs = (s + N_PLAYERS - ss) % N_PLAYERS;
@@ -83,8 +86,10 @@ void calcDaifugoSeatValue(const double transProbMatrix[N_PLAYERS][N_PLAYERS][N_P
                             //cerr << transProbMatrix[s][i][ss * N_PLAYERS + j] << " " << value[g][k][nrs][j] << endl;
                             assert(transProbMatrix[s][i][ss * N_PLAYERS + j] == 0
                                    || value[g][k][nrs][j] > 0);
+                            probSum += transProbMatrix[s][i][ss * N_PLAYERS + j];
                         }
                     }
+                    //cerr << probSum << " ";
                 }
             }
         }
@@ -133,11 +138,15 @@ int main(int argc, char* argv[]){
     for(int c = 1; c < argc; ++c){
         if(!strcmp(argv[c], "-l")){ // log path
             logFileNames.push_back(std::string(argv[c + 1]));
+        }else if(!strcmp(argv[c], "-ld")){
+            const std::string logDirectory = std::string(argv[c + 1]);
+            const std::vector<std::string> added = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
+            logFileNames.insert(logFileNames.end(), added.begin(), added.end());
         }
     }
     
     // 試合棋譜を読み込んで遷移行列を計算
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
+    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs(logFileNames);
     
     // 全体 (階級 x 順位)
     double transProbMatrixAll[N_PLAYERS][N_PLAYERS] = {0};

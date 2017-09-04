@@ -46,7 +46,7 @@
 #define N_THREADS (8)
 
 // 末端報酬を階級リセットから何試合前まで計算するか
-constexpr int N_REWARD_CALCULATED_GAMES = 15;
+constexpr int N_REWARD_CALCULATED_GAMES = 32;
 
 // ログ関連
 

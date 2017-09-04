@@ -161,29 +161,14 @@ namespace UECda{
                 // 汎用変数の設定
 #ifndef POLICY_ONLY
                 // 報酬設定
-                int bIG = getNGamesForClassInitGame(field.getGameNum());
                 // ランク初期化まで残り何試合か
                 // 公式には未定だが、多くの場合100試合だろうから100試合としておく
-                
-                // N_REWARD_CALCULATED_GAMES 試合前より以前は同じ報酬とする
-                bIG = min(bIG, N_REWARD_CALCULATED_GAMES - 1);
-                for(int r = 0; r < N_PLAYERS; ++r){
-                    shared.gameReward[r] = iReward[bIG][r];
-                }
-                
-                // 前の試合の順位から予測される期待報酬
-                double dist_sum = 0;
-                double last_er = 0;
-                for(int r = 0; r < N_PLAYERS; ++r){
-                    dist_sum += seni_dist[field.getMyClass()][r];
-                    last_er += seni_dist[field.getMyClass()][r] * (double)shared.gameReward[r];
-                }
-                if(dist_sum > 0){
-                    last_er /= dist_sum;
-                }else{
-                    last_er = 420; // なぜか分布がおかしいときは適当に設定
-                }
-                field.last_exp_reward = last_er;
+                const int gamesForCIG = getNGamesForClassInitGame(field.getGameNum());
+                const int gamesForSIG = getNGamesForSeatInitGame(field.getGameNum());
+                for(int cl = 0; cl < N_PLAYERS; ++cl)
+                    shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
+                for(int rs = 0; rs < N_PLAYERS; ++rs)for(int cl = 0; cl < N_PLAYERS; ++cl)
+                    shared.daifugoSeatGameReward[rs][cl] = int(daifugoSeatReward(gamesForCIG, gamesForSIG, rs, cl) * 100);
                 
                 // 置換表初期化
 #ifdef USE_L2BOOK
