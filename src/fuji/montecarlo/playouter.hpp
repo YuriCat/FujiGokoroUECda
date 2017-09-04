@@ -112,8 +112,7 @@ namespace UECda{
                     cij.start(&reward, *pfield, attractedPlayers); // ここでCI探索開始
 
                     //cerr<<pfield->toDebugString();
-                    
-                    uint32_t bestReward = pshared->gameReward[pfield->getBestClass()];
+                    uint32_t bestReward = pshared->gameReward[pfield->getNewClassPlayer()][pfield->getBestClass()];
                     
                     if(search(pfield->attractedPlayers, [reward, bestReward](uint32_t pn)->bool{
                         if (reward[pn] > bestReward){
@@ -231,7 +230,8 @@ namespace UECda{
         GAME_END:
             //getchar();
             for(int p = 0; p < N_PLAYERS; ++p){
-                pfield->infoReward.replace(p, pshared->gameReward[pfield->getPlayerNewClass(p)]);
+                int rs = (pfield->getPlayerSeat(p) + N_PLAYERS - pfield->getPlayerSeat(pfield->getNewClassPlayer(DAIFUGO))) % N_PLAYERS;
+                pfield->infoReward.assign(p, pshared->daifugoSeatGameReward[rs][pfield->getPlayerNewClass(p)]);
             }
             return 0;
         }

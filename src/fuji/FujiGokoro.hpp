@@ -170,6 +170,11 @@ namespace UECda{
                 for(int rs = 0; rs < N_PLAYERS; ++rs)for(int cl = 0; cl < N_PLAYERS; ++cl)
                     shared.daifugoSeatGameReward[rs][cl] = int(daifugoSeatReward(gamesForCIG, gamesForSIG, rs, cl) * 100);
                 
+                //for(int rs = 0; rs < N_PLAYERS; ++rs){
+                //    for(int cl = 0; cl < N_PLAYERS; ++cl)cerr << shared.daifugoSeatGameReward[rs][cl] << ",";
+                //    cerr << endl;
+                //}
+                
                 // 置換表初期化
 #ifdef USE_L2BOOK
                 L2::book.init();

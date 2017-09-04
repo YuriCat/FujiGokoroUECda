@@ -166,12 +166,9 @@ namespace UECda{
             infoClass.clear(); infoClassPlayer.clear();
         }
         
-        void setPlayerClass(int p, int r)noexcept{ infoClass.set(p, r); }
-        void setClassPlayer(int c, int p)noexcept{ infoClassPlayer.set(c, p); }
-        void setPlayerNewClass(int p, int c)noexcept{ infoNewClass.set(p, c); }
-        void setNewClassPlayer(int c, int p)noexcept{ infoNewClassPlayer.set(c, p); }
-        void setPlayerSeat(int p, int s)noexcept{ infoSeat.set(p, s); }
-        void setSeatPlayer(int s, int p)noexcept{ infoSeatPlayer.set(s, p); }
+        void setPlayerClass(int p, int cl)noexcept{ infoClass.set(p, cl); infoClassPlayer.set(cl, p); }
+        void setPlayerNewClass(int p, int cl)noexcept{ infoNewClass.set(p, cl); infoNewClassPlayer.set(cl, p); }
+        void setPlayerSeat(int p, int s)noexcept{ infoSeat.set(p, s); infoSeatPlayer.set(s, p); }
         
         uint32_t getPlayerClass(int p)const noexcept{ return infoClass[p]; }
         uint32_t getClassPlayer(int c)const noexcept{ return infoClassPlayer[c]; }
@@ -793,6 +790,7 @@ namespace UECda{
                 if(attractedPlayers.is_only(tp)){
                     // 結果が欲しいプレーヤーがすべて上がったので、プレイアウト終了
                     setPlayerNewClass(tp, getBestClass());
+                    setPlayerNewClass(tp, getBestClass());
                     return -1;
                 }else if(getNAlivePlayers() == 2){
                     // ゲームが終了
@@ -874,7 +872,8 @@ namespace UECda{
                 setPlayerNewClass(tp, getBestClass());
                 ps.setDead(tp);
                 if(ps.isSoloAlive()){
-                    setPlayerNewClass(ps.searchL1Player(), getBestClass());
+                    int l1Player = ps.searchL1Player();
+                    setPlayerNewClass(tp, getBestClass());
                     return -1;
                 }
                 procBoardStateDead(tp);
@@ -1170,13 +1169,11 @@ namespace UECda{
             
             int cl = getPlayerClass(table, p);
             pfield->setPlayerClass(p, cl);
-            pfield->setClassPlayer(cl, p);
         }
         
         for(int s = 0; s < N_PLAYERS; ++s){
             int p = getSeatPlayer(table, s);
             pfield->setPlayerSeat(p, s);
-            pfield->setSeatPlayer(s, p);
         }
     }
     

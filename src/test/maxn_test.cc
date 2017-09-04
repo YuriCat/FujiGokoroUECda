@@ -54,9 +54,7 @@ int outputMateJudgeResult(){
         }
         field.setOpsHand(p, subtrCards(rem, c[p]));
         field.setPlayerClass(p, p);
-        field.setClassPlayer(p, p);
         field.setPlayerSeat(p, p);
-        field.setSeatPlayer(p, p);
     }
     field.setRemHand(rem);
     field.prepareForPlay();

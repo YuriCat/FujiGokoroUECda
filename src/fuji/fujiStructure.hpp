@@ -66,8 +66,8 @@ namespace UECda{
             int estimating_by_time;
             
             // 毎回報酬テーブルから持ってこなくてもいいようにこの試合の報酬を置いておくテーブル
-            uint16_t gameReward[N_CLASSES];
-            uint16_t daifugoSeatGameReward[N_PLAYERS][N_CLASSES];
+            int16_t gameReward[N_CLASSES];
+            int16_t daifugoSeatGameReward[N_PLAYERS][N_CLASSES];
             
             // 着手決定のために一時的に参照できるようにしておくデータ
             FieldAddInfo fieldInfo;
@@ -285,8 +285,8 @@ namespace UECda{
             
             // 雑多な情報
             int myPlayerNum, rivalPlayerNum;
-            int bestReward, worstReward;
-            int rewardGap;
+            int16_t bestReward, worstReward;
+            int16_t rewardGap;
             int bestClass, worstClass;
             
             // モンテカルロ用の情報
@@ -313,6 +313,14 @@ namespace UECda{
                 worstClass = field.getWorstClass();
                 bestReward = shared.gameReward[bestClass];
                 worstReward = shared.gameReward[worstClass];
+                for(int rs = 0; rs < N_PLAYERS; ++rs){
+                    if(shared.daifugoSeatGameReward[rs][bestClass] >= 0)
+                        bestReward = max(bestReward, shared.daifugoSeatGameReward[rs][bestClass]);
+                    if(shared.daifugoSeatGameReward[rs][worstClass] >= 0)
+                        worstReward = min(worstReward, shared.daifugoSeatGameReward[rs][worstClass]);
+                }
+                //bestReward = shared.Reward[bestClass];
+                //worstReward = shared.gameReward[worstClass];
                 rewardGap = bestReward - worstReward;
                 uint32_t rivals = field.getRivalPlayersFlag();
                 if(countBits(rivals) == 1){
