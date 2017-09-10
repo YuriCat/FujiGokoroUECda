@@ -331,7 +331,7 @@ int compare_card_status(int stage_card[4], int now_card[4], int revers){
     
     // when the type is kaidan or tanki.
     if(revers){ //compare value of cards on kakumei
-        return ((now_card[0]-stage_card[0]-stage_card[1]+1)>=0);
+        return ((now_card[0]-stage_card[0]+stage_card[1]-1)>=0);
     }else{
         return ((now_card[0]-stage_card[0]-stage_card[1]+1)<=0);
     }
