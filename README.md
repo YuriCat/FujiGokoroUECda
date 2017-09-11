@@ -8,7 +8,28 @@ UECda2014, 2015, 2016 無差別級で優勝しています。
 
 2016/5/19深夜放送の日本テレビ系「変ラボ」にてタレントの手越祐也さんと対決させていただきました。
 
+## 使用方法
+
+make release -j4
+
+でビルドし、
+
+./out/release/server -g 100 &
+
+./out/release/client &
+./out/release/client &
+./out/release/client &
+./out/release/client &
+./out/release/client &
+
+のように5体の自己対戦を行うことができます。
+
+./out/release/server -g 100 -bc -l tmp.dat
+
+としてサーバーを起動すると試合内容をコンソールで表示し、tmp.datに棋譜を保存することができます。
+
 ## 注意
+
 過去に大会出場したバージョンは
 
 http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
