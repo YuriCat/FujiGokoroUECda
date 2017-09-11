@@ -496,7 +496,7 @@ int main(int argc, char* argv[]){ // for UECda
             //}
             
             MinClientPlayLog playLog;
-            playLog.set(serverMove, tmpTime, myPlayTime);
+            playLog.set(serverMove, serverUsedCards, tmpTime, myPlayTime);
             game_log.push_play(playLog);
             
             if(myTurn){

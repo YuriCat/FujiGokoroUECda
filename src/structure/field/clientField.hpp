@@ -300,10 +300,8 @@ namespace UECda{
                         setLastPlayerDead(searchL1Player());
                         return;
                     }
-                    setPMOwner(tp);
-                }else{
-                    setPMOwner(tp);
                 }
+                setPMOwner(tp);
                 addTurnNum();
             }
         }

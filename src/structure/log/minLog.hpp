@@ -19,16 +19,16 @@ namespace UECda{
     class MinPlayLog{
         // 1つの着手の記録
     public:
-        constexpr MinPlayLog():
+        MinPlayLog():
         move_(), time_(){}
         
-        constexpr MinPlayLog(const Move amove, const uint32_t atime):
+        MinPlayLog(Move amove, uint32_t atime):
         move_(amove), time_(atime){}
         
         Move move()const noexcept{ return move_; }
         uint32_t time()const noexcept{ return time_; }
         
-        void set(const Move amove, const uint32_t atime)noexcept{
+        void set(Move amove, uint32_t atime)noexcept{
             move_ = amove; time_ = atime;
         }
         std::string toString()const{
@@ -44,19 +44,40 @@ namespace UECda{
     
     class MinClientPlayLog : public MinPlayLog{
         // クライアント用の着手記録
+        // ルールが微妙に違っても対処できるように, このクラスが局面の一次情報クラスとして振舞う
     public:
-        constexpr MinClientPlayLog():
-        MinPlayLog(), sbjTime_(){}
-        
-        constexpr MinClientPlayLog(const Move amove, const uint32_t atime, const uint32_t asbjTime):
-        MinPlayLog(amove, atime), sbjTime_(asbjTime){}
-        
         uint32_t sbjTime()const noexcept{ return sbjTime_; }
         
-        void set(const Move amove, const uint32_t atime, const uint32_t asbjTime)noexcept{
-            MinPlayLog::set(amove, atime); sbjTime_ = asbjTime;
+        void set(Move amove, Cards adc,
+                 uint32_t atime, uint32_t asbjTime)noexcept{
+            MinPlayLog::set(amove, atime);
+            sbjTime_ = asbjTime;
+            usedCards = adc;
         }
+        void promByServer(const MinClientPlayLog& pLog,
+                          int p, Move move, Cards dc){
+            if(move.isPASS()){ // パス
+                ps.setAsleep(p);
+            }else{ // パスでない
+                bd.procExceptFlush(move);
+                infoNCards.subtr(p, countCards(dc));
+                if(infoNCards[p] <= 0){//あがり
+                    ps.setDead(p);
+                }
+                setPMOwner(p);
+            }
+        }
+        
+        Board bd;
+        PlayersState ps;
+        BitArray32<4> infoSpecialPlayer;
+        BitArray32<4, N_PLAYERS> infoNCards;
+        Cards usedCards; // javaサーバは役表現と構成する手札表現が合わないことがある...
     protected:
+        void setPMOwner(uint32_t p){
+            infoSpecialPlayer.assign(1, p);
+        }
+        
         uint32_t sbjTime_;
     };
     
@@ -177,47 +198,38 @@ namespace UECda{
             oss << "game " << gn << " " << endl;
             oss << "score " << endl;
             oss << "class ";
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << base::infoClass().at(p) << " ";
-            }
             oss << endl;
             oss << "seat ";
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << base::infoSeat().at(p) << " ";
-            }
             oss << endl;
             oss << "dealt ";
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << OutCardsM(dealtCards(p)) << " ";
-            }
             oss << endl;
             oss << "changed ";
             
             Cards changeCards[N_PLAYERS];
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 changeCards[p] = CARDS_NULL;
-            }
-            for(int c = 0; c < base::changes(); ++c){
+            for(int c = 0; c < base::changes(); ++c)
                 changeCards[base::change(c).from()] = base::change(c).cards();
-            }
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << OutCardsM(changeCards[p]) << " ";
-            }
             oss << endl;
             oss << "original ";
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << OutCardsM(orgCards(p)) << " ";
-            }
             oss << endl;
             oss << "play ";
-            for(int t = 0; t < base::plays(); ++t){
+            for(int t = 0; t < base::plays(); ++t)
                 oss << base::play(t).toString() << " ";
-            }
             oss << endl;
             oss << "result ";
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for(int p = 0; p < N_PLAYERS; ++p)
                 oss << base::infoNewClass().at(p) << " ";
-            }
             oss << endl;
             oss << "*/ " << endl;
             
@@ -727,6 +739,18 @@ namespace UECda{
         }
         return 0;
     }
+    
+    // 盤面情報のセット
+    template<class field_t, class gameLog_t>
+    void setFieldFromLog(field_t *const pfield, const gameLog_t& gLog){
+        // ルールを信頼する
+        iterateGameLogAfterChange(*pfield, gLog, gLog.orgCards());
+    }
+    /*template<class field_t, class gameLog_t>
+     void setFieldFromLogInGame(Field *const pfield, const gameLog_t& gLog){
+     // ルールを信頼しない
+     iterateGameLogAfterChange(*field, gLog, gLog.orgCards());
+     }*/
 }
 
 #endif // UECDA_STRUCTURE_MINLOG_HPP_

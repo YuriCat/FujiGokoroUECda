@@ -17,7 +17,7 @@
 #include "../montecarlo/playout.h"
 
 namespace UECda{
-	namespace Fuji{
+    namespace Fuji{
         namespace PolicyGradient{
             // 試合ログから方策勾配法で着手方策関数を棋譜の着手が選ばれやすいように近づける
             
@@ -25,9 +25,9 @@ namespace UECda{
             
             template<int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
             int learnChangeParamsGame(const gameLog_t& gLog,
-                                    const BitSet32 flags,
-                                    learningSpace_t *const plearningSpace,
-                                    threadTools_t *const ptools){
+                                      const BitSet32 flags,
+                                      learningSpace_t *const plearningSpace,
+                                      threadTools_t *const ptools){
                 
                 MoveInfo *const buf = ptools->buf;
                 Field field;
@@ -54,13 +54,13 @@ namespace UECda{
                      int changeQty = N_CHANGE_CARDS(myClass);
                      Cards change[N_MAX_CHANGES];
                      const int NChanges = genChange(change, myCards, changeQty);
-                                                    
+                     
                      if(NChanges <= 1){ return 0; }
                      
                      int idx = searchCards(change, NChanges, [chosenChange](const auto& ch)->bool{
                          return (ch == chosenChange);
                      });
-
+                     
                      // mate check なし
                      
                      double score[N_MAX_CHANGES + 1];

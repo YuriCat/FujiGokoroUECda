@@ -369,6 +369,7 @@ namespace UECda{
                 // 思考用の局面表現に変換
                 PlayouterField tfield;
                 setSubjectiveField(field, &tfield);
+                
                 Move playMove = MOVE_NONE;
                 
                 RootInfo root;
