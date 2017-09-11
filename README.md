@@ -16,11 +16,11 @@ make release -j4
 
 ./out/release/server -g 100 &
 
-./out/release/client &
-./out/release/client &
-./out/release/client &
-./out/release/client &
-./out/release/client &
+./out/release/client &  
+./out/release/client &  
+./out/release/client &  
+./out/release/client &  
+./out/release/client &  
 
 のように5体の自己対戦を行うことができます。
 
