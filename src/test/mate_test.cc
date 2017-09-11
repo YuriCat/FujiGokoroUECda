@@ -108,7 +108,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
     return true;
 }
 
-template<int M = 0>
+template<int M>
 int searchCardsPWSlow(MoveInfo *const buf, const int moves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
