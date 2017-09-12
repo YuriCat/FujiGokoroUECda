@@ -6,13 +6,13 @@
 // 方策関数の学習
 
 #include "include.h"
-#include "structure/log/minLog.hpp"
+#include "core/minLog.hpp"
 
 #include "fuji/fuji.h"
-#include "fuji/policy/changePolicy.hpp"
-#include "fuji/policy/playPolicy.hpp"
+#include "fuji/changePolicy.hpp"
+#include "fuji/playPolicy.hpp"
 
-#include "fuji/learning/policyGradient.hpp"
+#include "fuji/policyGradient.hpp"
 
 struct ThreadTools{
     MoveInfo buf[8192];

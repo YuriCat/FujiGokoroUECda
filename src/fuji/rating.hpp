@@ -3,13 +3,11 @@
  Katsuki Ohto
  */
 
+#pragma once
+
 // シミュレーション結果を用いた相対レーティングの計算
-
-#ifndef UECDA_RATING_HPP_
-#define UECDA_RATING_HPP_
-
-#include "../structure/log/minLog.hpp"
-#include "montecarlo/playouter.hpp"
+#include "../core/minLog.hpp"
+#include "playouter.hpp"
 
 namespace UECda{
     namespace Fuji{
@@ -44,7 +42,7 @@ namespace UECda{
                                        sharedData_t *const pshared,
                                        threadTools_t *const ptools){
             while(pdst->trials++ < simulations){
-                PlayouterField tfield = *pfield;
+                Field tfield = *pfield;
                 tfield.setMoveBuffer(ptools->buf);
                 tfield.setDice(&ptools->dice);
                 
@@ -87,7 +85,7 @@ namespace UECda{
                  // シミュレーションにより結果を予測
                  std::vector<std::thread> thr;
                  for(int ith = 0; ith < N_THREADS; ++ith){
-                     thr.emplace_back(std::thread(&simulationThreadForRating<PlayouterField, sharedData_t, threadTools_t>,
+                     thr.emplace_back(std::thread(&simulationThreadForRating<Field, sharedData_t, threadTools_t>,
                                                   presult, &field, simulations, pshared, &tools[ith]));
                  }
                  for(auto& th : thr){
@@ -168,7 +166,7 @@ namespace UECda{
                 for(int p1 = 0; p1 < N_PLAYERS; ++p1){
                     cerr << expectedWp[p0][p1] << " ";
                     if(p0 != p1){
-                        double realWin = (gLog.infoNewClass()[p0] < gLog.infoNewClass()[p1]) ? 1 : 0;
+                        double realWin = (gLog.getPlayerNewClass(p0) < gLog.getPlayerNewClass(p1)) ? 1 : 0;
                         sum += realWin - expectedWp[p0][p1];
                     }
                 }cerr << endl;
@@ -185,7 +183,7 @@ namespace UECda{
             std::array<double, N_PLAYERS> diffRate;
             for(int p0 = 0; p0 < N_PLAYERS; ++p0){
                 //cerr << expectedWp[p0] << " ";
-                double realScore = (DAIHINMIN - gLog.infoNewClass()[p0]) / double(N_PLAYERS - 1);
+                double realScore = (DAIHINMIN - gLog.getPlayerNewClass(p0)) / double(N_PLAYERS - 1);
                 //cerr << expectedWp[p0] << " -> " << realScore << endl;
                 diffRate[p0] = coef * (realScore - expectedWp[p0]);
             }cerr << endl;
@@ -253,5 +251,3 @@ namespace UECda{
         }
     }
 }
-
-#endif // UECDA_RATING_HPP_

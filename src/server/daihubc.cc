@@ -66,8 +66,8 @@ std::string record_file = "";
 
 MinMatchLog<MinGameLog<MinPlayLog>> match_log;
 MinGameLog<MinPlayLog> game_log;
-Fuji::SharedData shared;
-Fuji::ThreadTools threadTools[N_THREADS];
+Fuji::FujiSharedData shared;
+Fuji::FujiThreadTools threadTools[N_THREADS];
 
 void outputLog(){
     // 棋譜書き出し
@@ -499,7 +499,7 @@ int main(int argc, char *argv[]){
         
         //seats
         for (int s = 0; s < N_PLAYERS; ++s){
-            game_log.infoSeat().replace(sekijun[s], s);
+            game_log.infoSeat.assign(sekijun[s], s);
         }
         
         if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
@@ -520,7 +520,7 @@ int main(int argc, char *argv[]){
         
         for(i=0;i<N_PLAYERS;i++){
             work_card[6][mibun[i]+5]=i;
-            game_log.infoClass().replace(mibun[i],i);//class
+            game_log.infoClass.assign(mibun[i],i);//class
         }
         
         for(i=0;i<N_PLAYERS;i++){ // initialize each table[5]
@@ -975,7 +975,7 @@ int main(int argc, char *argv[]){
                     mibun[j-1]=now_player;
                     now_number_of_goal=j;
                     
-                    game_log.infoNewClass().replace(now_player, j-1);
+                    game_log.infoNewClass.assign(now_player, j-1);
                 }
                 
                 if(now_jocker_single==0){
@@ -1273,7 +1273,7 @@ int main(int argc, char *argv[]){
                     }
                     goal_flag[k-1]=1;
                     
-                    game_log.infoNewClass().replace(k-1, now_number_of_goal);
+                    game_log.infoNewClass.assign(k-1, now_number_of_goal);
                     
                     mibun[now_number_of_goal]=k-1;
                     
@@ -1333,7 +1333,7 @@ int main(int argc, char *argv[]){
                 //l1 player
                 for(int p=0;p<N_PLAYERS;++p){
                     if(!goal_flag[p]){
-                        game_log.infoNewClass().replace(p, now_number_of_goal);
+                        game_log.infoNewClass.assign(p, now_number_of_goal);
                         break;
                     }
                 }
@@ -1410,7 +1410,7 @@ int main(int argc, char *argv[]){
         if(!game_log.play(game_log.plays()-1).move().isPASS()){
             game_log.setTerminated();
         }
-        match_log.push_game(game_log);
+        match_log.pushGame(game_log);
         
     } // rof now_number_of_games
     

@@ -3,31 +3,29 @@
  Katsuki Ohto
  */
 
-#ifndef UECDA_FUJI_FUJISTRUCTURE_HPP_
-#define UECDA_FUJI_FUJISTRUCTURE_HPP_
+#pragma once
 
 // 思考用の構造体
-#include "montecarlo/playout.h"
+#include "../core/dataStructure.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
 
-#include "../structure/field/clientField.hpp"
-#include "estimation/galaxy.hpp"
-#include "model/playerModel.hpp"
+#include "galaxy.hpp"
+#include "playerModel.hpp"
 
-#include "policy/changePolicy.hpp"
-#include "policy/playPolicy.hpp"
+#include "changePolicy.hpp"
+#include "playPolicy.hpp"
 
 namespace UECda{
     namespace Fuji{
         
         // Field以外のデータ構造
         // Fieldは基本盤面情報+盤面を進めたり戻したりするときに値が変化するもの
-        // それ以外の重目のデータ構造は SharedData
+        // それ以外の重目のデータ構造は FujiSharedData
         // スレッドごとのデータは ThreadTools
         
-        struct ThreadTools{
+        struct FujiThreadTools : public ThreadTools{
             // 各スレッドの持ち物
-            using dice64_t = XorShift64;
-            using move_t = MoveInfo;
             
 #ifndef POLICY_ONLY
             // MCしないなら世界生成なし
@@ -36,30 +34,19 @@ namespace UECda{
             // 世界生成プール
             galaxy_t gal;
 #endif
-            // サイコロ
-            dice64_t dice;
-            
-            // 着手生成バッファ
-            static constexpr int BUFFER_LENGTH = 8192;
-            
-            // スレッド番号
-            int threadIndex;
-            
-            move_t buf[BUFFER_LENGTH];
-            
             void init(int index){
-                memset(buf, 0, sizeof(buf));
-                threadIndex = index;
+                ThreadTools::init(index);
 #ifndef POLICY_ONLY
                 gal.clear();
 #endif
             }
-            void close(){}
+            void close(){
+                ThreadTools::close();
+            }
         };
         
-        struct SharedData{
+        struct FujiSharedData : public SharedData{
             // 全体で共通のデータ
-            int myPlayerNum;
             
             // 計算量解析
             int modeling_time;
@@ -69,15 +56,9 @@ namespace UECda{
             uint16_t gameReward[N_CLASSES];
             uint16_t daifugoSeatGameReward[N_PLAYERS][N_CLASSES];
             
-            // 着手決定のために一時的に参照できるようにしておくデータ
-            FieldAddInfo fieldInfo;
-            
             // 基本方策
             ChangePolicy<policy_value_t> baseChangePolicy;
             PlayPolicy<policy_value_t> basePlayPolicy;
-            
-            MinMatchLog<MinClientGameLog<MinClientPlayLog>> matchLog;
-            MinClientGameLog<MinClientPlayLog> gameLog;
             
 #if defined(RL_POLICY)
             // 方策学習
@@ -86,7 +67,7 @@ namespace UECda{
 #endif
             
 #ifndef POLICY_ONLY
-            using galaxy_t = ThreadTools::galaxy_t;
+            using galaxy_t = FujiThreadTools::galaxy_t;
             GalaxyAnalyzer<galaxy_t, N_THREADS> ga;
             MyTimeAnalyzer timeAnalyzer;
             
@@ -97,45 +78,115 @@ namespace UECda{
             // 相手方策モデリング
             PlayerModelSpace playerModelSpace;
 #endif
+            // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
+            int mateClass; // 初めてMATEと判定した階級の宣言
+            int L2Class; // L2において判定した階級の宣言
+            
+            // クライアントの個人的スタッツ
+            std::array<std::array<uint32_t, 3>, 2> myL2Result; // (勝利宣言, 無宣言, 敗戦宣言) × (勝利, 敗戦)
+            std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> myMateResult; // MATEの宣言結果
+            
+            void setMyMate(int bestClass)noexcept{ // 詰み宣言
+                if(mateClass == -1)mateClass = bestClass;
+            }
+            void setMyL2Mate()noexcept{ // L2詰み宣言
+                if(L2Class == -1)L2Class = N_PLAYERS - 2;
+            }
+            void setMyL2GiveUp()noexcept{ // L2敗北宣言
+                if(L2Class == -1)L2Class = N_PLAYERS - 1;
+            }
+            
+            void feedL2Result(int realClass){
+                int index = (L2Class == -1) ? 1 : (L2Class == N_PLAYERS - 1 ? 2 : 0);
+                if(L2Class != -1){
+                    if(L2Class > realClass)cerr << "L2 Lucky!" << endl;
+                    if(L2Class < realClass)cerr << "L2 Miss!" << endl;
+                }
+                myL2Result[realClass - (N_PLAYERS - 2)][index] += 1;
+            }
+            void feedMyMateResult(int realClass){
+                if(mateClass != realClass){ // MATE宣言失敗
+                    cerr << "Mate Miss! DCL:" << mateClass;
+                    cerr << " REAL:" << realClass << endl;
+                }
+                myMateResult[realClass][mateClass] += 1;
+            }
+            
+            void feedResult(int myClass){
+                if(myClass >= N_PLAYERS - 2) // ラスト2人
+                    feedL2Result(myClass);
+                if(mateClass != -1) // MATE宣言あり
+                    feedMyMateResult(myClass);
+            }
+            
             void initMatch(){
-                
+                // スタッツ初期化
+                for(auto& a : myMateResult)a.fill(0);
+                for(auto& a : myL2Result)a.fill(0);
                 // 計算量解析初期化
                 modeling_time = 0;
                 estimating_by_time = 0;
                 
 #if defined(RL_POLICY)
+                // 方策学習初期化
                 changeLearner.setClassifier(&baseChangePolicy);
                 playLearner.setClassifier(&basePlayPolicy);
 #endif
             }
             void setMyPlayerNum(int p){
-                myPlayerNum = p;
 #ifndef POLICY_ONLY
                 playerModelSpace.init(p);
 #endif
             }
             void initGame(){
-                
+                SharedData::initGame();
+                mateClass = L2Class = -1;
             }
-            template<class field_t>
-            void closeGame(const field_t& field){
+            
+            void closeGame(){
+                const auto& gameLog = matchLog.latestGame();
+                SharedData::closeGame(gameLog);
+                int myNewClass = gameLog.getPlayerNewClass(matchLog.getMyPlayerNum());
+                
 #if defined(POLICY_ONLY) && defined(RL_POLICY)
                 // reinforcement learning
-                playLearner.feedReward(((N_PLAYERS - 1) / 2.0 - field.getMyNewClass()) / (N_PLAYERS - 1));
+                playLearner.feedReward(((N_PLAYERS - 1) / 2.0 - myNewClass) / (N_PLAYERS - 1));
                 playLearner.updateParams();
 #endif
+                // スタッツ更新
+                feedResult(myNewClass);
             }
             void closeMatch(){
 #ifndef POLICY_ONLY
                 playerModelSpace.closeMatch();
 #endif
+                //#ifdef MONITOR
+                // 全体スタッツ表示
+                
+                //#endif
+                
+                // 自己スタッツ表示
+                cerr << "My Stats" << endl;
+                
+                cerr << "change rejection by server : " << SharedData::changeRejection << endl;
+                cerr << "play rejection by server : " << SharedData::playRejection << endl;
+                cerr << "L2 result : " << endl;
+                for(auto& a : myL2Result){
+                    for(auto i : a)cerr << i << " ";
+                    cerr << endl;
+                }
+                cerr << "mate result : " << endl;
+                for(auto& a : myMateResult){
+                    for(auto i : a)cerr << i << " ";
+                    cerr << endl;
+                }cerr << endl;
             }
         };
         
         // 多人数不完全情報ゲームのため色々なデータ構造が必要になるのをここでまとめる
         // POLICY_ONLY フラグにてデータが減るので注意
         
-        struct FujiField : public ClientField{
+        /*struct FujiField : public ClientField{
             
             //MonteCarloLog MCLog;
             
@@ -209,7 +260,7 @@ namespace UECda{
             
             FujiField(){}
             ~FujiField(){}
-        };
+        };*/
         
         /**************************ルートの手の情報**************************/
         
@@ -308,13 +359,14 @@ namespace UECda{
                 actions = candidates = num;
                 for(int m = 0; m < actions; ++m)
                     monteCarloAllScore += child[m].monteCarloScore;
-                myPlayerNum = field.getMyPlayerNum();
+                myPlayerNum = shared.matchLog.getMyPlayerNum();
+                rivalPlayerNum = -1;
                 bestClass = field.getBestClass();
                 worstClass = field.getWorstClass();
                 bestReward = shared.gameReward[bestClass];
                 worstReward = shared.gameReward[worstClass];
                 rewardGap = bestReward - worstReward;
-                uint32_t rivals = field.getRivalPlayersFlag();
+                uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
                 if(countBits(rivals) == 1){
                     int rnum = bsf(rivals);
                     if(field.isAlive(rnum)){
@@ -380,8 +432,8 @@ namespace UECda{
                     child[m].policyProb = selector.prob(m);
             }
             
-            template<class shared_t>
-            void feedSimulationResult(int triedIndex, const PlayouterField& field, shared_t *const pshared){
+            template<class field_t, class shared_t>
+            void feedSimulationResult(int triedIndex, const field_t& field, shared_t *const pshared){
                 // シミュレーション結果を記録
                 // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
                 
@@ -546,5 +598,3 @@ namespace UECda{
         };
     }
 }
-
-#endif // UECDA_FUJI_FUJISTRUCTURE_HPP_

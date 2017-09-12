@@ -6,10 +6,10 @@
 // 不完全情報でのMaxN探索テスト
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/search/maxN.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
+#include "../fuji/maxN.hpp"
 
 using namespace UECda;
 using namespace UECda::Fuji;
@@ -33,9 +33,9 @@ int outputMateJudgeResult(){
         rem |= c[p];
     }
     
-    PlayouterField field;
+    Field field;
     
-    field.init1G();
+    field.initGame();
     field.setMoveBuffer(buffer);
     field.setDice(&dice);
     
@@ -54,9 +54,7 @@ int outputMateJudgeResult(){
         }
         field.setOpsHand(p, subtrCards(rem, c[p]));
         field.setPlayerClass(p, p);
-        field.setClassPlayer(p, p);
         field.setPlayerSeat(p, p);
-        field.setSeatPlayer(p, p);
     }
     field.setRemHand(rem);
     field.prepareForPlay();

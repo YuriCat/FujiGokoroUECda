@@ -6,10 +6,10 @@
 // 支配性判定のテスト
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/logic/dominance.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
+#include "../core/dominance.hpp"
 
 using namespace UECda;
 
@@ -82,7 +82,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
      );
     
     // より複雑な型での支配性判定
-    iterateGameLogAfterChange<PlayouterField>
+    iterateGameLogAfterChange
     (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback

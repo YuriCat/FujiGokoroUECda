@@ -6,12 +6,12 @@
 // 方策関数のテスト
 
 #include "../include.h"
-#include "../structure/log/minLog.hpp"
-#include "../generator/changeGenerator.hpp"
-#include "../generator/moveGenerator.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/policy/changePolicy.hpp"
-#include "../fuji/policy/playPolicy.hpp"
+#include "../core/minLog.hpp"
+#include "../core/changeGenerator.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/field.hpp"
+#include "../fuji/changePolicy.hpp"
+#include "../fuji/playPolicy.hpp"
 
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 

@@ -6,9 +6,9 @@
 // 棋譜ファイルからの基本統計量の計算
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
+#include "../core/moveGenerator.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
 
 using namespace UECda;
 
@@ -96,7 +96,7 @@ int analyzeRecords(const std::vector<std::string>& logs){
             minTurns = min(minTurns, gLog.plays());
             
             Field field;
-            iterateGameLogAfterChange<PlayouterField>
+            iterateGameLogAfterChange
             (field, gLog,
              [&](const auto& field){ // first callback
                  nullPassTemp = 0;

@@ -6,15 +6,15 @@
 // 棋譜からオフラインでレーティングを推定
 
 #include "../include.h"
+#include "../core/minLog.hpp"
 #include "../fuji/fuji.h"
 #include "../fuji/fujiStructure.hpp"
-#include "../structure/log/minLog.hpp"
 #include "../fuji/rating.hpp"
 
 MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs;
 
-Fuji::SharedData shared;
-Fuji::ThreadTools threadTools[N_THREADS];
+Fuji::FujiSharedData shared;
+Fuji::FujiThreadTools threadTools[N_THREADS];
 
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
@@ -198,7 +198,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
         std::map<std::string, int> gameSum;
         iterateGameRandomlyWithIndex(mLogs, 0, mLogs.games(), [&scoreSum, &gameSum](int index, const auto& gLog, const auto& mLog)->void{
             for(int p = 0; p < N_PLAYERS; ++p){
-                scoreSum[mLog.player(p)] += REWARD(gLog.infoNewClass()[p]);
+                scoreSum[mLog.player(p)] += REWARD(gLog.getPlayerNewClass(p));
                 gameSum[mLog.player(p)] += 1;
             }
         });

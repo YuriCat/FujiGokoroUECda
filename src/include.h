@@ -4,9 +4,7 @@
  */
 
 // 共通インクルード
-
-#ifndef UECDA_INCLUDE_H_
-#define UECDA_INCLUDE_H_
+#pragma once
 
 #include <cstring>
 #include <unistd.h>
@@ -91,22 +89,21 @@
 #include "UECda.h"
 
 // 基本型
-#include "structure/primitive/prim.hpp"
-#include "structure/primitive/prim2.hpp"
+#include "core/prim.hpp"
+#include "core/prim2.hpp"
+#include "core/hand.hpp"
+#include "core/field.hpp"
 
 namespace Game = UECda; // プレーするゲーム
 using namespace UECda;
 
-
 // ハッシュ
-#include "structure/hash/hashGenerator.hpp"
+#include "core/hashGenerator.hpp"
 
 // ログ
 #ifdef LOGGING
-#include "structure/log/minLog.hpp"
+#include "core/minLog.hpp"
 #endif
 
 // 状態表現
-#include "structure/field/commonField.hpp"
-
-#endif // UECDA_INCLUDE_H_
+#include "core/commonField.hpp"

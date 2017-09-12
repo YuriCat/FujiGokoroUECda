@@ -4,8 +4,9 @@
  */
 
 #pragma once
+
 #include "settings.h"
-#include "structure/primitive/prim.hpp"
+#include "core/prim.hpp"
 
 // UECdaルールで戦うためのヘッダ
 // 様々なルールを設定

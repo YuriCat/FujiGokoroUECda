@@ -13,9 +13,9 @@
 #endif
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
+#include "../core/moveGenerator.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
 
 using namespace UECda;
 

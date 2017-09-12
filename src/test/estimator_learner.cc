@@ -6,22 +6,22 @@
 // 手札推定関連の統計情報をまとめて学習をかける
 
 #include "../include.h"
-#include "../structure/log/minLog.hpp"
-#include "../generator/changeGenerator.hpp"
-#include "../generator/moveGenerator.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/policy/changePolicy.hpp"
-#include "../fuji/policy/playPolicy.hpp"
+#include "../core/minLog.hpp"
+#include "../core/changeGenerator.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/field.hpp"
+#include "../fuji/changePolicy.hpp"
+#include "../fuji/playPolicy.hpp"
 
-#include "../fuji/model/playerModel.hpp"
-#include "../fuji/model/playerBias.hpp"
+#include "../fuji/playerModel.hpp"
+#include "../fuji/playerBias.hpp"
 
 struct ThreadTools{
     MoveInfo buffer[8192];
     XorShift64 dice;
 };
 
-/*struct SubjectivePlayouterField : public PlayouterField{
+/*struct SubjectiveField : public Field{
     // シミュレーション用局面情報の主観化
     int myPlayerNum;
     

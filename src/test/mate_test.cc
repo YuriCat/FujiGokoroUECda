@@ -6,10 +6,10 @@
 // 必勝判定の動作テスト
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/logic/mate.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/field.hpp"
+#include "../core/minLog.hpp"
+#include "../core/mate.hpp"
 
 using namespace UECda;
 
@@ -205,7 +205,7 @@ int testRecordMoveMate(const logs_t& mLogs){
     
     uint64_t checkMatrix[2][2] = {0};
     
-    iterateGameLogAfterChange<PlayouterField>
+    iterateGameLogAfterChange
     (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
@@ -261,7 +261,7 @@ int testRecordMoveMate(const logs_t& mLogs){
     
     uint64_t searchMatrix[2][2] = {0};
     
-    iterateGameLogAfterChange<PlayouterField>
+    iterateGameLogAfterChange
     (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
@@ -343,7 +343,7 @@ int analyzeMateDistribution(const logs_t& mLogs){
     std::array<uint64_t, 12> mateMovesDistribution = {0};
     Field field;
     
-    iterateGameLogAfterChange<PlayouterField>
+    iterateGameLogAfterChange
     (field, mLogs,
      [&](const auto& field){}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback

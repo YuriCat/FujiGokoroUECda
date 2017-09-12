@@ -6,10 +6,10 @@
 // ラスト2人完全情報状態の勝敗判定動作テスト
 
 #include "../include.h"
-#include "../generator/moveGenerator.hpp"
-#include "../structure/log/minLog.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/search/l2Judge.hpp"
+#include "../core/moveGenerator.hpp"
+#include "../core/minLog.hpp"
+#include "../core/field.hpp"
+#include "../fuji/l2Judge.hpp"
 
 using namespace UECda;
 using namespace UECda::Fuji;
