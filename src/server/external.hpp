@@ -331,7 +331,7 @@ int compare_card_status(int stage_card[4], int now_card[4], int revers){
     
     // when the type is kaidan or tanki.
     if(revers){ //compare value of cards on kakumei
-        return ((now_card[0]-stage_card[0]-stage_card[1]+1)>=0);
+        return ((now_card[0]-stage_card[0]+stage_card[1]-1)>=0);
     }else{
         return ((now_card[0]-stage_card[0]-stage_card[1]+1)<=0);
     }
@@ -439,14 +439,14 @@ int search_strong_card(int player_card[8][15], int strong_card[8][15], int numbe
         number_of_card=card_num;
     }
     
-    if(player_card[4][1]=2 && k<number_of_card){
+    if(player_card[4][1]==2 && k<number_of_card){
         k++;
         strong_card[4][1]=2;
     }
     
     i=0; //suit
     j=14;
-    for(k=0;k<number_of_card;k++){
+    while(k<number_of_card){
         if(player_card[i][j]){
             k++;
             strong_card[i][j]=1;
@@ -559,8 +559,8 @@ double  tn_rand_gen(int type){
 
 int double_cmp(const void *a, const void *b) {
     int tmp;
-    double *tmp_a=(double *)a;
-    double *tmp_b=(double *)b;
+    const double *tmp_a=(const double*)a;
+    const double *tmp_b=(const double*)b;
     
     if((tmp_a[1]-tmp_b[1])>0){
         tmp=1;
