@@ -148,7 +148,8 @@ namespace UECda{
         using changeLog_t = MinChangeLog;
         
         void init()noexcept{
-            changes_ = 0; plays_ = 0;
+            changes_ = 0;
+            plays_ = 0;
             flags_.reset();
             infoClass.clear();
             infoSeat.clear();
@@ -858,8 +859,12 @@ namespace UECda{
         
         if(gLog.getPlayerClass(myPlayerNum) != HEIMIN && gLog.isInChange()){
             // 自分の手札だけわかるので設定
-            DERR << "dc = " << OutCards(gLog.getDealtCards(myPlayerNum)) << endl;
-            dst->hand[myPlayerNum].setAll(gLog.getDealtCards(myPlayerNum));
+            Cards dealt = gLog.getDealtCards(myPlayerNum);
+            //cerr << "dc = " << OutCards(dealt) << endl;
+            dst->dealtCards[myPlayerNum] = dealt;
+            for(int p = 0; p < N_PLAYERS; ++p)
+                dst->hand[p].qty = gLog.getNDealtCards(p);
+            dst->hand[myPlayerNum].setAll(dealt);
             dst->setInChange();
         }else{
             dst->sentCards[myPlayerNum] = gLog.getSentCards();
@@ -880,6 +885,8 @@ namespace UECda{
                     subtrCards(&dst->remCards, dc);
                     dst->remQty -= dq;
                     dst->remHash ^= dkey;
+                    
+                    // あがり処理
                     if(countCards(p) == pLog.getNCards(p))
                         dst->setPlayerNewClass(p, pLog.ps.getBestClass());
                 }

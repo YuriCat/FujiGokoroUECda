@@ -470,9 +470,8 @@ namespace UECda{
                 dealPart_AbsSbjInfo();
                 
                 // 各メソッドの使用可、不可を設定
-                if(checkCompWithRejection()){
+                if(checkCompWithRejection()){ // 採択棄却法使用OK
                     if(!field.isInitGame() && myClass < MIDDLE){
-                        //setWeight();
                         setWeightInWA();
                     }
                 }else{
@@ -551,7 +550,7 @@ namespace UECda{
                         case HINMIN:
                             if(NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 3 || NDet[DAIHINMIN] >= 5){ comp = 0; }break;
                         case DAIHINMIN:
-                            if(NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >=5 ){ comp = 0; }break;
+                            if(NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5){ comp = 0; }break;
                         default: UNREACHABLE; break;
                     }
                 }
@@ -949,6 +948,7 @@ namespace UECda{
                 std::vector<double> tmpProb;
                 const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
                 const int NMyDC = countCards(myDealtCards);
+                //cerr << "dc = " << OutCards(myDealtCards) << endl;
                 
                 // 相手の献上後の所持カードで判明しているもの
                 const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
@@ -1028,61 +1028,6 @@ namespace UECda{
                     candidatesInWA = index;
                 }
             }
-            /*
-             void setWeight(){
-             const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
-             int j = 1; // ic より下の自分の初期カードの数
-             int underJ = 0; // ic より下の配布カードの数
-             double tmpCW = 1.0; // 配布パターン数
-             const int NMyDC = countCards(myDealtCards);
-             if(T > 0){
-             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-             weight[ic] = 0;
-             dWeight[ic] = 0.0;
-             }
-             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-             Cards c = IntCardToCards(ic);
-             if(myDealtCards & c){ // 自分の初期カードと一致
-             // ICがもらったカードの下界だと仮定
-             if(underJ >= T){ // ここまでにT以上のカードがあった
-             double tmpDWeight = tmpCW;
-             tmpDWeight *= (T / (double)underJ); // 実際にその札が選ばれる確率
-             tmpDWeight *= ((myClass == DAIFUGO) ? (NMyDC - j) : 1); // 下界以外の献上札のパターン数
-             
-             //cerr << tmpDWeight << endl;
-             
-             for(IntCard ic2 = INTCARD_MIN; ic2 < ic; ++ic2){
-             if(distCards & IntCardToCards(ic2)){ // それ以下のカードを持つ重みを加算
-             dWeight[ic2] += tmpDWeight;
-             }
-             }
-             }
-             j++;
-             }else if(distCards & c){ // 配布カードに該当
-             underJ++; // 配布カード枚数更新
-             if(underJ > T){
-             // underJ未満の配布カードの組み合わせ数更新
-             tmpCW *= (((double)underJ) / (double)(underJ - T));
-             
-             ASSERT(underJ == countCards(distCards & pickLower(c)) + 1,
-             cerr << underJ << "<->" << countCards(distCards & pickLower(c)) + 1;);
-             //cerr << tmpCW << " <-> " << dCombination(countCards(distCards & pickLower(c)) + 1, T) << endl;
-             }
-             }
-             }
-             // 重み和計算
-             dWeightSum = 0;
-             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-             dWeightSum += dWeight[ic];
-             }
-             double bai = ((double)(1 << 20)) / dWeightSum;
-             weightSum = 0;
-             for(IntCard ic = INTCARD_MIN; ic <= INTCARD_MAX; ++ic){
-             weight[ic] = (int)(bai * dWeight[ic]);
-             weightSum += weight[ic];
-             }
-             }
-             }*/
             
             void dealPart_AbsSbjInfo(){
                 // 自分以外の未使用カード
@@ -1095,17 +1040,15 @@ namespace UECda{
                 
                 // 初手がすでに済んでいる場合、初手プレーヤーにD3
                 if(!phase.isInChange()
-                   && !phase.isFirstTurn()
-                   && containsD3(distCards)
-                   ){
+                   && turnNum > 0
+                   && containsD3(distCards)){
                     addCards(&detCards[firstTurnPlayerClass], CARDS_D3);
                     subtrCards(&distCards, CARDS_D3);
                     NDeal.minus(firstTurnPlayerClass, 1);
                     NDet.plus(firstTurnPlayerClass, 1);
                 }
                 if(!flag.test(0)
-                   && !phase.isInChange()
-                   ){
+                   && !phase.isInChange()){
                     if(myClass < MIDDLE){ // 自分が上位のとき
                         
                         // 交換でもらったカード以上のカードは（自分があげていなければ）持っていない
@@ -1130,14 +1073,13 @@ namespace UECda{
                 
                 // 結局配る枚数
                 NDistCards = countCards(distCards);
+                ASSERT(NDistCards == NDeal.sum(), cerr << NDistCards << " " << NDeal << " " << NDeal.sum() << endl;);
                 
                 //CERR<<HARate<<endl;
                 
                 // 初手がすでに済んでいる段階では、自分と、自分以外で全てのカードが明らかになっていないプレーヤーは着手を検討する必要がある
                 if(!phase.isInChange()
-                   && !phase.isFirstTurn()
-                   ){
-                    
+                   && turnNum > 0){
                     // HA設定
                     uint32_t NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
                     // 1 -> ... -> 20 -> ... -> 1 と台形に変化
@@ -1183,8 +1125,9 @@ namespace UECda{
                 }
                 
                 Field field;
+                const auto& gLog = shared.matchLog.latestGame();
                 iterateGameLogInGame
-                (field, shared.matchLog.latestGame(), field.getTurnNum(), orgCards,
+                (field, gLog, gLog.plays(), orgCards,
                  // after change callback
                  [](const auto& field)->void{},
                  // play callback
