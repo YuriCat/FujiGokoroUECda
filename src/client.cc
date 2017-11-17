@@ -394,7 +394,6 @@ int main(int argc, char* argv[]){ // for UECda
 #endif
             }else{ // 自分のターンでない
                 // 他人のプレー中の処理(UECdaでは暗黙の了解として、重い処理はしない)
-                client.wait();
                 myPlayTime = 0; // 他人のプレー着手決定実時間はわからないので0とする
             }
             
@@ -425,12 +424,6 @@ int main(int argc, char* argv[]){ // for UECda
             if(playLog.procByServer(serverMove, serverUsedCards)){
                 // あがり処理
                 gameLog.setPlayerNewClass(turnPlayer, playLog.ps.getBestClass() - 1);
-            }
-            
-            if(myTurn){
-                client.afterMyPlay(); // 自分のプレー後の処理
-            }else{
-                client.afterOthersPlay();
             }
             
 #ifdef BROADCAST

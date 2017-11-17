@@ -588,14 +588,6 @@ namespace UECda{
                 
                 return playMove;
             }
-            void afterMyPlay(){}
-            void afterOthersPlay(){}
-            void wait(){}
-            void tellOpponentsCards(){
-                // 相手のカードをサーバーからこっそり教えてもらう
-                // 旧版にはあったのだが、新版では未実装
-                // 全部分かった方が強くなるようだ
-            }
             void closeGame(){
 #ifndef POLICY_ONLY
                 // 自分の主観的プレー時間から、

@@ -5,23 +5,13 @@
 
 #pragma once
 
-// 棋譜以外の基本的なデータを詰め込んだ構造体
-
 namespace UECda{
     
     struct ThreadTools{
         // 各スレッドの持ち物
-        using dice64_t = XorShift64;
-        using move_t = MoveInfo;
-
-        
         int threadIndex; // スレッド番号
-        dice64_t dice; // サイコロ
-        
-        // 着手生成バッファ
-        static constexpr int BUFFER_LENGTH = 8192;
-        move_t buf[BUFFER_LENGTH];
-        
+        XorShift64 dice; // サイコロ
+        MoveInfo buf[8192]; // 着手生成バッファ
         void init(int index){
             memset(buf, 0, sizeof(buf));
             threadIndex = index;
@@ -30,10 +20,11 @@ namespace UECda{
     };
     
     struct SharedData{
+        // クライアントの持ち物
         std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDestination; //階級到達回数
         std::array<std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS>, N_PLAYERS> classTransition; // 階級遷移回数
         
-        ClientMatchLog<ClientGameLog<ClientPlayLog>> matchLog;
+        ClientMatchLog<ClientGameLog<ClientPlayLog>> matchLog; // 主観的な対戦棋譜
         
         // クライアントの個人的スタッツ
         uint32_t playRejection, changeRejection; // リジェクト
@@ -44,7 +35,6 @@ namespace UECda{
         void feedChangeRejection()noexcept{
             changeRejection += 1;
         }
-
         void feedResult(int p, int cl, int ncl){
             classDestination[p][ncl] += 1;
             classTransition[p][cl][ncl] += 1;
@@ -58,13 +48,11 @@ namespace UECda{
                     classTransition[p][cl].fill(0);
                 }
             }
-            
             playRejection = changeRejection = 0;
         }
         void initGame(){
             matchLog.initGame();
         }
-        
         template<class gameLog_t>
         void closeGame(const gameLog_t& gLog){
             // 試合順位の記録
