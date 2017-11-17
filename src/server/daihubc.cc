@@ -1366,7 +1366,8 @@ int main(int argc, char *argv[]){
         if(debug){printf("end of 1 game\n");}
         
         // レーティング計算
-        if(rating){std::array<double, N_PLAYERS> dist = UECda::Fuji::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
+        if(rating){
+            std::array<double, N_PLAYERS> dist = UECda::Fuji::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
             for(int p = 0; p < N_PLAYERS; ++p){
                 playerRate[p] += dist[p];
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;

@@ -8,3 +8,4 @@
 *.exe
 *.bin
 *.o
+*.DS_Store
