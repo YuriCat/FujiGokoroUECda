@@ -1,21 +1,16 @@
-/*
- monteCarlo.hpp
- Katsuki Ohto
- */
-
 #pragma once
 
 #include "fuji.h"
-#include "dealer.hpp"
-#include "playouter.hpp"
+#include "deal.hpp"
+#include "simulation.hpp"
 
 // マルチスレッディングのときはスレッド、
 // シングルの時は関数として呼ぶ
 
-namespace UECda{
-    namespace Fuji{
+namespace UECda {
+    namespace Fuji {
         
-        template<class root_t, class field_t, class sharedData_t, class threadTools_t>
+        template <class root_t, class field_t, class sharedData_t, class threadTools_t>
         void MonteCarloThread
         (const int threadId, root_t *const proot,
          const field_t *const pfield,
@@ -53,9 +48,7 @@ namespace UECda{
             // 連続作成のためここに置いておく
             RandomDealer<N_PLAYERS> estimator;
             estimator.set(*pfield, myPlayerNum);
-            
-            Playouter po; // プレイアウタ
-            
+
             Field pf = *pfield;
             pf.attractedPlayers.set(myPlayerNum);
             pf.dice = &ptools->dice;
@@ -65,7 +58,7 @@ namespace UECda{
                 pf.attractedPlayers.set(proot->rivalPlayerNum);
             }
             
-            uint64_t poTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
+            uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
             uint64_t estTime = 0ULL; // 局面推定にかかった時間
             
             // 諸々の準備が終わったので時間計測開始
@@ -113,12 +106,12 @@ namespace UECda{
                 const int pastNTrials = threadNTrials[tryingIndex]++; // 選ばれたもののこれまでのトライアル数
                 threadNTrialsSum++;
                 
-                if(threadNWorlds >= threadMaxNWorlds){
+                if (threadNWorlds >= threadMaxNWorlds) {
                     // このとき、世界作成は既に終わっている
-                    if(pastNTrials < threadMaxNWorlds){
+                    if (pastNTrials < threadMaxNWorlds) {
                         // まだ全ての世界でこの着手を検討していないので順番通りの世界で検討
                         pWorld = gal.access(pastNTrials);
-                        if(!pWorld->isActive()){
+                        if (!pWorld->isActive()) {
                             // 何らかの事情で世界作成スケジュールがずれている
                             // 仕方が無いので既にある世界からランダムに選ぶ
                             pWorld = nullptr;
@@ -126,9 +119,9 @@ namespace UECda{
                     }else{
                         // 全ての世界からランダムに選ぶ
                     }
-                }else{
+                } else {
                     // 世界作成が終わっていない
-                    if(pastNTrials < threadNWorlds){
+                    if (pastNTrials < threadNWorlds){
                         // まだ全ての世界でこの着手を検討していないので順番通りの世界で検討
                         //pWorld = gal->access(threadMaxNWorlds * threadId + pastNTrials);
                         pWorld = gal.access(pastNTrials);
@@ -138,47 +131,36 @@ namespace UECda{
                             // 仕方が無いので既にある世界からランダムに選ぶ
                             pWorld = nullptr;
                         }
-                    }else{
+                    } else {
                         // 新しい世界を作成し、そこにプレイアウトを割り振る
-                        //pWorld = gal->searchSpace(threadMaxNWorlds * threadId, threadMaxNWorlds);
-                        
                         pWorld = gal.searchSpace(0 , threadMaxNWorlds);
-                        
-                        if(pWorld != nullptr){
+                        if (pWorld != nullptr) {
                             // 世界作成スペースが見つかった
-                            poTime += clock.restart();
-                            
+                            simuTime += clock.restart();
                             // 世界作成
                             estimator.create(pWorld, Settings::monteCarloDealType,
                                              *pfield, *pshared, ptools);
-                            
                             estTime += clock.restart();
                             
-                            if(gal.regist(pWorld) != 0){ // 登録失敗
+                            if (gal.regist(pWorld) != 0) { // 登録失敗
                                 // 仕方が無いので既にある世界からランダムに選ぶ
                                 pWorld = nullptr;
-                            }else{
-                                ++threadNWorlds; // 当スレッドの作成世界数up
-                            }
+                            } else threadNWorlds++; // 当スレッドの作成世界数up
                         }
                     }
                 }
                 
-                if(threadNTrials[tryingIndex] > threadMaxNTrials){
+                if (threadNTrials[tryingIndex] > threadMaxNTrials) {
                     threadMaxNTrials = threadNTrials[tryingIndex];
                 }
                 
                 // この時点で世界が決まっていない場合はランダムに選ぶ
-                if(pWorld == nullptr){
-                    if(threadNWorlds > 0){
+                if (pWorld == nullptr) {
+                    if (threadNWorlds > 0) {
                         //pWorld=gal->pickRand( threadMaxNWorlds*threadId, threadNWorlds, &dice );
                         pWorld = gal.pickRand(0, threadNWorlds, &dice);
-                        if(pWorld == nullptr){
-                            goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
-                        }
-                    }else{
-                        goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
-                    }
+                        if (pWorld == nullptr) goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
+                    } else goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
                 }
                 
                 // 世界確定
@@ -189,50 +171,36 @@ namespace UECda{
                 // ここでプレイアウト実行
                 // alphaカットはしない
                 Field f;
-                if(proot->isChange){
+                if (proot->isChange) {
                     copyField(pf, &f);
                     setWorld(pf, *pWorld, &f);
-                    ASSERT(examCards(child[tryingIndex].changeCards),
-                           cerr << OutCards(child[tryingIndex].changeCards) << endl;);
-                    po.startChange(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
-                }else{
-                    //po.startRoot(&score,root->child[tryingIndex],*pWorld,*field);
+                    startChangeSimulation(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
+                } else {
                     copyField(pf, &f);
-                    //CERR << f.phase << endl;
                     setWorld(pf, *pWorld, &f);
-                    //CERR << f.phase << endl;
-                    po.startRoot(&f, child[tryingIndex].move, pshared, ptools);
+                    startRootSimulation(&f, child[tryingIndex].move, pshared, ptools);
                 }
-                //int r = std::rand() % 5;
-                
                 //CERR << "TRIAL : " << i << " " << moves.getMoveById(tryingIndex) << " : " << r << endl;
                 
                 proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
-                if(proot->exitFlag){
-                    goto THREAD_EXIT;
-                }
+                if (proot->exitFlag) goto THREAD_EXIT;
                 
-                poTime += clock.restart();
+                simuTime += clock.restart();
                 
 #ifndef FIXED_N_PLAYOUTS
-                if(threadId == 0
-                   && threadNTrialsSum % max(4, 32 / N_THREADS) == 0
-                   //root->simulations % 32 == 0
-                   && proot->allSimulations > candidates * MINNEC_N_TRIALS
-                   ){
-                    
-                    //cerr<<"cut ";
+                // 終了判定
+                if (threadId == 0
+                    && threadNTrialsSum % max(4, 32 / N_THREADS) == 0
+                    && proot->allSimulations > candidates * MINNEC_N_TRIALS) {
                     
                     // Regretによる打ち切り判定
-                    struct Dist{ double mean,sem,reg; };
-                    // time
-                    const double tmpClock = (double)poTime;
-                    
-                    const double line = -1600.0 * ((double)(2 * tmpClock * VALUE_PER_CLOCK)) / (double)proot->rewardGap;
+                    struct Dist { double mean,sem,reg; };
+                    double tmpClock = simuTime;
+                    double line = -1600.0 * double(2 * tmpClock * VALUE_PER_CLOCK) / proot->rewardGap;
                     
                     // regret check
                     Dist d[N_MAX_MOVES + 64];
-                    for(int m = 0; m < candidates; ++m){
+                    for (int m = 0; m < candidates; m++) {
                         d[m].reg = 0.0;
                         d[m].mean = child[m].mean();
                         
@@ -241,30 +209,23 @@ namespace UECda{
                         d[m].sem = sqrt(child[m].mean_var()); // 推定平均値の分散
                         //cerr << d[m].sem << endl;
                     }
-                    for(int t = 0; t < 1600; ++t){
+                    for (int t = 0; t < 1600; t++) {
                         double tmpBest = -1.0;
                         double tmpScore[256];
-                        for(int m = 0; m < candidates; ++m){
+                        for (int m = 0; m < candidates; m++) {
                             const Dist& tmpD = d[m];
                             NormalDistribution<double> norm(tmpD.mean, tmpD.sem);
                             double tmpDBL = norm.rand(&dice);
                             tmpScore[m] = tmpDBL;
-                            if(tmpDBL > tmpBest){
-                                tmpBest = tmpDBL;
-                            }
+                            if (tmpDBL > tmpBest) tmpBest = tmpDBL;
                         }
-                        for(int m = 0; m < candidates; ++m){
-                            d[m].reg += (tmpScore[m] - tmpBest);
+                        for (int m = 0; m < candidates; m++) {
+                            d[m].reg += tmpScore[m] - tmpBest;
                         }
                     }
                     
-                    for(int m = 0; m < candidates; ++m){
-                        if(d[m].reg > line){
-                            /*cerr<<"simulations = " << proot->simulations << " childs = "<<candidates<<" line = "<<line<<endl;
-                             for(int mm=0;mm<candidates;mm++){
-                             cerr<<d[mm].reg<<endl;
-                             }
-                             getchar();*/
+                    for (int m = 0; m < candidates; m++) {
+                        if (d[m].reg > line) {
                             proot->exitFlag = 1;
                             goto THREAD_EXIT;
                         }

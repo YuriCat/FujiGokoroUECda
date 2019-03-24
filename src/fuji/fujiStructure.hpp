@@ -99,8 +99,8 @@ namespace UECda{
             void feedL2Result(int realClass){
                 int index = (L2Class == -1) ? 1 : (L2Class == N_PLAYERS - 1 ? 2 : 0);
                 if(L2Class != -1){
-                    if(L2Class > realClass)cerr << "L2 Lucky!" << endl;
-                    if(L2Class < realClass)cerr << "L2 Miss!" << endl;
+                    if(L2Class > realClass) CERR << "L2 Lucky!" << endl;
+                    if(L2Class < realClass) CERR << "L2 Miss!" << endl;
                 }
                 myL2Result[realClass - (N_PLAYERS - 2)][index] += 1;
             }

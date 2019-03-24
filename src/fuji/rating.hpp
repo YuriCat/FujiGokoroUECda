@@ -7,7 +7,7 @@
 
 // シミュレーション結果を用いた相対レーティングの計算
 #include "../core/minLog.hpp"
-#include "playouter.hpp"
+#include "simulation.hpp"
 
 namespace UECda{
     namespace Fuji{
@@ -41,14 +41,14 @@ namespace UECda{
                                        const int simulations,
                                        sharedData_t *const pshared,
                                        threadTools_t *const ptools){
-            while(pdst->trials++ < simulations){
+            while (pdst->trials++ < simulations)
+            {
                 Field tfield = *pfield;
                 tfield.setMoveBuffer(ptools->buf);
                 tfield.setDice(&ptools->dice);
                 
                 // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
-                Playouter po;
-                po.startAll(&tfield, pshared, ptools);
+                startAllSimulation(&tfield, pshared, ptools);
                 
                 pdst->lock.lock();
                 // 相対勝ち数を加算

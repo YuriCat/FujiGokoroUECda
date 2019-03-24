@@ -1,12 +1,6 @@
-/*
- value.hpp
- Katsuki Ohto
- */
+#pragma once
 
-#ifndef UECDA_VALUE_HPP_
-#define UECDA_VALUE_HPP_
-
-namespace UECda{
+namespace UECda {
     
     // 順位遷移確率と報酬値の基本モデル
     const float standardTransition5[5][5] = {
@@ -263,5 +257,3 @@ namespace UECda{
         }
     }
 }
-
-#endif // UECDA_VALUE_HPP_

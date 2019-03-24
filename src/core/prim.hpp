@@ -8,7 +8,7 @@
 #include <array>
 #include <map>
 
-namespace UECda{
+namespace UECda {
     
     // プリミティブな型
     
@@ -29,12 +29,12 @@ namespace UECda{
     
     using Order = int;
     
-    enum{
+    enum {
         ORDER_NORMAL = 0, ORDER_REVERSED = 1,
         ORDER_BOTH = 2 // 永続的性質演算で使う
     };
     
-    constexpr int flipOrder(Order ord)noexcept{ return ORDER_NORMAL + ORDER_REVERSED - ord; }
+    constexpr int flipOrder(Order ord) { return ORDER_NORMAL + ORDER_REVERSED - ord; }
     
     /**************************ランク**************************/
     
@@ -43,7 +43,7 @@ namespace UECda{
     
     using Rank = int;
     
-    enum{
+    enum {
         RANK_U,
         RANK_3, RANK_4, RANK_5, RANK_6,
         RANK_7, RANK_8, RANK_9, RANK_T,
@@ -61,11 +61,11 @@ namespace UECda{
         RANK_NONE = -1
     };
     
-    constexpr bool isEightSeqRank(int rank, int qty)noexcept{ // 階段が８切りかどうか
+    constexpr bool isEightSeqRank(int rank, int qty) { // 階段が８切りかどうか
         return (rank <= RANK_8) && (RANK_8 < rank + qty);
     }
     
-    constexpr inline int flipRank(int r)noexcept{
+    constexpr inline int flipRank(int r) {
         // オーダー逆転時の仮ランクを使用する場合
         return RANK_3 + RANK_2 - r;
     }
@@ -74,30 +74,30 @@ namespace UECda{
     const std::string rankChar  = "-3456789TJQKA2+";
     const std::string rankCharM = "-3456789tjqka2+";
     
-    struct OutRank{
+    struct OutRank {
         int r;
-        constexpr OutRank(const int& arg) :r(arg){}
+        constexpr OutRank(const int& arg) :r(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutRank& arg){
+    std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
         out << rankChar[arg.r];
         return out;
     }
     
-    struct OutRankM{
+    struct OutRankM {
         int r;
-        constexpr OutRankM(const int& arg) :r(arg){}
+        constexpr OutRankM(const int& arg) :r(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutRankM& arg){
+    std::ostream& operator <<(std::ostream& out, const OutRankM& arg) {
         out << rankCharM[arg.r];
         return out;
     }
 
     struct RankRange{ // 連続ランク
         int r0, r1;
-        constexpr RankRange(const int& arg0, const int& arg1) :r0(arg0), r1(arg1){}
+        constexpr RankRange(const int& arg0, const int& arg1) :r0(arg0), r1(arg1) {}
     };
-    std::ostream& operator <<(std::ostream& out, const RankRange& arg){
-        for (int r = arg.r0; r <= arg.r1; ++r){
+    std::ostream& operator <<(std::ostream& out, const RankRange& arg) {
+        for (int r = arg.r0; r <= arg.r1; ++r) {
             out << rankChar[r];
         }
         return out;
@@ -105,23 +105,23 @@ namespace UECda{
     
     struct RankRangeM{ // 連続ランク
         int r0, r1;
-        constexpr RankRangeM(const int& arg0, const int& arg1) :r0(arg0), r1(arg1){}
+        constexpr RankRangeM(const int& arg0, const int& arg1) :r0(arg0), r1(arg1) {}
     };
-    std::ostream& operator<<(std::ostream& out, const RankRangeM& arg){
-        for (int r = arg.r0; r <= arg.r1; ++r){
+    std::ostream& operator<<(std::ostream& out, const RankRangeM& arg) {
+        for (int r = arg.r0; r <= arg.r1; ++r) {
             out << rankCharM[r];
         }
         return out;
     }
     
-    int CharToRank(char c)noexcept{
+    int CharToRank(char c) {
         int r = rankChar.find(c);
-        if(r == std::string::npos){ return RANK_NONE; }
+        if (r == std::string::npos) { return RANK_NONE; }
         return r;
     }
-    int CharToRankM(char c)noexcept{
+    int CharToRankM(char c) {
         int r = rankCharM.find(c);
-        if(r == std::string::npos){ return RANK_NONE; }
+        if (r == std::string::npos) { return RANK_NONE; }
         return r;
     }
     
@@ -130,7 +130,7 @@ namespace UECda{
     // ランクの4倍
     using Rank4x = int;
     
-    enum{
+    enum {
         RANK4X_U = RANK_U * 4,
         RANK4X_3 = RANK_3 * 4,
         RANK4X_4 = RANK_4 * 4,
@@ -156,15 +156,15 @@ namespace UECda{
         RANK4X_NONE = -1
     };
     
-    constexpr int RankToRank4x(int r)noexcept{ return r << 2; }
-    constexpr int Rank4xToRank(int r4x)noexcept{ return r4x >> 2; }
+    constexpr int RankToRank4x(int r) { return r << 2; }
+    constexpr int Rank4xToRank(int r4x) { return r4x >> 2; }
     
     /**************************スート番号**************************/
     
     using SuitNum = int;
     
     // 単スート
-    enum{
+    enum {
         SUITNUM_C, SUITNUM_D, SUITNUM_H, SUITNUM_S,
         SUITNUM_X,
         SUITNUM_MIN = SUITNUM_C,
@@ -178,32 +178,32 @@ namespace UECda{
     const std::string suitNumChar  = "CDHSX";
     const std::string suitNumCharM = "cdhsx";
         
-    struct OutSuitNum{
+    struct OutSuitNum {
         int sn;
-        constexpr OutSuitNum(const int& arg) :sn(arg){}
+        constexpr OutSuitNum(const int& arg) :sn(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitNum& arg){
+    std::ostream& operator <<(std::ostream& out, const OutSuitNum& arg) {
         out << suitNumChar[arg.sn];
         return out;
     }
     
-    struct OutSuitNumM{
+    struct OutSuitNumM {
         int sn;
-        constexpr OutSuitNumM(const int& arg) :sn(arg){}
+        constexpr OutSuitNumM(const int& arg) :sn(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitNumM& arg){
+    std::ostream& operator <<(std::ostream& out, const OutSuitNumM& arg) {
         out << suitNumCharM[arg.sn];
         return out;
     }
     
-    int CharToSuitNum(char c)noexcept{
+    int CharToSuitNum(char c) {
         int sn = suitNumChar.find(c);
-        if(sn == std::string::npos){ return SUITNUM_NONE; }
+        if (sn == std::string::npos) { return SUITNUM_NONE; }
         return sn;
     }
-    int CharToSuitNumM(char c)noexcept{
+    int CharToSuitNumM(char c) {
         int sn = suitNumCharM.find(c);
-        if(sn == std::string::npos){ return SUITNUM_NONE; }
+        if (sn == std::string::npos) { return SUITNUM_NONE; }
         return sn;
     }
     
@@ -212,7 +212,7 @@ namespace UECda{
     using Suits = unsigned int;
     
     // 単スート
-    enum{
+    enum {
         SUIT_NULL = 0,
         SUIT_C = 1, SUIT_D = 2, SUIT_H = 4, SUIT_S = 8,
         SUIT_X = 16,
@@ -221,7 +221,7 @@ namespace UECda{
     };
     
     // スート集合 (スートの和集合)
-    enum{
+    enum {
         SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
         SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
         SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
@@ -230,7 +230,7 @@ namespace UECda{
         SUITS_ALL = SUITS_CDHS,
     };
     
-    int countSuits(uint32_t s)noexcept{
+    int countSuits(uint32_t s) {
         return countBits(s);
     }
     
@@ -240,43 +240,43 @@ namespace UECda{
     
     //const char suitstr[5]={'C','D','H','S','X'};
     
-    int SuitToSuitNum(uint32_t suit)noexcept{
+    int SuitToSuitNum(uint32_t suit) {
         return bsf32(suit);
     }
     
     // 単スート番号からスート集合への変換
-    constexpr uint32_t SuitNumToSuits(int sn0)noexcept{
+    constexpr uint32_t SuitNumToSuits(int sn0) {
         return (1U << sn0);
     }
-    int SuitsToSuitNum(int suit){
+    int SuitsToSuitNum(int suit) {
         // 複スートの場合も
         return suitsIdx[suit];
     }
     
     // 出力
-    struct OutSuits{
+    struct OutSuits {
         uint32_t s;
-        constexpr OutSuits(const uint32_t& arg) :s(arg){}
+        constexpr OutSuits(const uint32_t& arg) :s(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuits& arg){ // 出力の時だけ第５のスートは16として対応している
-        if(arg.s & SUIT_C){ out << 'C'; }
-        if(arg.s & SUIT_D){ out << 'D'; }
-        if(arg.s & SUIT_H){ out << 'H'; }
-        if(arg.s & SUIT_S){ out << 'S'; }
-        if(arg.s & SUIT_X){ out << 'X'; }
+    std::ostream& operator <<(std::ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
+        if (arg.s & SUIT_C) { out << 'C'; }
+        if (arg.s & SUIT_D) { out << 'D'; }
+        if (arg.s & SUIT_H) { out << 'H'; }
+        if (arg.s & SUIT_S) { out << 'S'; }
+        if (arg.s & SUIT_X) { out << 'X'; }
         return out;
     }
 
-    struct OutSuitsM{
+    struct OutSuitsM {
         uint32_t s;
-        constexpr OutSuitsM(const uint32_t& arg) :s(arg){}
+        constexpr OutSuitsM(const uint32_t& arg) :s(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitsM& arg){ // 出力の時だけ第5のスートは16として対応している
-        if(arg.s & SUIT_C){ out << 'c'; }
-        if(arg.s & SUIT_D){ out << 'd'; }
-        if(arg.s & SUIT_H){ out << 'h'; }
-        if(arg.s & SUIT_S){ out << 's'; }
-        if(arg.s & SUIT_X){ out << 'x'; }
+    std::ostream& operator <<(std::ostream& out, const OutSuitsM& arg) { // 出力の時だけ第5のスートは16として対応している
+        if (arg.s & SUIT_C) { out << 'c'; }
+        if (arg.s & SUIT_D) { out << 'd'; }
+        if (arg.s & SUIT_H) { out << 'h'; }
+        if (arg.s & SUIT_S) { out << 's'; }
+        if (arg.s & SUIT_X) { out << 'x'; }
         return out;
     }
     
@@ -295,30 +295,30 @@ namespace UECda{
     constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
     constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
     
-    int getSuitSuitsIndex(uint32_t s0, uint32_t s1){
+    int getSuitSuitsIndex(uint32_t s0, uint32_t s1) {
         return suitSuitsIndexTable[s0][s1];
     }
-    int getSuitsSuitsIndex(uint32_t s0, uint32_t s1){
+    int getSuitsSuitsIndex(uint32_t s0, uint32_t s1) {
         return suitsSuitsIndexTable[s0][s1];
     }
-    int get2SuitsIndex(uint32_t s0, uint32_t s1){
+    int get2SuitsIndex(uint32_t s0, uint32_t s1) {
         return twoSuitsIndexTable[s0][s1];
     }
-    int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
+    int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
         return suitsSuitsSuitsIndexTable[s0][s1][s2];
     }
-    int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2){
+    int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
         return suitsSuitsSuitsIndexTable[s0][s1][s2];
     }
     
-    void initSuits(){
+    void initSuits() {
         
         // (suits suits) pattern index (exchangable) 0 ~ 21
         int twoSuitsCountIndex[5][5][5] = {0};
         int cnt = 0;
-        for(int c0 = 0; c0 <= 4; ++c0){
-            for(int c1 = 0; c1 <= c0; ++c1){
-                for(int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01){
+        for (int c0 = 0; c0 <= 4; c0++) {
+            for (int c1 = 0; c1 <= c0; c1++) {
+                for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
                     DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
                     twoSuitsCountIndex[c0][c1][c01] = cnt;
                     ++cnt;
@@ -330,20 +330,19 @@ namespace UECda{
         // (suits, suits) pattern index 0 ~ 34
         int suitsSuitsCountIndex[5][5][5] = {0};
         cnt = 0;
-        for(int c0 = 0; c0 <= 4; ++c0){
-            for(int c1 = 0; c1 <= 4; ++c1){
-                for(size_t c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01){
+        for (int c0 = 0; c0 <= 4; c0++) {
+            for (int c1 = 0; c1 <= 4; c1++) {
+                for (size_t c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
                     DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
-                    suitsSuitsCountIndex[c0][c1][c01] = cnt;
-                    ++cnt;
+                    suitsSuitsCountIndex[c0][c1][c01] = cnt++;
                 }
             }
         }
         ASSERT(cnt == N_PATTERNS_SUITS_SUITS,
                cerr << cnt << " <-> " << N_PATTERNS_SUITS_SUITS << endl;);
         
-        for(uint32_t s0 = 0; s0 < 16; ++s0){
-            for(uint32_t s1 = 0; s1 < 16; ++s1){
+        for (uint32_t s0 = 0; s0 < 16; s0++) {
+            for (uint32_t s1 = 0; s1 < 16; s1++) {
                 const uint32_t s01 = s0 & s1;
                 const uint32_t c0 = countBits(s0), c1 = countBits(s1);
                 const uint32_t cmin = min(c0, c1), cmax = max(c0, c1);
@@ -360,8 +359,8 @@ namespace UECda{
         // (suit, suits) pattern index 0 ~ 7
         int suitSuitsCountIndex[5][2] = {0};
         cnt = 0;
-        for(int c1 = 0; c1 <= 4; ++c1){
-            for(int c01 = max(0, 1 + c1 - 4); c01 <= min(c1, 1); ++c01){
+        for (int c1 = 0; c1 <= 4; ++c1) {
+            for (int c01 = max(0, 1 + c1 - 4); c01 <= min(c1, 1); ++c01) {
                 assert(c01 == 0 || c01 == 1);
                 DERR << "pattern " << cnt << " = " << c1 << ", " << c01 << endl;
                 suitSuitsCountIndex[c1][c01] = cnt;
@@ -370,8 +369,8 @@ namespace UECda{
         }
         ASSERT(cnt == N_PATTERNS_SUIT_SUITS, cerr << cnt << " <-> " << N_PATTERNS_SUIT_SUITS << endl;);
         
-        for(int sn0 = 0; sn0 < 4; ++sn0){
-            for(uint32_t s1 = 0; s1 < 16; ++s1){
+        for (int sn0 = 0; sn0 < 4; ++sn0) {
+            for (uint32_t s1 = 0; s1 < 16; ++s1) {
                 const uint32_t s0 = SuitNumToSuits(sn0);
                 const uint32_t s01 = s0 & s1;
                 const uint32_t c1 = countBits(s1);
@@ -384,9 +383,9 @@ namespace UECda{
         // (suits, suits, suits) pattern index
         int suitsSuitsSuitsCountIndex[5][5][5][5][5][5][5] = {0};
         std::map<std::array<uint32_t, ipow(2, 3) - 1>, int> sssMap;
-        for(uint32_t s0 = 0; s0 < 16; ++s0){
-            for(uint32_t s1 = 0; s1 < 16; ++s1){
-                for(uint32_t s2 = 0; s2 < 16; ++s2){
+        for (uint32_t s0 = 0; s0 < 16; ++s0) {
+            for (uint32_t s1 = 0; s1 < 16; ++s1) {
+                for (uint32_t s2 = 0; s2 < 16; ++s2) {
                     const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
                     const uint32_t s012 = s0 & s1 & s2;
                     const uint32_t c0 = countBits(s0), c1 = countBits(s1), c2 = countBits(s2);
@@ -394,11 +393,11 @@ namespace UECda{
                     const uint32_t c012 = countBits(s012);
                     std::array<uint32_t, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
                     int cnt;
-                    if(sssMap.count(pattern) == 0){
+                    if (sssMap.count(pattern) == 0) {
                         cnt = sssMap.size();
                         sssMap[pattern] = cnt;
                         DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << ", " << c012 << endl;
-                    }else{
+                    } else {
                         cnt = sssMap[pattern];
                     }
                     suitsSuitsSuitsCountIndex[c0][c1][c2][c01][c02][c12][c012] = cnt;
@@ -411,20 +410,20 @@ namespace UECda{
         
         int suitSuitsSuitsCountIndex[5][5][5][5][5]= {0};
         std::map<std::array<uint32_t, ipow(2, 3) - 3>, int> s1ssMap;
-        for(uint32_t s0 = 1; s0 < 16; s0 <<= 1){
-            for(uint32_t s1 = 0; s1 < 16; ++s1){
-                for(uint32_t s2 = 0; s2 < 16; ++s2){
+        for (uint32_t s0 = 1; s0 < 16; s0 <<= 1) {
+            for (uint32_t s1 = 0; s1 < 16; ++s1) {
+                for (uint32_t s2 = 0; s2 < 16; ++s2) {
                     const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
                     const uint32_t s012 = s0 & s1 & s2;
                     const uint32_t c1 = countBits(s1), c2 = countBits(s2);
                     const uint32_t c01 = countBits(s01), c02 = countBits(s02), c12 = countBits(s12);
                     std::array<uint32_t, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
                     int cnt;
-                    if(s1ssMap.count(pattern) == 0){
+                    if (s1ssMap.count(pattern) == 0) {
                         cnt = s1ssMap.size();
                         s1ssMap[pattern] = cnt;
                         DERR << "pattern " << cnt << " = " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << endl;
-                    }else{
+                    } else {
                         cnt = s1ssMap[pattern];
                     }
                     suitSuitsSuitsCountIndex[c1][c2][c01][c02][c12] = cnt;
@@ -435,7 +434,7 @@ namespace UECda{
     }
     
     struct SuitsInitializer{
-        SuitsInitializer(){
+        SuitsInitializer() {
             initSuits();
         }
     };
@@ -449,7 +448,7 @@ namespace UECda{
     // 定数
     using IntCard = int;
     
-    enum{
+    enum {
         INTCARD_CU, INTCARD_DU, INTCARD_HU, INTCARD_SU,
         INTCARD_C3, INTCARD_D3, INTCARD_H3, INTCARD_S3,
         INTCARD_C4, INTCARD_D4, INTCARD_H4, INTCARD_S4,
@@ -483,67 +482,67 @@ namespace UECda{
     constexpr int N_CARDS = 53;
     constexpr int N_IMG_CARDS = 61;
     
-    constexpr bool examIntCard(IntCard ic)noexcept{
+    constexpr bool examIntCard(IntCard ic) {
         return (INTCARD_C3 <= ic && ic <= INTCARD_S2) || (ic == INTCARD_JOKER);
     }
-    constexpr bool examImaginaryIntCard(IntCard ic)noexcept{
+    constexpr bool examImaginaryIntCard(IntCard ic) {
         return INTCARD_CU <= ic && ic <= INTCARD_JOKER;
     }
     
-    template<typename rank_t, typename suit_t>
-    constexpr IntCard RankSuitsToIntCard(rank_t r, suit_t s)noexcept{
+    template <typename rank_t, typename suit_t>
+    constexpr IntCard RankSuitsToIntCard(rank_t r, suit_t s) {
         return (r << 2) + SuitToSuitNum(s);
     }
     
-    template<typename r4x_t, typename suit_t>
-    constexpr IntCard Rank4xSuitsToIntCard(r4x_t r4x, suit_t s)noexcept{
+    template <typename r4x_t, typename suit_t>
+    constexpr IntCard Rank4xSuitsToIntCard(r4x_t r4x, suit_t s) {
         return r4x + SuitToSuitNum(s);
     }
     
-    template<typename rank_t>
-    constexpr IntCard RankSuitNumToIntCard(rank_t r, int sn)noexcept{
+    template <typename rank_t>
+    constexpr IntCard RankSuitNumToIntCard(rank_t r, int sn) {
         return (r << 2) + sn;
     }
     
-    constexpr int IntCardToRank(IntCard ic)noexcept{ return ic >> 2; }
-    constexpr int IntCardToRank4x(IntCard ic)noexcept{ return ic & ~3U; }
-    constexpr int IntCardToSuitNum(IntCard ic)noexcept{ return ic & 3U; }
-    constexpr int IntCardToSuits(IntCard ic)noexcept{ return SuitNumToSuits(IntCardToSuitNum(ic)); }
+    constexpr int IntCardToRank(IntCard ic) { return ic >> 2; }
+    constexpr int IntCardToRank4x(IntCard ic) { return ic & ~3U; }
+    constexpr int IntCardToSuitNum(IntCard ic) { return ic & 3U; }
+    constexpr int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
     
     // 出力用クラス
-    struct OutIntCard{
+    struct OutIntCard {
         IntCard ic;
-        constexpr OutIntCard(const IntCard& arg) :ic(arg){}
+        constexpr OutIntCard(const IntCard& arg) :ic(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutIntCard& arg){
-        if(arg.ic == INTCARD_JOKER){
+    std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
+        if (arg.ic == INTCARD_JOKER) {
             out << "JO";
-        }else{
+        } else {
             out << OutSuitNum(IntCardToSuitNum(arg.ic)) << OutRank(IntCardToRank(arg.ic));
         }
         return out;
     }
 
-    struct OutIntCardM{
+    struct OutIntCardM {
         IntCard ic;
-        constexpr OutIntCardM(const IntCard& arg) :ic(arg){}
+        constexpr OutIntCardM(const IntCard& arg) :ic(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutIntCardM& arg){
-        if(arg.ic == INTCARD_JOKER){
+    std::ostream& operator <<(std::ostream& out, const OutIntCardM& arg) {
+        if (arg.ic == INTCARD_JOKER) {
             out << "jo";
-        }else{
+        } else {
             out << OutSuitNumM(IntCardToSuitNum(arg.ic)) << OutRankM(IntCardToRank(arg.ic));
         }
         return out;
     }
     
-    IntCard StringToIntCardM(const std::string& str){
-        if(str.size() != 2){ return INTCARD_NONE; }
-        if(str == "jo"){ return INTCARD_JOKER; }
+    IntCard StringToIntCardM(const std::string& str) {
+        if (str.size() != 2) return INTCARD_NONE;
+        if (str == "jo") return INTCARD_JOKER;
         int sn = CharToSuitNumM(str[0]);
         int r = CharToRankM(str[1]);
-        if(r == RANK_NONE){ return INTCARD_NONE; }
-        if(sn == SUITNUM_NONE){ return INTCARD_NONE; }
+        if (r == RANK_NONE) return INTCARD_NONE;
+        if (sn == SUITNUM_NONE) return INTCARD_NONE;
         return RankSuitNumToIntCard(r, sn);
     }
     
@@ -565,12 +564,12 @@ namespace UECda{
     constexpr BitCards CARDS_HORIZONSUIT = 0x0111111111111111; // 基準の最小スートのカード全て
     
     // IntCard型との互換
-    constexpr BitCards IntCardToCards(IntCard ic)noexcept{
+    constexpr BitCards IntCardToCards(IntCard ic) {
         return BitCards(CARDS_HORIZON << ic);
     }
     
-    IntCard CardsToLowestIntCard(BitCards c)noexcept{ return bsf64(c); } // 一番低いもの
-    IntCard CardsToHighestIntCard(BitCards c)noexcept{ return bsr64(c); } // 一番高いもの
+    IntCard CardsToLowestIntCard(BitCards c) { return bsf64(c); } // 一番低いもの
+    IntCard CardsToHighestIntCard(BitCards c) { return bsr64(c); } // 一番高いもの
     
     // 定数
     constexpr BitCards CARDS_IMG_MIN = CARDS_HORIZON << INTCARD_IMG_MIN;
@@ -615,23 +614,23 @@ namespace UECda{
     constexpr BitCards CARDS_OO = 0xF000000000000000;
     
     // ランクの指定からカード集合を生成する
-    constexpr Cards RankToCards(uint32_t r)noexcept{
+    constexpr Cards RankToCards(uint32_t r) {
         // あるランクのカード全て
         return CARDS_HORIZONRANK << (r << 2);
     }
-    constexpr Cards RankRangeToCards(uint32_t r0, uint32_t r1)noexcept{
+    constexpr Cards RankRangeToCards(uint32_t r0, uint32_t r1) {
         // ランク間（両端含む）のカード全て
         // r0 <= r1 でない場合は CARDS_NULL
         return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
         & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
     }
     
-    constexpr Cards Rank4xToCards(uint32_t r4x)noexcept{
+    constexpr Cards Rank4xToCards(uint32_t r4x) {
         // あるランク4xのカード全て
         return CARDS_HORIZONRANK << r4x;
     }
     
-    constexpr Cards RankRange4xToCards(uint32_t r4x_0, uint32_t r4x_1)noexcept{
+    constexpr Cards RankRange4xToCards(uint32_t r4x_0, uint32_t r4x_1) {
         // ランク4x間（両端含む）のカード全て
         // r4x_0 <= r4x_1でない場合はNULL
         return ~((CARDS_HORIZON << r4x_0) - 1ULL)
@@ -658,7 +657,7 @@ namespace UECda{
     constexpr BitCards CARDS_CDHS = 0x0FFFFFFFFFFFFFFF;
     
     // スートの指定からカード集合を生成する
-    constexpr BitCards SuitsToCards(uint32_t s)noexcept{
+    constexpr BitCards SuitsToCards(uint32_t s) {
         return CARDS_HORIZONSUIT * s; // あるスートのカード全て
     }
     
@@ -666,113 +665,113 @@ namespace UECda{
     
     // ランクとスートの指定からカード集合を生成する
     // スートは集合として用いる事が出来る
-    constexpr BitCards RankSuitsToCards(int r, uint32_t s)noexcept{
+    constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
         return (BitCards)s << (r << 2);
     }
-    constexpr BitCards Rank4xSuitsToCards(int r4x, uint32_t s)noexcept{
+    constexpr BitCards Rank4xSuitsToCards(int r4x, uint32_t s) {
         return (BitCards)s << r4x;
     }
     
     // ランク両端とスートの指定
-    BitCards RRSToCards(uint32_t r0, uint32_t r1, uint32_t suits)noexcept{
+    BitCards RRSToCards(uint32_t r0, uint32_t r1, uint32_t suits) {
         return RankRangeToCards(r0, r1) & SuitsToCards(suits);
     }
     
-    BitCards RR4SToCards(uint32_t r4x_0, uint32_t r4x_1, uint32_t suits)noexcept{
+    BitCards RR4SToCards(uint32_t r4x_0, uint32_t r4x_1, uint32_t suits) {
         return RankRange4xToCards(r4x_0, r4x_1) & SuitsToCards(suits);
     }
     
-    constexpr uint32_t CardsRankToSuits(BitCards c, int r)noexcept{
+    constexpr uint32_t CardsRankToSuits(BitCards c, int r) {
         return uint32_t(c >> (r << 2)) & 15U;
     }
-    constexpr uint32_t CardsRank4xToSuits(BitCards c, int r4x)noexcept{
+    constexpr uint32_t CardsRank4xToSuits(BitCards c, int r4x) {
         return uint32_t(c >> r4x) & 15U;
     }
     
     // 関係ないビットを除外したり、実在するカードのみに限定したり
-    constexpr BitCards disarmCards(BitCards c)noexcept{ return c & CARDS_ALL; }
-    void disarmCards(BitCards *const c){ (*c) &= CARDS_ALL; }
+    constexpr BitCards disarmCards(BitCards c) { return c & CARDS_ALL; }
+    void disarmCards(BitCards *const c) { (*c) &= CARDS_ALL; }
     
     // Cards型基本演算
     
     // 追加
-    constexpr BitCards addCards(BitCards c0, BitCards c1)noexcept{ return c0 | c1; }
-    template<typename ... args_t>
-    constexpr BitCards addCards(BitCards c0, BitCards c1, args_t ... others)noexcept{
+    constexpr BitCards addCards(BitCards c0, BitCards c1) { return c0 | c1; }
+    template <typename ... args_t>
+    constexpr BitCards addCards(BitCards c0, BitCards c1, args_t ... others) {
         return c0 | addCards(c1, others...);
     }
 
-    constexpr BitCards addIntCard(BitCards c, IntCard ic)noexcept{ return addCards(c, IntCardToCards(ic)); }
-    constexpr BitCards addJOKER(BitCards c)noexcept{ return addCards(c, CARDS_JOKER); }
+    constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
+    constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
     
-    void addCards(BitCards *const c0, BitCards c1){ (*c0) |= c1; }
-    void addJOKER(BitCards *const cptr){ (*cptr) |= CARDS_JOKER; }
+    void addCards(BitCards *const c0, BitCards c1) { (*c0) |= c1; }
+    void addJOKER(BitCards *const cptr) { (*cptr) |= CARDS_JOKER; }
     
-    void addIntCard(BitCards *const pc, IntCard ic){ addCards(pc, IntCardToCards(ic)); }
+    void addIntCard(BitCards *const pc, IntCard ic) { addCards(pc, IntCardToCards(ic)); }
     
     // 限定
-    constexpr BitCards commonCards(BitCards c0, BitCards c1)noexcept{ return c0 & c1; }
-    constexpr BitCards andCards(BitCards c0, BitCards c1)noexcept{ return c0 & c1; }
-    void andCards(BitCards *const cptr, BitCards c){ (*cptr) &= c; }
+    constexpr BitCards commonCards(BitCards c0, BitCards c1) { return c0 & c1; }
+    constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
+    void andCards(BitCards *const cptr, BitCards c) { (*cptr) &= c; }
     
     // 削除（オーバーを引き起こさない）
     // maskは指定以外とのandをとることとしている。
     // 指定部分とのandはand処理で行う
-    constexpr BitCards maskCards(BitCards c0, BitCards c1)noexcept{ return c0 & ~c1; }
-    void maskCards(BitCards *const c0, BitCards c1){ (*c0) &= ~c1; }
-    constexpr BitCards maskJOKER(Cards c)noexcept{ return maskCards(c, CARDS_JOKER); }
-    void maskJOKER(BitCards *const cptr){ maskCards(cptr, CARDS_JOKER); }
+    constexpr BitCards maskCards(BitCards c0, BitCards c1) { return c0 & ~c1; }
+    void maskCards(BitCards *const c0, BitCards c1) { (*c0) &= ~c1; }
+    constexpr BitCards maskJOKER(Cards c) { return maskCards(c, CARDS_JOKER); }
+    void maskJOKER(BitCards *const cptr) { maskCards(cptr, CARDS_JOKER); }
     
     // 状態逆転（追加や削除のため用いた場合はオーバー処理で不具合となる危険性あり）
-    constexpr BitCards invCards(BitCards c0, BitCards c1)noexcept{ return c0 ^ c1; }
-    void invCards(BitCards *const c0, BitCards c1){ (*c0) ^= c1; }
-    constexpr BitCards invJOKER(BitCards c0)noexcept{ return invCards(c0, CARDS_JOKER); }
-    void invJOKER(BitCards *const cptr){ invCards(cptr, CARDS_JOKER); }
+    constexpr BitCards invCards(BitCards c0, BitCards c1) { return c0 ^ c1; }
+    void invCards(BitCards *const c0, BitCards c1) { (*c0) ^= c1; }
+    constexpr BitCards invJOKER(BitCards c0) { return invCards(c0, CARDS_JOKER); }
+    void invJOKER(BitCards *const cptr) { invCards(cptr, CARDS_JOKER); }
     
     // カード減算
     // 全ての（安定でなくても良い）カード減算処理から最も高速なものとして定義したいところだが、
     // 現在では整数としての引き算処理。
-    constexpr BitCards subtrCards(BitCards c0, BitCards c1)noexcept{ return c0 - c1; }
-    void subtrCards(Cards *const cptr, BitCards c){ (*cptr) -= c; }
-    constexpr BitCards subtrJOKER(BitCards c)noexcept{ return subtrCards(c, CARDS_JOKER); }
-    void subtrJOKER(BitCards *const cptr){ subtrCards(cptr, CARDS_JOKER); }
+    constexpr BitCards subtrCards(BitCards c0, BitCards c1) { return c0 - c1; }
+    void subtrCards(Cards *const cptr, BitCards c) { (*cptr) -= c; }
+    constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
+    void subtrJOKER(BitCards *const cptr) { subtrCards(cptr, CARDS_JOKER); }
     
     // 要素数
-    constexpr uint32_t countFewCards(BitCards c)noexcept{ return countFewBits64(c); } // 要素が比較的少ない時の速度優先
-    uint32_t countManyCards(BitCards c)noexcept{ return countBits64(c); } // 要素が比較的多い時の速度優先
-    uint32_t countCards(BitCards c)noexcept{ return countBits64(c); } // 基本のカウント処理
-    constexpr BitCards any2Cards(BitCards c)noexcept{ return c & (c - 1ULL); }
+    constexpr uint32_t countFewCards(BitCards c) { return countFewBits64(c); } // 要素が比較的少ない時の速度優先
+    uint32_t countManyCards(BitCards c) { return countBits64(c); } // 要素が比較的多い時の速度優先
+    uint32_t countCards(BitCards c) { return countBits64(c); } // 基本のカウント処理
+    constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
     
     // Cards型基本判定
     
     // 要素の部分一致
-    constexpr BitCards hasSameCards(BitCards c0, BitCards c1)noexcept{ return commonCards(c0, c1); }
-    constexpr bool isExclusiveCards(BitCards c0, BitCards c1)noexcept{ return !(c0 & c1); }
+    constexpr BitCards hasSameCards(BitCards c0, BitCards c1) { return commonCards(c0, c1); }
+    constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
     
     // 包括関係
-    constexpr BitCards containsCard(BitCards c0, BitCard c1)noexcept{ return andCards(c0, c1); } // 単体に対してはandでok
-    constexpr BitCards containsIntCard(BitCards c, IntCard ic)noexcept{ return containsCard(c, IntCardToCards(ic)); }
-    constexpr BitCards containsJOKER(BitCards c)noexcept{ return andCards(c, CARDS_JOKER); }
-    constexpr BitCards containsS3(BitCards c)noexcept{ return andCards(c, CARDS_S3); }
-    constexpr BitCards containsD3(BitCards c)noexcept{ return andCards(c, CARDS_D3); }
-    constexpr BitCards contains8(BitCards c)noexcept{ return andCards(c, CARDS_8); }
+    constexpr BitCards containsCard(BitCards c0, BitCard c1) { return andCards(c0, c1); } // 単体に対してはandでok
+    constexpr BitCards containsIntCard(BitCards c, IntCard ic) { return containsCard(c, IntCardToCards(ic)); }
+    constexpr BitCards containsJOKER(BitCards c) { return andCards(c, CARDS_JOKER); }
+    constexpr BitCards containsS3(BitCards c) { return andCards(c, CARDS_S3); }
+    constexpr BitCards containsD3(BitCards c) { return andCards(c, CARDS_D3); }
+    constexpr BitCards contains8(BitCards c) { return andCards(c, CARDS_8); }
 
-    constexpr bool holdsCards(BitCards c0, BitCards c1)noexcept{ return holdsBits(c0, c1); }
+    constexpr bool holdsCards(BitCards c0, BitCards c1) { return holdsBits(c0, c1); }
     
     // 空判定
-    constexpr BitCards anyCards(BitCards c)noexcept{ return c; }
+    constexpr BitCards anyCards(BitCards c) { return c; }
     
     // validation
-    constexpr bool examCards(BitCards c)noexcept{ return holdsCards(CARDS_ALL, c); }
-    constexpr bool examImaginaryCards(BitCards c)noexcept{ return holdsCards(CARDS_IMG_ALL, c); }
+    constexpr bool examCards(BitCards c) { return holdsCards(CARDS_ALL, c); }
+    constexpr bool examImaginaryCards(BitCards c) { return holdsCards(CARDS_IMG_ALL, c); }
     
     // Cards型生成
-    BitCards StringToCards(const std::string& str){
+    BitCards StringToCards(const std::string& str) {
         BitCards c = CARDS_NULL;
         std::vector<std::string> v = split(str, ' ');
-        for(const auto& s : v){
+        for (const auto& s : v) {
             IntCard ic = StringToIntCardM(s);
-            if(ic != INTCARD_NONE){
+            if (ic != INTCARD_NONE) {
                 addIntCard(&c, ic);
             }
         }
@@ -781,53 +780,53 @@ namespace UECda{
     // Cards型特殊演算
     
     // 特定順序の要素を選ぶ（元のデータは変えない）
-    inline Cards pickLow(const Cards c, int n)noexcept{
+    inline Cards pickLow(const Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         return lowestNBits(c, n);
     }
-    template<int N = 1>
-    inline Cards pickLow(const Cards c)noexcept{
+    template <int N = 1>
+    inline Cards pickLow(const Cards c) {
         assert(N > 0);
         assert((int)countCards(c) >= N);
         return pickLow(c, N);
     }
-    template<>inline constexpr Cards pickLow<1>(const Cards c)noexcept{
+    template <> inline constexpr Cards pickLow<1>(const Cards c) {
         return lowestBit(c);
     }
-    template<>inline Cards pickLow<2>(const Cards c)noexcept{
+    template <> inline Cards pickLow<2>(const Cards c) {
         Cards res = lowestBit(c);
         return res | lowestBit(c - res);
     }
     
-    inline Cards pickHigh(const Cards c, int n)noexcept{
+    inline Cards pickHigh(const Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         return highestNBits(c, n);
     }
-    template<int N = 1>
-    inline Cards pickHigh(const Cards c)noexcept{
+    template <int N = 1>
+    inline Cards pickHigh(const Cards c) {
         assert(N > 0);
         assert((int)countCards(c) >= N);
         return pickHigh(c, N);
     }
-    template<>inline Cards pickHigh<1>(const Cards c)noexcept{
+    template <> inline Cards pickHigh<1>(const Cards c) {
         return highestBit(c);
     }
-    template<>inline Cards pickHigh<2>(const Cards c)noexcept{
+    template <> inline Cards pickHigh<2>(const Cards c) {
         Cards r = highestBit(c);
         return r | highestBit(c - r);
     }
     
     // 特定順序の要素の取り出し(元のデータから引く)
-    inline Cards popHigh(Cards *const c)noexcept{
+    inline Cards popHigh(Cards *const c) {
         assert(*c);
         Cards r = 1ULL << bsr64(*c);
         (*c) -= r;
         return r;
     }
     
-    inline Cards popHigh2(Cards *const c)noexcept{
+    inline Cards popHigh2(Cards *const c) {
         assert(countCards(*c) >= 2U);
         Cards r1 = 1ULL << bsr64(*c);
         (*c) -= r1;
@@ -836,7 +835,7 @@ namespace UECda{
         return r1 | r2;
     }
     
-    inline Cards popLow(Cards *const c)noexcept{
+    inline Cards popLow(Cards *const c) {
         assert(anyCards(*c));
         Cards r = (*c)&(-(*c));
         subtrCards(c, r);
@@ -846,22 +845,22 @@ namespace UECda{
     // Cards pop
     
     // IntCard型で1つ取り出し
-    inline IntCard pickIntCardLow(const Cards c)noexcept{
+    inline IntCard pickIntCardLow(const Cards c) {
         return (IntCard)bsf64(c);
     }
     
-    inline IntCard pickIntCardHigh(const Cards c)noexcept{
+    inline IntCard pickIntCardHigh(const Cards c) {
         ASSERT(anyCards(c),);
         return (IntCard)bsr64(c);
     }
     
-    inline IntCard popIntCardLow(Cards *const c)noexcept{
+    inline IntCard popIntCardLow(Cards *const c) {
         IntCard ic = pickIntCardLow(*c);
         (*c) &= ((*c) - 1ULL);
         return ic;
     }
     
-    inline IntCard popIntCardHigh(Cards *const c)noexcept{
+    inline IntCard popIntCardHigh(Cards *const c) {
         IntCard ic = pickIntCardHigh(*c);
         subtrCards(c, IntCardToCards(ic));
         return ic;
@@ -869,31 +868,31 @@ namespace UECda{
     
     // 適当に（ランダムではない）１つ取り出し
     // 順序がどうでも良い取り出し操作の中で最速な操作で実装したい
-    inline Cards pop(Cards *const c)noexcept{
+    inline Cards pop(Cards *const c) {
         Cards r = (*c) & (-(*c));
         (*c) -= r;
         return r;
     }
     
-    inline constexpr Cards pick(const Cards c)noexcept{
+    inline constexpr Cards pick(const Cards c) {
         return c & (-c);
     }
     
-    inline IntCard pickIntCard(const Cards c)noexcept{
+    inline IntCard pickIntCard(const Cards c) {
         return pickIntCardLow(c);
     }
     
-    inline IntCard popIntCard(Cards *const c)noexcept{
+    inline IntCard popIntCard(Cards *const c) {
         return popIntCardLow(c);
     }
     
     // 完全ランダム取り出し
     // ビット分割関数(bitPartition.hpp)を使う
-    template<int N = 1, class dice64_t>
-    inline Cards popRand(Cards *const c, dice64_t *const dice){
+    template <int N = 1, class dice64_t>
+    inline Cards popRand(Cards *const c, dice64_t *const dice) {
         static_assert(N >= 0, " popRand N < 0 ");
         Cards res;
-        switch (N){
+        switch (N) {
             case 0: res = CARDS_NULL; break;
             case 1: res = pop1Bit64(c, dice); break;
                 //case 2:res=pickNBits64(c,2,countCards(c)-2,dice);break;
@@ -902,11 +901,11 @@ namespace UECda{
         return res;
     }
     
-    template<int N = 1, class dice64_t>
-    inline Cards pickRand(const Cards c, dice64_t *const dice){
+    template <int N = 1, class dice64_t>
+    inline Cards pickRand(const Cards c, dice64_t *const dice) {
         static_assert(N >= 0, " pickRand N < 0 ");
         Cards res;
-        switch (N){
+        switch (N) {
             case 0: res = CARDS_NULL; break;
             case 1: res = pick1Bit64(c, dice); break;
             case 2: res = pickNBits64(c, 2, countCards(c) - 2, dice); break;
@@ -916,14 +915,14 @@ namespace UECda{
     }
     
     // n番目(nは1から)に高い,低いもの
-    inline Cards pickNthHigh(Cards c, int n)noexcept{
+    inline Cards pickNthHigh(Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
         return NthHighestBit(c, n);
     }
     
-    inline Cards pickNthLow(Cards c, int n)noexcept{
+    inline Cards pickNthLow(Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
@@ -931,14 +930,14 @@ namespace UECda{
     }
     
     // n番目(nは1から)に高い,低いもの以外
-    inline Cards maskNthHigh(Cards c, int n)noexcept{
+    inline Cards maskNthHigh(Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
         return subtrCards(c, pickNthHigh(c, n));
     }
     
-    inline Cards maskNthLow(Cards c, int n)noexcept{
+    inline Cards maskNthLow(Cards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
@@ -948,68 +947,68 @@ namespace UECda{
     // 基準c1より高い、低い(同じは含まず)もの
     
     // 単体。変なカードも入るが...
-    inline Cards pickHigher(Cards c1)noexcept{
+    inline Cards pickHigher(Cards c1) {
         return allHigherBits(c1);
     }
     
-    inline Cards pickLower(Cards c1)noexcept{
+    inline Cards pickLower(Cards c1) {
         return allLowerBits(c1);
     }
     
-    inline Cards pickHigher(Cards c0, Cards c1)noexcept{
+    inline Cards pickHigher(Cards c0, Cards c1) {
         return c0 & allHigherBits(c1);
     }
     
-    inline Cards pickLower(Cards c0, Cards c1)noexcept{
+    inline Cards pickLower(Cards c0, Cards c1) {
         return c0 & allLowerBits(c1);
     }
     
     // 基準c1より高い、低い(同じは含まず)もの以外
-    inline Cards maskHigher(Cards c0, Cards c1)noexcept{
+    inline Cards maskHigher(Cards c0, Cards c1) {
         return c0 & ~allHigherBits(c1);
     }
     
-    inline Cards maskLower(Cards c0, Cards c1)noexcept{
+    inline Cards maskLower(Cards c0, Cards c1) {
         return c0 & ~allLowerBits(c1);
     }
     
     // 基準としてランクを用いる場合
-    inline constexpr BitCards higherMask(Rank r)noexcept{
+    inline constexpr BitCards higherMask(Rank r) {
         return ~((1ULL << ((r + 1) * 4)) - 1ULL);
     }
-    inline constexpr BitCards lowerMask(Rank r)noexcept{
+    inline constexpr BitCards lowerMask(Rank r) {
         return (1ULL << (r * 4)) - 1ULL;
     }
-    inline constexpr BitCards strongerMask(Rank r, Order ord)noexcept{
+    inline constexpr BitCards strongerMask(Rank r, Order ord) {
         return ord == ORDER_NORMAL ? higherMask(r) : lowerMask(r);
     }
-    inline constexpr BitCards weakerMask(Rank r, Order ord)noexcept{
+    inline constexpr BitCards weakerMask(Rank r, Order ord) {
         return ord == ORDER_NORMAL ? lowerMask(r) : higherMask(r);
     }
 
     // ランク重合
     // ランクを１つずつ下げてandを取るのみ(ジョーカーとかその辺のことは何も考えない)
     // 階段判定に役立つ
-    template<int N = 3>
-    inline Cards polymRanks(const Cards c){
+    template <int N = 3>
+    inline Cards polymRanks(const Cards c) {
         static_assert(N >= 0, "polymRanks<>()");
         return ((c >> ((N - 1) << 2)) & polymRanks<N - 1>(c));
     }
         
-    template<>inline constexpr Cards polymRanks<1>(const Cards c){ return c; }
-    template<>inline constexpr Cards polymRanks<0>(const Cards c){ return CARDS_NULL; }
+    template <> inline constexpr Cards polymRanks<1>(const Cards c) { return c; }
+    template <> inline constexpr Cards polymRanks<0>(const Cards c) { return CARDS_NULL; }
         
-    inline Cards polymRanks(Cards c, uint32_t num){ // 重合数が変数の場合
+    inline Cards polymRanks(Cards c, uint32_t num) { // 重合数が変数の場合
         assert(num > 0);
         --num;
-        while (num){
+        while (num) {
             c = polymRanks<2>(c);
             --num;
         }
         return c;
      }
         
-    inline Cards polymRanks_PR(Cards c, uint32_t arg, uint32_t dst){
+    inline Cards polymRanks_PR(Cards c, uint32_t arg, uint32_t dst) {
         // 既にargランク重合が成された状態から、より高次のdstランク重合結果を得る
         assert(arg > 0);
         assert(dst > 0);
@@ -1017,70 +1016,70 @@ namespace UECda{
         return polymRanks(c, dst - arg + 1U);
     }
         
-    inline constexpr Cards polymJump(const Cards c)noexcept{ // 1ランクとばし
+    inline constexpr Cards polymJump(const Cards c) { // 1ランクとばし
         return c & (c >> 8);
     }
         
     // ランク展開
     // ランクを１つずつ上げてorをとるのが基本だが、
     // 4以上の場合は倍々で増やしていった方が少ない命令で済む
-    template<int N = 3>
-    inline Cards extractRanks(const Cards c)noexcept{
+    template <int N = 3>
+    inline Cards extractRanks(const Cards c) {
         return ((c << ((N - 1) << 2)) | extractRanks<N - 1>(c));
     }
         
-    template<>inline constexpr Cards extractRanks<0>(const Cards c)noexcept{ return CARDS_NULL; }
-    template<>inline constexpr Cards extractRanks<1>(const Cards c)noexcept{ return c; }
-    template<>inline constexpr Cards extractRanks<2>(const Cards c)noexcept{ return c | (c << 4); }
-    template<>inline constexpr Cards extractRanks<3>(const Cards c)noexcept{ return c | (c << 4) | (c << 8); }
-    template<>inline Cards extractRanks<4>(const Cards c)noexcept{
+    template <> inline constexpr Cards extractRanks<0>(const Cards c) { return CARDS_NULL; }
+    template <> inline constexpr Cards extractRanks<1>(const Cards c) { return c; }
+    template <> inline constexpr Cards extractRanks<2>(const Cards c) { return c | (c << 4); }
+    template <> inline constexpr Cards extractRanks<3>(const Cards c) { return c | (c << 4) | (c << 8); }
+    template <> inline Cards extractRanks<4>(const Cards c) {
         Cards r = c | (c << 4);
         return r | (r << 8);
     }
-    template<>inline Cards extractRanks<5>(const Cards c)noexcept{
+    template <> inline Cards extractRanks<5>(const Cards c) {
         Cards r = c | (c << 4);
         return r | (c << 8) | (r << 12);
     }
         
-    Cards extractRanks(Cards c, uint32_t num)noexcept{ // 展開数が変数の場合
+    Cards extractRanks(Cards c, uint32_t num) { // 展開数が変数の場合
         assert(num > 0);
-        for (int n = num - 1U; n; --n){
+        for (int n = num - 1U; n; --n) {
             c = extractRanks<2>(c);
         }
         return c;
     }
     
-    Cards polymRanksWithJOKER(const Cards c, int qty)noexcept{
+    Cards polymRanksWithJOKER(const Cards c, int qty) {
         Cards r;
-        switch(qty){
+        switch (qty) {
             case 0: r = CARDS_NULL; break;
             case 1: r = CARDS_ALL; break;
             case 2: r = c; break;
-            case 3:{
+            case 3: {
                 Cards d = c & (c >> 4);
                 r = (d | (d >> 4)) | (c & (c >> 8));
-            }break;
-            case 4:{
+            } break;
+            case 4: {
                 
                 Cards d = c & (c >> 4);
                 Cards f = (d & (c >> 12)) | (c & (d >> 8)); // 1 + 2パターン
                 Cards e = d & (c >> 8); // 3連パターン
-                if(e){ f |= e | (e >> 4); }
+                if (e) { f |= e | (e >> 4); }
                 r = f;
-            }break;
-            case 5:{
+            } break;
+            case 5: {
                 Cards d = c & (c >> 4);
                 Cards g = d | (d >> 12); // 2 + 2パターン
                 Cards e = d & (c >> 8); // 3連
-                if(e){
+                if (e) {
                     g |= (e & (c >> 16)) | (c & (e >> 8)); // 1 + 3パターン
                     Cards f = e & (c >> 12);
-                    if(f){
+                    if (f) {
                         g |= (f | (f >> 4)); // 4連パターン
                     }
                 }
                 r = g;
-            }break;
+            } break;
             default: r = CARDS_NULL; break;
         }
         return r;
@@ -1092,30 +1091,30 @@ namespace UECda{
     // ジョーカーがあるか(JK)は重要な情報なので、テンプレートで分岐可能とする(通常は_BOTH)
     // 特に階段においてn枚階段判定は出されている状態でm枚判定を出すような状況にも対応が必要
     
-    template<int JK = _BOTH>Cards canMakeNJ2Seq(Cards c){ return JK; }
-    template<int JK = _BOTH>Cards canMakeJ2Seq(Cards c);
-    template<int JK = _BOTH>Cards canMake2Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeNJ2Seq(Cards c) { return JK; }
+    template <int JK = _BOTH> Cards canMakeJ2Seq(Cards c);
+    template <int JK = _BOTH> Cards canMake2Seq(Cards c);
     
-    template<int JK = _BOTH>Cards canMakeNJ3Seq(Cards c);
-    template<int JK = _BOTH>Cards canMakeJ3Seq(Cards c);
-    template<int JK = _BOTH>Cards canMake3Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeNJ3Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeJ3Seq(Cards c);
+    template <int JK = _BOTH> Cards canMake3Seq(Cards c);
     
-    template<int JK = _BOTH>Cards canMakeNJ4Seq(Cards c);
-    template<int JK = _BOTH>Cards canMakeJ4Seq(Cards c);
-    template<int JK = _BOTH>Cards canMake4Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeNJ4Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeJ4Seq(Cards c);
+    template <int JK = _BOTH> Cards canMake4Seq(Cards c);
     
-    template<int JK = _BOTH>Cards canMakeNJ5Seq(Cards c);
-    template<int JK = _BOTH>Cards canMakeJ5Seq(Cards c);
-    template<int JK = _BOTH>Cards canMake5Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeNJ5Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeJ5Seq(Cards c);
+    template <int JK = _BOTH> Cards canMake5Seq(Cards c);
     
-    template<int JK = _BOTH>Cards canMakeNJ6Seq(Cards c);
-    template<int JK = _BOTH>Cards canMakeJ6Seq(Cards c);
-    template<int JK = _BOTH>Cards canMake6Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeNJ6Seq(Cards c);
+    template <int JK = _BOTH> Cards canMakeJ6Seq(Cards c);
+    template <int JK = _BOTH> Cards canMake6Seq(Cards c);
     
-    template<int JK = _BOTH>
-    Cards canMakePlainSeq(Cards c, int qty){
+    template <int JK = _BOTH>
+    Cards canMakePlainSeq(Cards c, int qty) {
         Cards res;
-        switch(qty){
+        switch (qty) {
             case 0: res = CARDS_NULL; break;
             case 1: res = maskJOKER(c); break;
             case 2: res = canMakeNJ2Seq<JK>(c); break;
@@ -1126,10 +1125,10 @@ namespace UECda{
         }
         return res;
     }
-    template<int JK = _BOTH>
-    Cards canMakeJokerSeq(Cards c, int qty){
+    template <int JK = _BOTH>
+    Cards canMakeJokerSeq(Cards c, int qty) {
         Cards res;
-        switch(qty){
+        switch (qty) {
             case 0: res = CARDS_NULL; break;
             case 1: UNREACHABLE; res = c & CARDS_JOKER; break;
             case 2: res = canMakeJ2Seq<JK>(c); break;
@@ -1140,10 +1139,10 @@ namespace UECda{
         }
         return res;
     }
-    template<int JK = _BOTH>
-    Cards canMakeSeq(Cards c, int qty){
+    template <int JK = _BOTH>
+    Cards canMakeSeq(Cards c, int qty) {
         Cards res;
-        switch (qty){
+        switch (qty) {
             case 0: res = CARDS_NULL; break;
             case 1: res = c; break;
             case 2: res = canMake2Seq<JK>(c); break;
@@ -1155,91 +1154,91 @@ namespace UECda{
         return res;
     }
     
-    template<int QTY = 3, int JK = _BOTH>
-    Cards canMakeNJSeq(Cards c){ return canMakeNJSeq<JK>(c, QTY); }
-    template<int QTY = 3, int JK = _BOTH>
-    Cards canMakeJSeq(Cards c){ return canMakeJSeq<JK>(c, QTY); }
-    template<int QTY = 3, int JK = _BOTH>
-    Cards canMakeSeq(Cards c){ return canMakeSeq<JK>(c, QTY); }
+    template <int QTY = 3, int JK = _BOTH>
+    Cards canMakeNJSeq(Cards c) { return canMakeNJSeq<JK>(c, QTY); }
+    template <int QTY = 3, int JK = _BOTH>
+    Cards canMakeJSeq(Cards c) { return canMakeJSeq<JK>(c, QTY); }
+    template <int QTY = 3, int JK = _BOTH>
+    Cards canMakeSeq(Cards c) { return canMakeSeq<JK>(c, QTY); }
     
     // 2seq
-    template<>Cards canMakeNJ2Seq<0>(Cards c){ return c & (c >> 4); }
-    template<>Cards canMakeNJ2Seq<1>(Cards c){
+    template <> Cards canMakeNJ2Seq<0>(Cards c) { return c & (c >> 4); }
+    template <> Cards canMakeNJ2Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return canMakeNJ2Seq<0>(nj);
     }
-    template<>Cards canMakeNJ2Seq<2>(Cards c){ return canMakeNJ2Seq<1>(c); }
+    template <> Cards canMakeNJ2Seq<2>(Cards c) { return canMakeNJ2Seq<1>(c); }
     
-    template<>Cards canMakeJ2Seq<0>(Cards c){ return CARDS_NULL; }
-    template<>Cards canMakeJ2Seq<1>(Cards c){
+    template <> Cards canMakeJ2Seq<0>(Cards c) { return CARDS_NULL; }
+    template <> Cards canMakeJ2Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return anyCards(nj);
     }
-    template<>Cards canMakeJ2Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMakeJ2Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMakeJ2Seq<1>(c);
-        }else{
+        } else {
             return canMakeJ2Seq<0>(c);
         }
     }
     
-    template<>Cards canMake2Seq<0>(Cards c){ return canMakeNJ2Seq<0>(c); }
-    template<>Cards canMake2Seq<1>(Cards c){ return canMakeJ2Seq<1>(c); }
-    template<>Cards canMake2Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMake2Seq<0>(Cards c) { return canMakeNJ2Seq<0>(c); }
+    template <> Cards canMake2Seq<1>(Cards c) { return canMakeJ2Seq<1>(c); }
+    template <> Cards canMake2Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMake2Seq<1>(c);
-        }else{
+        } else {
             return canMakeNJ2Seq<0>(c);
         }
     }
     
     // 3seq
-    template<>Cards canMakeNJ3Seq<0>(Cards c){ return c&(c >> 4)&(c >> 8); }
-    template<>Cards canMakeNJ3Seq<1>(Cards c){
+    template <> Cards canMakeNJ3Seq<0>(Cards c) { return c&(c >> 4)&(c >> 8); }
+    template <> Cards canMakeNJ3Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return canMakeNJ3Seq<0>(nj);
     }
-    template<>Cards canMakeNJ3Seq<2>(Cards c){ return canMakeNJ3Seq<1>(c); }
+    template <> Cards canMakeNJ3Seq<2>(Cards c) { return canMakeNJ3Seq<1>(c); }
     
-    template<>Cards canMakeJ3Seq<0>(Cards c){ return CARDS_NULL; }
-    template<>Cards canMakeJ3Seq<1>(Cards c){
+    template <> Cards canMakeJ3Seq<0>(Cards c) { return CARDS_NULL; }
+    template <> Cards canMakeJ3Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return (nj & (nj >> 4)) | (nj & (nj >> 8));
     }
-    template<>Cards canMakeJ3Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMakeJ3Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMakeJ3Seq<1>(c);
-        }else{
+        } else {
             return canMakeJ3Seq<0>(c);
         }
     }
     
-    template<>Cards canMake3Seq<0>(Cards c){ return canMakeNJ3Seq<0>(c); }
-    template<>Cards canMake3Seq<1>(Cards c){ return canMakeJ3Seq<1>(c); }
-    template<>Cards canMake3Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMake3Seq<0>(Cards c) { return canMakeNJ3Seq<0>(c); }
+    template <> Cards canMake3Seq<1>(Cards c) { return canMakeJ3Seq<1>(c); }
+    template <> Cards canMake3Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMake3Seq<1>(c);
-        }else{
+        } else {
             return canMakeNJ3Seq<0>(c);
         }
     }
     
     // 4seq
-    template<>Cards canMakeNJ4Seq<0>(Cards c){ return c&(c >> 4)&(c >> 8)&(c >> 12); }
-    template<>Cards canMakeNJ4Seq<1>(Cards c){
+    template <> Cards canMakeNJ4Seq<0>(Cards c) { return c&(c >> 4)&(c >> 8)&(c >> 12); }
+    template <> Cards canMakeNJ4Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return canMakeNJ4Seq<0>(nj);
     }
-    template<>Cards canMakeNJ4Seq<2>(Cards c){ return canMakeNJ4Seq<1>(c); }
+    template <> Cards canMakeNJ4Seq<2>(Cards c) { return canMakeNJ4Seq<1>(c); }
     
-    template<>Cards canMakeJ4Seq<0>(Cards c){ return CARDS_NULL; }
-    template<>Cards canMakeJ4Seq<1>(Cards c){
+    template <> Cards canMakeJ4Seq<0>(Cards c) { return CARDS_NULL; }
+    template <> Cards canMakeJ4Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         Cards c12 = nj & (nj >> 4), c3 = nj >> 8, c4 = nj >> 12;
         return (c12 & c3) | (c12 & c4) | (nj & c3 & c4);
     }
-    template<>Cards canMakeJ4Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMakeJ4Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMakeJ4Seq<1>(c);
         }
         else{
@@ -1247,10 +1246,10 @@ namespace UECda{
         }
     }
     
-    template<>Cards canMake4Seq<0>(Cards c){ return canMakeNJ4Seq<0>(c); }
-    template<>Cards canMake4Seq<1>(Cards c){ return canMakeJ4Seq<1>(c); }
-    template<>Cards canMake4Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMake4Seq<0>(Cards c) { return canMakeNJ4Seq<0>(c); }
+    template <> Cards canMake4Seq<1>(Cards c) { return canMakeJ4Seq<1>(c); }
+    template <> Cards canMake4Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMake4Seq<1>(c);
         }
         else{
@@ -1259,44 +1258,44 @@ namespace UECda{
     }
     
     // 5seq
-    template<>Cards canMakeNJ5Seq<0>(Cards c){ return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16); }
-    template<>Cards canMakeNJ5Seq<1>(Cards c){
+    template <> Cards canMakeNJ5Seq<0>(Cards c) { return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16); }
+    template <> Cards canMakeNJ5Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return canMakeNJ5Seq<0>(nj);
     }
-    template<>Cards canMakeNJ5Seq<2>(Cards c){ return canMakeNJ5Seq<1>(c); }
+    template <> Cards canMakeNJ5Seq<2>(Cards c) { return canMakeNJ5Seq<1>(c); }
     
-    template<>Cards canMakeJ5Seq<0>(Cards c){ return CARDS_NULL; }
-    template<>Cards canMakeJ5Seq<1>(Cards c){
+    template <> Cards canMakeJ5Seq<0>(Cards c) { return CARDS_NULL; }
+    template <> Cards canMakeJ5Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         Cards c12 = nj & (nj >> 4), c3 = nj >> 8, c4 = nj >> 12, c5 = nj >> 16, c45 = c4 & c5;
         return (c12 & c3 & c4) | (c12 & c3 & c5) | (c12 & c45) | (nj & c3 & c45);
     }
-    template<>Cards canMakeJ5Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMakeJ5Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMakeJ5Seq<1>(c);
-        }else{
+        } else {
             return canMakeJ5Seq<0>(c);
         }
     }
     
-    template<>Cards canMake5Seq<0>(Cards c){ return canMakeNJ5Seq<0>(c); }
-    template<>Cards canMake5Seq<1>(Cards c){ return canMakeJ5Seq<1>(c); }
-    template<>Cards canMake5Seq<2>(Cards c){
-        if(containsJOKER(c)){
+    template <> Cards canMake5Seq<0>(Cards c) { return canMakeNJ5Seq<0>(c); }
+    template <> Cards canMake5Seq<1>(Cards c) { return canMakeJ5Seq<1>(c); }
+    template <> Cards canMake5Seq<2>(Cards c) {
+        if (containsJOKER(c)) {
             return canMake5Seq<1>(c);
-        }else{
+        } else {
             return canMakeNJ5Seq<0>(c);
         }
     }
     
     // 6seq
-    template<>Cards canMakeNJ6Seq<0>(Cards c){ return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16) & (c >> 20); }
-    template<>Cards canMakeNJ6Seq<1>(Cards c){
+    template <> Cards canMakeNJ6Seq<0>(Cards c) { return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16) & (c >> 20); }
+    template <> Cards canMakeNJ6Seq<1>(Cards c) {
         Cards nj = maskJOKER(c);
         return canMakeNJ6Seq<0>(nj);
     }
-    template<>Cards canMakeNJ6Seq<2>(Cards c){ return canMakeNJ6Seq<1>(c); }
+    template <> Cards canMakeNJ6Seq<2>(Cards c) { return canMakeNJ6Seq<1>(c); }
     
     //uint32_t removeAllGroups(Cards c)
    
@@ -1304,9 +1303,9 @@ namespace UECda{
     // 支配性の判定のため、合法着手がカード集合表現のどこに存在しうるかを計算
     
     // グループ版（ジョーカーを除けばシングルも一緒）
-    inline Cards ORSToGValidZone(int ord, uint32_t rank, uint32_t suits)noexcept{
+    inline Cards ORSToGValidZone(int ord, uint32_t rank, uint32_t suits) {
         Cards res;
-        switch(ord){
+        switch (ord) {
             case 0: res = RRSToCards(rank + 1, RANK_MAX, suits); break;
             case 1: res = RRSToCards(RANK_MIN, rank - 1, suits); break;
             case 2: res = subtrCards(RRSToCards(RANK_MIN, RANK_MAX, suits), RankSuitsToCards(rank, suits)); break;
@@ -1315,9 +1314,9 @@ namespace UECda{
         return res;
     }
     
-    inline Cards ORToGValidZone(int ord, uint32_t rank)noexcept{ // ランク限定のみ
+    inline Cards ORToGValidZone(int ord, uint32_t rank) { // ランク限定のみ
         Cards res;
-        switch(ord){
+        switch (ord) {
             case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
             case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
             case 2: res = subtrCards(RankRangeToCards(RANK_MIN, RANK_MAX), RankToCards(rank)); break;
@@ -1327,9 +1326,9 @@ namespace UECda{
     }
     
     // 階段版
-    inline Cards ORSQToSCValidZone(int ord, uint32_t rank, uint32_t suits, int qty)noexcept{
+    inline Cards ORSQToSCValidZone(int ord, uint32_t rank, uint32_t suits, int qty) {
         Cards res;
-        switch(ord){
+        switch (ord) {
             case 0: res = RRSToCards(rank + qty, RANK_MAX, suits); break;
             case 1: res = RRSToCards(RANK_MIN, rank - 1, suits); break;
             case 2: res = addCards(RRSToCards(RANK_MIN, rank - 1, suits),
@@ -1339,9 +1338,9 @@ namespace UECda{
         return res;
     }
     
-    inline Cards ORQToSCValidZone(int ord, uint32_t rank, int qty)noexcept{ // ランク限定のみ
+    inline Cards ORQToSCValidZone(int ord, uint32_t rank, int qty) { // ランク限定のみ
         Cards res;
-        switch(ord){
+        switch (ord) {
             case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
             case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
             case 2: res = addCards(RankRangeToCards(RANK_MIN, rank - 1),
@@ -1354,54 +1353,54 @@ namespace UECda{
     // 許容包括
     // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
     // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
-    bool isValidGroupRank(int mvRank, int order, int bdRank)noexcept{
-        if(order == ORDER_NORMAL){
+    bool isValidGroupRank(int mvRank, int order, int bdRank) {
+        if (order == ORDER_NORMAL) {
             return mvRank > bdRank;
-        }else{
+        } else {
             return mvRank < bdRank;
         }
     }
     
-    bool isValidSeqRank(int mvRank, int order, int bdRank, int qty)noexcept{
-        if(order == ORDER_NORMAL){
+    bool isValidSeqRank(int mvRank, int order, int bdRank, int qty) {
+        if (order == ORDER_NORMAL) {
             return mvRank >= (bdRank + qty);
-        }else{
+        } else {
             return mvRank <= (bdRank - qty);
         }
     }
     
     // 枚数オンリーによる許容包括
-    Cards seqExistableZone(uint32_t qty){
+    Cards seqExistableZone(uint32_t qty) {
         return RankRangeToCards(RANK_IMG_MIN, RANK_IMG_MAX + 1 - qty);
     }
     
     // 出力用クラス
-    struct OutCards{
+    struct OutCards {
         BitCards c;
-        constexpr OutCards(const BitCards& arg) :c(arg){}
+        constexpr OutCards(const BitCards& arg) :c(arg) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const OutCards& arg){
+    std::ostream& operator <<(std::ostream& out, const OutCards& arg) {
         assert(holdsCards(CARDS_IMG_ALL, arg.c));
         out << "{";
         BitCards tmp = arg.c;
-        while(anyCards(tmp)){
+        while(anyCards(tmp)) {
             out << " " << OutIntCard(popIntCardLow(&tmp));
         }
         out << " }";
         return out;
     }
     
-    struct OutCardsM{
+    struct OutCardsM {
         Cards c;
-        constexpr OutCardsM(const Cards& arg) :c(arg){}
+        constexpr OutCardsM(const Cards& arg) :c(arg) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const OutCardsM& arg){
+    std::ostream& operator <<(std::ostream& out, const OutCardsM& arg) {
         assert(holdsCards(CARDS_IMG_ALL, arg.c));
         out << "{";
         Cards tmp = arg.c;
-        while(anyCards(tmp)){
+        while(anyCards(tmp)) {
             out << " " << OutIntCardM(popIntCardLow(&tmp));
         }
         out << " }";
@@ -1409,32 +1408,32 @@ namespace UECda{
     }
     
     // テーブル形式で出力
-    struct OutCardTable{
+    struct OutCardTable {
         BitCards c;
-        OutCardTable(const BitCards& ac) : c(ac){}
+        OutCardTable(const BitCards& ac) : c(ac) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const OutCardTable& arg){
+    std::ostream& operator <<(std::ostream& out, const OutCardTable& arg) {
         // テーブル形式で見やすく
         BitCards c = arg.c;
         out << " ";
-        for (int r = RANK_3; r <= RANK_2; ++r){
+        for (int r = RANK_3; r <= RANK_2; ++r) {
             out << " " << OutRank(r);
         }
         out << " " << "X" << endl;
-        for(int sn = 0; sn < 4; ++sn){
+        for (int sn = 0; sn < 4; ++sn) {
             out << OutSuitNum(sn) << " ";
-            for (int r = RANK_3; r <= RANK_2; ++r){
-                if(containsCard(c, RankSuitsToCards(r, SuitNumToSuits(sn)))){
+            for (int r = RANK_3; r <= RANK_2; ++r) {
+                if (containsCard(c, RankSuitsToCards(r, SuitNumToSuits(sn)))) {
                     out << "O ";
-                }else{
+                } else {
                     out << ". ";
                 }
             }
-            if(sn == 0){
-                if(containsJOKER(c)){
+            if (sn == 0) {
+                if (containsJOKER(c)) {
                     out << "O ";
-                }else{
+                } else {
                     out << ". ";
                 }
             }
@@ -1443,42 +1442,42 @@ namespace UECda{
         return out;
     }
     
-    struct Out2CardTables{
+    struct Out2CardTables {
         BitCards c0, c1;
-        Out2CardTables(const BitCards& ac0, const BitCards& ac1) : c0(ac0), c1(ac1){}
+        Out2CardTables(const BitCards& ac0, const BitCards& ac1) : c0(ac0), c1(ac1) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const Out2CardTables& arg){
+    std::ostream& operator <<(std::ostream& out, const Out2CardTables& arg) {
         // テーブル形式で見やすく
         // ２つを横並びで表示
         BitCards c[2] = { arg.c0, arg.c1 };
-        for(int i = 0; i < 2; ++i){
+        for (int i = 0; i < 2; ++i) {
             out << " ";
-            for (int r = RANK_3; r <= RANK_2; ++r){
+            for (int r = RANK_3; r <= RANK_2; ++r) {
                 out << " " << OutRank(r);
             }
             out << " " << "X";
             out << "    ";
         }
         out << endl;
-        for(int sn = 0; sn < N_SUITS; ++sn){
-            for(int i = 0; i < 2; ++i){
+        for (int sn = 0; sn < N_SUITS; ++sn) {
+            for (int i = 0; i < 2; ++i) {
                 out << OutSuitNum(sn) << " ";
-                for (int r = RANK_3; r <= RANK_2; ++r){
-                    if(containsCard(c[i], RankSuitsToCards(r, SuitNumToSuits(sn)))){
+                for (int r = RANK_3; r <= RANK_2; ++r) {
+                    if (containsCard(c[i], RankSuitsToCards(r, SuitNumToSuits(sn)))) {
                         out << "O ";
-                    }else{
+                    } else {
                         out << ". ";
                     }
                 }
-                if(sn == 0){
-                    if(containsJOKER(c[i])){
+                if (sn == 0) {
+                    if (containsJOKER(c[i])) {
                         out << "O ";
-                    }else{
+                    } else {
                         out << ". ";
                     }
                     out << "   ";
-                }else{
+                } else {
                     out << "     ";
                 }
             }
@@ -1488,25 +1487,25 @@ namespace UECda{
     }
 
     // イテレーション
-    template<typename callback_t>
-    void iterateIntCard(BitCards c, const callback_t& callback){
-        while(anyCards(c)){
+    template <typename callback_t>
+    void iterateIntCard(BitCards c, const callback_t& callback) {
+        while(anyCards(c)) {
             IntCard ic = popIntCard(&c);
             callback(ic);
         }
     }
-    template<typename callback_t>
-    void iterateCard(BitCards c, const callback_t& callback){
-        while(anyCards(c)){
+    template <typename callback_t>
+    void iterateCard(BitCards c, const callback_t& callback) {
+        while(anyCards(c)) {
             Cards tc = pop(&c);
             callback(tc);
         }
     }
     
-    template<class cards_buf_t, typename callback_t>
-    int searchCards(const cards_buf_t *const buf, const int n, const callback_t& callback)noexcept{
-        for(int m = 0; m < n; ++m){
-            if(callback(buf[m])){ return m; }
+    template <class cards_buf_t, typename callback_t>
+    int searchCards(const cards_buf_t *const buf, const int n, const callback_t& callback) {
+        for (int m = 0; m < n; ++m) {
+            if (callback(buf[m])) { return m; }
         }
         return -1;
     }
@@ -1549,58 +1548,58 @@ namespace UECda{
     constexpr BitCards PQR_1234 = CARDS_IMG_ALL_PLAIN & 0xffffffffffffffff;
     
     // 定義通りの関数
-    inline Cards QtyToPQR(uint32_t q){
+    inline Cards QtyToPQR(uint32_t q) {
         return PQR_1 << (q - 1);
     }
     
-    BitArray64<4, 16> CardsToQR_slow(BitCards c)noexcept{
+    BitArray64<4, 16> CardsToQR_slow(BitCards c) {
         BitArray64<4, 16> ret = 0;
-        for(int r = RANK_U; r <= RANK_O; ++r){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
             ret.set(r, countCards(RankToCards(r) & c));
         }
         return ret.data();
     }
-    BitArray64<4, 16> CardsToENR_slow(BitCards c, int n)noexcept{
+    BitArray64<4, 16> CardsToENR_slow(BitCards c, int n) {
         BitArray64<4, 16> ret = 0;
-        for(int r = RANK_U; r <= RANK_O; ++r){
-            if(countCards(c & RankToCards(r)) >= n){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
+            if (countCards(c & RankToCards(r)) >= n) {
                 ret.set(r, 1);
             }
         }
         return ret.data();
     }
-    BitArray64<4, 16> CardsToNR_slow(BitCards c, int n)noexcept{
+    BitArray64<4, 16> CardsToNR_slow(BitCards c, int n) {
         BitArray64<4, 16> ret = 0;
-        for(int r = RANK_U; r <= RANK_O; ++r){
-            if(countCards(c & RankToCards(r)) == n){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
+            if (countCards(c & RankToCards(r)) == n) {
                 ret.set(r, 1);
             }
         }
         return ret.data();
     }
-    BitCards QRToPQR_slow(BitArray64<4, 16> qr)noexcept{
+    BitCards QRToPQR_slow(BitArray64<4, 16> qr) {
         BitArray64<4, 16> arr = qr;
         BitArray64<4, 16> ret = CARDS_NULL;
-        for(int r = RANK_U; r <= RANK_O; ++r){
-            if(arr[r]){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
+            if (arr[r]) {
                 ret.set(r, 1 << (arr[r] - 1));
             }
         }
         return ret.data();
     }
-    BitCards QRToSC_slow(BitArray64<4, 16> qr)noexcept{
+    BitCards QRToSC_slow(BitArray64<4, 16> qr) {
         BitArray64<4, 16> arr = qr;
         BitArray64<4, 16> ret = CARDS_NULL;
-        for(int r = RANK_U; r <= RANK_O; ++r){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
             ret.set(r, (1 << arr[r]) - 1);
         }
         return ret.data();
     }
-    BitCards PQRToSC_slow(BitArray64<4, 16> qr)noexcept{
+    BitCards PQRToSC_slow(BitArray64<4, 16> qr) {
         BitArray64<4, 16> arr = qr;
         BitArray64<4, 16> ret = CARDS_NULL;
-        for(int r = RANK_U; r <= RANK_O; ++r){
-            if(arr[r]){
+        for (int r = RANK_U; r <= RANK_O; ++r) {
+            if (arr[r]) {
                 uint32_t q = bsf(arr[r]) + 1;
                 ret.set(r, (1 << q) - 1);
             }
@@ -1609,39 +1608,39 @@ namespace UECda{
     }
     
     // パラレル演算関数
-    inline BitArray64<4, 16> CardsToQR(const BitCards c)noexcept{
+    inline BitArray64<4, 16> CardsToQR(const BitCards c) {
         // 枚数が各4ビットに入る
         BitCards a = (c & PQR_13) + ((c >> 1) & PQR_13);
         return (a & PQR_12) + ((a >> 2) & PQR_12);
     }
-    inline BitCards CardsToFR(const BitCards c)noexcept{
+    inline BitCards CardsToFR(const BitCards c) {
         // ランク中の4ビット全てあればPQR_1の位置にビットが立つ
         BitCards a = c & (c >> 1);
         return a & (a >> 2) & PQR_1;
     }
-    inline BitCards CardsTo3R(const BitCards c)noexcept{
+    inline BitCards CardsTo3R(const BitCards c) {
         // ランク中に丁度3ビットあればPQR_1の位置にビットが立つ
         BitCards ab_cd = c & (c >> 1);
         BitCards axb_cxd = c ^ (c >> 1);
         return ((ab_cd & (axb_cxd >> 2)) | ((ab_cd >> 2) & axb_cxd)) & PQR_1;
     }
-    inline BitCards CardsTo2R(const BitCards c)noexcept{
+    inline BitCards CardsTo2R(const BitCards c) {
         // ランク中に丁度2ビットあればPQR_1の位置にビットが立つ
         BitCards qr = CardsToQR(c);
         return (qr >> 1) & ~qr & PQR_1;
     }
-    inline BitCards CardsTo1R(const BitCards c)noexcept{
+    inline BitCards CardsTo1R(const BitCards c) {
         // ランク中に丁度1ビットあればPQR_1の位置にビットが立つ
         return CardsTo3R(~c);
     }
-    inline BitCards CardsTo0R(const BitCards c)noexcept{
+    inline BitCards CardsTo0R(const BitCards c) {
         // ランク中に1ビットもなければPQR_1の位置にビットが立つ
         return CardsToFR(~c);
     }
         
-    inline BitCards CardsToNR(const BitCards c, int q)noexcept{
+    inline BitCards CardsToNR(const BitCards c, int q) {
         Cards nr;
-        switch(q){
+        switch (q) {
             case 0: nr = CardsTo0R(c); break;
             case 1: nr = CardsTo1R(c); break;
             case 2: nr = CardsTo2R(c); break;
@@ -1652,13 +1651,13 @@ namespace UECda{
         return nr;
     }
         
-    inline BitCards CardsToER(const BitCards c)noexcept{
+    inline BitCards CardsToER(const BitCards c) {
         // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
         BitCards a = c | (c >> 1);
         return (a | (a >> 2)) & PQR_1;
     }
     
-    inline BitCards CardsToPQR(const BitCards arg)noexcept{
+    inline BitCards CardsToPQR(const BitCards arg) {
         // ランクごとの枚数を示す位置にビットが立つようにする
         // 2ビットごとの枚数を計算
         BitCards a = (arg & PQR_13) + ((arg >> 1) & PQR_13);
@@ -1670,16 +1669,16 @@ namespace UECda{
         
         // 残りは足すだけ。ただし3,4ビットがすでにあったところにはビットを置かない。
         BitCards r12 = ((a & PQR_12) + ((a >> 2) & PQR_12)) & PQR_12;
-        if(r3){
+        if (r3) {
             r |= r3;
             r |= ~((r3 >> 1) | (r3 >> 2)) & r12;
-        }else{
+        } else {
             r |= r12;
         }
         return r;
     }
     
-    inline BitCards QRToPQR(const BitArray64<4, 16> qr)noexcept{
+    inline BitCards QRToPQR(const BitArray64<4, 16> qr) {
         // qr -> pqr 変換
         const Cards iqr = ~qr;
         const Cards qr_l1 = (qr << 1);
@@ -1687,7 +1686,7 @@ namespace UECda{
         return r;
     }
     
-    inline BitCards PQRToSC(const BitCards pqr)noexcept{
+    inline BitCards PQRToSC(const BitCards pqr) {
         // pqr -> sc はビットを埋めていくだけ
         Cards r = pqr;
         r |= (r & PQR_234) >> 1;
@@ -1695,7 +1694,7 @@ namespace UECda{
         return r;
     }
     
-    inline void PQRToND(const BitCards pqr, uint32_t jk, Cards *const nd)noexcept{
+    inline void PQRToND(const BitCards pqr, uint32_t jk, Cards *const nd) {
         // pqr -> nd[2] 変換
         // ジョーカーの枚数の情報も必要
         assert(jk == 0 || jk == 1); // 0or1枚
@@ -1707,14 +1706,14 @@ namespace UECda{
         // 以降、tmpのビットの示す位置は実際にカードがあるランクよりずれている事に注意
         Cards tmp0 = pqr >> 4;
         Cards tmp1 = pqr << 4;
-        while(tmp0){ // 無支配ゾーンがまだ広いはず
+        while(tmp0) { // 無支配ゾーンがまだ広いはず
             IntCard ic = pickIntCardHigh(tmp0);
             int r = IntCardToRank(ic);
             int sn = IntCardToSuitNum(ic);
             nd[0] |= ORQ_NDTable[0][r][sn]; // このゾーンに対して返せることが確定
             tmp0 &= (~nd[0]); // もう関係なくなった部分は外す
         }
-        while(tmp1){ // 無支配ゾーンがまだ広いはず
+        while(tmp1) { // 無支配ゾーンがまだ広いはず
             IntCard ic = pickIntCardLow(tmp1);
             int r = IntCardToRank(ic);
             int sn = IntCardToSuitNum(ic);
@@ -1724,7 +1723,7 @@ namespace UECda{
         
         // ジョーカーがある場合は1枚分ずらして、全てのシングルを加える
         // 逆転オーダーの場合は+の4枚にフラグがある可能性があるのでマスクする
-        if(jk){
+        if (jk) {
             nd[0] <<= 1;
             nd[0] |= PQR_1;
             nd[1] &= PQR_123;
@@ -1734,9 +1733,9 @@ namespace UECda{
     }
 
     // 役の作成可能性判定
-    Cards canMakePlainGroup(Cards c, int q){
+    Cards canMakePlainGroup(Cards c, int q) {
         Cards ret;
-        switch(q){
+        switch (q) {
             case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする(canMakeGroupでジョーカーありの場合のため)
             case 1: ret = maskJOKER(c); break;
             case 2: ret = CardsToQR(c) & PQR_234; break;
@@ -1746,7 +1745,7 @@ namespace UECda{
         }
         return ret;
     }
-    Cards canMakeGroup(Cards c, int q){
+    Cards canMakeGroup(Cards c, int q) {
         return canMakePlainGroup(c, containsJOKER(c) ? (q - 1) : q);
     }
     
@@ -1754,21 +1753,21 @@ namespace UECda{
     // あるカード集合（スート限定がなされていてもよい）の中にn枚グループが作成可能かの判定
     // ただしジョーカーの分は最初から引いておく
     // 高速な処理には場合分けが必要か
-    inline bool judgeSuitComp(Cards c, int n){
-        if(c){
-            if(n == 1){
+    inline bool judgeSuitComp(Cards c, int n) {
+        if (c) {
+            if (n == 1) {
                 return true;
-            }else{
+            } else {
                 c = CardsToQR(c);
-                if(c & PQR_234){ // 2枚以上
-                    if(n == 2){
+                if (c & PQR_234) { // 2枚以上
+                    if (n == 2) {
                         return true;
-                    }else{
-                        if(c & PQR_34){ // 4枚
-                            if(n <= 4){ return true; }
-                        }else{
-                            if(((c & PQR_2) >> 1) & c){ // 3枚
-                                if(n == 3){ return true; }
+                    } else {
+                        if (c & PQR_34) { // 4枚
+                            if (n <= 4) { return true; }
+                        } else {
+                            if (((c & PQR_2) >> 1) & c) { // 3枚
+                                if (n == 3) { return true; }
                             }
                         }
                     }
@@ -1778,17 +1777,17 @@ namespace UECda{
         return false;
     }
 
-    void initCards(){
+    void initCards() {
         // カード集合関係の初期化
         
         // nd計算に使うテーブル
-        for(int r = 0; r < 16; ++r){
+        for (int r = 0; r < 16; ++r) {
             // オーダー通常
             ORQ_NDTable[0][r][0] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1;
             ORQ_NDTable[0][r][1] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_12;
             ORQ_NDTable[0][r][2] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_123;
             ORQ_NDTable[0][r][3] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-            for(int q = 4; q < 8; ++q){
+            for (int q = 4; q < 8; ++q) {
                 ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
             }
             // オーダー逆転
@@ -1796,15 +1795,15 @@ namespace UECda{
             ORQ_NDTable[1][r][1] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_12;
             ORQ_NDTable[1][r][2] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_123;
             ORQ_NDTable[1][r][3] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-            for(int q = 4; q < 8; ++q){
+            for (int q = 4; q < 8; ++q) {
                 ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
             }
             //複数ジョーカーには未対応
         }
     }
     
-    struct CardsInitializer{
-        CardsInitializer(){
+    struct CardsInitializer {
+        CardsInitializer() {
             initCards();
         }
     };
@@ -1813,91 +1812,91 @@ namespace UECda{
     
     /**************************カード集合表現(クラス版)**************************/
     
-    /*struct Cards : BitSet64{
+    /*struct Cards : public BitSet64 {
         
         // 定数
-        constexpr Cards() : BitSet64(){}
-        constexpr Cards(const BitCards ac) : BitSet64(ac){}
-        constexpr Cards(const Cards& ac) : BitSet64(ac.cards()){}
+        constexpr Cards() : BitSet64() {}
+        constexpr Cards(const BitCards ac) : BitSet64(ac) {}
+        constexpr Cards(const Cards& ac) : BitSet64(ac.cards()) {}
         
-        Cards& fill()noexcept{
+        Cards& fill() {
             set(CARDS_ALL);
         }
      
         // 生のBitCards型への変換
-        BitCards cards()const noexcept{ return static_cast<BitCards>(data()); }
-        BitCards& cards()noexcept{ return data(); }
+        BitCards cards() const { return static_cast<BitCards>(data()); }
+        BitCards& cards() { return data(); }
         
-        bool anyJOKER()const noexcept{ return anyJOKER(cards()); }
-        bool anyPlain()const noexcept{ return anyPlain(cards()); }
-        bool any()const noexcept{ return anyCards(cards()); }
-        bool any2()const noexcept{ return any2Cards(cards()); }
+        bool anyJOKER() const { return anyJOKER(cards()); }
+        bool anyPlain() const { return anyPlain(cards()); }
+        bool any() const { return anyCards(cards()); }
+        bool any2() const { return any2Cards(cards()); }
         
-        bool containsJOKER()const{ return containsJOKER(cards()); }
-        bool containsS3()const{ return containsS3(cards()); }
-        bool containsD3()const{ return containsD3(cards()); }
+        bool containsJOKER() const{ return containsJOKER(cards()); }
+        bool containsS3() const{ return containsS3(cards()); }
+        bool containsD3() const{ return containsD3(cards()); }
         
-        uint32_t countPlain()const noexcept{
+        uint32_t countPlain()const  {
              return countCards(maskJOKER(cards()));
         }
         
-        Cards& set(BitCards ac)noexcept{
+        Cards& set(BitCards ac) {
             (*this) = ac;
         }
-        Cards& set(Cards ac)noexcept{
+        Cards& set(Cards ac) {
             (*this) = ac.cards();
         }
-        Cards& add(BitCards ac)noexcept{
+        Cards& add(BitCards ac) {
             addCards(&cards(), ac);
             return *this;
         }
-        Cards& addJOKER()noexcept{
+        Cards& addJOKER() {
             addJOKER(&cards());
             return *this;
         }
-        Cards& addIntCard(IntCard ic)noexcept{
+        Cards& addIntCard(IntCard ic) {
             addIntCard(&cards(), ic);
             return *this;
         }
-        Cards& sub(BitCards ac)noexcept{
+        Cards& sub(BitCards ac) {
             subtrCards(&cards(), ac);
         }
         
-        Cards& inv(Cards argc)noexcept{
+        Cards& inv(Cards argc) {
             invCards(&cards, argc);
         }
-        Cards& inv()noexcept{
+        Cards& inv() {
             invCards(&cards, CARDS_ALL);
         }
-        Cards& mask(BitCards ac)noexcept{
+        Cards& mask(BitCards ac) {
             maskCards(&cards(), ac);
             return *this;
         }
-        Cards& maskJOKER()noexcept{
+        Cards& maskJOKER() {
             UECda::maskJOKER(&cards());
             return *this;
         }
 
         // 包括性
-        bool holds(const BitCards ac)const noexcept{
+        bool holds(const BitCards ac) const {
             return holdsCards(cards, ac);
         }
         
         
         // pick, pop
-        IntCard pickIntCardLow()const{
+        IntCard pickIntCardLow() const {
             assert(any());
             return UECda::pickIntCardLow(cards());
         }
-        IntCard pickIntCardHigh()const{
+        IntCard pickIntCardHigh() const {
             assert(any());
             return UECda::pickIntCardHigh(cards());
         }
-        IntCard popIntCardLow(){
+        IntCard popIntCardLow() {
             assert(any());
             return UECda::popIntCardLow(&cards());
         }
-        IntCard popIntCardHigh(){
+        IntCard popIntCardHigh() {
             assert(any());
             return UECda::popIntCardHigh(&cards());
         }
@@ -1916,31 +1915,32 @@ namespace UECda{
         }
         
         // 複数pick, pop
-        template<int N = 1>Cards pickLow(
+        template <int N = 1>Cards pickLow(
         )const{
             assert(count() >= N);
         }
         
-        template<int N=1,int JK=1> void pickHigh(Cards96<cards_t,NJK> *const dst)const{
-            assert( count() >= N );
-            if( JK && jk >= (uint32_t)N ){
+        template <int N = 1,int JK = 1>
+        void pickHigh(Cards96<cards_t,NJK> *const dst) const {
+            assert(count() >= N);
+            if (JK && jk >= (uint32_t)N) {
                 dst->cards=CARDS_NULL;
-                dst->jk=(uint32_t)N;
-            }else{
+                dst->jk = (uint32_t)N;
+            } else {
                 dst->cards=::pickHigh(cards,(uint32_t)N-jk);
                 dst->jk=jk;
             }
         }
         
-        template<int N=1,int JK=1> void popLow(Cards96<cards_t,NJK> *const dst){
+        template <int N = 1,int JK = 1> void popLow(Cards96<cards_t,NJK> *const dst) {
             assert( count() >= N );
             uint32_t nex=countPlain();
-            if( (!JK) || nex >= (uint32_t)N ){
+            if ( (!JK) || nex >= (uint32_t)N ) {
                 Cards tmp=::pickLow<N>(cards);
                 dst->cards=tmp;
                 dst->jk=0;
                 subtr(tmp);
-            }else{
+            } else {
                 dst->cards=cards;
                 dst->jk=(uint32_t)N - nex;
                 cards=CARDS_NULL;
@@ -1948,13 +1948,13 @@ namespace UECda{
             }
         }
         
-        template<int N=1,int JK=1> void popHigh(Cards96<cards_t,NJK> *const dst){
+        template <int N=1,int JK=1> void popHigh(Cards96<cards_t,NJK> *const dst) {
             assert( count() >= N );
-            if( JK && jk >= (uint32_t)N ){
+            if ( JK && jk >= (uint32_t)N ) {
                 dst->cards=CARDS_NULL;
                 dst->jk=(uint32_t)N;
                 jk-=(uint32_t)N;
-            }else{
+            } else {
                 Cards tmp=::pickHigh(cards,(uint32_t)N-jk);
                 dst->cards=tmp;
                 dst->jk=jk;
@@ -1963,19 +1963,19 @@ namespace UECda{
             }
         }
         
-        template<int N=1,int JK=1,class dice_t> void popRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice){
+        template <int N=1,int JK=1,class dice_t> void popRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice) {
             assert( count() >= n );
-            if( !JK ){
+            if ( !JK ) {
                 Cards tmp=pickNBits64(cards,n,countPlain()-n,pdice);
                 subtr(tmp);
                 dst->cards=tmp;
                 dst->jk=0;
-            }else{
+            } else {
                 dst->clear();
                 Cards tmp=cards;
-                if( jk ){
+                if ( jk ) {
                     addCards(&tmp,CARDS_JOKER);
-                    if( jk==2 ){
+                    if ( jk==2 ) {
                         addCards(&tmp,CARDS_JOKER<<1);
                     }
                 }
@@ -1986,18 +1986,18 @@ namespace UECda{
             }
         }
         
-        template<int N=1,int JK=1,class dice_t> void pickRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice)const{
+        template <int N=1,int JK=1,class dice_t> void pickRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice)const{
             assert( count() >= n );
-            if( !JK ){
+            if ( !JK ) {
                 Cards tmp=pickNBits64(cards,n,countPlain()-n,pdice);
                 dst->cards=tmp;
                 dst->jk=0;
-            }else{
+            } else {
                 dst->clear();
                 Cards tmp=cards;
-                if( jk ){
+                if ( jk ) {
                     addCards(&tmp,CARDS_JOKER);
-                    if( jk==2 ){
+                    if ( jk==2 ) {
                         addCards(&tmp,CARDS_JOKER<<1);
                     }
                 }
@@ -2008,15 +2008,15 @@ namespace UECda{
         }
         
         //階段の作成可能性
-        template<int N=MIN_SEQ_QTY,int JK_QTY=-1>Cards canMakeSeq(){
+        template <int N=MIN_SEQ_QTY,int JK_QTY=-1>Cards canMakeSeq() {
             //持っているジョーカーの枚数と異なる枚数でJK_QTYを指定されてもよいことにする
-            switch( JK_QTY ){
+            switch ( JK_QTY ) {
                 case 0: return polymRanks<N>(cards);break;
                 case 1: return polymRanksWithJOKER<N,1>(cards);break;
                 case 2: return polymRanksWithJOKER<N,2>(cards);break;
                 default:
                     assert( jk<=N_JOKERS );
-                    switch( jk ){
+                    switch ( jk ) {
                         case 0: return canMakeSeq<N,0>();break;
                         case 1: return canMakeSeq<N,1>();break;
                         case 2: return canMakeSeq<N,2>();break;
@@ -2036,11 +2036,11 @@ namespace UECda{
     
     //階段用
     /*
-     template<int CON_JOKER>struct SeqMelds{
+     template <int CON_JOKER>struct SeqMelds{
      
      Cards melds;
      
-     Move popLow(){
+     Move popLow() {
      
      }
      
@@ -2124,175 +2124,175 @@ namespace UECda{
     constexpr uint32_t MOVE_SINGLEJOKER    = (1U << MOVE_LCT_QTY) | MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM | (SUITS_ALL << MOVE_LCT_JKSUITS);
     constexpr uint32_t MOVE_S3FLUSH        = (1U << MOVE_LCT_QTY) | MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM | (SUIT_S << MOVE_LCT_SUITS) | (RANK_3 << MOVE_LCT_RANK);
     
-    template<typename data_t>
+    template <typename data_t>
     class MoveInRegister{
     public:
-        constexpr MoveInRegister() : i_(){}
-        constexpr MoveInRegister(data_t arg) : i_(arg){}
+        constexpr MoveInRegister() : i_() {}
+        constexpr MoveInRegister(data_t arg) : i_(arg) {}
         
-        constexpr operator data_t()const noexcept{ return i_; }
-        constexpr data_t data()const noexcept{ return i_.data(); }
-        constexpr BitSetInRegister<data_t> bits()const noexcept{ return i_; }
+        constexpr operator data_t()const  { return i_; }
+        constexpr data_t data()const  { return i_.data(); }
+        constexpr BitSetInRegister<data_t> bits()const  { return i_; }
         
-        void setNULL()                   noexcept{ i_ = MOVE_NULL; }
-        void setPASS()                   noexcept{ i_ = MOVE_PASS; }
-        void setSingleJOKER()            noexcept{ i_ = MOVE_SINGLEJOKER; } // シングルジョーカーのランクは未定義
-        void setS3Flush()                noexcept{ i_ = MOVE_S3FLUSH; } // スペ3切りの場合のみ
-        void setRev()                    noexcept{ i_ ^= MOVE_FLAG_ORD; }
-        void setBack()                   noexcept{ i_ ^= MOVE_FLAG_TMPORD; }
-        void setEight()                  noexcept{ i_ |= MOVE_FLAG_INEVITDOM; }
-        void setSingle()                 noexcept{ i_ |= MOVE_FLAG_SINGLE; }
-        void setGroup()                  noexcept{ i_ |= MOVE_FLAG_GROUP; }
-        void setSeq()                    noexcept{ i_ |= MOVE_FLAG_SEQ; }
-        void setQty(uint32_t qty)        noexcept{ i_ |= qty     << MOVE_LCT_QTY; }
-        void setRank(uint32_t r)         noexcept{ i_ |= r       << MOVE_LCT_RANK; }
-        void setRank4x(uint32_t r4x)     noexcept{ i_ |= r4x     << MOVE_LCT_RANK4X; } // 4倍型
-        void setSuits(uint32_t s)        noexcept{ i_ |= s       << MOVE_LCT_SUITS; }
-        void setJokerRank(uint32_t r)    noexcept{ i_ |= r       << MOVE_LCT_JKRANK; }
-        void setJokerRank4x(uint32_t r4x)noexcept{ i_ |= r4x     << MOVE_LCT_JKRANK4X; } // 4倍型
-        void setJokerSuits(uint32_t s)   noexcept{ i_ |= s       << MOVE_LCT_JKSUITS; }
-        void setSpecialJokerSuits()      noexcept{ i_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
+        void setNULL()                    { i_ = MOVE_NULL; }
+        void setPASS()                    { i_ = MOVE_PASS; }
+        void setSingleJOKER()             { i_ = MOVE_SINGLEJOKER; } // シングルジョーカーのランクは未定義
+        void setS3Flush()                 { i_ = MOVE_S3FLUSH; } // スペ3切りの場合のみ
+        void setRev()                     { i_ ^= MOVE_FLAG_ORD; }
+        void setBack()                    { i_ ^= MOVE_FLAG_TMPORD; }
+        void setEight()                   { i_ |= MOVE_FLAG_INEVITDOM; }
+        void setSingle()                  { i_ |= MOVE_FLAG_SINGLE; }
+        void setGroup()                   { i_ |= MOVE_FLAG_GROUP; }
+        void setSeq()                     { i_ |= MOVE_FLAG_SEQ; }
+        void setQty(uint32_t qty)         { i_ |= qty     << MOVE_LCT_QTY; }
+        void setRank(uint32_t r)          { i_ |= r       << MOVE_LCT_RANK; }
+        void setRank4x(uint32_t r4x)      { i_ |= r4x     << MOVE_LCT_RANK4X; } // 4倍型
+        void setSuits(uint32_t s)         { i_ |= s       << MOVE_LCT_SUITS; }
+        void setJokerRank(uint32_t r)     { i_ |= r       << MOVE_LCT_JKRANK; }
+        void setJokerRank4x(uint32_t r4x) { i_ |= r4x     << MOVE_LCT_JKRANK4X; } // 4倍型
+        void setJokerSuits(uint32_t s)    { i_ |= s       << MOVE_LCT_JKSUITS; }
+        void setSpecialJokerSuits()       { i_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
         
         // 特殊効果
-        void resetEffects()noexcept{ i_ &= ~MOVE_FLAG_EFFECTS; }
-        void setEffects()noexcept{
+        void resetEffects() { i_ &= ~MOVE_FLAG_EFFECTS; }
+        void setEffects() {
             // 普通は合法着手生成の段階で付ける
             // 棋譜から読んだ着手にはここで付ける
-            if(isSeq()){
-                if(qty() >= 5){ setRev(); }
-                if(isEightSeqRank(rank(), qty())){
+            if (isSeq()) {
+                if (qty() >= 5) { setRev(); }
+                if (isEightSeqRank(rank(), qty())) {
                     setEight();
                 }
-            }else{
-                if(rank() == RANK_3 && suits() == SUITS_S && qty() == 1){
+            } else {
+                if (rank() == RANK_3 && suits() == SUITS_S && qty() == 1) {
                     i_ = MOVE_S3FLUSH;
-                }else if(qty() == 1 && suits() == SUITS_NULL){
+                }else if (qty() == 1 && suits() == SUITS_NULL) {
                     i_ = MOVE_SINGLEJOKER;
-                }else{
-                    if(qty() >= 4){ setRev(); }
-                    if(rank() == RANK_8){ setEight(); }
+                } else {
+                    if (qty() >= 4) { setRev(); }
+                    if (rank() == RANK_8) { setEight(); }
                 }
             }
         }
         
         // タイプを指定してまとめて処理
         // 特殊効果フラグはここでの分岐処理は避け、呼び出し元で対応
-        template<typename rank_t, typename suits_t>
-        void setSingle(rank_t rank, suits_t suits)noexcept{
+        template <typename rank_t, typename suits_t>
+        void setSingle(rank_t rank, suits_t suits) {
             setSingle(); setQty(1); setRank(rank); setSuits(suits);
         }
-        template<typename rank4x_t, typename suits_t>
-        void setSingleByRank4x(rank4x_t r4x, suits_t suits)noexcept{
+        template <typename rank4x_t, typename suits_t>
+        void setSingleByRank4x(rank4x_t r4x, suits_t suits) {
             setSingle(); setQty(1); setRank4x(r4x); setSuits(suits);
         }
-        template<typename qty_t, typename rank_t, typename suits_t>
-        void setGroup(qty_t qty, rank_t rank, suits_t suits)noexcept{
+        template <typename qty_t, typename rank_t, typename suits_t>
+        void setGroup(qty_t qty, rank_t rank, suits_t suits) {
             setGroup(); setQty(qty); setRank(rank); setSuits(suits);
         }
-        template<typename qty_t, typename rank4x_t, typename suits_t>
-        void setGroupByRank4x(qty_t qty, rank4x_t r4x, suits_t suits)noexcept{
+        template <typename qty_t, typename rank4x_t, typename suits_t>
+        void setGroupByRank4x(qty_t qty, rank4x_t r4x, suits_t suits) {
             setGroup(); setQty(qty); setRank4x(r4x); setSuits(suits);
         }
-        template<typename qty_t, typename rank_t, typename suits_t>
-        void setSeq(qty_t qty, rank_t rank, suits_t suits)noexcept{
+        template <typename qty_t, typename rank_t, typename suits_t>
+        void setSeq(qty_t qty, rank_t rank, suits_t suits) {
             setSeq(); setQty(qty); setRank(rank); setSuits(suits);
         }
-        template<typename qty_t, typename rank4x_t, typename suits_t>
-        void setSeqByRank4x(qty_t qty, rank4x_t r4x, suits_t suits)noexcept{
+        template <typename qty_t, typename rank4x_t, typename suits_t>
+        void setSeqByRank4x(qty_t qty, rank4x_t r4x, suits_t suits) {
             setSeq(); setQty(qty); setRank4x(r4x); setSuits(suits);
         }
 
         // IntCard型からシングル着手をセットする(特殊効果フラグ以外)
-        void setSingleByIntCard(IntCard ic)noexcept{
+        void setSingleByIntCard(IntCard ic) {
             setSingle(IntCardToRank(ic), IntCardToSuits(ic));
         }
         
         // 情報を得る
-        constexpr uint32_t suits()      const noexcept{ return (i_ >> MOVE_LCT_SUITS)    & 15U; }
-        constexpr uint32_t qty()        const noexcept{ return (i_ >> MOVE_LCT_QTY)      & 15U; }
-        constexpr uint32_t rank()       const noexcept{ return (i_ >> MOVE_LCT_RANK)     & 15U; }
-        constexpr uint32_t jokerRank()  const noexcept{ return (i_ >> MOVE_LCT_JKRANK)   & 15U; }
-        constexpr uint32_t jokerSuits() const noexcept{ return (i_ >> MOVE_LCT_JKSUITS)  & 15U; }
-        constexpr uint32_t rank4x()     const noexcept{ return (i_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
-        constexpr uint32_t jokerRank4x()const noexcept{ return (i_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
+        constexpr uint32_t suits()      const  { return (i_ >> MOVE_LCT_SUITS)    & 15U; }
+        constexpr uint32_t qty()        const  { return (i_ >> MOVE_LCT_QTY)      & 15U; }
+        constexpr uint32_t rank()       const  { return (i_ >> MOVE_LCT_RANK)     & 15U; }
+        constexpr uint32_t jokerRank()  const  { return (i_ >> MOVE_LCT_JKRANK)   & 15U; }
+        constexpr uint32_t jokerSuits() const  { return (i_ >> MOVE_LCT_JKSUITS)  & 15U; }
+        constexpr uint32_t rank4x()     const  { return (i_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
+        constexpr uint32_t jokerRank4x()const  { return (i_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
         
         // 部分に着目する
-        constexpr uint32_t orderPart()      const noexcept{ return i_ & MOVE_FLAG_ORD;   }
-        constexpr uint32_t exceptOrderPart()const noexcept{ return i_ & ~MOVE_FLAG_ORD;  }
-        constexpr uint32_t suitsPart()      const noexcept{ return i_ & MOVE_FLAG_SUITS; }
-        constexpr uint32_t rankPart()       const noexcept{ return i_ & MOVE_FLAG_RANK;  }
-        constexpr uint32_t qtyPart()        const noexcept{ return i_ & MOVE_FLAG_QTY;   }
-        constexpr uint32_t typePart()       const noexcept{ return i_ & MOVE_FLAG_TYPE;  } // サイズ + 形式
-        constexpr uint32_t jokerPart()      const noexcept{ return i_ & MOVE_FLAG_JK;    } // ジョーカー関連
-        constexpr uint32_t exceptJokerPart()const noexcept{ return i_ & ~MOVE_FLAG_JK;   } // ジョーカー関連以外
-        constexpr uint32_t charaPart()      const noexcept{ return i_ & MOVE_FLAG_CHARA;    } // 性質決定のための必要十分条件
-        constexpr uint32_t meldPart()       const noexcept{ return i_ & MOVE_FLAG_MELD;    } // 性質決定のための必要十分条件
+        constexpr uint32_t orderPart()      const  { return i_ & MOVE_FLAG_ORD;   }
+        constexpr uint32_t exceptOrderPart()const  { return i_ & ~MOVE_FLAG_ORD;  }
+        constexpr uint32_t suitsPart()      const  { return i_ & MOVE_FLAG_SUITS; }
+        constexpr uint32_t rankPart()       const  { return i_ & MOVE_FLAG_RANK;  }
+        constexpr uint32_t qtyPart()        const  { return i_ & MOVE_FLAG_QTY;   }
+        constexpr uint32_t typePart()       const  { return i_ & MOVE_FLAG_TYPE;  } // サイズ + 形式
+        constexpr uint32_t jokerPart()      const  { return i_ & MOVE_FLAG_JK;    } // ジョーカー関連
+        constexpr uint32_t exceptJokerPart()const  { return i_ & ~MOVE_FLAG_JK;   } // ジョーカー関連以外
+        constexpr uint32_t charaPart()      const  { return i_ & MOVE_FLAG_CHARA;    } // 性質決定のための必要十分条件
+        constexpr uint32_t meldPart()       const  { return i_ & MOVE_FLAG_MELD;    } // 性質決定のための必要十分条件
         
         // True or False
-        constexpr bool isPASS()const noexcept{ return (uint32_t)i_ == MOVE_PASS; }
-        constexpr uint32_t isSeq()const noexcept{ return i_ & MOVE_FLAG_SEQ; }
-        constexpr uint32_t isGroup()const noexcept{ return i_ & MOVE_FLAG_GROUP; }
-        constexpr uint32_t isSingle()const noexcept{ return i_ & MOVE_FLAG_SINGLE; }
-        constexpr uint32_t isSingleOrGroup()const noexcept{ return i_ & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP); }
-        constexpr bool isQuadruple()const noexcept{
+        constexpr bool isPASS()const  { return (uint32_t)i_ == MOVE_PASS; }
+        constexpr uint32_t isSeq()const  { return i_ & MOVE_FLAG_SEQ; }
+        constexpr uint32_t isGroup()const  { return i_ & MOVE_FLAG_GROUP; }
+        constexpr uint32_t isSingle()const  { return i_ & MOVE_FLAG_SINGLE; }
+        constexpr uint32_t isSingleOrGroup()const  { return i_ & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP); }
+        constexpr bool isQuadruple()const  {
             return typePart() == (MOVE_FLAG_GROUP | (4U << MOVE_LCT_QTY));
         }
-        constexpr bool isQuintuple()const noexcept{
+        constexpr bool isQuintuple()const  {
             return typePart() == (MOVE_FLAG_GROUP | (5U << MOVE_LCT_QTY));
         }
-        bool isOver5Seq()const noexcept{ // 5枚以上階段
+        bool isOver5Seq()const  { // 5枚以上階段
             return isSeq() && (qtyPart() > (4U << MOVE_LCT_QTY));
         }
-        template<int IS_SEQ = _BOTH>
-        bool isSpecialRankSeq()const noexcept{
-            if((IS_SEQ == _NO) || ((IS_SEQ != _YES) && !isSeq())){ return false; }
+        template <int IS_SEQ = _BOTH>
+        bool isSpecialRankSeq()const  {
+            if ((IS_SEQ == _NO) || ((IS_SEQ != _YES) && !isSeq())) { return false; }
             uint32_t r = rank(), q = qty();
             return (r < RANK_MIN) || (RANK_MAX < (r + q - 1));
         }
         
-        constexpr uint32_t containsJOKER()const noexcept{ return i_ & MOVE_FLAG_JK; }
+        constexpr uint32_t containsJOKER()const  { return i_ & MOVE_FLAG_JK; }
         
-        constexpr bool isSingleJOKER()const noexcept{ return (((uint32_t)i_) & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
-        constexpr bool isS3Flush()const noexcept{ return holdsBits<data_t>(i_, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
+        constexpr bool isSingleJOKER()const  { return (((uint32_t)i_) & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
+        constexpr bool isS3Flush()const  { return holdsBits<data_t>(i_, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
         
-        constexpr bool isEqualRankSuits(uint32_t r, uint32_t s)const noexcept{
+        constexpr bool isEqualRankSuits(uint32_t r, uint32_t s)const  {
             // rank と スートが一致するか
             return ((uint32_t)i_ & (MOVE_FLAG_RANK | MOVE_FLAG_SUITS)) == ((r << MOVE_LCT_RANK) | (s << MOVE_LCT_SUITS));
         }
 
-        constexpr uint32_t domInevitably()const noexcept{ return i_ & MOVE_FLAG_INEVITDOM; }
+        constexpr uint32_t domInevitably()const  { return i_ & MOVE_FLAG_INEVITDOM; }
         
-        constexpr uint32_t flipsPrmOrder()const noexcept{ return i_ & MOVE_FLAG_PRMORD; }
-        constexpr uint32_t flipsTmpOrder()const noexcept{ return i_ & MOVE_FLAG_TMPORD; }
+        constexpr uint32_t flipsPrmOrder()const  { return i_ & MOVE_FLAG_PRMORD; }
+        constexpr uint32_t flipsTmpOrder()const  { return i_ & MOVE_FLAG_TMPORD; }
         
-        constexpr uint32_t changesPrmState()const noexcept{ return flipsPrmOrder(); }
+        constexpr uint32_t changesPrmState()const  { return flipsPrmOrder(); }
         
-        int typeNum()const noexcept{
+        int typeNum()const  {
             uint32_t q = qty();
-            if(isSeq()){
-                if(q >= 6){ return 8; }
+            if (isSeq()) {
+                if (q >= 6) { return 8; }
                 return 2 + q;
-            }else{
-                if(q >= 5){ return 8; }
+            } else {
+                if (q >= 5) { return 8; }
                 return q;
             }
         }
         
-        template<int IS_PASS = _BOTH>
-        Cards cards()const noexcept{ // カード集合を得る
+        template <int IS_PASS = _BOTH>
+        Cards cards()const  { // カード集合を得る
             // 本来は着手表現からの計算で得るのは止めた方が良いかもしれない
             Cards res;
-            if((IS_PASS == _YES) || ((IS_PASS != _NO) && isPASS())){ return CARDS_NULL; }
-            if(isSingleJOKER()){ return CARDS_JOKER; }
+            if ((IS_PASS == _YES) || ((IS_PASS != _NO) && isPASS())) { return CARDS_NULL; }
+            if (isSingleJOKER()) { return CARDS_JOKER; }
             
             uint32_t s = suits(), r4x = rank4x();
             
-            if(!isSeq()){ // 階段でない
+            if (!isSeq()) { // 階段でない
                 res = CARDS_NULL;
                 uint32_t jks = jokerSuits();
-                if(jks){
+                if (jks) {
                     addJOKER(&res);
-                    if(jks != SUITS_CDHS){ s -= jks; } // クインタプル対策
+                    if (jks != SUITS_CDHS) { s -= jks; } // クインタプル対策
                 }
                 addCards(&res, Rank4xSuitsToCards(r4x, s));
             }
@@ -2300,7 +2300,7 @@ namespace UECda{
                 /*
                  uint32_t qty=qty();
                  res=convRx4S_Cards(r4x,suits);
-                 switch(qty){
+                 switch (qty) {
                  case 0:break;
                  case 1:break;
                  case 2:break;
@@ -2313,7 +2313,7 @@ namespace UECda{
                  res=convRx4S_Cards(r4x,suits);
                  res=extractRanks<3>(res);
                  qty-=3;
-                 while(qty){
+                 while(qty) {
                  res=extractRanks<2>(res);
                  --qty;
                  }*/
@@ -2322,12 +2322,12 @@ namespace UECda{
                 assert(q >= 3);
                 
                 res = extractRanks<3>(Rank4xSuitsToCards(r4x, s));
-                if(q != 3){
+                if (q != 3) {
                     res = extractRanks<2>(res);
-                    if(q != 4){
+                    if (q != 4) {
                         res = extractRanks<2>(res);
                         q -= 5;
-                        while(q){
+                        while(q) {
                             res = extractRanks<2>(res);
                             q -= 1;
                         }
@@ -2336,18 +2336,18 @@ namespace UECda{
                 /*
                  uint32_t qty=qtyPart();
                  res=extractRanks<3>(convRx4S_Cards(r4x,suits));
-                 if(qty!=(3<<8)){
+                 if (qty!=(3<<8)) {
                  res=extractRanks<2>(res);
-                 if(qty!=(4<<8)){
+                 if (qty!=(4<<8)) {
                  res=extractRanks<2>(res);
                  qty-=(5<<8);
-                 while(qty){
+                 while(qty) {
                  res=extractRanks<2>(res);
                  qty-=(1<<8);
                  }
                  }
                  }*/
-                if(containsJOKER()){
+                if (containsJOKER()) {
                     subtrCards(&res, Rank4xSuitsToCards(jokerRank4x(), s));
                     addJOKER(&res);
                 }
@@ -2358,16 +2358,16 @@ namespace UECda{
             return res;
         }
         
-        template<int IS_PASS = _BOTH>
-        Cards charaCards()const noexcept{
+        template <int IS_PASS = _BOTH>
+        Cards charaCards()const  {
             // 性質カードを返す
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
-            if((IS_PASS == _YES) || ((IS_PASS != _NO) && isPASS())){ return CARDS_NULL; }
-            if(isSingleJOKER()){ return CARDS_JOKER; }
+            if ((IS_PASS == _YES) || ((IS_PASS != _NO) && isPASS())) { return CARDS_NULL; }
+            if (isSingleJOKER()) { return CARDS_JOKER; }
             Cards res = Rank4xSuitsToCards(rank4x(), suits());
-            if(isSeq()){
+            if (isSeq()) {
                 uint64_t q = qty();
-                switch(q){
+                switch (q) {
                     case 0: break;
                     case 1: break;
                     case 2: break;
@@ -2380,62 +2380,62 @@ namespace UECda{
             return res;
         }
         
-        template<int QTY = 256>
+        template <int QTY = 256>
         Cards charaPQR()const{
             static_assert((QTY == 256 || (1 <= QTY && QTY <= 4)), "Move::charaPQR\n");
             // 性質カードのPQRを返す
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
             // パスとシングルジョーカーも関係ないし、
             // 階段にも今の所対応していない(意味が無さそう)
-            if(QTY == 0){
+            if (QTY == 0) {
                 return CARDS_NULL;
-            }else if(QTY == 1){
+            }else if (QTY == 1) {
                 return CARDS_HORIZON << rank4x();
-            }else if(QTY != 256){
+            }else if (QTY != 256) {
                 constexpr int sft = (QTY - 1) >= 0 ? ((QTY - 1) < 32 ? (QTY - 1) : 31) : 0; // warningに引っかからないように...
-                if(1 <= QTY && QTY <= 4){
+                if (1 <= QTY && QTY <= 4) {
                     return Cards(1U << sft) << rank4x();
-                }else{
+                } else {
                     return CARDS_NULL;
                 }
-            }else{
+            } else {
                 return Cards(1U << (qty() - 1)) << rank4x();
             }
         }
         
-        bool exam()const noexcept{
+        bool exam()const  {
             // 変な値でないかチェック
             // 特殊効果の付け忘れなどに注意
             int q = qty();
             int r = rank();
             uint32_t s = suits();
-            if(isPASS()){
+            if (isPASS()) {
                 // TODO: パスの時のチェックがあれば
-            }else{
-                if(q < 0){ return false; }
-                if(isSeq()){
-                    if(q < 3){ return false; }
-                    if(countSuits(s) != 1){ return false; }
-                    if(isEightSeqRank(r, 3)){
-                        if(!domInevitably()){ return false; }
-                    }else{
-                        if(domInevitably()){ return false; }
+            } else {
+                if (q < 0) { return false; }
+                if (isSeq()) {
+                    if (q < 3) { return false; }
+                    if (countSuits(s) != 1) { return false; }
+                    if (isEightSeqRank(r, 3)) {
+                        if (!domInevitably()) { return false; }
+                    } else {
+                        if (domInevitably()) { return false; }
                     }
-                }else if(isSingle()){
-                    if(q != 1){ return false; }
-                    if(countSuits(s) != 1){ return false; }
-                    if(r == RANK_8){
-                        if(!domInevitably()){ return false; }
+                }else if (isSingle()) {
+                    if (q != 1) { return false; }
+                    if (countSuits(s) != 1) { return false; }
+                    if (r == RANK_8) {
+                        if (!domInevitably()) { return false; }
                     }
-                }else{
-                    if(isQuintuple()){
-                    }else{
-                        if(q != countSuits(s)){ return false; }
+                } else {
+                    if (isQuintuple()) {
+                    } else {
+                        if (q != countSuits(s)) { return false; }
                     }
-                    if(r == RANK_8){
-                        if(!domInevitably()){ return false; }
-                    }else{
-                        if(domInevitably()){ return false; }
+                    if (r == RANK_8) {
+                        if (!domInevitably()) { return false; }
+                    } else {
+                        if (domInevitably()) { return false; }
                     }
                 }
             }
@@ -2450,36 +2450,36 @@ namespace UECda{
     class MeldChar : public Move{
         // Moveと全く同じデータなのだが、構成するカード集合に言及する気がないときにこっちで表記
     public:
-        MeldChar(const Move& arg) : Move(arg.data()){}
+        MeldChar(const Move& arg) : Move(arg.data()) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const MeldChar& m){ // MeldChar出力
-        if(m.isPASS()){
+    std::ostream& operator <<(std::ostream& out, const MeldChar& m) { // MeldChar出力
+        if (m.isPASS()) {
             out << "PASS";
-        }else if(m.isSingleJOKER()){
+        }else if (m.isSingleJOKER()) {
             out << "JOKER";
-        }else{
+        } else {
             // スート
-            if(m.isQuintuple()){ // クインタ特別
+            if (m.isQuintuple()) { // クインタ特別
                 out << OutSuits(SUITS_CDHSX);
-            }else{
+            } else {
                 out << OutSuits(m.suits());
             }
             out << "-";
             
             // ランク
             int r = m.rank();
-            if(m.isSeq()){
+            if (m.isSeq()) {
                 uint32_t q = m.qty();
                 out << RankRange(r, r + q - 1);
-            }else{
+            } else {
                 out << OutRank(r);
             }
         }
         return out;
     }
     
-    std::ostream& operator <<(std::ostream& out, const Move& m){ // Move出力
+    std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
         out << MeldChar(m) << OutCards(m.cards());
         return out;
     }
@@ -2487,17 +2487,17 @@ namespace UECda{
     class LogMove : public Move{
         // ログ出力用
     public:
-        LogMove(const Move& arg) : Move(arg.data()){}
+        LogMove(const Move& arg) : Move(arg.data()) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const LogMove& m){ // LogMove出力
-        if(m.isPASS()){
+    std::ostream& operator <<(std::ostream& out, const LogMove& m) { // LogMove出力
+        if (m.isPASS()) {
             out << "p";
-        }else if(m.isSingleJOKER()){
+        }else if (m.isSingleJOKER()) {
             out << "jk";
-        }else{
+        } else {
             int r = m.rank();
-            if(m.isSeq()){
+            if (m.isSeq()) {
                 
                 out << OutSuitsM(m.suits());
                 out << "-";
@@ -2505,19 +2505,19 @@ namespace UECda{
                 uint32_t q = m.qty();
                 out << RankRangeM(r, r + q - 1);
                 // ジョーカー
-                if(m.containsJOKER()){
+                if (m.containsJOKER()) {
                     //cerr << m.jokerRank() << " " << OutRankM(m.jokerRank()) << endl;
                     out << "(" << OutRankM(m.jokerRank()) << ")";
                 }
-            }else{
-                if(m.isQuintuple()){ // クインタ特別
+            } else {
+                if (m.isQuintuple()) { // クインタ特別
                     out << OutSuitsM(SUITS_CDHSX);
-                }else{
+                } else {
                     out << OutSuitsM(m.suits());
                 }
                 out << "-";
                 out << OutRankM(r);
-                if(m.containsJOKER()){
+                if (m.containsJOKER()) {
                     out << "(" << OutSuitsM(m.jokerSuits()) << ")";
                 }
             }
@@ -2525,30 +2525,30 @@ namespace UECda{
         return out;
     }
         
-    Move CardsToMove(const Cards chara, const Cards used){
+    Move CardsToMove(const Cards chara, const Cards used) {
         // 性質 chara 構成札 used のカードから着手への変換
         Move m = MOVE_NULL;
         DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
-        if(chara == CARDS_NULL)return MOVE_PASS;
-        if(chara == CARDS_JOKER)return MOVE_SINGLEJOKER;
+        if (chara == CARDS_NULL)return MOVE_PASS;
+        if (chara == CARDS_JOKER)return MOVE_SINGLEJOKER;
         IntCard ic = CardsToLowestIntCard(chara);
         int r4x = IntCardToRank4x(ic);
         uint32_t s = CardsRank4xToSuits(chara, r4x);
         uint32_t ps = CardsRank4xToSuits(used, r4x); // ジョーカーなしのスート
         int q = countCards(chara);
-        if(!polymRanks<2>(chara)){ // グループ系
-            if(q == 1){
+        if (!polymRanks<2>(chara)) { // グループ系
+            if (q == 1) {
                 m.setSingleByRank4x(r4x, s);
-            }else{
+            } else {
                 m.setGroupByRank4x(q, r4x, s);
                 uint32_t js = s - ps;
-                if(js){
+                if (js) {
                     m.setJokerSuits(js);
                 }
             }
-        }else{ // 階段系
+        } else { // 階段系
             m.setSeqByRank4x(q, r4x, s);
-            if(containsJOKER(used)){
+            if (containsJOKER(used)) {
                 IntCard jic = CardsToLowestIntCard(subtrCards(chara, maskJOKER(used)));
                 uint32_t jr4x = IntCardToRank4x(jic);
                 m.setJokerRank4x(jr4x);
@@ -2561,7 +2561,7 @@ namespace UECda{
         return m;
     }
     
-    Move StringToMoveM(const std::string& str){
+    Move StringToMoveM(const std::string& str) {
         // 入力文字列からMove型への変更
         Move mv = MOVE_NULL;
         bool jk = false; // joker used
@@ -2572,76 +2572,76 @@ namespace UECda{
         uint32_t i = 0;
         
         // special
-        if(str == "p"){ return MOVE_PASS; }
-        if(str == "jk"){ return MOVE_SINGLEJOKER; }
+        if (str == "p") { return MOVE_PASS; }
+        if (str == "jk") { return MOVE_SINGLEJOKER; }
         // suits
-        for(; i < str.size(); ++i){
+        for (; i < str.size(); ++i) {
             char c = str[i];
-            if(c == '-'){
+            if (c == '-') {
                 ++i; break;
             }
             int sn = CharToSuitNumM(c);
-            if(sn == SUITNUM_NONE){
+            if (sn == SUITNUM_NONE) {
                 CERR << "illegal suit number" << endl;
                 return MOVE_NONE;
             }
-            if(sn != SUITNUM_X){
+            if (sn != SUITNUM_X) {
                 s |= SuitNumToSuits(sn);
-            }else{ // クインタプル
+            } else { // クインタプル
                 jk = true;
             }
             ++ns;
         }
         // rank
-        for(; i < str.size(); ++i){
+        for (; i < str.size(); ++i) {
             char c = str[i];
-            if(c == '('){ jk = true; ++i; break; }
+            if (c == '(') { jk = true; ++i; break; }
             int r = CharToRankM(c);
-            if(r == RANK_NONE){
+            if (r == RANK_NONE) {
                 CERR << "illegal rank" << endl;
                 return MOVE_NONE;
             }
-            if(rank == RANK_NONE){
+            if (rank == RANK_NONE) {
                 rank = r;
             }
             ++nr;
         }
         // invalid
-        if(s == SUITS_NULL){ CERR << "null suits" << endl; return MOVE_NONE; }
-        if(!ns){ CERR << "zero suits" << endl; return MOVE_NONE; }
-        if(rank == RANK_NONE){ CERR << "null lowest-rank" << endl; return MOVE_NONE; }
-        if(!nr){ CERR << "zero ranks" << endl; return MOVE_NONE; }
+        if (s == SUITS_NULL) { CERR << "null suits" << endl; return MOVE_NONE; }
+        if (!ns) { CERR << "zero suits" << endl; return MOVE_NONE; }
+        if (rank == RANK_NONE) { CERR << "null lowest-rank" << endl; return MOVE_NONE; }
+        if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
         // seq or group?
-        if(nr > 1){ // seq
+        if (nr > 1) { // seq
             mv.setSeq(nr, rank, s);
-        }else if(ns == 1){ // single
+        }else if (ns == 1) { // single
             mv.setSingle(rank, s);
-        }else{ // group
+        } else { // group
             mv.setGroup(ns, rank, s);
         }
         // joker
-        if(jk){
-            if(!mv.isSeq()){
+        if (jk) {
+            if (!mv.isSeq()) {
                 uint32_t jks = SUITS_NULL;
-                for(; i < str.size(); ++i){
+                for (; i < str.size(); ++i) {
                     char c = str[i];
-                    if(c == ')'){ break; }
+                    if (c == ')') { break; }
                     int sn = CharToSuitNumM(c);
-                    if(sn == SUITNUM_NONE){
+                    if (sn == SUITNUM_NONE) {
                         CERR << "illegal joker-suit" << c << " from " << str << endl;
                         return MOVE_NONE;
                     }
                     jks |= SuitNumToSuits(sn);
                 }
-                if(jks == SUITS_NULL)jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
+                if (jks == SUITS_NULL)jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
                 mv.setJokerSuits(jks);
-            }else{
+            } else {
                 int jkr = RANK_NONE;
-                for(; i < str.size(); ++i){
+                for (; i < str.size(); ++i) {
                     char c = str[i];
-                    if(c == ')'){ break; }
+                    if (c == ')') { break; }
                     int r = CharToRankM(c);
-                    if(r == RANK_NONE){
+                    if (r == RANK_NONE) {
                         CERR << "illegal joker-rank " << c << " from " << str << endl;
                         return MOVE_NONE;
                     }
@@ -2656,7 +2656,7 @@ namespace UECda{
     }
     
     // 生成関数
-    constexpr Move IntCardToSingleMove(IntCard ic)noexcept{
+    constexpr Move IntCardToSingleMove(IntCard ic) {
         // IntCard型から対応するシングル役に変換
         // シングルジョーカー、ジョーカーS3は非対応
         return Move(MOVE_FLAG_SINGLE
@@ -2665,20 +2665,20 @@ namespace UECda{
                     | (IntCardToRank(ic) << MOVE_LCT_RANK));
     }
     
-    template<class move_buf_t>
-    int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move)noexcept{
+    template <class move_buf_t>
+    int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move) {
         // 同じ着手の探索
-        for(int m = 0; m < moves; ++m){
-            if(buf[m].meldPart() == move.meldPart()){ return m; }
+        for (int m = 0; m < moves; ++m) {
+            if (buf[m].meldPart() == move.meldPart()) { return m; }
         }
         return -1;
     }
     
-    template<class move_buf_t, typename callback_t>
-    int searchMove(const move_buf_t *const buf, const int moves, const callback_t& callback)noexcept{
+    template <class move_buf_t, typename callback_t>
+    int searchMove(const move_buf_t *const buf, const int moves, const callback_t& callback) {
         // callback を条件とする着手の探索
-        for(int m = 0; m < moves; ++m){
-            if(callback(buf[m])){ return m; }
+        for (int m = 0; m < moves; ++m) {
+            if (callback(buf[m])) { return m; }
         }
         return -1;
     }
@@ -2693,175 +2693,175 @@ namespace UECda{
         
         uint32_t bd;
         
-        constexpr Board() :bd(){}
-        constexpr Board(uint32_t arg) : bd(arg){}
-        constexpr Board(uint64_t arg) : bd((uint32_t)arg){}
-        constexpr Board(const Board& arg) : bd(arg.bd){}
+        constexpr Board() :bd() {}
+        constexpr Board(uint32_t arg) : bd(arg) {}
+        constexpr Board(uint64_t arg) : bd((uint32_t)arg) {}
+        constexpr Board(const Board& arg) : bd(arg.bd) {}
         
-        constexpr operator uint32_t()const noexcept{ return bd; }
-        constexpr operator uint64_t()const noexcept{ return (uint64_t)bd; }
+        constexpr operator uint32_t()const  { return bd; }
+        constexpr operator uint64_t()const  { return (uint64_t)bd; }
         
-        void init()noexcept{ bd = 0U; }
+        void init() { bd = 0U; }
         
         // set, fix
         
-        void setTmpOrder(const uint32_t ord)noexcept{ bd |= ord << MOVE_LCT_TMPORD; }
-        void setPrmOrder(const uint32_t ord)noexcept{ bd |= ord << MOVE_LCT_PRMORD; }
+        void setTmpOrder(const uint32_t ord) { bd |= ord << MOVE_LCT_TMPORD; }
+        void setPrmOrder(const uint32_t ord) { bd |= ord << MOVE_LCT_PRMORD; }
         
-        void fixTmpOrder(const uint32_t ord)noexcept{ bd = (bd & ~MOVE_FLAG_TMPORD) | (ord << MOVE_LCT_TMPORD); }
-        void fixPrmOrder(const uint32_t ord)noexcept{ bd = (bd & ~MOVE_FLAG_PRMORD) | (ord << MOVE_LCT_PRMORD); }
+        void fixTmpOrder(const uint32_t ord) { bd = (bd & ~MOVE_FLAG_TMPORD) | (ord << MOVE_LCT_TMPORD); }
+        void fixPrmOrder(const uint32_t ord) { bd = (bd & ~MOVE_FLAG_PRMORD) | (ord << MOVE_LCT_PRMORD); }
         
-        void flipTmpOrder()noexcept{ bd ^= MOVE_FLAG_TMPORD; }
-        void flipPrmOrder()noexcept{ bd ^= MOVE_FLAG_PRMORD; }
+        void flipTmpOrder() { bd ^= MOVE_FLAG_TMPORD; }
+        void flipPrmOrder() { bd ^= MOVE_FLAG_PRMORD; }
         
-        void setExceptOrder(const uint32_t info)noexcept{ bd |= info; }
-        void fixExceptOrder(const uint32_t info)noexcept{ bd = (bd & MOVE_FLAG_ORD) | info; }
+        void setExceptOrder(const uint32_t info) { bd |= info; }
+        void fixExceptOrder(const uint32_t info) { bd = (bd & MOVE_FLAG_ORD) | info; }
         
-        void resetDom()noexcept{ bd &= ~MOVE_FLAG_DOM; }
+        void resetDom() { bd &= ~MOVE_FLAG_DOM; }
         
         // 2体情報をメンバ関数で返す関数
         // 半マスク化みたいな感じ
-        constexpr uint32_t domConditionally(Move m)const noexcept{ return isSingleJOKER() && m.isS3Flush(); }
+        constexpr uint32_t domConditionally(Move m)const  { return isSingleJOKER() && m.isS3Flush(); }
         
-        constexpr bool locksSuits(Move m)const noexcept{ return suitsPart() == m.suitsPart(); }
-        constexpr bool locksRank(Move m)const noexcept{ return false; } // ルールにない
+        constexpr bool locksSuits(Move m)const  { return suitsPart() == m.suitsPart(); }
+        constexpr bool locksRank(Move m)const  { return false; } // ルールにない
         
-        constexpr uint32_t afterPrmOrder(Move m)const noexcept{ return ((bd ^ m) >> MOVE_LCT_PRMORD) & 1U; }
-        constexpr uint32_t afterTmpOrder(Move m)const noexcept{ return ((bd ^ m) >> MOVE_LCT_TMPORD) & 1U; }
+        constexpr uint32_t afterPrmOrder(Move m)const  { return ((bd ^ m) >> MOVE_LCT_PRMORD) & 1U; }
+        constexpr uint32_t afterTmpOrder(Move m)const  { return ((bd ^ m) >> MOVE_LCT_TMPORD) & 1U; }
         
-        constexpr uint32_t isAfterTmpOrderReversed(Move m)const noexcept{ return (bd ^ m) & (1U << MOVE_LCT_TMPORD); }
-        constexpr uint32_t isAfterPrmOrderReversed(Move m)const noexcept{ return (bd ^ m) & (1U << MOVE_LCT_PRMORD); }
+        constexpr uint32_t isAfterTmpOrderReversed(Move m)const  { return (bd ^ m) & (1U << MOVE_LCT_TMPORD); }
+        constexpr uint32_t isAfterPrmOrderReversed(Move m)const  { return (bd ^ m) & (1U << MOVE_LCT_PRMORD); }
             
-        constexpr bool afterSuitsLocked(Move m)const noexcept{
+        constexpr bool afterSuitsLocked(Move m)const  {
             return suitsLocked() || locksSuits(m);
         }
         
         // get
-        constexpr uint32_t prmOrder()   const noexcept{ return (bd >> MOVE_LCT_PRMORD) & 1U; }
-        constexpr uint32_t tmpOrder()   const noexcept{ return (bd >> MOVE_LCT_TMPORD) & 1U; }
-        constexpr uint32_t suits()      const noexcept{ return (bd >> MOVE_LCT_SUITS) & 15U; }
-        constexpr uint32_t qty()        const noexcept{ return (bd >> MOVE_LCT_QTY) & 15U; }
-        constexpr uint32_t rank()       const noexcept{ return (bd >> MOVE_LCT_RANK) & 15U; }
-        constexpr uint32_t rank4x()     const noexcept{ return (bd >> MOVE_LCT_RANK4X) & (15U << 2); } // 4倍型
-        constexpr uint32_t jokerRank()  const noexcept{ return (bd >> MOVE_LCT_JKRANK) & 15U; }
-        constexpr uint32_t jokerRank4x()const noexcept{ return (bd >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
-        constexpr uint32_t jokerSuits() const noexcept{ return (bd >> MOVE_LCT_JKSUITS) & 15U; }
+        constexpr uint32_t prmOrder()   const  { return (bd >> MOVE_LCT_PRMORD) & 1U; }
+        constexpr uint32_t tmpOrder()   const  { return (bd >> MOVE_LCT_TMPORD) & 1U; }
+        constexpr uint32_t suits()      const  { return (bd >> MOVE_LCT_SUITS) & 15U; }
+        constexpr uint32_t qty()        const  { return (bd >> MOVE_LCT_QTY) & 15U; }
+        constexpr uint32_t rank()       const  { return (bd >> MOVE_LCT_RANK) & 15U; }
+        constexpr uint32_t rank4x()     const  { return (bd >> MOVE_LCT_RANK4X) & (15U << 2); } // 4倍型
+        constexpr uint32_t jokerRank()  const  { return (bd >> MOVE_LCT_JKRANK) & 15U; }
+        constexpr uint32_t jokerRank4x()const  { return (bd >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
+        constexpr uint32_t jokerSuits() const  { return (bd >> MOVE_LCT_JKSUITS) & 15U; }
         
         // 部分に着目する
-        constexpr uint32_t orderPart()     const noexcept{ return bd & MOVE_FLAG_ORD; }
-        constexpr uint32_t exceptOrderPart()const noexcept{ return bd & ~MOVE_FLAG_ORD; }
-        constexpr uint32_t suitsPart()     const noexcept{ return bd & MOVE_FLAG_SUITS; }
-        constexpr uint32_t rankPart()      const noexcept{ return bd & MOVE_FLAG_RANK; }
-        constexpr uint32_t qtyPart()       const noexcept{ return bd & MOVE_FLAG_QTY; }
-        constexpr uint32_t typePart()      const noexcept{ return bd & MOVE_FLAG_TYPE; } // サイズ＋形式
-        constexpr uint32_t jokerPart()     const noexcept{ return bd & MOVE_FLAG_JK; } // ジョーカー関連
-        constexpr uint32_t exeptJokerPart()const noexcept{ return bd & ~MOVE_FLAG_JK; } // ジョーカー関連以外
+        constexpr uint32_t orderPart()     const  { return bd & MOVE_FLAG_ORD; }
+        constexpr uint32_t exceptOrderPart()const  { return bd & ~MOVE_FLAG_ORD; }
+        constexpr uint32_t suitsPart()     const  { return bd & MOVE_FLAG_SUITS; }
+        constexpr uint32_t rankPart()      const  { return bd & MOVE_FLAG_RANK; }
+        constexpr uint32_t qtyPart()       const  { return bd & MOVE_FLAG_QTY; }
+        constexpr uint32_t typePart()      const  { return bd & MOVE_FLAG_TYPE; } // サイズ＋形式
+        constexpr uint32_t jokerPart()     const  { return bd & MOVE_FLAG_JK; } // ジョーカー関連
+        constexpr uint32_t exeptJokerPart()const  { return bd & ~MOVE_FLAG_JK; } // ジョーカー関連以外
         
         // true or false
-        constexpr bool isNull()const noexcept{ return !isRF(); }
-        constexpr bool isNF()const noexcept{ return !isRF(); }
-        constexpr uint32_t isRF()const noexcept{ return bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP | MOVE_FLAG_SEQ); }
-        constexpr uint32_t suitsLocked()const noexcept{ return bd & MOVE_FLAG_SUITSLOCK; }
-        constexpr uint32_t rankLocked()const noexcept{ return bd & MOVE_FLAG_RANKLOCK; }
+        constexpr bool isNull()const  { return !isRF(); }
+        constexpr bool isNF()const  { return !isRF(); }
+        constexpr uint32_t isRF()const  { return bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP | MOVE_FLAG_SEQ); }
+        constexpr uint32_t suitsLocked()const  { return bd & MOVE_FLAG_SUITSLOCK; }
+        constexpr uint32_t rankLocked()const  { return bd & MOVE_FLAG_RANKLOCK; }
         
-        constexpr uint32_t isTmpOrderRev()const noexcept{ return bd & MOVE_FLAG_TMPORD; }
-        constexpr uint32_t isPrmOrderRev()const noexcept{ return bd & MOVE_FLAG_PRMORD; }
+        constexpr uint32_t isTmpOrderRev()const  { return bd & MOVE_FLAG_TMPORD; }
+        constexpr uint32_t isPrmOrderRev()const  { return bd & MOVE_FLAG_PRMORD; }
         
-        constexpr uint32_t containsJOKER()const noexcept{ return bd & MOVE_FLAG_JK; }
+        constexpr uint32_t containsJOKER()const  { return bd & MOVE_FLAG_JK; }
         
-        constexpr bool isSingleJOKER()const noexcept{ return (bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
-        constexpr bool isS3Flush()const noexcept{ return holdsBits(bd, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
-        constexpr uint32_t domInevitably()const noexcept{ return bd & MOVE_FLAG_INEVITDOM; }
+        constexpr bool isSingleJOKER()const  { return (bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
+        constexpr bool isS3Flush()const  { return holdsBits(bd, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
+        constexpr uint32_t domInevitably()const  { return bd & MOVE_FLAG_INEVITDOM; }
         
-        constexpr uint32_t isSeq()const noexcept{ return bd & MOVE_FLAG_SEQ; }
-        constexpr uint32_t isGroup()const noexcept{ return bd & MOVE_FLAG_GROUP; }
-        constexpr uint32_t isSingle()const noexcept{ return bd & MOVE_FLAG_SINGLE; }
-        constexpr uint32_t isSingleOrGroup()const noexcept{ return bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP); }
-        bool isQuintuple()const noexcept{
+        constexpr uint32_t isSeq()const  { return bd & MOVE_FLAG_SEQ; }
+        constexpr uint32_t isGroup()const  { return bd & MOVE_FLAG_GROUP; }
+        constexpr uint32_t isSingle()const  { return bd & MOVE_FLAG_SINGLE; }
+        constexpr uint32_t isSingleOrGroup()const  { return bd & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP); }
+        bool isQuintuple()const  {
             return typePart() == (MOVE_FLAG_GROUP | (5U << MOVE_LCT_QTY));
         }
         
-        bool isOver5Seq()const noexcept{ // 5枚以上階段
+        bool isOver5Seq()const  { // 5枚以上階段
             return isSeq() && (qtyPart() > (4U << MOVE_LCT_QTY));
         }
         
-        template<int IS_SEQ = _BOTH>
-        bool isSpecialRankSeq()const noexcept{
-            if((IS_SEQ == _NO) || ((IS_SEQ != _YES) && !isSeq())){ return false; }
+        template <int IS_SEQ = _BOTH>
+        bool isSpecialRankSeq()const  {
+            if ((IS_SEQ == _NO) || ((IS_SEQ != _YES) && !isSeq())) { return false; }
             uint32_t r = rank();
             uint32_t q = qty();
             return (r < RANK_MIN) || (RANK_MAX < (r + q - 1));
         }
         
-        int typeNum()const noexcept{
+        int typeNum()const  {
             uint32_t q = qty();
-            if(isSeq()){
-                if(q >= 6){ return 8; }
+            if (isSeq()) {
+                if (q >= 6) { return 8; }
                 return 2 + q;
-            }else{
-                if(q >= 5){ return 8; }
+            } else {
+                if (q >= 5) { return 8; }
                 return q;
             }
         }
         
         // 進行
-        void procOrder(Move m)noexcept{ bd ^= m.orderPart(); } // オーダーフリップのみ
+        void procOrder(Move m) { bd ^= m.orderPart(); } // オーダーフリップのみ
         
-        void flush()noexcept{
+        void flush() {
             // 一時オーダーを永続オーダーに合わせる
             // TODO: ...現ルールではやらなくてよいので未実装
             bd &= MOVE_FLAG_ORD;
         }
         
-        void lockSuits()noexcept{ bd |= MOVE_FLAG_SUITSLOCK; }
+        void lockSuits() { bd |= MOVE_FLAG_SUITSLOCK; }
         
-        void procPASS()const noexcept{}//何もしない
+        void procPASS()const  {}//何もしない
         
-        template<int IS_NF = _BOTH, int IS_PASS = _BOTH>
-        void proc(Move m)noexcept{ // プレーヤー等は関係なく局面のみ進める
-            if(IS_PASS == _YES || ((IS_PASS != _NO) && m.isPASS())){
+        template <int IS_NF = _BOTH, int IS_PASS = _BOTH>
+        void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
+            if (IS_PASS == _YES || ((IS_PASS != _NO) && m.isPASS())) {
                 procPASS();
-            }else{
-                if(IS_NF == _YES){
+            } else {
+                if (IS_NF == _YES) {
                     procOrder(m);
-                    if(m.domInevitably()){ // 無条件完全支配
+                    if (m.domInevitably()) { // 無条件完全支配
                         flush();
-                    }else{
+                    } else {
                         setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
                     }
-                }else if(IS_NF == _NO){
+                }else if (IS_NF == _NO) {
                     procOrder(m);
-                    if(m.domInevitably()){ // 無条件完全支配
+                    if (m.domInevitably()) { // 無条件完全支配
                         flush();
-                    }else{
-                        if(domConditionally(m)){ // 条件付完全支配(Joker->S3のみ)
+                    } else {
+                        if (domConditionally(m)) { // 条件付完全支配(Joker->S3のみ)
                             flush();
-                        }else{
+                        } else {
                             // スートロック
-                            if(!suitsLocked()){
+                            if (!suitsLocked()) {
                                 // スートが一緒だったらロック処理
-                                if(locksSuits(m)){ lockSuits(); }
+                                if (locksSuits(m)) { lockSuits(); }
                             }
                             // 一時情報入れ替え
                             bd = (bd & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                             | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
                         }
                     }
-                }else{ // IS_NF不明
+                } else { // IS_NF不明
                     procOrder(m);
-                    if(m.domInevitably()){ // 無条件完全支配
+                    if (m.domInevitably()) { // 無条件完全支配
                         flush();
-                    }else{
-                        if(isNF()){
+                    } else {
+                        if (isNF()) {
                             setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
-                        }else{
-                            if(domConditionally(m)){ // 条件付完全支配(Joker->S3のみ)
+                        } else {
+                            if (domConditionally(m)) { // 条件付完全支配(Joker->S3のみ)
                                 flush();
-                            }else{
+                            } else {
                                 // スートロック
-                                if(!suitsLocked()){
+                                if (!suitsLocked()) {
                                     // スートが一緒だったらロック処理
-                                    if(locksSuits(m)){ lockSuits(); }
+                                    if (locksSuits(m)) { lockSuits(); }
                                 }
                                 // 一時情報入れ替え
                                 bd = (bd & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
@@ -2873,28 +2873,28 @@ namespace UECda{
             }
         }
         
-        template<int IS_NF = _BOTH, int IS_PASS = _BOTH>
-        void procAndFlush(Move m)noexcept{
+        template <int IS_NF = _BOTH, int IS_PASS = _BOTH>
+        void procAndFlush(Move m) {
             // 局面を更新し、強引に場を流す
-            if(IS_PASS == _NO || ((IS_PASS != _YES) && (!m.isPASS()))){ // パスならオーダーフリップいらず
+            if (IS_PASS == _NO || ((IS_PASS != _YES) && (!m.isPASS()))) { // パスならオーダーフリップいらず
                 procOrder(m); // オーダーフリップ
             }
-            if(IS_NF == _NO || ((IS_NF != _YES) && (!isNF()))){
+            if (IS_NF == _NO || ((IS_NF != _YES) && (!isNF()))) {
                 flush();
             }
         }
         
-        void procExceptFlush(Move m)noexcept{
+        void procExceptFlush(Move m) {
             // 局面を更新するが場を流さない
             procOrder(m);
             
             // スートロック
-            if(!suitsLocked()){
+            if (!suitsLocked()) {
                 // スートが一緒だったらロック処理
-                if(locksSuits(m)){ lockSuits(); }
+                if (locksSuits(m)) { lockSuits(); }
             }
             
-            if(domConditionally(m)){ // Joker->S3のみ
+            if (domConditionally(m)) { // Joker->S3のみ
                 bd = ((bd & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                       | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD)));
                 // ８切りと同じように無条件支配フラグをたてておく
@@ -2908,83 +2908,83 @@ namespace UECda{
         }
     };
     
-    constexpr Board OrderToNullBoard(const uint32_t prmOrder)noexcept{
+    constexpr Board OrderToNullBoard(const uint32_t prmOrder) {
         return Board(prmOrder | (prmOrder << 1));
     }
     
-    constexpr Move BoardToMove(const Board& bd)noexcept{
+    constexpr Move BoardToMove(const Board& bd) {
         // 場->場役へと変化させる
         // 場役へとコンバート出来ない部分は変えない
-        /*if(isSeq(bd)){
+        /*if (isSeq(bd)) {
          bd-=(((bd&MOVE_FLAG_QTY)-(1U<<8))<<4);
          }*/
         return Move(bd.bd);
     }
-    constexpr Board MoveToBoard(const Move& mv)noexcept{
+    constexpr Board MoveToBoard(const Move& mv) {
         // 場->場役へと変化させる
         return Board(mv.data());
     }
     
-    std::ostream& operator <<(std::ostream& out, const Board& bd){ // Board出力
-        if(bd.isNull()){
+    std::ostream& operator <<(std::ostream& out, const Board& bd) { // Board出力
+        if (bd.isNull()) {
             out << "NULL";
-        }else{
+        } else {
             Move m = BoardToMove(bd); // 場役へ変化
             out << m;
         }
         // オーダー...一時オーダーのみ
         out << "  Order : ";
-        if(bd.tmpOrder() == ORDER_NORMAL){
+        if (bd.tmpOrder() == ORDER_NORMAL) {
             out << "NORMAL";
-        }else{
+        } else {
             out << "REVERSED";
         }
         out << "  Suits : ";
-        if(bd.suitsLocked()){
+        if (bd.suitsLocked()) {
             out << "LOCKED";
-        }else{
+        } else {
             out << "FREE";
         }
         return out;
     }
     
-    bool isSubjectivelyValid(Board bd, Move mv, const Cards& c, const uint32_t q){
+    bool isSubjectivelyValid(Board bd, Move mv, const Cards& c, const uint32_t q) {
         // 不完全情報の上での合法性判定
         // c はそのプレーヤーが所持可能なカード
         // q はそのプレーヤーの手札枚数（公開されている情報）
-        if(mv.isPASS()){
+        if (mv.isPASS()) {
             return true;
         }
         // 枚数オーバー
-        if(mv.qty() > q){ return false; }
+        if (mv.qty() > q) { return false; }
         // 持っていないはずの札を使った場合
-        if(!holdsCards(c, mv.cards())){ return false; }
-        if(bd.isNF()){
-        }else{
-            if(bd.typePart() != mv.typePart()){ return false; } // 型違い
-            if(bd.isSeq()){
-                if(!isValidSeqRank(mv.rank(), bd.tmpOrder(), bd.rank(), mv.qty())){
+        if (!holdsCards(c, mv.cards())) { return false; }
+        if (bd.isNF()) {
+        } else {
+            if (bd.typePart() != mv.typePart()) { return false; } // 型違い
+            if (bd.isSeq()) {
+                if (!isValidSeqRank(mv.rank(), bd.tmpOrder(), bd.rank(), mv.qty())) {
                     return false;
                 }
-                if(bd.suitsLocked()){
-                    if(bd.suits() != mv.suits()){ return false; }
+                if (bd.suitsLocked()) {
+                    if (bd.suits() != mv.suits()) { return false; }
                 }
-            }else{
-                if(bd.isSingleJOKER()){
-                    if(!mv.isS3Flush()){ // ジョーカー->S3でなかった
+            } else {
+                if (bd.isSingleJOKER()) {
+                    if (!mv.isS3Flush()) { // ジョーカー->S3でなかった
                         return false;
-                    }else{
+                    } else {
                         return true;
                     }
                 }
-                if(mv.isSingleJOKER()){
-                    if(!bd.isSingle()){ return false; }
-                }else{
-                    if(!isValidGroupRank(mv.rank(), bd.tmpOrder(), bd.rank())){
+                if (mv.isSingleJOKER()) {
+                    if (!bd.isSingle()) { return false; }
+                } else {
+                    if (!isValidGroupRank(mv.rank(), bd.tmpOrder(), bd.rank())) {
                         return false;
                     }
-                    if(bd.suitsLocked()){
-                        if(bd.suits() != mv.suits()){ return false; }
+                    if (bd.suitsLocked()) {
+                        if (bd.suits() != mv.suits()) { return false; }
                     }
                 }
             }
