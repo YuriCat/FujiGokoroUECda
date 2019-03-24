@@ -1,14 +1,13 @@
-/*
- mate.hpp
- Katsuki Ohto
- */
+#pragma once
 
 // 詰み(Mate)判定
 
-#ifndef UECDA_LOGIC_MATE_HPP_
-#define UECDA_LOGIC_MATE_HPP_
+#include "daifugo.hpp"
+#include "hand.hpp"
+#include "action.hpp"
+#include "dominance.hpp"
 
-namespace UECda{
+namespace UECda {
     
     // 他のプレーヤー達がいかなる行動信念を持っていたとしても
     // 自分のあがりを阻止出来ない事の判定
@@ -790,5 +789,3 @@ namespace UECda{
      
      */
 }
-
-#endif // UECDA_LOGIC_MATE_HPP_

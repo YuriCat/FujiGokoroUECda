@@ -1,14 +1,8 @@
-/*
- dominance.hpp
- Katsuki Ohto
- */
+#pragma once
 
-// 支配性の判定
+// 支配性(確実に場を流せるか)の判定
 
-#ifndef UECDA_LOGIC_DOMINANCE_HPP_
-#define UECDA_LOGIC_DOMINANCE_HPP_
-
-namespace UECda{
+namespace UECda {
     
     // 支配性判定の情報系は大きく分けて3種類
     
@@ -382,5 +376,3 @@ namespace UECda{
         }
     }
 }
-
-#endif // UECDA_LOGIC_DOMINANCE_HPP_

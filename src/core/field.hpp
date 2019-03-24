@@ -1,18 +1,13 @@
-/*
- field.hpp
- Katsuki Ohto
- */
-
 #pragma once
 
 // 盤の情報表現
 
-#include "prim.hpp"
+#include "daifugo.hpp"
 #include "prim2.hpp"
 #include "hand.hpp"
-#include "hashGenerator.hpp"
+#include "hash.hpp"
 #include "dominance.hpp"
-#include "../fuji/playPolicy.hpp"
+#include "logic.hpp"
 
 namespace UECda {
     

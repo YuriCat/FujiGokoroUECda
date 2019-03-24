@@ -1,22 +1,17 @@
-/*
- UECda.h
- Katsuki Ohto
- */
-
 #pragma once
 
 #include "settings.h"
-#include "core/prim.hpp"
+#include "core/daifugo.hpp"
 
 // UECdaルールで戦うためのヘッダ
 // 様々なルールを設定
 constexpr bool RULE_FIRSTTURNPLAYER_D3 = true;
 
-namespace UECda{
+namespace UECda {
     
 #if _PLAYERS == 5 // 5人時
     // 階級
-    enum Class{
+    enum Class {
         DAIFUGO = 0,
         FUGO,
         HEIMIN,
@@ -29,12 +24,12 @@ namespace UECda{
     constexpr int N_PLAYERS = 5;
     constexpr int N_CLASSES = 5;
     
-    constexpr int N_CHANGE_FALL_CARDS(int cl)noexcept{ return MIDDLE - cl; }
-    constexpr int N_CHANGE_RISE_CARDS(int cl)noexcept{ return cl - MIDDLE; }
+    constexpr int N_CHANGE_FALL_CARDS(int cl){ return MIDDLE - cl; }
+    constexpr int N_CHANGE_RISE_CARDS(int cl){ return cl - MIDDLE; }
     
-    int N_CHANGE_CARDS(int cl)noexcept{ return abs(cl - MIDDLE); }
+    int N_CHANGE_CARDS(int cl){ return abs(cl - MIDDLE); }
     
-    constexpr int REWARD(int cl)noexcept{ return N_PLAYERS - cl; }
+    constexpr int REWARD(int cl){ return N_PLAYERS - cl; }
     
     constexpr int N_MAX_OWNED_CARDS_CHANGE = 13;
     constexpr int N_MAX_OWNED_CARDS_PLAY = 11;
@@ -62,12 +57,12 @@ namespace UECda{
     constexpr int NChangeRiseCards[N_PLAYERS] = {0, 0, 1, 2};
     constexpr int NChangeCards[N_PLAYERS] = {2, 1, 1, 2};
     
-    constexpr int N_CHANGE_FALL_CARDS(int cl)noexcept{ return NChangeFallCards[cl]; }
-    constexpr int N_CHANGE_RISE_CARDS(int cl)noexcept{ return NChangeRiseCards[cl]; }
+    constexpr int N_CHANGE_FALL_CARDS(int cl){ return NChangeFallCards[cl]; }
+    constexpr int N_CHANGE_RISE_CARDS(int cl){ return NChangeRiseCards[cl]; }
     
-    constexpr int N_CHANGE_CARDS(int cl)noexcept{ return NChangeCards[cl]; }
+    constexpr int N_CHANGE_CARDS(int cl){ return NChangeCards[cl]; }
     
-    constexpr int REWARD(int cl)noexcept{ return N_PLAYERS - cl; }
+    constexpr int REWARD(int cl){ return N_PLAYERS - cl; }
     
     constexpr int N_MAX_OWNED_CARDS_CHANGE = 16;
     constexpr int N_MAX_OWNED_CARDS_PLAY = 14;
@@ -91,31 +86,31 @@ namespace UECda{
     // 場の流れ方
     //
     
-    constexpr int getChangePartnerClass(int acl)noexcept{
+    constexpr int getChangePartnerClass(int acl){
         // 交換相手の階級
         return N_CLASSES - 1 - acl;
     }
     
-    constexpr int getNGamesForClassInitGame(int gn)noexcept{
+    constexpr int getNGamesForClassInitGame(int gn){
         // 試合番号から、階級初期化ゲームへの残り試合数に変換
         return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
     }
-    constexpr int getNGamesForSeatInitGame(int gn)noexcept{
+    constexpr int getNGamesForSeatInitGame(int gn){
         // 試合番号から、席順初期化ゲームへの残り試合数に変換
         return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
     }
     
     
     template<int N = N_PLAYERS>
-    constexpr unsigned int getNextSeat(unsigned int s)noexcept{
+    constexpr unsigned int getNextSeat(unsigned int s){
         return (s + 1) % (unsigned int)cmax(N, 1);
     }
     template<int N>
-    constexpr unsigned int getRemovedNextSeat(unsigned int s)noexcept{
+    constexpr unsigned int getRemovedNextSeat(unsigned int s){
         return s % (unsigned int)cmax(N - 1, 1);
     }
     template<int N = N_PLAYERS>
-    constexpr unsigned int getPreviousSeat(unsigned int s)noexcept{
+    constexpr unsigned int getPreviousSeat(unsigned int s){
         return (s + N - 1) % (unsigned int)cmax(N, 1);
     }
     
@@ -173,7 +168,7 @@ namespace UECda{
     
     constexpr inline int IntCardToH(IntCard ic){ return SuitNumToH(IntCardToSuitNum(ic)); }
     constexpr inline int IntCardToW(IntCard ic){ return RankToW(IntCardToRank(ic)); }
-    constexpr inline IntCard HWtoIC(int h, int w)noexcept{ return RankSuitNumToIntCard(WToRank(w), HToSuitNum(h)); }
+    constexpr inline IntCard HWtoIC(int h, int w){ return RankSuitNumToIntCard(WToRank(w), HToSuitNum(h)); }
     
     // カード集合変換(chara == true の場合は性質カードに変換)
     Cards TableToCards(const int table[8][15], bool chara = false){

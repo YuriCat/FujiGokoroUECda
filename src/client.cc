@@ -1,16 +1,12 @@
-/*
- client.cc
- */
+
 
 /////////////////////////////////
 
 // UECコンピュータ大貧民大会(UECda)用クライアントメイン
-// by Katsuki Ohto
 
 /////////////////////////////////
 
 
-// ヘッダ
 #include "connection.h"
 
 #include "include.h"
@@ -25,7 +21,7 @@ using namespace UECda::Human;
 #include "ai/randomAI.hpp"
 using namespace UECda::RandomAI;
 #else
-#include "fuji/FujiGokoro.hpp"
+#include "engine/engineMain.hpp"
 using namespace UECda::Fuji;
 #endif
 
@@ -36,7 +32,6 @@ int main(int argc, char* argv[]){ // for UECda
     // main関数はクライアントの思考の進行役を務める
     // サーバーの情報を、クライアントが用いる共通型に変換して最低限の主観的情報を更新する
     // それ以上高次な演算はクライアントが行う
-    // ただしClientFieldに高次な演算結果のスペースがあることについては問題ない
     
     CERR << MY_NAME << " ver. " << MY_VERSION << " trained with " << MY_COACH << "." << endl;
     
@@ -61,7 +56,7 @@ int main(int argc, char* argv[]){ // for UECda
     }
     
     // 全試合前の初期化
-    auto& matchLog = client.matchLog;
+    auto& record = client.matchLog;
     auto& shared = client.shared;
     
     bool seedSet = false;
@@ -145,7 +140,7 @@ int main(int argc, char* argv[]){ // for UECda
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更
     int myPlayerNum = entryToGame(); // ゲームに参加
     
-    matchLog.setMyPlayerNum(myPlayerNum);
+    record.setMyPlayerNum(myPlayerNum);
     client.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない
     
     if(seedSet){ // シード指定の場合
@@ -153,7 +148,7 @@ int main(int argc, char* argv[]){ // for UECda
     }
     
 #ifdef BROADCAST
-    broadcastBMatch();
+    //broadcastBMatch();
 #endif
     
     // 通信変数
@@ -172,20 +167,20 @@ int main(int argc, char* argv[]){ // for UECda
         client.initGame();
         
         // 棋譜準備
-        matchLog.initGame();
-        auto& gameLog = matchLog.latestGame();
-        ClientPlayLog& playLog = gameLog.current; // 盤面の更新等のため
+        record.initGame();
+        auto& gameRecord = record.latestGame();
+        ClientPlayLog& playLog = gameRecord.current; // 盤面の更新等のため
         playLog.initGame();
         
         startGame(recv_table); // 自分のカード、初期情報受け取り
 
         // 席順設定
         for(int s = 0; s < N_PLAYERS; ++s)
-            gameLog.setPlayerSeat(getSeatPlayer(recv_table, s), s);
+            gameRecord.setPlayerSeat(getSeatPlayer(recv_table, s), s);
         
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
-        gameLog.setDealtCards(myPlayerNum, c);
+        gameRecord.setDealtCards(myPlayerNum, c);
         
         CERR << toString(recv_table) << endl;
         
@@ -195,14 +190,14 @@ int main(int argc, char* argv[]){ // for UECda
         if(isInitGame(recv_table)){
             // init gameは全員平民としておく
             CERR << "main() : probed init game from table" << endl;
-            gameLog.setInitGame();
+            gameRecord.setInitGame();
             for(int p = 0; p < N_PLAYERS; ++p)
-                gameLog.setPlayerClass(p, MIDDLE);
+                gameRecord.setPlayerClass(p, MIDDLE);
         }else{
             CERR << "main() : probed change game from table" << endl;
-            gameLog.resetInitGame();
+            gameRecord.resetInitGame();
             for(int p = 0; p < N_PLAYERS; ++p)
-                gameLog.setPlayerClass(p, getPlayerClass(recv_table, p));
+                gameRecord.setPlayerClass(p, getPlayerClass(recv_table, p));
         }
         
         // カード枚数設定
@@ -210,8 +205,8 @@ int main(int argc, char* argv[]){ // for UECda
         // init gameのときは関係ないが、falseになればそれで良い
         bool isJava;
         
-        if(!gameLog.isInitGame()
-           && getNCards(recv_table, gameLog.getClassPlayer(DAIFUGO)) == 13U){
+        if(!gameRecord.isInitGame()
+           && getNCards(recv_table, gameRecord.getClassPlayer(DAIFUGO)) == 13U){
             isJava = true;
             CERR << "main() : This is java server." << endl;
         }else{
@@ -225,17 +220,17 @@ int main(int argc, char* argv[]){ // for UECda
                 int cl = getPlayerClass(recv_table, p);
                 if(cl <= FUGO)NCards -= N_CHANGE_CARDS(cl);
             }
-            gameLog.setNDealtCards(p, NCards);
+            gameRecord.setNDealtCards(p, NCards);
         }
 #ifdef BROADCAST
-        field.broadcastBGame();
+        //broadcastBGame(gameRecord);
 #endif
         
         // カード交換フェーズ
-        int myClass = gameLog.getPlayerClass(myPlayerNum);
+        int myClass = gameRecord.getPlayerClass(myPlayerNum);
         int changeQty = N_CHANGE_CARDS(myClass);
         
-        if(!gameLog.isInitGame()){ // カード交換あり
+        if(!gameRecord.isInitGame()){ // カード交換あり
             
             CERR << "main() : change phase" << endl;
             
@@ -245,12 +240,12 @@ int main(int argc, char* argv[]){ // for UECda
                 if(myClass < HEIMIN){ // 自分があげるカードを選択する必要あり
                     CERR << "main() : my req for change" << endl;
                     Cards changeCards = client.change(changeQty); // 自分のカード交換選択
-                    gameLog.setSentCards(changeCards); // 実際にその交換が行われるかわからないがとりあえず設定
+                    gameRecord.setSentCards(changeCards); // 実際にその交換が行われるかわからないがとりあえず設定
                     CardsToTable(changeCards, send_table);
                     
                     sendChangingCards(send_table);
 #ifdef BROADCAST
-                    field.broadcastMyChange(cCards);
+                    //field.broadcastMyChange(cCards);
 #endif
                 }else{
                     // 自分はもらう側なのでここでは何もしない
@@ -288,7 +283,7 @@ int main(int argc, char* argv[]){ // for UECda
             if(isNF(recv_table) && (!playLog.bd.isNF() || playLog.ps.getNAwake() == 0)){
                 // 空場パスに対応するため、既に空場と認識していない状況、
                 // またはawakeなプレーヤーが誰もいない状況でのみ流す
-                playLog.flush(gameLog.infoSeat); // 席順が必要
+                playLog.flush(gameRecord.infoSeat); // 席順が必要
             }
             
             if(suitsLocked(recv_table))
@@ -301,7 +296,7 @@ int main(int argc, char* argv[]){ // for UECda
             if(firstTurn){ // 初手の特別な処理
                 // 局面をサーバーからの情報通りに設定する
                 for(int p = 0; p < N_PLAYERS; ++p)
-                    gameLog.setNOrgCards(p, getNCards(recv_table, p));
+                    gameRecord.setNOrgCards(p, getNCards(recv_table, p));
                     
                 playLog.setFirstTurnPlayer(turnPlayer);
                 playLog.setPMOwner(turnPlayer); // 初期オーナーは初手プレーヤーとしておく
@@ -314,13 +309,13 @@ int main(int argc, char* argv[]){ // for UECda
                     // 自分が上位の際もカード交換が自分の想定通りに行われたか確認の必要がある
                     
                     Cards sentCards, recvCards;
-                    Cards dealtCards = gameLog.getDealtCards(myPlayerNum);
+                    Cards dealtCards = gameRecord.getDealtCards(myPlayerNum);
                     
                     if(myClass < HEIMIN){ // 交換要求されていた場合
                         // recvCardsは分からない
                         recvCards = CARDS_NULL;
                         sentCards = maskCards(dealtCards, newCards);
-                        if(sentCards != gameLog.getSentCards()){
+                        if(sentCards != gameRecord.getSentCards()){
                             // 自分がやろうとした交換が出来ていないのでリジェクト報告
                             shared.feedChangeRejection();
                             cerr << "main() : My Change was Rejected!" << endl;
@@ -342,16 +337,16 @@ int main(int argc, char* argv[]){ // for UECda
                             assert(countCards(recvCards) == changeQty && countCards(sentCards) == changeQty);
                         }
                     }
-                    gameLog.setRecvCards(recvCards);
-                    gameLog.setSentCards(sentCards);
+                    gameRecord.setRecvCards(recvCards);
+                    gameRecord.setSentCards(sentCards);
                     
                     client.afterChange();
                     client.prepareForGame();
                     
-                    gameLog.setOrgCards(myPlayerNum, newCards);
+                    gameRecord.setOrgCards(myPlayerNum, newCards);
                     
                 }else{ // 自分がカード交換に関与していない
-                    gameLog.setOrgCards(myPlayerNum, gameLog.getDealtCards(myPlayerNum));
+                    gameRecord.setOrgCards(myPlayerNum, gameRecord.getDealtCards(myPlayerNum));
                 }
             }
             
@@ -359,7 +354,7 @@ int main(int argc, char* argv[]){ // for UECda
                 playLog.setNCards(p, getNCards(recv_table, p));
             
 #ifdef BROADCAST
-            field.broadcastBP();
+            //field.broadcastBP();
 #endif
             
             uint64_t myPlayTime;
@@ -390,7 +385,7 @@ int main(int argc, char* argv[]){ // for UECda
                     }
                 }
 #ifdef BROADCAST
-                field.broadcastMyPlay(myMove);
+                //field.broadcastMyPlay(myMove);
 #endif
             }else{ // 自分のターンでない
                 // 他人のプレー中の処理(UECdaでは暗黙の了解として、重い処理はしない)
@@ -420,14 +415,14 @@ int main(int argc, char* argv[]){ // for UECda
             //    cerr << toString(recv_table) << endl;
             //}
             playLog.set(serverMove, serverUsedCards, tmpTime, myPlayTime);
-            gameLog.push_play(playLog);
+            gameRecord.push_play(playLog);
             if(playLog.procByServer(serverMove, serverUsedCards)){
                 // あがり処理
-                gameLog.setPlayerNewClass(turnPlayer, playLog.ps.getBestClass() - 1);
+                gameRecord.setPlayerNewClass(turnPlayer, playLog.ps.getBestClass() - 1);
             }
             
 #ifdef BROADCAST
-            field.broadcastPlay(turnPlayer, serverMove);
+            //field.broadcastPlay(turnPlayer, serverMove);
 #endif
             
             switch(beGameEnd()){
@@ -447,17 +442,17 @@ int main(int argc, char* argv[]){ // for UECda
         
         // 試合終了後処理
         int lastPlayer = playLog.ps.searchL1Player();
-        gameLog.setPlayerNewClass(lastPlayer, DAIHINMIN);
+        gameRecord.setPlayerNewClass(lastPlayer, DAIHINMIN);
         Field field;
-        setFieldFromClientLog(gameLog, myPlayerNum, &field);
+        setFieldFromClientLog(gameRecord, myPlayerNum, &field);
         for(int p = 0; p < N_PLAYERS; ++p){
-            gameLog.setOrgCards(p, field.getUsedCards(p));
+            gameRecord.setOrgCards(p, field.getUsedCards(p));
         }
         if(field.getNAlivePlayers() == 0){ // 先日手でなく通常の終了
-            gameLog.addOrgCards(lastPlayer, field.getRemCards());
-            gameLog.setTerminated();
+            gameRecord.addOrgCards(lastPlayer, field.getRemCards());
+            gameRecord.setTerminated();
         }
-        matchLog.closeGame();
+        record.closeGame();
         client.closeGame(); // 相手の分析等はここで
         
         if(whole_gameend_flag){ break; }

@@ -47,9 +47,9 @@
 #include "statistics.h"
 
 #include "../include.h"
-#include "../fuji/fuji.h"
-#include "../fuji/fujiStructure.hpp"
-#include "../fuji/rating.hpp"
+#include "../engine/engineSettings.h"
+#include "../engine/engineStructure.hpp"
+#include "../engine/rating.hpp"
 
 using namespace UECda;
 

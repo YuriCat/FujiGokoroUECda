@@ -1,10 +1,6 @@
-/*
- include.h
- Katsuki Ohto
- */
+#pragma once
 
 // 共通インクルード
-#pragma once
 
 #include <cstring>
 #include <unistd.h>
@@ -75,7 +71,6 @@
 #include "../CppCommon/src/util/math.hpp"
 #include "../CppCommon/src/hash/hashFunc.hpp"
 #include "../CppCommon/src/hash/hashBook.hpp"
-//#include "../CppCommon/src/util/softmaxPolicy.hpp"
 #include "../CppCommon/src/util/softmaxClassifier.hpp"
 #include "../CppCommon/src/util/selection.hpp"
 #include "../CppCommon/src/util/lock.hpp"
@@ -89,21 +84,11 @@
 #include "UECda.h"
 
 // 基本型
-#include "core/prim.hpp"
+#include "core/daifugo.hpp"
 #include "core/prim2.hpp"
 #include "core/hand.hpp"
 #include "core/field.hpp"
+#include "core/record.hpp"
+#include "core/hash.hpp"
 
-namespace Game = UECda; // プレーするゲーム
 using namespace UECda;
-
-// ハッシュ
-#include "core/hashGenerator.hpp"
-
-// ログ
-#ifdef LOGGING
-#include "core/minLog.hpp"
-#endif
-
-// 状態表現
-#include "core/commonField.hpp"

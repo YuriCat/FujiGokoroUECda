@@ -1,16 +1,12 @@
-/*
- prim2.hpp
- Katsuki Ohto
- */
-
-#ifndef UECDA_STRUCTURE_PRIMITIVE2_HPP_
-#define UECDA_STRUCTURE_PRIMITIVE2_HPP_
+#pragma once
 
 // プリミティブな型 少し複雑なもの
 
-#include "prim.hpp"
+#include "daifugo.hpp"
+#include "card.hpp"
+#include "move.hpp"
 
-namespace UECda{
+namespace UECda {
     
     /**************************着手決定のための基本追加場情報**************************/
     
@@ -103,42 +99,42 @@ namespace UECda{
         using data_t = uint64_t;
         
         // set
-        void setFinal()noexcept{    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW()noexcept{       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW()noexcept{     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW()noexcept{     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate()noexcept{   i_.set(LCT64_MPMATE); }
-        void setL2Mate()noexcept{   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp()noexcept{ i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp()noexcept{ i_.set(LCT64_L2GIVEUP); }
+        void setFinal(){    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW(){       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW(){     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW(){     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate(){   i_.set(LCT64_MPMATE); }
+        void setL2Mate(){   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp(){ i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp(){ i_.set(LCT64_L2GIVEUP); }
         
-        void setSelfFollow()noexcept{ i_.set(LCT64_SELFFOLLOW,
+        void setSelfFollow(){ i_.set(LCT64_SELFFOLLOW,
                                             LCT64_UNRIVALED,
                                             LCT64_LASTAWAKE,
                                             LCT64_FLUSHLEAD,
                                             LCT64_NPDOM,
                                             LCT64_PDOM); }
-        void setUnrivaled()noexcept{ i_.set(LCT64_UNRIVALED,
+        void setUnrivaled(){ i_.set(LCT64_UNRIVALED,
                                            LCT64_FLUSHLEAD,
                                            LCT64_NPDOM,
                                            LCT64_PDOM); }
-        void setLastAwake()noexcept{ i_.set(LCT64_LASTAWAKE,
+        void setLastAwake(){ i_.set(LCT64_LASTAWAKE,
                                            LCT64_NPDOM,
                                            LCT64_BDOMOTHERS); }
-        void setFlushLead()noexcept{ i_.set(LCT64_FLUSHLEAD); }
-        void setNPDom()noexcept{ i_.set(LCT64_NPDOM); }
-        void setPassDom()noexcept{ i_.set(LCT64_PDOM); }
-        void setBDO()noexcept{ i_.set(LCT64_BDOMOTHERS); }
-        void setBDM()noexcept{ i_.set(LCT64_BDOMME); }
-        void setBDALL()noexcept{ i_.set(LCT64_BDOMOTHERS,
+        void setFlushLead(){ i_.set(LCT64_FLUSHLEAD); }
+        void setNPDom(){ i_.set(LCT64_NPDOM); }
+        void setPassDom(){ i_.set(LCT64_PDOM); }
+        void setBDO(){ i_.set(LCT64_BDOMOTHERS); }
+        void setBDM(){ i_.set(LCT64_BDOMME); }
+        void setBDALL(){ i_.set(LCT64_BDOMOTHERS,
                                        LCT64_BDOMME); }
-        void setNoChance()noexcept{ setBDM(); }
+        void setNoChance(){ setBDM(); }
         
-        void settlePrmOrder()noexcept{ i_.set(LCT64_TMPORDSETTLED); }
-        void settleTmpOrder()noexcept{ i_.set(LCT64_TMPORDSETTLED,
+        void settlePrmOrder(){ i_.set(LCT64_TMPORDSETTLED); }
+        void settleTmpOrder(){ i_.set(LCT64_TMPORDSETTLED,
                                              LCT64_PRMORDSETTLED); }
         
-        void setDConst()noexcept{ i_.set(LCT64_DCONST); }
+        void setDConst(){ i_.set(LCT64_DCONST); }
         
         void setMinNMelds(uint32_t n){ i_ |= uint64_t(n & 15U) << LCT64_MINNMELDS; }
         
@@ -151,58 +147,58 @@ namespace UECda{
         
         // get
         // 一時情報
-        uint64_t isFinal()const noexcept{    return test(LCT64_FINAL); }
-        uint64_t isPW()const noexcept{       return test(LCT64_PW); }
-        uint64_t isBNPW()const noexcept{     return test(LCT64_BNPW); }
-        uint64_t isBRPW()const noexcept{     return test(LCT64_BRPW); }
-        uint64_t isMPMate()const noexcept{   return test(LCT64_MPMATE); }
-        uint64_t isMPGiveUp()const noexcept{ return test(LCT64_MPGIVEUP); }
-        uint64_t isL2Mate()const noexcept{   return test(LCT64_L2MATE); }
-        uint64_t isL2GiveUp()const noexcept{ return test(LCT64_L2GIVEUP); }
-        uint64_t isMate()const noexcept{     return i_ & FLAG64_MATE; }
-        uint64_t isGiveUp()const noexcept{   return i_ & FLAG64_GIVEUP; }
+        uint64_t isFinal()const {    return test(LCT64_FINAL); }
+        uint64_t isPW()const {       return test(LCT64_PW); }
+        uint64_t isBNPW()const {     return test(LCT64_BNPW); }
+        uint64_t isBRPW()const {     return test(LCT64_BRPW); }
+        uint64_t isMPMate()const {   return test(LCT64_MPMATE); }
+        uint64_t isMPGiveUp()const { return test(LCT64_MPGIVEUP); }
+        uint64_t isL2Mate()const {   return test(LCT64_L2MATE); }
+        uint64_t isL2GiveUp()const { return test(LCT64_L2GIVEUP); }
+        uint64_t isMate()const {     return i_ & FLAG64_MATE; }
+        uint64_t isGiveUp()const {   return i_ & FLAG64_GIVEUP; }
         
-        uint64_t isSelfFollow()const noexcept{ return test(LCT64_SELFFOLLOW); }
-        uint64_t isUnrivaled()const noexcept{ return test(LCT64_UNRIVALED); }
-        uint64_t isLastAwake()const noexcept{ return test(LCT64_LASTAWAKE); }
-        uint64_t isFlushLead()const noexcept{ return test(LCT64_FLUSHLEAD); }
-        uint64_t isNonPassDom()const noexcept{ return test(LCT64_NPDOM); }
-        uint64_t isPassDom()const noexcept{ return test(LCT64_PDOM); }
-        uint64_t isBDO()const noexcept{ return test(LCT64_BDOMOTHERS); }
-        uint64_t isBDM()const noexcept{ return test(LCT64_BDOMME); }
-        bool isBDALL()const noexcept{ return i_.holds(LCT64_BDOMOTHERS,
+        uint64_t isSelfFollow()const { return test(LCT64_SELFFOLLOW); }
+        uint64_t isUnrivaled()const { return test(LCT64_UNRIVALED); }
+        uint64_t isLastAwake()const { return test(LCT64_LASTAWAKE); }
+        uint64_t isFlushLead()const { return test(LCT64_FLUSHLEAD); }
+        uint64_t isNonPassDom()const { return test(LCT64_NPDOM); }
+        uint64_t isPassDom()const { return test(LCT64_PDOM); }
+        uint64_t isBDO()const { return test(LCT64_BDOMOTHERS); }
+        uint64_t isBDM()const { return test(LCT64_BDOMME); }
+        bool isBDALL()const { return i_.holds(LCT64_BDOMOTHERS,
                                                      LCT64_BDOMME); }
-        uint64_t isNoChance()const noexcept{ return isBDM();}
+        uint64_t isNoChance()const { return isBDM();}
         
         // 永続情報
-        uint64_t isTmpOrderSettled()const noexcept{ return test(LCT64_TMPORDSETTLED); }
-        uint64_t isPrmOrderSettled()const noexcept{ return test(LCT64_PRMORDSETTLED); }
+        uint64_t isTmpOrderSettled()const { return test(LCT64_TMPORDSETTLED); }
+        uint64_t isPrmOrderSettled()const { return test(LCT64_PRMORDSETTLED); }
         
-        uint64_t isDConst()const noexcept{ return test(LCT64_DCONST); }
+        uint64_t isDConst()const { return test(LCT64_DCONST); }
         
-        uint32_t getMinNMelds()const noexcept{ return uint32_t(i_ >> LCT64_MINNMELDS) & 15U; }
+        uint32_t getMinNMelds()const { return uint32_t(i_ >> LCT64_MINNMELDS) & 15U; }
         
-        uint32_t getMinNCards()const noexcept{ return i_ & 15U;}
-        uint32_t getMaxNCards()const noexcept{ return (i_ >> 4) & 15U; }
-        uint32_t getMinNCardsAwake()const noexcept{ return (i_ >> 8) & 15U; }
-        uint32_t getMaxNCardsAwake()const noexcept{ return (i_ >> 12) & 15U; }
+        uint32_t getMinNCards()const { return i_ & 15U;}
+        uint32_t getMaxNCards()const { return (i_ >> 4) & 15U; }
+        uint32_t getMinNCardsAwake()const { return (i_ >> 8) & 15U; }
+        uint32_t getMaxNCardsAwake()const { return (i_ >> 12) & 15U; }
         
-        void initHalf()noexcept{ i_.reset(); }
+        void initHalf(){ i_.reset(); }
         
-        void init()noexcept{
+        void init(){
             // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
             i_ = 0x0000F0F0ULL;
         }
         
-        void initTmpInfo()noexcept{
+        void initTmpInfo(){
             // 一時情報は初期化し、永続情報は残す
             i_ = (i_ & MASK64_TMPINFO) | 0x0000F0F0ULL;
         }
-        void procTmpInfo()noexcept{
+        void procTmpInfo(){
             i_ &= i_ & (MASK64_TMPINFO | 0xFFFFULL);
         }
         
-        constexpr data_t data()const noexcept{ return i_.data(); }
+        constexpr data_t data()const { return i_.data(); }
         
         constexpr FieldAddInfo():i_(){}
         constexpr FieldAddInfo(const FieldAddInfo& arg):
@@ -284,46 +280,46 @@ namespace UECda{
         constexpr move_t mv()const{ return Move((uint32_t)data()); }
         
         // 合法着手生成のときに一緒にクリアする
-        void setNULL()noexcept{i_ = MOVEINFO_NULL;}
-        void setPASS()noexcept{i_ = MOVEINFO_PASS;}
-        void setSingleJOKER()noexcept{i_ = MOVEINFO_SINGLEJOKER;}
-        void setS3Flush()noexcept{i_ = MOVEINFO_S3FLUSH;}
+        void setNULL(){i_ = MOVEINFO_NULL;}
+        void setPASS(){i_ = MOVEINFO_PASS;}
+        void setSingleJOKER(){i_ = MOVEINFO_SINGLEJOKER;}
+        void setS3Flush(){i_ = MOVEINFO_S3FLUSH;}
         
         // MoveAddInfo
         // 上位32ビットの演算
-        void setFinal()noexcept{    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW()noexcept{       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW()noexcept{     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW()noexcept{     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate()noexcept{   i_.set(LCT64_MPMATE); }
-        void setL2Mate()noexcept{   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp()noexcept{ i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp()noexcept{ i_.set(LCT64_L2GIVEUP); }
+        void setFinal(){    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW(){       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW(){     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW(){     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate(){   i_.set(LCT64_MPMATE); }
+        void setL2Mate(){   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp(){ i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp(){ i_.set(LCT64_L2GIVEUP); }
         
         // 当座支配
-        void setDO()noexcept{i_ |= 1ULL<<(32+12);}
-        void setDM()noexcept{i_ |= 1ULL<<(32+13);}
-        void setDALL()noexcept{i_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
-        void setDomOthers()noexcept{setDO();}
-        void setDomMe()noexcept{setDO();}
-        void setDomAll()noexcept{setDO();}
+        void setDO(){i_ |= 1ULL<<(32+12);}
+        void setDM(){i_ |= 1ULL<<(32+13);}
+        void setDALL(){i_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
+        void setDomOthers(){setDO();}
+        void setDomMe(){setDO();}
+        void setDomAll(){setDO();}
         
         // 当座でない支配
         // 当座支配フラグを一緒に付けるかは要検討
-        void setP_DO()noexcept{setP_NFDO();}
-        void setP_DM()noexcept{setP_NFDM();}
-        void setP_DALL()noexcept{setP_NFDALL();}
-        void setE_DO()noexcept{setE_NFDO();}
-        void setE_DM()noexcept{setE_NFDM();}
-        void setE_DALL()noexcept{setE_NFDALL();}
-        void setP_NFDO()noexcept{i_|=1ULL<<(32+18);setE_NFDO();}
-        void setP_NFDM()noexcept{i_|=1ULL<<(32+19);setE_NFDM();}
-        void setP_NFDALL()noexcept{i_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
-        void setE_NFDO()noexcept{i_|=1ULL<<(32+20);setDO();}
-        void setE_NFDM()noexcept{i_|=1ULL<<(32+21);setDM();}
-        void setE_NFDALL()noexcept{i_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
+        void setP_DO(){setP_NFDO();}
+        void setP_DM(){setP_NFDM();}
+        void setP_DALL(){setP_NFDALL();}
+        void setE_DO(){setE_NFDO();}
+        void setE_DM(){setE_NFDM();}
+        void setE_DALL(){setE_NFDALL();}
+        void setP_NFDO(){i_|=1ULL<<(32+18);setE_NFDO();}
+        void setP_NFDM(){i_|=1ULL<<(32+19);setE_NFDM();}
+        void setP_NFDALL(){i_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
+        void setE_NFDO(){i_|=1ULL<<(32+20);setDO();}
+        void setE_NFDM(){i_|=1ULL<<(32+21);setDM();}
+        void setE_NFDALL(){i_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
         
-        void setP_NFDALL_only()noexcept{
+        void setP_NFDALL_only(){
             i_|=(1ULL<<(32+18))|(1ULL<<(32+19))|(1ULL<<(32+20))|(1ULL<<(32+21));
         } // P_NFDOだが当座支配は付けない。S3とジョーカーのダブルに適用
         
@@ -347,46 +343,46 @@ namespace UECda{
         }
         
         // kousoku
-        void setDConst()noexcept{i_|=1ULL<<(32+28);}
-        void setDW_NFH()noexcept{i_|=1ULL<<(32+29);}
+        void setDConst(){i_|=1ULL<<(32+28);}
+        void setDW_NFH(){i_|=1ULL<<(32+29);}
         
-        void init()noexcept{i_&=0x00000000FFFFFFFF;}
+        void init(){i_&=0x00000000FFFFFFFF;}
         
         // get
-        uint64_t isFinal()const noexcept{    return test(LCT64_FINAL); }
-        uint64_t isPW()const noexcept{       return test(LCT64_PW); }
-        uint64_t isBNPW()const noexcept{     return test(LCT64_BNPW); }
-        uint64_t isBRPW()const noexcept{     return test(LCT64_BRPW); }
-        uint64_t isMPMate()const noexcept{   return test(LCT64_MPMATE); }
-        uint64_t isMPGiveUp()const noexcept{ return test(LCT64_MPGIVEUP); }
-        uint64_t isL2Mate()const noexcept{   return test(LCT64_L2MATE); }
-        uint64_t isL2GiveUp()const noexcept{ return test(LCT64_L2GIVEUP); }
-        uint64_t isMate()const noexcept{     return i_ & FLAG64_MATE; }
-        uint64_t isGiveUp()const noexcept{   return i_ & FLAG64_GIVEUP; }
+        uint64_t isFinal()const {    return test(LCT64_FINAL); }
+        uint64_t isPW()const {       return test(LCT64_PW); }
+        uint64_t isBNPW()const {     return test(LCT64_BNPW); }
+        uint64_t isBRPW()const {     return test(LCT64_BRPW); }
+        uint64_t isMPMate()const {   return test(LCT64_MPMATE); }
+        uint64_t isMPGiveUp()const { return test(LCT64_MPGIVEUP); }
+        uint64_t isL2Mate()const {   return test(LCT64_L2MATE); }
+        uint64_t isL2GiveUp()const { return test(LCT64_L2GIVEUP); }
+        uint64_t isMate()const {     return i_ & FLAG64_MATE; }
+        uint64_t isGiveUp()const {   return i_ & FLAG64_GIVEUP; }
         
-        uint64_t isDO()const noexcept{return i_&(1ULL<<(32+12));}
-        uint64_t isDM()const noexcept{return i_&(1ULL<<(32+13));}
-        bool isDALL()const noexcept{return i_.holds(32+12,32+13);}
+        uint64_t isDO()const {return i_&(1ULL<<(32+12));}
+        uint64_t isDM()const {return i_&(1ULL<<(32+13));}
+        bool isDALL()const {return i_.holds(32+12,32+13);}
         
-        uint64_t dominatesOthers()const noexcept{return isDO();}
-        uint64_t dominatesMe()const noexcept{return isDM();}
-        uint64_t dominatesAll()const noexcept{return isDALL();}
+        uint64_t dominatesOthers()const {return isDO();}
+        uint64_t dominatesMe()const {return isDM();}
+        uint64_t dominatesAll()const {return isDALL();}
         
-        uint32_t getIncMinNMelds()const noexcept{return ((uint32_t)(i_>>(32+8)))&15U;}
+        uint32_t getIncMinNMelds()const {return ((uint32_t)(i_>>(32+8)))&15U;}
         
-        uint64_t isTmpOrderRev()const noexcept{return i_ & (1ULL<<(32+14));}
-        uint32_t getTmpOrder()const noexcept{return (uint32_t(i_>>(32+14)))&1U;}
-        uint64_t isSuitLock()const noexcept{return i_&(1ULL<<(32+16));}
+        uint64_t isTmpOrderRev()const {return i_ & (1ULL<<(32+14));}
+        uint32_t getTmpOrder()const {return (uint32_t(i_>>(32+14)))&1U;}
+        uint64_t isSuitLock()const {return i_&(1ULL<<(32+16));}
         
-        uint64_t isP_NFDO()const noexcept{return i_ & (1ULL<<(32+18));}
-        uint64_t isP_NFDM()const noexcept{return i_ & (1ULL<<(32+19));}
-        bool isP_NFDALL()const noexcept{return i_.holds(32+18,32+19);}
-        uint64_t isE_NFDO()const noexcept{return i_ & (1ULL<<(32+20));}
-        uint64_t isE_NFDM()const noexcept{return i_ & (1ULL<<(32+21));}
-        bool isE_NFDALL()const noexcept{return i_.holds(32+20,32+21);}
+        uint64_t isP_NFDO()const {return i_ & (1ULL<<(32+18));}
+        uint64_t isP_NFDM()const {return i_ & (1ULL<<(32+19));}
+        bool isP_NFDALL()const {return i_.holds(32+18,32+19);}
+        uint64_t isE_NFDO()const {return i_ & (1ULL<<(32+20));}
+        uint64_t isE_NFDM()const {return i_ & (1ULL<<(32+21));}
+        bool isE_NFDALL()const {return i_.holds(32+20,32+21);}
         
-        uint64_t isDConst()const noexcept{return i_ & (1ULL<<(32+28));}
-        uint64_t isDW_NFH()const noexcept{return i_ & (1ULL<<(32+29));}
+        uint64_t isDConst()const {return i_ & (1ULL<<(32+28));}
+        uint64_t isDW_NFH()const {return i_ & (1ULL<<(32+29));}
     };
     
     std::ostream& operator<<(std::ostream& out, const MoveInfo& mi){
@@ -514,26 +510,26 @@ namespace UECda{
         // init game 16
         // subjective 17
         
-        void setInChange()noexcept{ set(0); }
-        void resetInChange()noexcept{ reset(0); }
-        constexpr uint32_t isInChange()const noexcept{ return test(0); }
+        void setInChange(){ set(0); }
+        void resetInChange(){ reset(0); }
+        constexpr uint32_t isInChange()const { return test(0); }
         
-        void setFirstTurn()noexcept{ set(1); }
-        void resetFirstTurn()noexcept{ reset(1); }
-        constexpr uint32_t isFirstTurn()const noexcept{ return test(1); }
+        void setFirstTurn(){ set(1); }
+        void resetFirstTurn(){ reset(1); }
+        constexpr uint32_t isFirstTurn()const { return test(1); }
         
-        void setInPlay()noexcept{ set(2); }
-        void resetInPlay()noexcept{ reset(2); }
-        constexpr uint32_t isInPlay()const noexcept{ return test(2); }
+        void setInPlay(){ set(2); }
+        void resetInPlay(){ reset(2); }
+        constexpr uint32_t isInPlay()const { return test(2); }
         
-        void setInitGame()noexcept{ set(16); }
-        void resetInitGame()noexcept{ reset(16); }
-        constexpr uint32_t isInitGame()const noexcept{ return test(16); }
+        void setInitGame(){ set(16); }
+        void resetInitGame(){ reset(16); }
+        constexpr uint32_t isInitGame()const { return test(16); }
         
-        void setSubjective()noexcept{ set(17); }
-        constexpr uint32_t isSubjective()const noexcept{ return test(17); }
+        void setSubjective(){ set(17); }
+        constexpr uint32_t isSubjective()const { return test(17); }
         
-        void init()noexcept{ reset(); }
+        void init(){ reset(); }
         
         constexpr GamePhase() : BitSet32(){}
         constexpr GamePhase(const GamePhase& arg) : BitSet32(arg){}
@@ -559,55 +555,55 @@ namespace UECda{
         constexpr static uint32_t REALPMASK = (1 << N) - 1; // 実際にいるプレーヤー全体
         constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
         
-        constexpr operator uint32_t()const noexcept{ return (uint32_t)i; }
+        constexpr operator uint32_t()const { return (uint32_t)i; }
         
         // set
-        void setAsleep(const int p)noexcept{
+        void setAsleep(const int p){
             ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << (uint32_t)i << endl;); // 現在Awake
             i -= (BMASK << 24) + ((BMASK << 16) << p);
         }
-        void setDead(const int p)noexcept{
+        void setDead(const int p){
             // プレーヤーがあがった
             ASSERT(isAwake(p), cerr << "p = " << p <<endl;);
             ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在AliveかつAwakeの必要
             i -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
         }
-        void setDeadOnly(const int p)noexcept{
+        void setDeadOnly(const int p){
             // プレーヤーがあがった
             ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在Aliveの必要
             i -= (BMASK << 8) + ((1U << 0) << p);
         }
-        void setAwake(const int p)noexcept{
+        void setAwake(const int p){
             assert(!isAwake(p));
             i += (BMASK << 24) + ((BMASK << 16) << p);
         }
-        void setAlive(const int p)noexcept{
+        void setAlive(const int p){
             // プレーヤー復活
             assert(!isAwake(p)); assert(!isAlive(p));
             i += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
         }
         
-        void setAllAsleep()noexcept{
+        void setAllAsleep(){
             i &= (PMASK << 0) | (NMASK << 8);
         }
         
-        void setNAlive(const int n)noexcept{
+        void setNAlive(const int n){
             i.replace(1, n);
         }
-        void setNAwake(const int n)noexcept{
+        void setNAwake(const int n){
             i.replace(3, n);
         }
         // get
         
-        constexpr data_t isAlive(int p)const noexcept{ return i & ((BMASK << 0) << p); }
-        constexpr data_t isAwake(int p)const noexcept{ return i & ((BMASK << 16) << p); }
-        constexpr bool isExcluded(int p)const noexcept{ return false; } // あがり以外の除外(都落ち)
+        constexpr data_t isAlive(int p)const { return i & ((BMASK << 0) << p); }
+        constexpr data_t isAwake(int p)const { return i & ((BMASK << 16) << p); }
+        constexpr bool isExcluded(int p)const { return false; } // あがり以外の除外(都落ち)
         
-        constexpr bool isAllAsleepExcept(int p)const noexcept{ // p以外全員asleep
+        constexpr bool isAllAsleepExcept(int p)const { // p以外全員asleep
             return !(i & ((PMASK << 16) ^ ((BMASK << 16) << p)));
         }
         
-        uint32_t searchOpsPlayer(int p)const noexcept{
+        uint32_t searchOpsPlayer(int p)const {
             // p以外でaliveなプレーヤーを1人挙げる
             // pがaliveであることは保証される
             assert(isAlive(p));
@@ -615,33 +611,33 @@ namespace UECda{
             return bsf32(i ^ (BMASK << p));
         }
         
-        constexpr data_t getNAlive()const noexcept{ return i[1]; }
-        constexpr data_t getNAwake()const noexcept{ return i[3]; }
+        constexpr data_t getNAlive()const { return i[1]; }
+        constexpr data_t getNAwake()const { return i[3]; }
         
-        uint32_t countNAlive()const noexcept{ return countBits(i.get_part(0)); }
-        uint32_t countNAwake()const noexcept{ return countBits(i.get_part(2)); }
+        uint32_t countNAlive()const { return countBits(i.get_part(0)); }
+        uint32_t countNAwake()const { return countBits(i.get_part(2)); }
         
-        constexpr data_t anyAlive()const noexcept{ return i & (PMASK <<  0); }
-        constexpr data_t anyAwake()const noexcept{ return i & (PMASK << 16); }
+        constexpr data_t anyAlive()const { return i & (PMASK <<  0); }
+        constexpr data_t anyAwake()const { return i & (PMASK << 16); }
         
-        bool isSoloAlive()const noexcept{ return i.get_part(1)  == (1U <<  8); }
-        bool isSoloAwake()const noexcept{ return i.get_part(3)  == (1U << 24); }
+        bool isSoloAlive()const { return i.get_part(1)  == (1U <<  8); }
+        bool isSoloAwake()const { return i.get_part(3)  == (1U << 24); }
         
-        constexpr data_t getBestClass()const noexcept{ return N - getNAlive(); } // 最高の階級 = 全員 - 残っている人数
-        constexpr data_t getWorstClass()const noexcept{ return N - 1; } // 最低の階級 = 全員の最後
+        constexpr data_t getBestClass()const { return N - getNAlive(); } // 最高の階級 = 全員 - 残っている人数
+        constexpr data_t getWorstClass()const { return N - 1; } // 最低の階級 = 全員の最後
         
-        uint32_t searchL1Player()const noexcept{
+        uint32_t searchL1Player()const {
             // 最後に残ったプレーヤーを探す
             assert(countBits32(i & PMASK) == 1); // 1人だけ残っている
             return bsf32(i);
         }
         
-        void flush()noexcept{
+        void flush(){
             // 場が流れる
             data_t alive = i & ((PMASK << 0) | (NMASK << 8)); // alive情報
             i = alive | (alive << 16); // awake情報をalive情報に置き換える
         }
-        void init()noexcept{
+        void init(){
             i = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
         }
         
@@ -717,5 +713,3 @@ namespace UECda{
         return out;
     }
 }
-
-#endif // UECDA_STRUCTURE_PRIMITIVE2_HPP_
