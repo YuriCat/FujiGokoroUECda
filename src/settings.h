@@ -12,11 +12,11 @@
 #include <cfloat>
 
 // プロフィール
-#define MY_MC_NAME "blauweregen"
-#define MY_POL_NAME "kleinBlauw"
-#define MY_POL_RL_NAME "kleinBlauwRL"
+#define MY_MC_NAME "lilovyy"
+#define MY_POL_NAME "maLilovyy"
+#define MY_POL_RL_NAME "maLilovyyRL"
 
-#define MY_VERSION "20170813"
+#define MY_VERSION "20190325"
 #define MY_COACH "KatsukiOhto"
 
 // 重要な設定
