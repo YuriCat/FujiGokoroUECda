@@ -53,10 +53,10 @@
 
 using namespace UECda;
 
-const char* one_to_yes(int n){
-    if(n){
+const char* one_to_yes(int n) {
+    if (n) {
         return "YES";
-    }else{
+    } else {
         return "NO";
     }
 }
@@ -69,17 +69,17 @@ MinGameLog<MinPlayLog> game_log;
 Fuji::FujiSharedData shared;
 Fuji::FujiThreadTools threadTools[N_THREADS];
 
-void outputLog(){
+void outputLog() {
     // 棋譜書き出し
     //log name
-    if(record_file.size()==0){//ディレクトリが指定されていない時
+    if (record_file.size()==0) {//ディレクトリが指定されていない時
         int record_num = 0;
         char str_file[256];
         {
             int i,iret;
             FILE *pf;
             //ログの番号を決める
-            for (i = 0; i < 999; ++i){
+            for (i = 0; i < 999; ++i) {
                 snprintf(str_file, 256, std::string(DIR_LOG+"logn%d.dat").c_str(), i);
                 pf = fopen(str_file, "r");
                 if (pf == NULL) { break; }
@@ -101,7 +101,7 @@ void outputLog(){
 unsigned int point_sum[100000][N_PLAYERS]={0};  // cards on the stage
 unsigned char point[100000][N_PLAYERS]={0};  // cards on the stage
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]){
     /* for player statistics */
     int count_turn;
     struct playerStatistics ps[N_PLAYERS];
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         memset(&ps[i], 0, sizeof(struct playerStatistics));
     }
     int sum_of_turn = 0;
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]){
     /*  setting initial value	    */
     /************************************/
     
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         sprintf(player_name[i],"Player %i",i+1);
     }
     
@@ -252,29 +252,29 @@ int main(int argc, char *argv[]){
     /*  setting for argument part1	    */
     /************************************/
     
-    for(i=1;i<=argc-1;i++){
-        if(strcmp(argv[i],"-v")==0){ /* print version */
+    for (i=1;i<=argc-1;i++) {
+        if (strcmp(argv[i],"-v")==0) { /* print version */
             printf("tndhms version 0.29\n");
             return 0;
-        }else if((strcmp(argv[i],"-h")==0)){ /* print help message */
+        }else if ((strcmp(argv[i],"-h")==0)) { /* print help message */
             printf("tndhms [-vh] [-p port_number] \n");
             printf("   -v version\n");
             printf("   -h help\n");
             printf("   -c config_file\n");
             printf("   -p port_number\n");
             return 0;
-        }else if((strcmp(argv[i],"-c")==0)){ /* config file name */
-            if(i+1<=argc-1){
+        }else if ((strcmp(argv[i],"-c")==0)) { /* config file name */
+            if (i+1<=argc-1) {
                 fp=fopen(argv[i+1],"r");
-                if((strlen(argv[i+1])>=90) || fp==NULL){
+                if ((strlen(argv[i+1])>=90) || fp==NULL) {
                     printf("Bad file name. \n");
                     return 0;
-                }else{
+                } else {
                     strcpy(cfg_file,argv[i+1]);
                     printf("a use config_file is %s\n", cfg_file);
                 }
                 fclose(fp);
-            }else{
+            } else {
                 printf("Bad file name. \n");
                 return 0;
             }
@@ -285,54 +285,54 @@ int main(int argc, char *argv[]){
     /*  setting for argument part2	    */
     /************************************/
     
-    for(i=1;i<=argc-1;i++){
-        if(strcmp(argv[i],"-p")==0){   /* port number  */
-            if(i+1<=argc-1){
-                //if(isint(argv[i+1])){
+    for (i=1;i<=argc-1;i++) {
+        if (strcmp(argv[i],"-p")==0) {   /* port number  */
+            if (i+1<=argc-1) {
+                //if (isint(argv[i+1])) {
                 port_number=atoi(argv[i+1]);
                 printf("port number is %i\n",port_number);
-                //}else{
+                //} else {
                 //	printf("bad argument\n");
                 //	return 0;
                 //}
-            }else{
+            } else {
                 printf("bad argument\n");
                 return 0;
             }
-        }else if(strcmp(argv[i],"-d")==0){ /* debug flag */
+        }else if (strcmp(argv[i],"-d")==0) { /* debug flag */
             debug=1;
-        }else if(strcmp(argv[i],"-bc")==0){ /* broadcasting flag */
+        }else if (strcmp(argv[i],"-bc")==0) { /* broadcasting flag */
             broadcast=1;
-        }else if(strcmp(argv[i],"-g")==0){ /* the number of games */
+        }else if (strcmp(argv[i],"-g")==0) { /* the number of games */
             GAME_NUMBER=atoi(argv[i+1]);
-        }else if(strcmp(argv[i],"-o")==0){ /* output */
+        }else if (strcmp(argv[i],"-o")==0) { /* output */
             output_flag=1;
             output_file=std::string(argv[i+1]);
             //output_player_num=atoi(argv[i+1]);
             //output_span=atoi(argv[i+2]);
-        }else if(strcmp(argv[i],"-nc")==0){ /* no change */
+        }else if (strcmp(argv[i],"-nc")==0) { /* no change */
             FLASH_MIBUN_NUMBER=1;
-        }else if(strcmp(argv[i],"-r")==0){ /* rev mode */
+        }else if (strcmp(argv[i],"-r")==0) { /* rev mode */
             rev_mode=1;
-        }else if(strcmp(argv[i],"-l")==0){ /* record file path */
+        }else if (strcmp(argv[i],"-l")==0) { /* record file path */
             record_file=std::string(argv[i+1]);
-        }else if(strcmp(argv[i],"-ra")==0){ /* rating */
+        }else if (strcmp(argv[i],"-ra")==0) { /* rating */
             rating = true;
         }
     }
     
-    if(rating){
+    if (rating) {
         // レート計算のためシミュレーションに使用するデータを準備
         shared.setMyPlayerNum(-1);
         shared.basePlayPolicy.fin(DIR_IN + "play_policy_param.dat");
         shared.baseChangePolicy.fin(DIR_IN + "change_policy_param.dat");
         // スレッドごとのデータ初期化
-        for(int th = 0; th < N_THREADS; ++th){
+        for (int th = 0; th < N_THREADS; ++th) {
             threadTools[th].init(th);
         }
         XorShift64 tdice;
         tdice.srand((unsigned int)time(NULL));
-        for(int th = 0; th < N_THREADS; ++th){
+        for (int th = 0; th < N_THREADS; ++th) {
             threadTools[th].dice.srand(tdice.rand() * (th + 111));
         }
     }
@@ -356,7 +356,7 @@ int main(int argc, char *argv[]){
     printf("FLASH_MIBUN_NUMBER\t=\t%i\n",FLASH_MIBUN_NUMBER);
     printf("GAME_PORT\t=\t%i\n",port_number);
     
-    if(makelog){
+    if (makelog) {
         if ((logfile = fopen("log.dat", "a")) == NULL) {
             printf("file open error!!\n");
             exit(EXIT_FAILURE);
@@ -391,22 +391,22 @@ int main(int argc, char *argv[]){
     
     i = 1;
     j = sizeof(i);
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&i, j) < 0){
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&i, j) < 0) {
         perror("setsockopt");
     }
-    if(::bind(sockfd, (struct sockaddr *)&wait_addr, sizeof(wait_addr)) < 0){
+    if (::bind(sockfd, (struct sockaddr *)&wait_addr, sizeof(wait_addr)) < 0) {
         perror("reader: bind");
         exit(1);
     }
-    if(listen(sockfd, 1) < 0) {
+    if (listen(sockfd, 1) < 0) {
         perror("reader: listen");
         close(sockfd);
         exit(1);
     }
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         printf("now waiting %i \n", i);
         client_len[i]=sizeof(client_addr[i]);
-        if((client_sockfd[i]=accept(sockfd,(struct sockaddr *)&client_addr[i],&client_len[i])) < 0 ){
+        if ((client_sockfd[i]=accept(sockfd,(struct sockaddr *)&client_addr[i],&client_len[i])) < 0 ) {
             perror("reader: accept");
             exit(1);
         };
@@ -417,7 +417,7 @@ int main(int argc, char *argv[]){
         memcpy(&target_fds, &org_target_fds, sizeof(org_target_fds));
         waitval.tv_sec  = 2;
         waitval.tv_usec = 500;
-        switch(select(50,&target_fds,NULL,NULL,&waitval)){
+        switch(select(50,&target_fds,NULL,NULL,&waitval)) {
             case -1:
                 printf("protocol_version: NONE\n");
                 exit(1);
@@ -432,19 +432,19 @@ int main(int argc, char *argv[]){
                 
                 player_name_length[i]=15;
                 
-                for(j=0;j<=13;j++){
+                for (j=0;j<=13;j++) {
                     player_name[i][j]=work_card[1][j];
-                    if(j<player_name_length[i] && player_name[i][j]==0){
+                    if (j<player_name_length[i] && player_name[i][j]==0) {
                         player_name[i][j]='\0';
                         player_name_length[i]=j;
                     }
                 }
-                if(player_name_length[i]==15){
+                if (player_name_length[i]==15) {
                     player_name[i][14]='\0';
                     player_name_length[i]=j;
                 }
                 
-                if(player_name_length[i] > player_name_maxlength)player_name_maxlength=player_name_length[i];
+                if (player_name_length[i] > player_name_maxlength)player_name_maxlength=player_name_length[i];
                 
                 player_name[i][14]='\0';
                 printf("NAME: %s\n", player_name[i]);
@@ -463,23 +463,23 @@ int main(int argc, char *argv[]){
     /* initialize values */
     /*********************/
     
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         mibun[i]=i;
     }
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         sekijun[i]=i;
     }
     
     // player statistics
     
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         memset(&ps[i], 0, sizeof(struct playerStatistics));
     }
     
     /**************/
     /* game start */
     /**************/
-    for(now_number_of_games=1;now_number_of_games<=GAME_NUMBER;now_number_of_games++){
+    for (now_number_of_games=1;now_number_of_games<=GAME_NUMBER;now_number_of_games++) {
         
         game_log.init();
         
@@ -489,50 +489,50 @@ int main(int argc, char *argv[]){
         memset(players_card,0,sizeof(players_card));
         memset(goal_flag,0,sizeof(goal_flag));
         
-        if(RULE_SEKIGAE!=0){ // decide sekigae
+        if (RULE_SEKIGAE!=0) { // decide sekigae
             tn_sekigae(now_number_of_games,sekijun,RULE_SEKIGAE,RULE_SEKIGAE_NUM, RAND_TYPE);
             /*printf("sekigae done\n");
-             for(i=0;i<=4;i++){
+             for (i=0;i<=4;i++) {
              printf("-> %i\n",sekijun[i]);
              }*/
         }
         
         //seats
-        for (int s = 0; s < N_PLAYERS; ++s){
+        for (int s = 0; s < N_PLAYERS; ++s) {
             game_log.infoSeat.assign(sekijun[s], s);
         }
         
-        if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
+        if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
             // decide first member for shuffle
             //shuffle_card(rand()%5,players_card);
             
             shuffle_card((int)(tn_rand_gen(RAND_TYPE)*N_PLAYERS),players_card, RAND_TYPE, sekijun);
             
             game_log.setInitGame();
-        }else{
+        } else {
             shuffle_card(mibun[0],players_card , RAND_TYPE, sekijun);
         }
         
-        for (int p = 0; p < N_PLAYERS; ++p){
+        for (int p = 0; p < N_PLAYERS; ++p) {
             Cards c = TableToCards(players_card[p]);
             game_log.setDealtCards(p, c);
         }
         
-        for(i=0;i<N_PLAYERS;i++){
+        for (i=0;i<N_PLAYERS;i++) {
             work_card[6][mibun[i]+5]=i;
             game_log.infoClass.assign(mibun[i],i);//class
         }
         
-        for(i=0;i<N_PLAYERS;i++){ // initialize each table[5]
+        for (i=0;i<N_PLAYERS;i++) { // initialize each table[5]
             memcpy(players_card[i][5], work_card[5], 2*sizeof(work_card[5]));
         }
         
-        if(makelog){
-            for(i=0;i<N_PLAYERS;i++){
+        if (makelog) {
+            for (i=0;i<N_PLAYERS;i++) {
                 fprintf(logfile,"%d,",i);
                 int h,w;
-                for(h=0;h<5;h++){
-                    for(w=0;w<15;w++){
+                for (h=0;h<5;h++) {
+                    for (w=0;w<15;w++) {
                         fprintf(logfile,"%d",players_card[i][h][w]);
                     }
                 }
@@ -553,30 +553,30 @@ int main(int argc, char *argv[]){
         // work_card[5][6] = 0;
         work_card[5][6] = rev_mode ? 1 : 0;//最初からオーダー逆の場合
         work_card[5][7] = 0;
-        for(int i = 0; i < N_PLAYERS; ++i){
+        for (int i = 0; i < N_PLAYERS; ++i) {
             work_card[6][i] = count_card_num_r(players_card[i], &error);
         }
-        if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
-            for(i=0;i<N_PLAYERS;i++){
+        if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
+            for (i=0;i<N_PLAYERS;i++) {
                 work_card[6][i+5]=0;
             }
-        }else{
-            for(i=0;i<N_PLAYERS;i++){
+        } else {
+            for (i=0;i<N_PLAYERS;i++) {
                 work_card[6][mibun[i]+5]=i;
             }
         }
-        for(i=0;i<N_PLAYERS;i++){
+        for (i=0;i<N_PLAYERS;i++) {
             work_card[6][i+10]=sekijun[i];
         }
-        for(i=0;i<N_PLAYERS;i++){
+        for (i=0;i<N_PLAYERS;i++) {
             memcpy(players_card[i][5], work_card[5], 2*sizeof(work_card[5]));
         }
         // distribute
         
         
         // search strong card in hinmin and data setting
-        if((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER) != 0) &&(RULE_CHANGE==1)){
-            for(i=0;i<N_PLAYERS;i++){  // data setting for all player
+        if ((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER) != 0) &&(RULE_CHANGE==1)) {
+            for (i=0;i<N_PLAYERS;i++) {  // data setting for all player
                 players_card[mibun[i]][5][0]=1;
                 players_card[mibun[i]][5][1]=2-i;
             }
@@ -596,12 +596,12 @@ int main(int argc, char *argv[]){
                 game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 2],mibun[1],c));
             }
             
-            for(int cl = 0; cl <= FUGO; ++cl){ //search strong card
+            for (int cl = 0; cl <= FUGO; ++cl) { //search strong card
                 int oppCl = getChangePartnerClass(cl);
                 trans_strong_card(players_card[mibun[oppCl]],players_card[mibun[cl]],N_CHANGE_CARDS(cl));
             }
-        }else{  // no change because of it's a 1st game
-            for(i=0;i<N_PLAYERS;i++){  // data setting for all player
+        } else {  // no change because of it's a 1st game
+            for (i=0;i<N_PLAYERS;i++) {  // data setting for all player
                 players_card[mibun[i]][5][0]=1;
                 players_card[mibun[i]][5][1]=0;
             }
@@ -609,22 +609,22 @@ int main(int argc, char *argv[]){
             memcpy(tmp_card[1], players_card[mibun[N_PLAYERS - 1]], sizeof(players_card[mibun[N_PLAYERS - 1]]));
             
         }
-        if(debug){printf("hinmin and daihinmin card change is done\n");} //DEBUG
+        if (debug) {printf("hinmin and daihinmin card change is done\n");} //DEBUG
         
         int mid = (N_PLAYERS + 1) / 2;
-        for(int p = 0; p < mid; ++p){
+        for (int p = 0; p < mid; ++p) {
             tn_card_write(client_sockfd[mibun[p]],players_card[mibun[p]],protocol_version); // tuuchi
         }
         //tn_card_write(client_sockfd[mibun[3]],players_card[mibun[3]],protocol_version);
         //tn_card_write(client_sockfd[mibun[4]],players_card[mibun[4]],protocol_version);
-        for(int p = mid; p < N_PLAYERS; ++p){
+        for (int p = mid; p < N_PLAYERS; ++p) {
             tn_card_write(client_sockfd[mibun[p]],tmp_card[p - mid],protocol_version);
         }
         //printf("tought.*********************************************************************************************************");
         gettimeofday(&timevalstart,NULL);
         
         // change faise of daihugou start
-        if((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER) != 0) &&(RULE_CHANGE==1)){ // change card
+        if ((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER) != 0) &&(RULE_CHANGE==1)) { // change card
             
             //cerr << "change";
             
@@ -633,11 +633,11 @@ int main(int argc, char *argv[]){
             changetime[mibun[0]]+=(timevalstop.tv_sec-timevalstart.tv_sec)*1000000+timevalstop.tv_usec-timevalstart.tv_usec;
             error=0;
             error=count_card_num(work_card, &number_of_card); // number check
-            if((check_include_card(players_card[mibun[0]],work_card)==0)&&(number_of_card==2)&&(error==0)){
-                if(debug){printf("change card - OK \n");}
+            if ((check_include_card(players_card[mibun[0]],work_card)==0)&&(number_of_card==2)&&(error==0)) {
+                if (debug) {printf("change card - OK \n");}
                 trans_work_card(players_card[mibun[0]],players_card[mibun[N_PLAYERS - 1]],work_card);
-            }else{
-                if(debug){printf("change card - fault \n");}
+            } else {
+                if (debug) {printf("change card - fault \n");}
                 trans_strong_card(players_card[mibun[0]],players_card[mibun[N_PLAYERS - 1]],2);
             } // fi
             
@@ -645,20 +645,20 @@ int main(int argc, char *argv[]){
             game_log.push_change(MinChangeLog(mibun[0],mibun[N_PLAYERS - 1],c));
             
         }// fi
-        if(debug){printf("change daihugou - OK\n");} //DEBUG
+        if (debug) {printf("change daihugou - OK\n");} //DEBUG
         
         // change faise of hugou start
-        if((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER)!= 0)&&(RULE_CHANGE==1)){ // change card
+        if ((((now_number_of_games - 1) % FLASH_MIBUN_NUMBER)!= 0)&&(RULE_CHANGE==1)) { // change card
             tn_card_read(client_sockfd[mibun[1]],work_card,protocol_version); // uketori
             gettimeofday(&timevalstop,NULL);
             changetime[mibun[1]]+=(timevalstop.tv_sec-timevalstart.tv_sec)*1000000+timevalstop.tv_usec-timevalstart.tv_usec;
             error=0;
             error=count_card_num(work_card, &number_of_card); // number check
-            if((check_include_card(players_card[mibun[1]],work_card)==0)&&(number_of_card==1)){
-                if(debug){printf("change card - OK \n");}
+            if ((check_include_card(players_card[mibun[1]],work_card)==0)&&(number_of_card==1)) {
+                if (debug) {printf("change card - OK \n");}
                 trans_work_card(players_card[mibun[1]],players_card[mibun[N_PLAYERS - 2]],work_card);
-            }else{
-                if(debug){printf("change card - fault \n");}
+            } else {
+                if (debug) {printf("change card - fault \n");}
                 trans_strong_card(players_card[mibun[1]],players_card[mibun[N_PLAYERS - 2]],1);
             } // fi
             
@@ -666,16 +666,16 @@ int main(int argc, char *argv[]){
             game_log.push_change(MinChangeLog(mibun[1], mibun[N_PLAYERS - 2], c));
             
         }// fi
-        if(debug){printf("change hugou - OK\n");} //DEBUG
-        if(debug){printf("end of distribute\n");} //DEBUG
+        if (debug) {printf("change hugou - OK\n");} //DEBUG
+        if (debug) {printf("end of distribute\n");} //DEBUG
         /* end of distribute */
         
-        if(makelog){
-            for(i=0;i<N_PLAYERS;i++){
+        if (makelog) {
+            for (i=0;i<N_PLAYERS;i++) {
                 fprintf(logfile,"%d,",i);
                 int h,w;
-                for(h=0;h<5;h++){
-                    for(w=0;w<15;w++){
+                for (h=0;h<5;h++) {
+                    for (w=0;w<15;w++) {
                         fprintf(logfile,"%d",players_card[i][h][w]);
                     }
                 }
@@ -683,13 +683,13 @@ int main(int argc, char *argv[]){
             }
         }
         
-        if(yaocho4){
+        if (yaocho4) {
             //printf("start");
             //ここでplayer4に全員の手札を教えます
-            for(i=0;i<N_PLAYERS;i++){
+            for (i=0;i<N_PLAYERS;i++) {
                 //tn_card_read(client_sockfd[4],work_card,protocol_version);
                 tn_card_write(client_sockfd[N_PLAYERS - 1],players_card[i],protocol_version);
-                //for(j=0;j<15;j++){printf("%d.",players_card[i][0][j]);}
+                //for (j=0;j<15;j++) {printf("%d.",players_card[i][0][j]);}
                 
                 //printf("sent.");
             }
@@ -724,14 +724,14 @@ int main(int argc, char *argv[]){
         memset(now_pass,0,sizeof(now_pass));       // flags of passed person
         
         //original cards
-        for(int p=0;p<N_PLAYERS;++p){
+        for (int p=0;p<N_PLAYERS;++p) {
             game_log.setOrgCards(p, TableToCards(players_card[p]));
         }
         
         // player statistics
         count_turn = 0;
         
-        while(now_number_of_goal<=N_PLAYERS - 2){
+        while(now_number_of_goal<=N_PLAYERS - 2) {
             
             //convert status to table
             work_card[5][0] = 0;
@@ -742,32 +742,32 @@ int main(int argc, char *argv[]){
             work_card[5][5] = now_11back;
             work_card[5][6] = now_kakumei;
             work_card[5][7] = now_shibari;
-            for(int i = 0; i < N_PLAYERS; ++i){
+            for (int i = 0; i < N_PLAYERS; ++i) {
                 work_card[6][i] = count_card_num_r(players_card[i], &error);
             }
-            if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
-                for(i=0;i<N_PLAYERS;i++){
+            if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
+                for (i=0;i<N_PLAYERS;i++) {
                     work_card[6][i+5]=0;
                 }
-            }else{
-                for(i=0;i<N_PLAYERS;i++){
+            } else {
+                for (i=0;i<N_PLAYERS;i++) {
                     work_card[6][mibun[i]+5]=i;
                 }
             }
-            for(i=0;i<N_PLAYERS;i++){
+            for (i=0;i<N_PLAYERS;i++) {
                 work_card[6][i+10]=sekijun[i];
             }
-            for(i=0;i<N_PLAYERS;i++){
+            for (i=0;i<N_PLAYERS;i++) {
                 memcpy(players_card[i][5], work_card[5], 2*sizeof(work_card[5]));
             }
             
             memcpy(stage_card[5], work_card[5], 2*sizeof(work_card[5]));
             players_card[now_player][5][2]=1;
             
-            if(debug){printf("To send prepared datas for each player now\n");} //DEBUG
+            if (debug) {printf("To send prepared datas for each player now\n");} //DEBUG
             // prepare datas for each player
             // atode
-            for(int i = 0; i < N_PLAYERS; ++i){
+            for (int i = 0; i < N_PLAYERS; ++i) {
                 tn_card_write(client_sockfd[i],players_card[i],protocol_version);
             }
             
@@ -778,9 +778,9 @@ int main(int argc, char *argv[]){
             
             gettimeofday(&timevalstart,NULL);
             
-            if(debug){printf("To send prepared date is done. \n");} //DEBUG
+            if (debug) {printf("To send prepared date is done. \n");} //DEBUG
             
-            if(debug){printf("Read from player %i\n", now_player);} //DEBUG
+            if (debug) {printf("Read from player %i\n", now_player);} //DEBUG
             
             
             
@@ -792,26 +792,26 @@ int main(int argc, char *argv[]){
             
             Move mv = TableToMove(work_card);
             
-            if(mv.isSeq() && mv.jokerRank() == 15){
+            if (mv.isSeq() && mv.jokerRank() == 15) {
                 //cerr << toString(work_card) << endl << getchar();
             }
             
-            if(debug){printf("accepted card is \n");} //DEBUG
-            if(debug){print_player_card(work_card);} //DEBUG
-            if(debug){printf("player card is \n");} //DEBUG
-            if(debug){print_player_card(players_card[now_player]);} //DEBUG
+            if (debug) {printf("accepted card is \n");} //DEBUG
+            if (debug) {print_player_card(work_card);} //DEBUG
+            if (debug) {printf("player card is \n");} //DEBUG
+            if (debug) {print_player_card(players_card[now_player]);} //DEBUG
             
             //fprintf(logfile,"%d.",now_player);
             
-            if(makelog){
+            if (makelog) {
                 int h,w;
-                for(h=0;h<5;h++){
-                    for(w=0;w<15;w++){
+                for (h=0;h<5;h++) {
+                    for (w=0;w<15;w++) {
                         fprintf(logfile,"%d",work_card[h][w]);
                     }
                 }
-                for(h=5;h<8;h++){
-                    for(w=0;w<15;w++){
+                for (h=5;h<8;h++) {
+                    for (w=0;w<15;w++) {
                         fprintf(logfile,"%d",players_card[0][h][w]);
                     }
                 }
@@ -821,14 +821,14 @@ int main(int argc, char *argv[]){
             error=0; // error initialize
             
             error|=check_include_card(players_card[now_player],work_card);  // include check
-            if(debug){printf("error01 = %i: include check\n",error);} //DEBUG
+            if (debug) {printf("error01 = %i: include check\n",error);} //DEBUG
             
             error|=analyze_card(work_card,status_of_submitted_card,0); // analyze check.  the number of joker > 2 then error and etc
-            if(debug){printf("error02 = %i: analyze check \n",error);} //DEBUG
+            if (debug) {printf("error02 = %i: analyze check \n",error);} //DEBUG
             
             error|=compare_card_status(status_of_stages_card, status_of_submitted_card, (now_kakumei + now_11back)%2); // compare check
-            if(debug){printf("error03 = %i: compare check \n",error);} //DEBUG
-            if(debug){
+            if (debug) {printf("error03 = %i: compare check \n",error);} //DEBUG
+            if (debug) {
                 printf(
                        "stage value    %i - number %i - suit %i - type %i \n",
                        status_of_stages_card[0],status_of_stages_card[1],status_of_stages_card[2],status_of_stages_card[3]
@@ -876,41 +876,41 @@ int main(int argc, char *argv[]){
                 }
             }
             
-            if(RULE_SHIBARI){
-                if((error==0)&&(status_of_submitted_card[3]!=4)){
-                    if(now_shibari==1){
-                        if(status_of_submitted_card[2]==status_of_stages_card[2]){
+            if (RULE_SHIBARI) {
+                if ((error==0)&&(status_of_submitted_card[3]!=4)) {
+                    if (now_shibari==1) {
+                        if (status_of_submitted_card[2]==status_of_stages_card[2]) {
                             
-                        }else{
+                        } else {
                             error|=1;
-                            if(debug){printf("error06 = %i: shibari \n", error);} //DEBUG
+                            if (debug) {printf("error06 = %i: shibari \n", error);} //DEBUG
                         }
-                    }else{
+                    } else {
                         ps[now_player].shibariCnt++;
-                        if(status_of_submitted_card[2]==status_of_stages_card[2]){
+                        if (status_of_submitted_card[2]==status_of_stages_card[2]) {
                             now_shibari++;
                             ps[now_player].shibari++;
-                        }else{
+                        } else {
                             now_shibari=0;
                         }
                     }
                 }
             }
             
-            if(now_jocker_single){ //spe3
-                if((status_of_submitted_card[0]==1)&&(status_of_submitted_card[1]==1)&&(status_of_submitted_card[2]==0x0001)){
+            if (now_jocker_single) { //spe3
+                if ((status_of_submitted_card[0]==1)&&(status_of_submitted_card[1]==1)&&(status_of_submitted_card[2]==0x0001)) {
                     error=0;
                     now_jocker_single=0;
                     flash=1;
                     ps[now_player].spe3++;
-                }else{
+                } else {
                     error|=1;
                 }
             }
-            if(debug){printf("error04 = %i: jocker \n",error);} //DEBUG
+            if (debug) {printf("error04 = %i: jocker \n",error);} //DEBUG
             
-            if(error==0){
-                switch (status_of_submitted_card[3]){
+            if (error==0) {
+                switch (status_of_submitted_card[3]) {
                     case 0: // pass
                         break;
                     case 1: // single
@@ -918,9 +918,9 @@ int main(int argc, char *argv[]){
                     case 2: // pair
                         break;
                     case 3: // kaidan
-                        if(RULE_KAIDAN){
+                        if (RULE_KAIDAN) {
                             break;
-                        }else{
+                        } else {
                             error|=1;
                         }
                         break;
@@ -930,33 +930,33 @@ int main(int argc, char *argv[]){
                         break;
                 }
             }
-            if(debug){printf("error05 = %i: kaidan \n",error);} //DEBUG
+            if (debug) {printf("error05 = %i: kaidan \n",error);} //DEBUG
             
             
-            if(error || (status_of_submitted_card[1]==0)){
-                if(error){
-                    if(debug){printf("error 01 - error = %i - number of card is %i\n",error,status_of_submitted_card[1]);}
+            if (error || (status_of_submitted_card[1]==0)) {
+                if (error) {
+                    if (debug) {printf("error 01 - error = %i - number of card is %i\n",error,status_of_submitted_card[1]);}
                     i=8;
-                }else{
-                    if(debug){printf("OK 02\n");}
+                } else {
+                    if (debug) {printf("OK 02\n");}
                     i=9;
                 }
-                if(i==8){//illegal move
+                if (i==8) {//illegal move
                     mv=MOVE_PASS;
                 }
-                j=0; while(j<=0){
+                j=0; while(j<=0) {
                     j=tn_int_write(client_sockfd[now_player],i,protocol_version);
-                    if(debug){printf("ack roop %i\n",j);}
+                    if (debug) {printf("ack roop %i\n",j);}
                 };
-                if(debug){printf("ack to player %i -- number %i\n",now_player,i);} //DEBUG
+                if (debug) {printf("ack to player %i -- number %i\n",now_player,i);} //DEBUG
                 now_pass[now_player]=1;
                 number_renzoku_pass++;
-            }else{
-                if(debug){printf("OK 03\n");}
+            } else {
+                if (debug) {printf("OK 03\n");}
                 memcpy(status_of_stages_card,status_of_submitted_card,sizeof(status_of_submitted_card));
                 i=9;
-                j=0;while(j<=0){j=tn_int_write(client_sockfd[now_player],i,protocol_version);if(debug){printf("ack roop %i",j);}};
-                if(debug){printf("ack to player %i -- number %i\n",now_player,i);} //DEBUG
+                j=0;while(j<=0) {j=tn_int_write(client_sockfd[now_player],i,protocol_version);if (debug) {printf("ack roop %i",j);}};
+                if (debug) {printf("ack to player %i -- number %i\n",now_player,i);} //DEBUG
                 memcpy(old_stage_card,stage_card,sizeof(work_card));
                 memcpy(stage_card,work_card,sizeof(work_card));
                 drop_card_flag(players_card[now_player],work_card);
@@ -965,9 +965,9 @@ int main(int argc, char *argv[]){
                 number_renzoku_pass=0;
                 
                 count_card_num(players_card[now_player], &number_of_card);
-                if((number_of_card==0)&&(goal_flag[now_player]==0)){
+                if ((number_of_card==0)&&(goal_flag[now_player]==0)) {
                     j=0;
-                    for(i=0;i<N_PLAYERS;i++){
+                    for (i=0;i<N_PLAYERS;i++) {
                         count_card_num(players_card[i], &number_of_card);
                         j=j+(number_of_card==0);
                     }
@@ -978,41 +978,41 @@ int main(int argc, char *argv[]){
                     game_log.infoNewClass.assign(now_player, j-1);
                 }
                 
-                if(now_jocker_single==0){
-                    if(RULE_KAKUMEI){
-                        if((status_of_submitted_card[3]==2)&&(status_of_submitted_card[1]>=4)){
+                if (now_jocker_single==0) {
+                    if (RULE_KAKUMEI) {
+                        if ((status_of_submitted_card[3]==2)&&(status_of_submitted_card[1]>=4)) {
                             now_kakumei=(now_kakumei+1)%2;
                             ps[now_player].kakumei++;
                         }
-                        if((status_of_submitted_card[3]==3)&&(status_of_submitted_card[1]>=5)){
+                        if ((status_of_submitted_card[3]==3)&&(status_of_submitted_card[1]>=5)) {
                             now_kakumei=(now_kakumei+1)%2;
                             ps[now_player].kakumei++;
                         }
                     }
-                    if(RULE_8GIRI){
-                        if(check_special_card(8-2,status_of_submitted_card,0)){
+                    if (RULE_8GIRI) {
+                        if (check_special_card(8-2,status_of_submitted_card,0)) {
                             flash=1;
                             ps[now_player].eightGiriCnt++;
                             ps[now_player].eightGiriTurnSum+=count_turn;
                         }
                     }
-                    if(RULE_6REVERS){
-                        if(check_special_card(6-2,status_of_submitted_card,0)){
-                            if(now_muki==1){
+                    if (RULE_6REVERS) {
+                        if (check_special_card(6-2,status_of_submitted_card,0)) {
+                            if (now_muki==1) {
                                 now_muki=N_PLAYERS - 1;
-                            }else{
+                            } else {
                                 now_muki=1;
                             }
                         }
                     }
-                    if(RULE_5TOBI){
-                        if(check_special_card(5-2,status_of_submitted_card,0)){
+                    if (RULE_5TOBI) {
+                        if (check_special_card(5-2,status_of_submitted_card,0)) {
                             i=get_seat(sekijun,now_player);
                             now_player=sekijun[(i+now_muki)%N_PLAYERS];
                         }
                     }
-                    if(RULE_11BACK){
-                        if(check_special_card(11-2,status_of_submitted_card,0)){
+                    if (RULE_11BACK) {
+                        if (check_special_card(11-2,status_of_submitted_card,0)) {
                             now_11back=(now_11back+1)%2;
                         }
                     }
@@ -1032,50 +1032,50 @@ int main(int argc, char *argv[]){
             work_card[5][5] = now_11back;
             work_card[5][6] = now_kakumei;
             work_card[5][7] = now_shibari;
-            for(int i = 0; i < N_PLAYERS; ++i){
+            for (int i = 0; i < N_PLAYERS; ++i) {
                 work_card[6][i] = count_card_num_r(players_card[i], &error);
             }
-            if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
-                for(i=0;i<N_PLAYERS;i++){
+            if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
+                for (i=0;i<N_PLAYERS;i++) {
                     work_card[6][i+5]=0;
                 }
-            }else{
-                for(i=0;i<N_PLAYERS;i++){
+            } else {
+                for (i=0;i<N_PLAYERS;i++) {
                     work_card[6][mibun[i]+5]=i;
                 }
             }
-            for(i=0;i<N_PLAYERS;i++){
+            for (i=0;i<N_PLAYERS;i++) {
                 work_card[6][i+10]=sekijun[i];
             }
-            for(i=0;i<N_PLAYERS;i++){
+            for (i=0;i<N_PLAYERS;i++) {
                 memcpy(stage_card[5], work_card[5], 2*sizeof(work_card[5]));
             }
             memcpy(stage_card[5], work_card[5], 2*sizeof(work_card[5]));
             players_card[now_player][5][2]=1;
             
             // send information "stage cards" to clients.
-            for(int i = 0; i < N_PLAYERS; ++i){
+            for (int i = 0; i < N_PLAYERS; ++i) {
                 tn_card_write(client_sockfd[i],stage_card,protocol_version);
             }
             
-            if(broadcast /*&& work_card[6][4]*/){
+            if (broadcast /*&& work_card[6][4]*/) {
                 
-                if(status_of_submitted_card[3]==0){
+                if (status_of_submitted_card[3]==0) {
                     printf("%d.%s played: PASS\n",now_player,player_name[now_player]);
-                }else{
+                } else {
                     
                     int h,w,sp;
                     int hidari;
                     int hidarispace=21;
-                    for(i=0;i<max(5, N_PLAYERS);i++){
+                    for (i=0;i<max(5, N_PLAYERS);i++) {
                         hidari=0;
-                        switch(i){
+                        switch(i) {
                             case 0:
                                 printf("Turn %d:",count_turn);
                                 hidari+=6+1;
-                                if(count_turn >= 10){
+                                if (count_turn >= 10) {
                                     hidari++;
-                                    if(count_turn >=100){
+                                    if (count_turn >=100) {
                                         hidari++;
                                     }
                                 }
@@ -1091,20 +1091,20 @@ int main(int argc, char *argv[]){
                                 
                                 printf(" ");hidari++;
                                 
-                                if(status_of_submitted_card[3]==0){
+                                if (status_of_submitted_card[3]==0) {
                                     printf("Pass ");hidari+=5;
-                                }else{
+                                } else {
                                     
-                                    for(w=1;w<=13;w++){
-                                        for(h=3;h>=0;h--){
-                                            if(stage_card[h][w]==1){
-                                                switch(h){
+                                    for (w=1;w<=13;w++) {
+                                        for (h=3;h>=0;h--) {
+                                            if (stage_card[h][w]==1) {
+                                                switch(h) {
                                                     case 0: printf("S");break;
                                                     case 1: printf("H");break;
                                                     case 2: printf("D");break;
                                                     case 3: printf("C");break;
                                                 }
-                                                switch(w){
+                                                switch(w) {
                                                     case 8: printf("T");break;
                                                     case 9: printf("J");break;
                                                     case 10: printf("Q");break;
@@ -1116,33 +1116,33 @@ int main(int argc, char *argv[]){
                                                 printf(" ");
                                                 hidari+=3;
                                             }
-                                            if(stage_card[h][w]==2){printf("JO ");hidari+=3;}
+                                            if (stage_card[h][w]==2) {printf("JO ");hidari+=3;}
                                         }
                                     }
-                                    for(h=0;h<=3;h++){
-                                        if(stage_card[h][0]==2){printf("JO ");hidari+=3;}
-                                        if(stage_card[h][14]==2){printf("JO ");hidari+=3;}
+                                    for (h=0;h<=3;h++) {
+                                        if (stage_card[h][0]==2) {printf("JO ");hidari+=3;}
+                                        if (stage_card[h][14]==2) {printf("JO ");hidari+=3;}
                                     }
-                                    for(w=0;w<=14;w++){
-                                        if(stage_card[4][w]==2){printf("JO ");hidari+=3;}
+                                    for (w=0;w<=14;w++) {
+                                        if (stage_card[4][w]==2) {printf("JO ");hidari+=3;}
                                     }
                                 }
                                 break;
                             case 3:
                                 
-                                if(status_of_submitted_card[3]==0){
+                                if (status_of_submitted_card[3]==0) {
                                     printf("onStage: ");hidari+=9;
                                     
-                                    for(w=1;w<=13;w++){
-                                        for(h=3;h>=0;h--){
-                                            if(stage_card[h][w]==1){
-                                                switch(h){
+                                    for (w=1;w<=13;w++) {
+                                        for (h=3;h>=0;h--) {
+                                            if (stage_card[h][w]==1) {
+                                                switch(h) {
                                                     case 0: printf("S");break;
                                                     case 1: printf("H");break;
                                                     case 2: printf("D");break;
                                                     case 3: printf("C");break;
                                                 }
-                                                switch(w){
+                                                switch(w) {
                                                     case 8: printf("T");break;
                                                     case 9: printf("J");break;
                                                     case 10: printf("Q");break;
@@ -1154,15 +1154,15 @@ int main(int argc, char *argv[]){
                                                 printf(" ");
                                                 hidari+=3;
                                             }
-                                            if(stage_card[h][w]==2){printf("JO ");hidari+=3;}
+                                            if (stage_card[h][w]==2) {printf("JO ");hidari+=3;}
                                         }
                                     }
-                                    for(h=0;h<=3;h++){
-                                        if(stage_card[h][0]==2){printf("JO ");hidari+=3;}
-                                        if(stage_card[h][14]==2){printf("JO ");hidari+=3;}
+                                    for (h=0;h<=3;h++) {
+                                        if (stage_card[h][0]==2) {printf("JO ");hidari+=3;}
+                                        if (stage_card[h][14]==2) {printf("JO ");hidari+=3;}
                                     }
-                                    for(w=0;w<=14;w++){
-                                        if(stage_card[4][w]==2){printf("JO ");hidari+=3;}
+                                    for (w=0;w<=14;w++) {
+                                        if (stage_card[4][w]==2) {printf("JO ");hidari+=3;}
                                     }
                                     
                                 }	
@@ -1170,10 +1170,10 @@ int main(int argc, char *argv[]){
                                 break;
                             case 4:
                                 
-                                if(stage_card[5][7]){
+                                if (stage_card[5][7]) {
                                     printf("Lock ");hidari+=5;
                                 }
-                                if(stage_card[5][6]){
+                                if (stage_card[5][6]) {
                                     printf("Rev ");hidari+=4;
                                 }
                                 
@@ -1181,13 +1181,13 @@ int main(int argc, char *argv[]){
                                 break;
                         }
                         
-                        for(sp=hidari;sp<hidarispace;sp++)printf(" ");
+                        for (sp=hidari;sp<hidarispace;sp++)printf(" ");
                         
-                        if(i < N_PLAYERS){
-                            if(((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0){
+                        if (i < N_PLAYERS) {
+                            if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
                                 printf("  ");
-                            }else{
-                                switch(work_card[6][sekijun[i]+5]){
+                            } else {
+                                switch(work_card[6][sekijun[i]+5]) {
                                     case DAIFUGO: printf("++"); break;
                                     case FUGO: printf(" +"); break;
                                     case HINMIN: printf(" -"); break;
@@ -1197,35 +1197,35 @@ int main(int argc, char *argv[]){
                             }
                             
                             printf(" %d.%s",sekijun[i],player_name[sekijun[i]]);
-                            for(sp=player_name_length[sekijun[i]];sp<player_name_maxlength;sp++)printf(" ");
-                            if(now_pass[sekijun[i]]){
+                            for (sp=player_name_length[sekijun[i]];sp<player_name_maxlength;sp++)printf(" ");
+                            if (now_pass[sekijun[i]]) {
                                 printf("*");
-                            }else{
+                            } else {
                                 printf(" ");
                             }
                             printf(": ");
                             
-                            if(humanplaying && sekijun[i] != N_PLAYERS - 1){
-                                for(w=1;w<=13;w++){
-                                    for(h=3;h>=0;h--){
-                                        if(players_card[sekijun[i]][h][w]){
+                            if (humanplaying && sekijun[i] != N_PLAYERS - 1) {
+                                for (w=1;w<=13;w++) {
+                                    for (h=3;h>=0;h--) {
+                                        if (players_card[sekijun[i]][h][w]) {
                                             printf("**");
                                             printf(" ");
                                         }
                                     }
                                 }
-                                if(players_card[sekijun[i]][4][1])printf("** ");
-                            }else{
-                                for(w=1;w<=13;w++){
-                                    for(h=3;h>=0;h--){
-                                        if(players_card[sekijun[i]][h][w]){
-                                            switch(h){
+                                if (players_card[sekijun[i]][4][1])printf("** ");
+                            } else {
+                                for (w=1;w<=13;w++) {
+                                    for (h=3;h>=0;h--) {
+                                        if (players_card[sekijun[i]][h][w]) {
+                                            switch(h) {
                                                 case 0: printf("S");break;
                                                 case 1: printf("H");break;
                                                 case 2: printf("D");break;
                                                 case 3: printf("C");break;
                                             }
-                                            switch(w){
+                                            switch(w) {
                                                 case 8: printf("T");break;
                                                 case 9: printf("J");break;
                                                 case 10: printf("Q");break;
@@ -1238,18 +1238,18 @@ int main(int argc, char *argv[]){
                                         }
                                     }
                                 }
-                                if(players_card[sekijun[i]][4][1])printf("JO ");
+                                if (players_card[sekijun[i]][4][1])printf("JO ");
                             }
                         }
                         printf("\n");
                     }
                     printf("\n");
-                    if(status_of_submitted_card[3]==0){
+                    if (status_of_submitted_card[3]==0) {
                         //Sleep(1000);
-                    }else{
+                    } else {
                         //system("PAUSE");
                     }
-                    if(now_player==N_PLAYERS - 1){
+                    if (now_player==N_PLAYERS - 1) {
                         //system("PAUSE");
                         //getchar();
                     }
@@ -1257,17 +1257,17 @@ int main(int argc, char *argv[]){
                 }
             }			
             
-            if(number_renzoku_pass>=20){
+            if (number_renzoku_pass>=20) {
                 
-                if(debug){printf("renzoku pass \n");}
+                if (debug) {printf("renzoku pass \n");}
                 // srand((unsigned)time(NULL));	
-                while(now_number_of_goal<=N_PLAYERS - 2){
+                while(now_number_of_goal<=N_PLAYERS - 2) {
                     j=(int)(tn_rand_gen(RAND_TYPE)*(N_PLAYERS-now_number_of_goal)+1);
                     i=0;
                     k=0;
-                    while(i<j){
+                    while(i<j) {
                         k++;
-                        if(goal_flag[k-1]==0){
+                        if (goal_flag[k-1]==0) {
                             i++;
                         }
                     }
@@ -1282,15 +1282,15 @@ int main(int argc, char *argv[]){
             }
             
             int n_now_pass = 0;
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for (int p = 0; p < N_PLAYERS; ++p) {
                 n_now_pass += now_pass[p];
             }
             
-            if(n_now_pass>=(N_PLAYERS-now_number_of_goal)){
+            if (n_now_pass>=(N_PLAYERS-now_number_of_goal)) {
                 flash=1;	
             }
             
-            if(flash){
+            if (flash) {
                 flash=0;	
                 now_11back=0;	
                 now_player=last_player;
@@ -1305,70 +1305,70 @@ int main(int argc, char *argv[]){
                 memset(stage_card,0,sizeof(stage_card));
                 
                 count_card_num(players_card[now_player], &number_of_card);
-                while(number_of_card==0){
-                    if(debug){printf("now_player search %i \n",now_player);} //DEBUG
+                while(number_of_card==0) {
+                    if (debug) {printf("now_player search %i \n",now_player);} //DEBUG
                     i=get_seat(sekijun,now_player);
                     now_player=sekijun[(i+now_muki)%N_PLAYERS];
                     count_card_num(players_card[now_player], &number_of_card);
                 }
                 last_player=now_player;
-                if(debug){printf("flashed 01==>next player is %i \n",now_player);}
-            }else{
-                if(debug){printf("no flash==>%i %i %i \n",now_player, now_muki,(now_player+now_muki)%N_PLAYERS);}
+                if (debug) {printf("flashed 01==>next player is %i \n",now_player);}
+            } else {
+                if (debug) {printf("no flash==>%i %i %i \n",now_player, now_muki,(now_player+now_muki)%N_PLAYERS);}
                 i=get_seat(sekijun,now_player);
                 now_player=sekijun[(i+now_muki)%N_PLAYERS];
                 
                 count_card_num(players_card[now_player], &number_of_card);
-                while(((number_of_card==0)||(now_pass[now_player]==1))){
-                    if(debug){printf("now_player search %i \n",now_player);} //DEBUG
+                while(((number_of_card==0)||(now_pass[now_player]==1))) {
+                    if (debug) {printf("now_player search %i \n",now_player);} //DEBUG
                     i=get_seat(sekijun,now_player);
                     now_player=sekijun[(i+now_muki)%N_PLAYERS];
                     count_card_num(players_card[now_player], &number_of_card);
                 }
             }
-            if(debug){printf("game is contineous = %i \n",now_number_of_goal);}
+            if (debug) {printf("game is contineous = %i \n",now_number_of_goal);}
             
-            if(now_number_of_goal==N_PLAYERS - 1){
+            if (now_number_of_goal==N_PLAYERS - 1) {
                 
                 //l1 player
-                for(int p=0;p<N_PLAYERS;++p){
-                    if(!goal_flag[p]){
+                for (int p=0;p<N_PLAYERS;++p) {
+                    if (!goal_flag[p]) {
                         game_log.infoNewClass.assign(p, now_number_of_goal);
                         break;
                     }
                 }
                 
                 accept_flag=10;
-                if(now_number_of_games==GAME_NUMBER){ // send a information "all game is overd" to clients.
+                if (now_number_of_games==GAME_NUMBER) { // send a information "all game is overd" to clients.
                     i=2;
-                    for(j=0;j<N_PLAYERS;j++){
+                    for (j=0;j<N_PLAYERS;j++) {
                         tn_int_write(client_sockfd[j],i,protocol_version);
                     }
-                }else{  // send a information "One game is overd" to clients.
+                } else {  // send a information "One game is overd" to clients.
                     i=1;
-                    for(j=0;j<N_PLAYERS;j++){
+                    for (j=0;j<N_PLAYERS;j++) {
                         tn_int_write(client_sockfd[j],i,protocol_version);
                     }
                 }
-            }else{
+            } else {
                 i=0;
-                for(j=0;j<N_PLAYERS;j++){
+                for (j=0;j<N_PLAYERS;j++) {
                     tn_int_write(client_sockfd[j],i,protocol_version);
                 }
             }
             sum_of_turn++;
         }// elihw of 1 game
-        for(i=0;i<N_PLAYERS;i++){
-            if(goal_flag[i]==0){
+        for (i=0;i<N_PLAYERS;i++) {
+            if (goal_flag[i]==0) {
                 mibun[N_PLAYERS - 1]=i;
             }
         }
-        if(debug){printf("end of 1 game\n");}
+        if (debug) {printf("end of 1 game\n");}
         
         // レーティング計算
-        if(rating){
+        if (rating) {
             std::array<double, N_PLAYERS> dist = UECda::Fuji::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for (int p = 0; p < N_PLAYERS; ++p) {
                 playerRate[p] += dist[p];
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;
                 playerRateExpMean[p] = playerRateExpMean[p] * rateEpsilon + playerRate[p] * (1 - rateEpsilon);
@@ -1378,7 +1378,7 @@ int main(int argc, char *argv[]){
             cerr << toString(playerRateExpMean) << endl;
         }
         
-        if(WINDOW_TYPE==2){
+        if (WINDOW_TYPE==2) {
             
             const char* class_name[5] = {
                 "daihugou  ",
@@ -1391,31 +1391,31 @@ int main(int argc, char *argv[]){
             printf("================ game %i \n",now_number_of_games);
             
             int mid = (N_PLAYERS + 1) / 2;
-            for(int p = 0; p < mid; ++p){
+            for (int p = 0; p < mid; ++p) {
                 printf("%s %i.%s\n",class_name[p],mibun[p],player_name[mibun[p]]);
             }
-            for(int p = mid; p < N_PLAYERS; ++p){
+            for (int p = mid; p < N_PLAYERS; ++p) {
                 printf("%s %i.%s\n",class_name[5 - (N_PLAYERS - p)],mibun[p],player_name[mibun[p]]);
             }
             printf("--------- total point\n");
         }
-        for(i=0;i<N_PLAYERS;i++){
+        for (i=0;i<N_PLAYERS;i++) {
             human[mibun[i]]=i;
             point[now_number_of_games][mibun[i]]=N_PLAYERS-i;
             point_sum[now_number_of_games][mibun[i]]=point_sum[now_number_of_games-1][mibun[i]]+(N_PLAYERS-i);
         }
-        for(i=0;i<N_PLAYERS;i++){printf("%i (%1.3f) %i.%s\n",point_sum[now_number_of_games][i],point_sum[now_number_of_games][i] / (double)now_number_of_games,i,player_name[i]);}
+        for (i=0;i<N_PLAYERS;i++) {printf("%i (%1.3f) %i.%s\n",point_sum[now_number_of_games][i],point_sum[now_number_of_games][i] / (double)now_number_of_games,i,player_name[i]);}
         game_count++;
         
         //fprintf(logfile,"\n");
-        if(!game_log.play(game_log.plays()-1).move().isPASS()){
+        if (!game_log.play(game_log.plays()-1).move().isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);
         
     } // rof now_number_of_games
     
-    if(output_flag){
+    if (output_flag) {
         // spanなしのresult outputの出力
         
         std::ofstream ofs;
@@ -1425,9 +1425,9 @@ int main(int argc, char *argv[]){
             ofs.open(oss.str(), std::ios::app);
         }
         
-        for(int p=0;p<N_PLAYERS;++p){
+        for (int p=0;p<N_PLAYERS;++p) {
             ofs << player_name[p];
-            for(int g=0;g<GAME_NUMBER;++g){
+            for (int g=0;g<GAME_NUMBER;++g) {
                 ofs << "," << (int)point[g+1][p];
             }
             ofs << endl;
@@ -1435,27 +1435,27 @@ int main(int argc, char *argv[]){
         ofs.close();
         
         std::vector<int> output_vector[N_PLAYERS];
-        for(int p=0;p<N_PLAYERS;++p){
-            for(int s=0,g=0;s<(GAME_NUMBER/output_game_span);++s){
+        for (int p=0;p<N_PLAYERS;++p) {
+            for (int s=0,g=0;s<(GAME_NUMBER/output_game_span);++s) {
                 int sum=0;
-                for(int sg=0;sg<output_game_span && g<GAME_NUMBER;++sg,++g){
+                for (int sg=0;sg<output_game_span && g<GAME_NUMBER;++sg,++g) {
                     sum+=point[g+1][p];
                 }
                 output_vector[p].push_back(sum);
             }
         }
         // spanありのresult outputの出力
-        if(output_file == ""){
+        if (output_file == "") {
             std::ostringstream oss;
             oss << "output_span_" << start_time << ".csv";
             ofs.open(oss.str(), std::ios::app);
-        }else{
+        } else {
             ofs.open(output_file, std::ios::app);
         }
         
-        for(int p=0;p<N_PLAYERS;++p){
+        for (int p=0;p<N_PLAYERS;++p) {
             ofs << player_name[p];
-            for(int sg=0;sg<output_vector[p].size();++sg){
+            for (int sg=0;sg<output_vector[p].size();++sg) {
                 ofs << "," << output_vector[p][sg];
             }
             ofs << endl;
@@ -1465,7 +1465,7 @@ int main(int argc, char *argv[]){
     
     outputLog();
     
-    if(makelog){
+    if (makelog) {
         fclose(logfile);
     }
     
@@ -1494,7 +1494,7 @@ int main(int argc, char *argv[]){
     /* game over */ 
     /*************/ 
     printf("All games are overed \n");
-    for(i=0;i<N_PLAYERS;i++){
+    for (i=0;i<N_PLAYERS;i++) {
         shutdown(client_sockfd[i], 2);
         close(client_sockfd[i]);
     }

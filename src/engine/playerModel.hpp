@@ -22,28 +22,28 @@ namespace UECda{
                 // 頻繁に呼ばれるのでここで長い計算はしない
                 return bias;
             }
-            void feed(double p){
+            void feed(double p) {
                 size += 1;
                 sum += p;
                 attenuate(Settings::playerBiasAttenuateRate);
                 bias = calc_value(mean());
             }
-            void attenuate(double r){
+            void attenuate(double r) {
                 size *= r;
                 sum *= r;
             }
-            void resize(double s){
-                if(size > s){
+            void resize(double s) {
+                if (size > s) {
                     sum *= s / size;
                     size = s;
                 }
             }
-            static double calc_value(double m){
+            static double calc_value(double m) {
                 assert(-1 < m && m < 1);
                 return 2.0 * log((1 + m) / (1 - m));
             }
             
-            void init(double p, double i){
+            void init(double p, double i) {
                 size = i;
                 sum = i * p;
                 bias = calc_value(mean());
@@ -112,7 +112,7 @@ namespace UECda{
                 return playerNum;
             }
             
-            void init(const int pNum, const bool cFlag){
+            void init(const int pNum, const bool cFlag) {
                 setPlayerNum(pNum);
                 setClientFlag(cFlag);
                 //type=0;
@@ -120,14 +120,14 @@ namespace UECda{
             }
             
             //結果報告
-            void feedPlayTime(uint64_t argTime, uint32_t NMoves, int ph, Move pMove, bool isMate, bool isL2){
+            void feedPlayTime(uint64_t argTime, uint32_t NMoves, int ph, Move pMove, bool isMate, bool isL2) {
                 //++allPlays;allTime+=argTime;
                 
-                if(isL2){
+                if (isL2) {
                     L2Time += argTime; ++L2Plays;
-                }else if(isMate){
+                }else if (isMate) {
                     LnMateTime += argTime; ++LnMatePlays;
-                }else{
+                } else {
                     
                     //assert(NMoves >= 1 && ph <= 2);
                     
@@ -142,10 +142,10 @@ namespace UECda{
                     
                     //feedTimeDist(playerNum,ph,nms,argTime);
                     
-                    if(ph == 1){
-                        if(NMoves == 1){ // NoChance
+                    if (ph == 1) {
+                        if (NMoves == 1) { // NoChance
                             timeModel_.feed_real_time(1, argTime);
-                        }else if(pMove.isPASS()){
+                        }else if (pMove.isPASS()) {
                             timeModel_.feed_real_time(0, argTime);
                         }
                     }
@@ -154,34 +154,34 @@ namespace UECda{
             
             void feedChancePlay(bool isPASS)noexcept{
                 ++chancePlays;
-                if(isPASS){
+                if (isPASS) {
                     ++PassPlays;
                 }
             }
             
             void feedMateRel(bool success)noexcept{
-                if(success){
+                if (success) {
                     ++mateSuccess;
-                }else{
+                } else {
                     ++mateMiss;
                 }
             }
             void feedL2Rel(bool success)noexcept{
-                if(success){
+                if (success) {
                     ++L2Success;
-                }else{
+                } else {
                     ++L2Miss;
                 }
             }
             
-            void initRecord(){
+            void initRecord() {
                 //プレー記録初期化
                 allTime = 0ULL;
                 allPlays = 0U;
                 PassPlays = 0U;
                 chancePlays = 0U;
-                for(int ph = 0; ph < 3 ;ph++){
-                    for(int nms = 0; nms < 6; ++nms){
+                for (int ph = 0; ph < 3 ;ph++) {
+                    for (int nms = 0; nms < 6; ++nms) {
                         NMovesTime[ph][nms] = 0ULL;
                         NMovesPlays[ph][nms] = 0U;
                     }
@@ -190,15 +190,15 @@ namespace UECda{
                 L2Success = L2Miss = 0;
             }
             
-            void initBias(){
+            void initBias() {
                 //局面推定用の時間解析初期化
                 
                 // 着手バイアス
-                for(int i = 0; i < 5; ++i){
+                for (int i = 0; i < 5; ++i) {
                     biasNF[i].init(0, Settings::playerBiasPriorSize);
                 }
-                for(int i = 0; i < 3; ++i){
-                    for(int j = 0;j < 4; ++j){
+                for (int i = 0; i < 3; ++i) {
+                    for (int j = 0;j < 4; ++j) {
                         biasRF[i][j].init(0, Settings::playerBiasPriorSize);
                     }
                 }
@@ -244,15 +244,15 @@ namespace UECda{
                 return oss.str();
             }
             
-            PlayerModel(){}
-            ~PlayerModel(){}
+            PlayerModel() {}
+            ~PlayerModel() {}
             
             
-            void closeMatch(){
+            void closeMatch() {
                 cerr << "time dist of player " << playerNum << " : " << endl;
-                for(int ph = 0; ph < 2; ++ph){
+                for (int ph = 0; ph < 2; ++ph) {
                     cerr<<" ";
-                    for(int s = 0; s < 7; ++s){
+                    for (int s = 0; s < 7; ++s) {
                         cerr << timeModel_.time_dist7[ph][s] << ", ";
                     }
                     cerr << endl;
@@ -265,22 +265,22 @@ namespace UECda{
             
             std::array<PlayerModel, N_PLAYERS> model_;
             
-            PlayerModel& model(int p){ return model_[p]; }
+            PlayerModel& model(int p) { return model_[p]; }
             const PlayerModel& model(int p)const{ return model_[p]; }
             
-            void init(int myPlayerNum){
-                for(int p = 0; p < N_PLAYERS; ++p){
+            void init(int myPlayerNum) {
+                for (int p = 0; p < N_PLAYERS; ++p) {
                     model_[p].init(p, p == myPlayerNum);
                     model_[p].initBias();
                     model_[p].initRecord();
                 }
             }
             
-            void closeMatch(){
+            void closeMatch() {
                 
             }
             
-            PlayerModelSpace(){
+            PlayerModelSpace() {
             }
         };
         

@@ -20,7 +20,7 @@
 using namespace UECda;
 using namespace std;
 
-int count_card_num(int tmp_card[8][15],int *card_num){
+int count_card_num(int tmp_card[8][15],int *card_num) {
     /***********************************************************/
     /* input  : tmp_card : player's card table.                */
     /*          card_num : dust                                */
@@ -37,17 +37,17 @@ int count_card_num(int tmp_card[8][15],int *card_num){
     int tmp_joker_num=0;
     int collectly=0;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
             switch (tmp_card[i][j]) {
                 case 0:
                     break;
                 case 1:
                     tmp_card_num++;
-                    if(j==0 || j==14){
+                    if (j==0 || j==14) {
                         collectly=1;
                     };
-                    if(i==4){
+                    if (i==4) {
                         collectly=1;
                     };
                     break;
@@ -65,7 +65,7 @@ int count_card_num(int tmp_card[8][15],int *card_num){
     return ((collectly + (tmp_joker_num >= 2)) >=1);
 }
 
-int count_card_num_r(int tmp_card[8][15], int *error){
+int count_card_num_r(int tmp_card[8][15], int *error) {
     /***********************************************************/
     /* input  : tmp_card : player's card table.                */
     /*          card_num : dust                                */
@@ -82,17 +82,17 @@ int count_card_num_r(int tmp_card[8][15], int *error){
     int tmp_joker_num=0;
     int collectly=0;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
             switch (tmp_card[i][j]) {
                 case 0:
                     break;
                 case 1:
                     tmp_card_num++;
-                    if(j==0 || j==14){
+                    if (j==0 || j==14) {
                         collectly=1;
                     };
-                    if(i==4){
+                    if (i==4) {
                         collectly=1;
                     };
                     break;
@@ -110,7 +110,7 @@ int count_card_num_r(int tmp_card[8][15], int *error){
     return tmp_card_num;
 }
 
-void shuffle_card(int initial_person,int player_card[N_PLAYERS][8][15], int RAND_TYPE, int sekijun[N_PLAYERS]){
+void shuffle_card(int initial_person,int player_card[N_PLAYERS][8][15], int RAND_TYPE, int sekijun[N_PLAYERS]) {
     /***********************************************************/
     /* input  : initial_person : DAIHUGO or first player       */
     /*          player_card    : dust                          */
@@ -127,23 +127,23 @@ void shuffle_card(int initial_person,int player_card[N_PLAYERS][8][15], int RAND
     
     initial_seat=get_seat(sekijun, initial_person);
     
-    for(i=0;i<=52;i++){
+    for (i=0;i<=52;i++) {
         tmp=(int)(tn_rand_gen(RAND_TYPE) * (53 - i));
         tmp_number=0;
-        for(j=0;tmp_number<=tmp;j++){
+        for (j=0;tmp_number<=tmp;j++) {
             tmp_number=tmp_number+(card_table[j] ==0 );
         }
         j--;
         card_table[j]=1;
-        if(j==52){
+        if (j==52) {
             player_card[sekijun[(i+initial_seat) % N_PLAYERS]][j / 13][j % 13 + 1]=2;
-        }else{
+        } else {
             player_card[sekijun[(i+initial_seat) % N_PLAYERS]][j / 13][j % 13 + 1]=1;
         }
     }
 }
 
-void print_player_card(int player_card[8][15]){
+void print_player_card(int player_card[8][15]) {
     /***********************************************************/
     /* input  : player_card : table of one player's card       */
     /* return : none                                           */
@@ -152,15 +152,15 @@ void print_player_card(int player_card[8][15]){
     /***********************************************************/
     int i,j;
     
-    for(i=0;i<=7;i++){
-        for(j=0;j<=14;j++){
+    for (i=0;i<=7;i++) {
+        for (j=0;j<=14;j++) {
             printf("%i ",player_card[i][j]);
         }
         printf("\n");
     }
 }
 
-int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int revers){
+int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int revers) {
     /***************************************************************/
     /* input  : player_card : table of published cards table       */
     /*        : status_of_submitted_card : dust                    */
@@ -192,10 +192,10 @@ int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int re
     
     
     j=-1; // search minimum value of cards
-    while((j==-1)||(player_card[i][j]==0 && j<=14)){
+    while((j==-1)||(player_card[i][j]==0 && j<=14)) {
         i=0;
         j=j+1;
-        while(player_card[i][j]==0 && i<=3){
+        while(player_card[i][j]==0 && i<=3) {
             //printf("%i %i %i \n", i,j,player_card[i][j]);
             i++;
         }
@@ -203,43 +203,43 @@ int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int re
     status_of_submitted_card[0]=j; // set a minimam value of cards
     
     error+=count_card_num(player_card,&number_of_submitted_cards);
-    switch ((int)number_of_submitted_cards){
+    switch ((int)number_of_submitted_cards) {
         case 0:
             status_of_submitted_card[3]=0;
             return 0;
         case 1:
-            if(player_card[i][j]==2){
+            if (player_card[i][j]==2) {
                 status_of_submitted_card[3]=4;
-            }else{
+            } else {
                 status_of_submitted_card[3]=1;
             }
     }
     
-    if(j!=14 && player_card[i][j+1]!=0){ // kaidan haitei
+    if (j!=14 && player_card[i][j+1]!=0) { // kaidan haitei
         status_of_submitted_card[2]=0x0001<<i;
         status_of_submitted_card[1]=1;
-        while(j<=14 && player_card[i][j++]!=0){
+        while(j<=14 && player_card[i][j++]!=0) {
             status_of_submitted_card[1]++;
         }
         status_of_submitted_card[1]--;
         status_of_submitted_card[3]=3;
-        if(revers){
+        if (revers) {
             status_of_submitted_card[0]=status_of_submitted_card[0]+status_of_submitted_card[1]-1;
         }
         error+=(status_of_submitted_card[1]<=2);
-    }else{ // pair hantei
-        for(i=0;i<=4;i++){
-            if(player_card[i][j]!=0){
+    } else { // pair hantei
+        for (i=0;i<=4;i++) {
+            if (player_card[i][j]!=0) {
                 status_of_submitted_card[1]++;
                 status_of_submitted_card[2] |= (0x0001 << i);
             }
         }
-        if(status_of_submitted_card[3]==0){
+        if (status_of_submitted_card[3]==0) {
             status_of_submitted_card[3]=2;
         }
     }
     
-    if(status_of_submitted_card[2]>=16 && status_of_submitted_card[2]!=31){
+    if (status_of_submitted_card[2]>=16 && status_of_submitted_card[2]!=31) {
         error+=1;
     }
     
@@ -247,7 +247,7 @@ int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int re
     return error;
 }
 
-int check_special_card(int special_card, int status_of_submitted_card[4], int revers){
+int check_special_card(int special_card, int status_of_submitted_card[4], int revers) {
     /*****************************************************************************/
     /* input  : special_card : a special card, which is checked in this function */
     /*        : status_of_submitted_card : a analyze table                       */
@@ -255,27 +255,27 @@ int check_special_card(int special_card, int status_of_submitted_card[4], int re
     /* return : If a status of submitted card includes specias card then 1       */
     /* destroy: none                                                             */
     /*****************************************************************************/
-    if(status_of_submitted_card[3]==3){ // kaidan
-        if(revers){
-            if((status_of_submitted_card[0]>=special_card) && (status_of_submitted_card[0]-status_of_submitted_card[1]+1<=special_card)){
+    if (status_of_submitted_card[3]==3) { // kaidan
+        if (revers) {
+            if ((status_of_submitted_card[0]>=special_card) && (status_of_submitted_card[0]-status_of_submitted_card[1]+1<=special_card)) {
                 return 1;
             }
             return 0;
-        }else{
-            if((status_of_submitted_card[0]<=special_card) && (status_of_submitted_card[0]+status_of_submitted_card[1]-1>=special_card)){
+        } else {
+            if ((status_of_submitted_card[0]<=special_card) && (status_of_submitted_card[0]+status_of_submitted_card[1]-1>=special_card)) {
                 return 1;
             }
             return 0;
         }
-    }else{  // etc
-        if(status_of_submitted_card[0]==special_card){
+    } else {  // etc
+        if (status_of_submitted_card[0]==special_card) {
             return 1;
         }
         return 0;
     }
 }
 
-int search_card(int players_card[N_PLAYERS][8][15], int num, int suit){
+int search_card(int players_card[N_PLAYERS][8][15], int num, int suit) {
     /********************************************************************************/
     /* input  : players_card : all player's all cards                               */
     /*        : num : a card's number which is wanted to search                     */
@@ -286,15 +286,15 @@ int search_card(int players_card[N_PLAYERS][8][15], int num, int suit){
     /********************************************************************************/
     int i;
     
-    for(i=0;i<=4;i++){
-        if(players_card[i][num][suit]!=0){
+    for (i=0;i<=4;i++) {
+        if (players_card[i][num][suit]!=0) {
             return i;
         }
     }
     return 255;
 }
 
-int compare_card_status(int stage_card[4], int now_card[4], int revers){
+int compare_card_status(int stage_card[4], int now_card[4], int revers) {
     /****************************************************************/
     /* input  : stage_card : a analyze table of cards on the stage  */
     /*        : now_card : a analyze table of submitted card        */
@@ -304,40 +304,40 @@ int compare_card_status(int stage_card[4], int now_card[4], int revers){
     /* destroy: none                                                */
     /* note   : This function can't compare suit                    */
     /****************************************************************/
-    if(stage_card[0]==-1){ // if there are no cards on the stage then any cards are accepted.
+    if (stage_card[0]==-1) { // if there are no cards on the stage then any cards are accepted.
         return 0;
     }
     
-    if(stage_card[1]!=now_card[1]){ // compare number of cards
+    if (stage_card[1]!=now_card[1]) { // compare number of cards
         return 1;
     }
     
-    if((now_card[3]==4) && stage_card[3]==1){ // when joker tanki
+    if ((now_card[3]==4) && stage_card[3]==1) { // when joker tanki
         return 0;
     }
     
-    if(stage_card[3]!=now_card[3]){ //if type are different between accepted cards and stages cards then return value is 1.
+    if (stage_card[3]!=now_card[3]) { //if type are different between accepted cards and stages cards then return value is 1.
         return 1;
     }
     
-    if(stage_card[3]==2){ // when the type is pair
-        if(revers){ // compare value of cards on kakumei
+    if (stage_card[3]==2) { // when the type is pair
+        if (revers) { // compare value of cards on kakumei
             return ((now_card[0]-stage_card[0])>=0);
-        }else{
+        } else {
             //printf("pair hantei %i\n",((now_card[0]-stage_card[0]+1)<=0));
             return ((now_card[0]-stage_card[0])<=0);
         }
     }
     
     // when the type is kaidan or tanki.
-    if(revers){ //compare value of cards on kakumei
+    if (revers) { //compare value of cards on kakumei
         return ((now_card[0]-stage_card[0]+stage_card[1]-1)>=0);
-    }else{
+    } else {
         return ((now_card[0]-stage_card[0]-stage_card[1]+1)<=0);
     }
 }
 
-int check_include_card(int org_card[8][15], int subset_card[8][15]){
+int check_include_card(int org_card[8][15], int subset_card[8][15]) {
     /***************************************************************/
     /* input  : org_card :card table of player's all cards         */
     /*        : subset_card :card table of published cards         */
@@ -349,16 +349,16 @@ int check_include_card(int org_card[8][15], int subset_card[8][15]){
     /***************************************************************/
     int i,j;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
-            switch (subset_card[i][j]){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
+            switch (subset_card[i][j]) {
                 case 1:
-                    if(org_card[i][j]!=1){
+                    if (org_card[i][j]!=1) {
                         return 1;
                     }
                     break;
                 case 2:
-                    if(org_card[4][1]!=2){
+                    if (org_card[4][1]!=2) {
                         return 1;
                     }
             }
@@ -367,7 +367,7 @@ int check_include_card(int org_card[8][15], int subset_card[8][15]){
     return 0;
 }
 
-int marge_card(int target_card[8][15], int add_card[8][15]){
+int marge_card(int target_card[8][15], int add_card[8][15]) {
     /****************************************************************/
     /* input  : target_card: a card table of one player's all cards */
     /*        : add_card : a card table of published cards          */
@@ -376,9 +376,9 @@ int marge_card(int target_card[8][15], int add_card[8][15]){
     /****************************************************************/
     int i,j;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
-            switch(add_card[i][j]){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
+            switch(add_card[i][j]) {
                 case 0:
                     break;
                 case 1:
@@ -393,7 +393,7 @@ int marge_card(int target_card[8][15], int add_card[8][15]){
     return 0;
 }
 
-int drop_card_flag(int org_card[8][15], int subset_card[8][15]){
+int drop_card_flag(int org_card[8][15], int subset_card[8][15]) {
     /**************************************************************************/
     /* input  : org_card: a card table of one player's all cards              */
     /*        : subset_card : a card table of published cards                 */
@@ -404,9 +404,9 @@ int drop_card_flag(int org_card[8][15], int subset_card[8][15]){
     /**************************************************************************/
     int i,j;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
-            switch (subset_card[i][j]){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
+            switch (subset_card[i][j]) {
                 case 1:
                     org_card[i][j]=0;
                     break;
@@ -418,7 +418,7 @@ int drop_card_flag(int org_card[8][15], int subset_card[8][15]){
     return 0;
 }
 
-int search_strong_card(int player_card[8][15], int strong_card[8][15], int number_of_card){
+int search_strong_card(int player_card[8][15], int strong_card[8][15], int number_of_card) {
     /**************************************************************************/
     /* input  : player_card: a card table of one player's all cards           */
     /*        : strong_card: dump                                             */
@@ -432,34 +432,34 @@ int search_strong_card(int player_card[8][15], int strong_card[8][15], int numbe
     
     memset(strong_card,0,8*15*strong_card[0][0]);
     
-    if(count_card_num(player_card,&card_num)){
+    if (count_card_num(player_card,&card_num)) {
         return 1;
     }
-    if(card_num < number_of_card){
+    if (card_num < number_of_card) {
         number_of_card=card_num;
     }
     
-    if(player_card[4][1]==2 && k<number_of_card){
+    if (player_card[4][1]==2 && k<number_of_card) {
         k++;
         strong_card[4][1]=2;
     }
     
     i=0; //suit
     j=14;
-    while(k<number_of_card){
-        if(player_card[i][j]){
+    while(k<number_of_card) {
+        if (player_card[i][j]) {
             k++;
             strong_card[i][j]=1;
         }
         i=(i+1)%4;
-        if(i==0){
+        if (i==0) {
             j--;
         }
     }
     return 0;
 }
 
-int trans_strong_card(int source_card[8][15], int target_card[8][15], int number_of_card){
+int trans_strong_card(int source_card[8][15], int target_card[8][15], int number_of_card) {
     /**************************************************************************/
     /* input  : source_card: a card table of one player's all cards           */
     /*        : target_card: a card table of one player's all cards           */
@@ -472,14 +472,14 @@ int trans_strong_card(int source_card[8][15], int target_card[8][15], int number
     int k=0;
     int card_num=0;
     
-    if(count_card_num(source_card,&card_num)){
+    if (count_card_num(source_card,&card_num)) {
         return 1;
     }
-    if(card_num < number_of_card){
+    if (card_num < number_of_card) {
         number_of_card=card_num;
     }
     
-    if(source_card[4][1]==2 && k<number_of_card){
+    if (source_card[4][1]==2 && k<number_of_card) {
         //print_player_card(source_card);
         k++;
         source_card[4][1]=0;
@@ -489,21 +489,21 @@ int trans_strong_card(int source_card[8][15], int target_card[8][15], int number
     
     i=0; //suit
     j=14;
-    while(k<number_of_card){
-        if(source_card[i][j]){
+    while(k<number_of_card) {
+        if (source_card[i][j]) {
             k++;
             source_card[i][j]=0;
             target_card[i][j]=1;
         }
         i=(i+1)%4;
-        if(i==0){
+        if (i==0) {
             j--;
         }
     }
     return 0;
 }
 
-int trans_work_card(int source_card[8][15], int target_card[8][15], int work_card[8][15]){
+int trans_work_card(int source_card[8][15], int target_card[8][15], int work_card[8][15]) {
     /**************************************************************************/
     /* input  : target_card: a card table of one player's all cards           */
     /*        : souce_card : a card table of published cards                  */
@@ -516,9 +516,9 @@ int trans_work_card(int source_card[8][15], int target_card[8][15], int work_car
     /**************************************************************************/
     int i,j;
     
-    for(i=0;i<=4;i++){
-        for(j=0;j<=14;j++){
-            switch(work_card[i][j]){
+    for (i=0;i<=4;i++) {
+        for (j=0;j<=14;j++) {
+            switch(work_card[i][j]) {
                 case 0:
                     break;
                 case 1:
@@ -536,8 +536,8 @@ int trans_work_card(int source_card[8][15], int target_card[8][15], int work_car
     return 0;
 }
 
-void tn_rand_init(unsigned long seed, int type){
-    switch(type){
+void tn_rand_init(unsigned long seed, int type) {
+    switch(type) {
         case 0 :
             srand((int)seed);
             break;
@@ -547,8 +547,8 @@ void tn_rand_init(unsigned long seed, int type){
     }
 }
 
-double  tn_rand_gen(int type){
-    switch(type){
+double  tn_rand_gen(int type) {
+    switch(type) {
         case 0 :
             return (double)rand()/((double)RAND_MAX-1.0);
         case 1 :
@@ -562,40 +562,40 @@ int double_cmp(const void *a, const void *b) {
     const double *tmp_a=(const double*)a;
     const double *tmp_b=(const double*)b;
     
-    if((tmp_a[1]-tmp_b[1])>0){
+    if ((tmp_a[1]-tmp_b[1])>0) {
         tmp=1;
-    }else if((tmp_a[1]-tmp_b[1]<0)){
+    }else if ((tmp_a[1]-tmp_b[1]<0)) {
         tmp=-1;
-    }else{
+    } else {
         tmp=0;
     }
     return tmp;
 }
 
 
-void tn_sekigae(int now_number_of_games, int sekijun[N_PLAYERS], int RULE_SEKIGAE, int RULE_SEKIGAE_NUM, int RAND_TYPE){
+void tn_sekigae(int now_number_of_games, int sekijun[N_PLAYERS], int RULE_SEKIGAE, int RULE_SEKIGAE_NUM, int RAND_TYPE) {
     int i,j;
     int flag;
     double tmp_seki[N_PLAYERS][2];
     
-    switch(RULE_SEKIGAE){
+    switch(RULE_SEKIGAE) {
         case 1:
-            if((now_number_of_games % RULE_SEKIGAE_NUM)==1){
-                for(i=0;i<N_PLAYERS;i++){
+            if ((now_number_of_games % RULE_SEKIGAE_NUM)==1) {
+                for (i=0;i<N_PLAYERS;i++) {
                     tmp_seki[i][0]=i;
                     flag=0;
-                    while(flag==0){
+                    while(flag==0) {
                         flag=1;
                         tmp_seki[i][1]=tn_rand_gen(RAND_TYPE);
-                        for(j=0;j<i;j++){
-                            if(tmp_seki[i][1]==tmp_seki[j][1]){
+                        for (j=0;j<i;j++) {
+                            if (tmp_seki[i][1]==tmp_seki[j][1]) {
                                 flag=0;
                             }
                         }
                     }
                 }
                 qsort(tmp_seki,N_PLAYERS,sizeof(tmp_seki[0]),double_cmp);
-                for(i=0;i<N_PLAYERS;i++){
+                for (i=0;i<N_PLAYERS;i++) {
                     sekijun[i]=(int)tmp_seki[i][0];
                 }
             }
@@ -606,11 +606,11 @@ void tn_sekigae(int now_number_of_games, int sekijun[N_PLAYERS], int RULE_SEKIGA
     
 }
 
-int get_seat(int sekijun[N_PLAYERS], int now_player){
+int get_seat(int sekijun[N_PLAYERS], int now_player) {
     int i;
     
     i=0;
-    while(sekijun[i]!=now_player){
+    while(sekijun[i]!=now_player) {
         i++;
     }
     return i;

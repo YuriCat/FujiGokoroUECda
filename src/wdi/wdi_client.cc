@@ -37,8 +37,8 @@ namespace UECda{
 		
 	public:
 		// オーバーロード関数
-		virtual int undo(){ // 局面をコマンド1つ分戻す
-			if(fnow <= ffirst){
+		virtual int undo() { // 局面をコマンド1つ分戻す
+			if (fnow <= ffirst) {
 				return -1; // もう戻せない
 			}
 			--fnow;
@@ -48,8 +48,8 @@ namespace UECda{
 #endif
 			return 0;
 		}
-		virtual int redo(){ // 局面をコマンド1つ分進める
-			if(fnow >= flast){
+		virtual int redo() { // 局面をコマンド1つ分進める
+			if (fnow >= flast) {
 				return -1; // もう進められない
 			}
 			++fnow;
@@ -59,19 +59,19 @@ namespace UECda{
 #endif
 			return 0;
 		}
-		virtual int rev(){ // 局面の永続オーダーを強引に反転させる
+		virtual int rev() { // 局面の永続オーダーを強引に反転させる
 			f.bd.flipPrmOrder();
 			save();
 			return 0;
 		}
-		virtual int recvSeats(const int* as){
-			for(int p = 0; p < N_PLAYERS; ++p){
+		virtual int recvSeats(const int* as) {
+			for (int p = 0; p < N_PLAYERS; ++p) {
 				f.setPlayerSeat(p, as[p]);
 			}
 			return 0;
 		}
-		/*virtual int recvClasses(const int* acl){
-			for(int p = 0; p < ClientField::N; ++p){
+		/*virtual int recvClasses(const int* acl) {
+			for (int p = 0; p < ClientField::N; ++p) {
 				cerr << p << "," << acl[p] << " ";
 				f.infoClass.assign(p, acl[p]);
 				f.infoClass.assign(N_PLAYERS + acl[p], p);
@@ -80,25 +80,25 @@ namespace UECda{
 			f.setMyClass(f.getPlayerClass(f.getMyPlayerNum()));
 			return 0;
 		}*/
-		virtual int recvDealtCards(const Cards& ac){
+		virtual int recvDealtCards(const Cards& ac) {
             
-            if((int)countCards(ac) != f.infoNDealtCards[f.getMyPlayerNum()]){
+            if ((int)countCards(ac) != f.infoNDealtCards[f.getMyPlayerNum()]) {
                 cerr << OutCards(ac) << "(" << (int)countCards(ac) << ")";
                 cerr << f.infoNDealtCards[f.getMyPlayerNum()] << endl;
                 cerr << "ClientField : illegal dealt cards." << endl;
                 return -1;
             }
             
-			if(f.setMyDealtCards(ac) == -1){
+			if (f.setMyDealtCards(ac) == -1) {
 				return -1;
 			}
-			if(f.setMyCards(ac) == -1){
+			if (f.setMyCards(ac) == -1) {
 				return -1;
 			}
             
             // もしD3を持っている場合にはFTP確定
-            if(containsD3(f.getMyCards())){
-                if(f.setFirstTurnPlayer(f.getMyPlayerNum()) != 0){
+            if (containsD3(f.getMyCards())) {
+                if (f.setFirstTurnPlayer(f.getMyPlayerNum()) != 0) {
                     return -1;
                 }
                 f.setTurnPlayer(f.getMyPlayerNum());
@@ -110,11 +110,11 @@ namespace UECda{
             f.broadcastBP();
 #endif
             
-			if(!f.isInitGame()){
+			if (!f.isInitGame()) {
 				CERR << "start change phase" << endl;
 				//f.initChangePhase();
 				CERR << "next command... cc" << endl;
-			}else{
+			} else {
 				CERR << "start init play" << endl;
 				//f.initPlayPhase();
                 
@@ -129,8 +129,8 @@ namespace UECda{
 			save();
 			return 0;
 		}
-		virtual int recvChange(const Cards& ac){
-			if(f.setMyRecvCards(ac) == -1){
+		virtual int recvChange(const Cards& ac) {
+			if (f.setMyRecvCards(ac) == -1) {
 				return -1;
 			}
 			//f.initPlayPhase();
@@ -144,17 +144,17 @@ namespace UECda{
 			save();
 			return 0;
 		}
-		virtual int recvPlay(const Move& amv, const uint64_t at){
-			if(f.isInChange()){
+		virtual int recvPlay(const Move& amv, const uint64_t at) {
+			if (f.isInChange()) {
 				// 交換中
 				return -1;
-			}else if(!f.isInPlay()){
+			}else if (!f.isInPlay()) {
 				// プレー中でない
 				return -1;
 			}
 			uint32_t tp = f.getTurnPlayer();
 			
-			if(!isSbjValid(f.bd, amv, f.getRemCards(), f.getNCards(tp))){
+			if (!isSbjValid(f.bd, amv, f.getRemCards(), f.getNCards(tp))) {
 				// 非合法手。入力モードでミスがあった場合など
 				cerr << "UECda::WDIClient : subjectively illegal move." << endl;
 				return -1;
@@ -174,17 +174,17 @@ namespace UECda{
 #ifdef BROADCAST
 			f.broadcastPlay(tp, amv); // 実況
 #endif
-			if(tp == f.getMyPlayerNum()){
+			if (tp == f.getMyPlayerNum()) {
                 client.replaceField(f);
 				client.afterMyPlay();
                 f = client.field;
-			}else{
+			} else {
                 client.replaceField(f);
 				client.afterOthersPlay();
                 f = client.field;
 			}
 			
-			if(next_tp == (uint32_t)(-1)){ // 試合終了
+			if (next_tp == (uint32_t)(-1)) { // 試合終了
 				close1G();
 				CERR << "game end." << endl;
 				init1G();
@@ -192,16 +192,16 @@ namespace UECda{
 #ifdef BROADCAST
 				f.broadcastB1G(); // 実況
 #endif
-				if(!isNetWorkMode()){
+				if (!isNetWorkMode()) {
 					CERR << "next command... chbc seats dc" << endl;
 				}
-			}else{
-				if(!isNetWorkMode()){
+			} else {
+				if (!isNetWorkMode()) {
 #ifdef BROADCAST
                     f.broadcastBP();
 #endif
 					CERR << "next command... " << next_tp << "'s play ";
-					if(!f.ps.isAlive(f.getMyPlayerNum())){
+					if (!f.ps.isAlive(f.getMyPlayerNum())) {
 						CERR << "res ";
 					}
 					CERR << endl;
@@ -210,18 +210,18 @@ namespace UECda{
 			save();
 			return 0;
 		}
-		virtual int recvAllPass(){
+		virtual int recvAllPass() {
 			// 流れる、または自分の手番が来るまで全員パス
-			if(f.isInChange()){
+			if (f.isInChange()) {
 				// 交換中
 				return -1;
-			}else if(!f.isInPlay()){
+			}else if (!f.isInPlay()) {
 				// プレー中でない
 				return -1;
 			}
-			if(f.bd.isNF()){ return -1; } // 空場からの全員パスは考慮しない
+			if (f.bd.isNF()) { return -1; } // 空場からの全員パスは考慮しない
 			uint32_t tp = f.getTurnPlayer();
-			while(tp != f.getMyPlayerNum()){
+			while(tp != f.getMyPlayerNum()) {
 				
 #ifdef LOGGING
 				//game_log.thisGameLog->setBeforePlay(f);
@@ -231,13 +231,13 @@ namespace UECda{
 				//game_log.thisGameLog->setPlay(MOVE_PASS, 0);
 				//game_log.thisGameLog->setAfterPlay(f);
 #endif			
-				if(f.bd.isNF()){break;}
+				if (f.bd.isNF()) {break;}
 			}
 #ifdef BROADCAS
 			f.broadcastAP();
 #endif
 			CERR << "next command... " << f.getTurnPlayer() << "'s play ";
-			if(!f.ps.isAlive(f.getMyPlayerNum())){
+			if (!f.ps.isAlive(f.getMyPlayerNum())) {
 				CERR << "res ";
 			}
 			CERR << endl;
@@ -245,8 +245,8 @@ namespace UECda{
 			save();
 			return 0;
 		}
-        virtual int recvFirstTurnPlayer(int p){
-            if(f.setFirstTurnPlayer(p) != 0){
+        virtual int recvFirstTurnPlayer(int p) {
+            if (f.setFirstTurnPlayer(p) != 0) {
                 return -1;
             }
             f.setTurnPlayer(p);
@@ -255,9 +255,9 @@ namespace UECda{
             return 0;
         }
         
-		virtual int go(){
+		virtual int go() {
 			// 自分が何かするべき状況か考える
-			if(f.isInChange() && 0 /*f.isMyChangeReq()*/){
+			if (f.isInChange() && 0 /*f.isMyChangeReq()*/) {
 				CERR << "my change turn." << endl;
                 
                 client.replaceField(f);
@@ -265,16 +265,16 @@ namespace UECda{
                 f = client.field;
                 
 				f.setMySentCards(c);
-				if(sendChangeCards(c) == -1){
+				if (sendChangeCards(c) == -1) {
 					return -1;
 				}
-				if(!isNetWorkMode()){
+				if (!isNetWorkMode()) {
 #ifdef BROADCAST
                     f.broadcastBP();
 #endif
 				}
 				return 1;
-			}else if(f.isInPlay() && f.getTurnPlayer() == f.getMyPlayerNum()){
+			}else if (f.isInPlay() && f.getTurnPlayer() == f.getMyPlayerNum()) {
 				CERR << "my play turn." << endl;
 #ifdef BROADCAST
                 f.broadcastB1G(); // 実況
@@ -288,36 +288,36 @@ namespace UECda{
                 f = client.field;
                 
 				//CERR<<mv<<endl;
-				if(sendPlay(mv) == -1){
+				if (sendPlay(mv) == -1) {
 					CERR << "illegal play" << endl;
 					return -1;
 				}
-				if(!isNetWorkMode()){
+				if (!isNetWorkMode()) {
 #ifdef BROADCAST
                     f.broadcastBP();
 #endif
 				}
 				return 1;
-			}else{
+			} else {
 				// 自分が何かする状況ではない
 				CERR << "not my turn." << endl;
 				return 0;
 			}
 		}
-		virtual int getMyName(string *const str){
+		virtual int getMyName(string *const str) {
 			*str = string(MY_NAME) + string(MY_VERSION);
             return 0;
 		}
-		virtual int recvMyPlayerNumber(int n){
-			if(isNetWorkMode() || f.getMyPlayerNum() == 0){
+		virtual int recvMyPlayerNumber(int n) {
+			if (isNetWorkMode() || f.getMyPlayerNum() == 0) {
 				CERR << "MyPlayerNum..." << n << endl;
 			}
 			init1G();
-			if(f.setMyPlayerNum(n) == -1){
+			if (f.setMyPlayerNum(n) == -1) {
 				return -1;
 			}
 			
-			if(isNetWorkMode()){
+			if (isNetWorkMode()) {
 #ifdef BROADCAST
                 f.broadcastBAllG();
 #endif
@@ -328,33 +328,33 @@ namespace UECda{
 			save();
 			return 0;
 		}
-		/*virtual int recvNewClass(int ap, int acl){
+		/*virtual int recvNewClass(int ap, int acl) {
 			// 観戦によって結果を報告する
-			if(f.isInChange()){
+			if (f.isInChange()) {
 				// 交換中
 				return -1;
-			}else if(!f.isInPlay()){
+			}else if (!f.isInPlay()) {
 				// プレー中でない
 				return -1;
 			}
-			if(!f.ps.isAlive(ap)){
+			if (!f.ps.isAlive(ap)) {
 				cerr << "WDIClient : is not alive" << endl;
 				return -1;
 			}
-			if(acl != f.ps.getBestClass()){
+			if (acl != f.ps.getBestClass()) {
 				return -1;
 			}
-			//if( !isNetWorkMode() || f.getMyPlayerNum()==0 ){ CERR<<"watching player "<<ap<<" class "<<acl<<endl; }
-			if(f.setPlayerNewClass(ap, acl) == -1){
+			//if ( !isNetWorkMode() || f.getMyPlayerNum()==0 ) { CERR<<"watching player "<<ap<<" class "<<acl<<endl; }
+			if (f.setPlayerNewClass(ap, acl) == -1) {
 				return -1;
 			}
 			f.ps.setAgari(ap);
 
-			if(!isNetWorkMode()){
+			if (!isNetWorkMode()) {
 				f.print();
 			}
 			
-			if(f.ps.isSoloAlive()){
+			if (f.ps.isSoloAlive()) {
 				//最後の1人のあがり処理
 				f.settleGameResult();
 				close1G();
@@ -364,13 +364,13 @@ namespace UECda{
 				f.broadcastB1G();//実況
 #endif
 				CERR << "next command... seats dc" << endl;
-			}else{
+			} else {
 				CERR << "next command... res" << endl;
 			}
 			save();
 			return 0;
 		}*/
-		virtual int initAll(){
+		virtual int initAll() {
             CERR << "WDIClient::initAll()" << endl;
 			initCards();
 			//initHash();
@@ -390,7 +390,7 @@ namespace UECda{
 			
 			return 0;
 		}
-		virtual int closeAll(){
+		virtual int closeAll() {
             
             client.replaceField(f);
 			client.closeAllG();
@@ -401,23 +401,23 @@ namespace UECda{
 #endif
 			return 0;
 		}
-		virtual int printState(){
+		virtual int printState() {
 			// コマンド1つ入力するごとに局面情報を出力
 			return 0;
 		}
 		
 		
 		// 自分用関数
-		int save(){
+		int save() {
 			// fをセーブ
 			//CERR<<"SAVED "<<fnow+1<<endl;
 			++fnow;
 			fSaved[fnow % 16] = f;
-			if(fnow-16 > ffirst){
+			if (fnow-16 > ffirst) {
 				// ffirstが消えた
 				++ffirst;
 			}
-			if(fnow >= flast){
+			if (fnow >= flast) {
 				flast = fnow;
 			}
 			
@@ -426,7 +426,7 @@ namespace UECda{
 			
 			return 0;
 		}
-		int close1G(){
+		int close1G() {
             
             client.replaceField(f);
 			client.close1G();
@@ -439,7 +439,7 @@ namespace UECda{
 #endif
 			return 0;
 		}
-		int init1G(){
+		int init1G() {
             CERR << "WDIClient::init1G()" << endl;
 			f.init1G();
 #ifdef LOGGING
@@ -453,11 +453,11 @@ namespace UECda{
             
             // 配布枚数はプレーヤー番号に従って設定
             f.infoNDealtCards.clear();
-            for(int c = 0; c < N_CARDS; ++c){
+            for (int c = 0; c < N_CARDS; ++c) {
                 f.infoNDealtCards.plus(c % N_PLAYERS, 1);
             }
             int seat[N_PLAYERS];
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for (int p = 0; p < N_PLAYERS; ++p) {
                 seat[p] = p;
             }
             recvSeats(seat);
@@ -465,7 +465,7 @@ namespace UECda{
             game_log.init();
             game_log.infoClass() = f.infoClass;
             game_log.infoSeat() = f.infoSeat;
-            if(f.isInitGame()){
+            if (f.isInitGame()) {
                 game_log.setInitGame();
             }
             
@@ -487,7 +487,7 @@ namespace UECda{
 	};
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 	
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stdin, NULL, _IONBF, 0);
@@ -496,9 +496,9 @@ int main(int argc, char *argv[]){
     // ファイルパスの取得
     {
         std::ifstream ifs("blauweregen_config.txt");
-        if(ifs){ ifs >> DIRECTORY_PARAMS_IN; }
-        if(ifs){ ifs >> DIRECTORY_PARAMS_OUT; }
-        if(ifs){ ifs >> DIRECTORY_LOGS; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
+        if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
 	
 	WDI::DSpace *wdi = new UECda::WDIDSpace();
@@ -506,19 +506,19 @@ int main(int argc, char *argv[]){
     
     int mode = 0;
     
-    for(int c = 1; c < argc; ++c){
-        if(strstr(argv[c], "-n")){
+    for (int c = 1; c < argc; ++c) {
+        if (strstr(argv[c], "-n")) {
             mode = 1;
-        }else if(strstr(argv[c], "-p")){
+        }else if (strstr(argv[c], "-p")) {
             mode = 2;
         }
     }
 	
-    if(mode == 1){
+    if (mode == 1) {
         wdiClient.start_network_mode();
-    }else if(mode == 2){
+    }else if (mode == 2) {
         wdiClient.start_practice_mode();
-    }else{
+    } else {
         wdiClient.start_input_mode();
     }
 	

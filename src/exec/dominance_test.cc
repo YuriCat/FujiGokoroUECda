@@ -15,25 +15,25 @@ MoveGenerator<MoveInfo, Hand> mgHand;
 Clock cl;
 std::mt19937 mt;
 
-int outputDominanceJudgeResult(){
+int outputDominanceJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     return 0;
 }
 
-bool dominateCardsSlow(const Move move, const Cards cards, const Board abd){
+bool dominateCardsSlow(const Move move, const Cards cards, const Board abd) {
     // カード集合への支配性について合法着手生成関数を用いてチェック
-    if(move.isPASS()){ return false; }
+    if (move.isPASS()) { return false; }
     Board bd = abd;
     bd.proc(move);
-    if(bd.isNF()){ return true; }
+    if (bd.isNF()) { return true; }
     int moves = mgCards.genFollowExceptPASS(buffer, cards, bd);
-    if(moves <= 0){ // pass only
+    if (moves <= 0) { // pass only
         return true;
     }
     return false;
 }
 
-int testRecordMoveDominance(const std::vector<std::string>& logs){
+int testRecordMoveDominance(const std::vector<std::string>& logs) {
     // 棋譜中の局面において支配性判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     
@@ -48,7 +48,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
     // プリミティブ型での支配性判定
     iterateGameLogAfterChange
     (field, mLogs,
-     [&](const auto& field){}, // first callback
+     [&](const auto& field) {}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
          Cards opsCards = field.getOpsCards(turnPlayer);
@@ -62,7 +62,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
          bool ans = dominateCardsSlow(move, opsCards, bd);
          judgeTime[2] += cl.stop();
          
-         /*if(dom != ans){
+         /*if (dom != ans) {
              cerr << "judge " << dom << " <-> " << " answer " << ans << endl;
              cerr << move << " on " << bd << endl;
              cerr << OutCardTable(opsCards);
@@ -74,13 +74,13 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
          
          return 0;
      },
-     [&](const auto& field){} // last callback
+     [&](const auto& field) {} // last callback
      );
     
     // より複雑な型での支配性判定
     iterateGameLogAfterChange
     (field, mLogs,
-     [&](const auto& field){}, // first callback
+     [&](const auto& field) {}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          int turnPlayer = field.getTurnPlayer();
          const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -98,18 +98,18 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
          
          return 0;
      },
-     [&](const auto& field){} // last callback
+     [&](const auto& field) {} // last callback
      );
     
     cerr << "judge result (cards) = " << endl;
-    for(int i = 0; i < 2; ++i){
-        for(int j = 0; j < 2; ++j){
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
             cerr << judgeMatrix[0][i][j] << " ";
         }cerr << endl;
     }
     cerr << "judge result (hand) = " << endl;
-    for(int i = 0; i < 2; ++i){
-        for(int j = 0; j < 2; ++j){
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
             cerr << judgeMatrix[1][i][j] << " ";
         }cerr << endl;
     }
@@ -121,22 +121,22 @@ int testRecordMoveDominance(const std::vector<std::string>& logs){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     std::vector<std::string> logFileNames;
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-l")){
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-l")) {
             logFileNames.push_back(std::string(argv[c + 1]));
         }
     }
     mt.seed(1);
     
-    if(outputDominanceJudgeResult()){
+    if (outputDominanceJudgeResult()) {
         cerr << "failed case test." << endl; return -1;
     }
     cerr << "passed case test." << endl;
-    if(testRecordMoveDominance(logFileNames)){
+    if (testRecordMoveDominance(logFileNames)) {
         cerr << "failed record move dominance judge test." << endl;
     }
     cerr << "passed record move dominance judge test." << endl;

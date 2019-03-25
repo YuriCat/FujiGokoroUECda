@@ -34,7 +34,7 @@ struct SubjectivePlayouterField : public PlayouterField{
     Cards getRecvCards()const{ return getRecvCards(getRecvCards()); }
     
     SubjectivePlayouterField(const PlayouterField& objField, consy int ap):
-    PlayouterField(objField), myPlayerNum(ap){}
+    PlayouterField(objField), myPlayerNum(ap) {}
 };
 
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
@@ -48,11 +48,11 @@ PlayerModelSpace playerModelSpace;
 
 // 指標
 template<hand_t>
-double simpleConcordance(const hand_t& answer[], const Cards estimated[], const int myPlayerNum){
+double simpleConcordance(const hand_t& answer[], const Cards estimated[], const int myPlayerNum) {
     int sum = 0;
     int same = 0;
-    for(int p = 0; p < N_PLAYERS; ++p){
-        if(p != myPlayerNum){
+    for (int p = 0; p < N_PLAYERS; ++p) {
+        if (p != myPlayerNum) {
             Cards a = Cards(answer[p]), e = estimated[p];
             sum += countCards(a);
             same += countCards(a & e);
@@ -61,7 +61,7 @@ double simpleConcordance(const hand_t& answer[], const Cards estimated[], const 
     return same / (double)sum;
 }
 
-int testEstimation(const logs_t& mLog){
+int testEstimation(const logs_t& mLog) {
     // 棋譜を読んで主観的な情報から不完全情報を推定する
     
     uint64_t dealTime[4] = {0};
@@ -72,7 +72,7 @@ int testEstimation(const logs_t& mLog){
     
     iterateGameLogAfterChange<PlayouterField>
     (mLog,
-     [&](const auto& field){}, // first callback
+     [&](const auto& field) {}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          // このプレーヤーの視点で推定
          SubjectivePlayouterField sbjField(field, field.getTurnPlayer());
@@ -81,7 +81,7 @@ int testEstimation(const logs_t& mLog){
          dealer.set(field);
          field.
          
-         for(int i = 0; i < 100; ++i){
+         for (int i = 0; i < 100; ++i) {
              Cards dst[N_PLAYERS];
              
              // 完全ランダム
@@ -113,18 +113,18 @@ int testEstimation(const logs_t& mLog){
          
          return 0;
      },
-     [&](const auto& field){} // last callback
+     [&](const auto& field) {} // last callback
      );
     
     /*cerr << "judge result (cards) = " << endl;
-     for(int i = 0; i < 2; ++i){
-     for(int j = 0; j < 2; ++j){
+     for (int i = 0; i < 2; ++i) {
+     for (int j = 0; j < 2; ++j) {
      cerr << judgeMatrix[0][i][j] << " ";
      }cerr << endl;
      }*/
     cerr << "check result (hand) = " << endl;
-    for(int i = 0; i < 2; ++i){
-        for(int j = 0; j < 2; ++j){
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
             cerr << checkMatrix[1][i][j] << " ";
         }cerr << endl;
     }
@@ -137,7 +137,7 @@ int testEstimation(const logs_t& mLog){
 }
 
 template<class logs_t>
-int testEstimationWithModeling(const logs_t& mLog){
+int testEstimationWithModeling(const logs_t& mLog) {
     // 相手モデリングによる着手の変化について実験
     // 棋譜ファイルは1つのみ受ける(相手が変わる場合には最初からなのでまたこの関数を呼ぶ)
     
@@ -145,7 +145,7 @@ int testEstimationWithModeling(const logs_t& mLog){
     
     playerModelSpace.init();
     
-    for(int g = 0; g < mLog.games(); ++g){
+    for (int g = 0; g < mLog.games(); ++g) {
         const auto& gLog = mLog.game(g);
         
         iterateGameLogAfterChange<PlayouterField>
@@ -158,7 +158,7 @@ int testEstimationWithModeling(const logs_t& mLog){
              // 試合棋譜からの学習
              learnPlayBiasGame(gLog, &playerModelSpace, &threadTools);
          });
-        if((g + 1) % 100 == 0){
+        if ((g + 1) % 100 == 0) {
             // 元の方策からの変化を解析
             
             // モデリングの結果を全試合に対して解析
@@ -168,7 +168,7 @@ int testEstimationWithModeling(const logs_t& mLog){
             double samePlayProb[N_PLAYERS] = {0};
             double Plays[N_PLAYERS]= {0};
             
-            for(int gg = g + 1; gg < mLog.games(); ++gg){
+            for (int gg = g + 1; gg < mLog.games(); ++gg) {
                 const auto& ggLog = mLog.game(gg);
                 
                 iterateGameLogAfterChange<PlayouterField>
@@ -204,7 +204,7 @@ int testEstimationWithModeling(const logs_t& mLog){
             }
             
             // 解析結果表示
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for (int p = 0; p < N_PLAYERS; ++p) {
                 cerr << mLog.player(p);
                 cerr << " " << samePlayProb[p] / (double)plays[p];
                 cerr << endl;
@@ -214,27 +214,27 @@ int testEstimationWithModeling(const logs_t& mLog){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     {
         std::ifstream ifs("blauweregen_config.txt");
-        if(ifs){ ifs >> DIRECTORY_PARAMS_IN; }
-        if(ifs){ ifs >> DIRECTORY_PARAMS_OUT; }
-        if(ifs){ ifs >> DIRECTORY_LOGS; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
+        if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     std::vector<std::string> logFileNames;
     
     threadTools.dice.srand((unsigned int)time(NULL));
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-i")){ // input directory
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-l")){ // log path
+        }else if (!strcmp(argv[c], "-l")) { // log path
             logFileNames.push_back(std::string(argv[c + 1]));
         }
     }
     
-    for(const std::string& log : logFileNames){
+    for (const std::string& log : logFileNames) {
         MinMatchLog<MinGameLog<MinPlayLog<N_PLAYERS>>> mLog(log);
         testPlayPolicyModeling(mLog);
     }

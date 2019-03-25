@@ -25,13 +25,13 @@ namespace UECda {
                  [buf, flags, plearningSpace](const auto& field, const int from, const int to, const Cards chosenChange)->int{
                      
                      int myClass = field.getPlayerClass(from);
-                     if(myClass > Class::MIDDLE){ return 0; }
+                     if (myClass > Class::MIDDLE) { return 0; }
                      
                      const Hand& myHand = field.getHand(from);
                      const Hand& opsHand = field.getOpsHand(from);
                      const Cards myCards = myHand.cards;
                      
-                     if(!holdsCards(myHand.cards, chosenChange)){
+                     if (!holdsCards(myHand.cards, chosenChange)) {
                          assert(0);
                          return 0;
                      }
@@ -41,7 +41,7 @@ namespace UECda {
                      Cards change[N_MAX_CHANGES];
                      const int NChanges = genChange(change, myCards, changeQty);
                      
-                     if(NChanges <= 1){ return 0; }
+                     if (NChanges <= 1) { return 0; }
                      
                      int idx = searchCards(change, NChanges, [chosenChange](const auto& ch)->bool{
                          return (ch == chosenChange);
@@ -54,39 +54,39 @@ namespace UECda {
                      
                      const int ph = (myClass == DAIFUGO) ? 0 : 1;
                      
-                     if(idx == -1){ // unfound
+                     if (idx == -1) { // unfound
 #if 0
                          cerr << "unfound " << chosenMove << chosenMove.data() << endl;
                          Move tmp = chosenMove;tmp.resetEffects();
                          cerr << tmp.data() << endl;
                          cerr << field.toDebugString();
-                         for(int m = 0;m < NMoves; ++m){
+                         for (int m = 0;m < NMoves; ++m) {
                              cerr << buf[m] << buf[m].mv().bits() << " ";
                          }
                          cerr << endl;
                          getchar();
 #endif
-                         if(flags.test(1)){ // feed feature value
+                         if (flags.test(1)) { // feed feature value
                              plearner->feedUnfoundFeatureValue(ph);
                          }
-                         if(flags.test(2)){ // test
+                         if (flags.test(2)) { // test
                              plearner->feedObjValue(idx, ph);
                          }
-                     }else{
+                     } else {
                          
-                         if(!calcChangePolicyScoreSlow<1>(score, change, NChanges, myCards, changeQty, field, *plearner)){
+                         if (!calcChangePolicyScoreSlow<1>(score, change, NChanges, myCards, changeQty, field, *plearner)) {
                              
-                             if(flags.test(1)){ // feed feature value
+                             if (flags.test(1)) { // feed feature value
                                  plearner->feedFeatureValue(ph);
                              }
-                             if(flags.test(0)){ // learn
+                             if (flags.test(0)) { // learn
                                  plearner->feedSupervisedActionIndex(idx, ph);
 #if 0
                                  cerr << policy.plearner_ << endl;
                                  cerr << " score_sum = " << plearner->score_sum_ << endl;
-                                 for(int m = 0; m < NMoves; ++m){
+                                 for (int m = 0; m < NMoves; ++m) {
                                      cerr << buf[m] << " " << plearner->score_.at(m) / plearner->score_sum_;
-                                     if(m == idx){ cerr << " <-"; }
+                                     if (m == idx) { cerr << " <-"; }
                                      cerr << endl;
                                  }
                                  cerr << plearner->toFeatureString() << endl;
@@ -95,7 +95,7 @@ namespace UECda {
 #endif
                                  plearner->updateParams();
                              }
-                             if(flags.test(2)){ // test
+                             if (flags.test(2)) { // test
                                  plearner->feedObjValue(idx, ph);
                              }
                          }
@@ -111,7 +111,7 @@ namespace UECda {
             int learnPlayParamsGame(const gameLog_t& gLog,
                                     const BitSet32 flags,
                                     learningSpace_t *const plearningSpace,
-                                    threadTools_t *const ptools){
+                                    threadTools_t *const ptools) {
                 
                 MoveInfo *const buf = ptools->buf;
                 Field field;
@@ -122,14 +122,14 @@ namespace UECda {
                  //play callback
                  [buf, flags, plearningSpace](const auto& field, const Move chosenMove, const uint64_t time)->int{
                      
-                     if(field.isEndGame()){ return -1; }
+                     if (field.isEndGame()) { return -1; }
                      
                      const uint32_t tp = field.getTurnPlayer();
                      const Hand& myHand = field.getHand(tp);
                      const Hand& opsHand = field.getOpsHand(tp);
                      const Board bd = field.getBoard();
                      
-                     if(!holdsCards(myHand.cards, chosenMove.cards())){
+                     if (!holdsCards(myHand.cards, chosenMove.cards())) {
                          return -1;
                      }
                      
@@ -137,51 +137,51 @@ namespace UECda {
                      const int NMoves = genMove(buf, myHand, bd);
                      assert(NMoves > 0);
                      
-                     if(NMoves == 1){ return 0; }
+                     if (NMoves == 1) { return 0; }
                      
                      int idx = searchMove(buf, NMoves, [chosenMove](const auto& mv)->bool{
                          return mv.mv().meldPart() == chosenMove.meldPart();
                      });
                      
-                     if(searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0){                         return 0;
+                     if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) {                         return 0;
                      }
                      
                      double score[N_MAX_MOVES + 1];
                      auto *const plearner = &plearningSpace->playLearner(tp);
                      
-                     if(idx == -1){ // unfound
+                     if (idx == -1) { // unfound
 #if 0
                          cerr << "unfound " << chosenMove << chosenMove.data() << endl;
                          Move tmp = chosenMove;tmp.resetEffects();
                          cerr << tmp.data() << endl;
                          cerr << field.toDebugString();
-                         for(int m = 0; m < NMoves; ++m){
+                         for (int m = 0; m < NMoves; ++m) {
                              cerr << buf[m] << buf[m].mv().bits() << " ";
                          }
                          cerr << endl;
                          getchar();
 #endif
-                         if(flags.test(1)){ // feed feature value
+                         if (flags.test(1)) { // feed feature value
                              plearner->feedUnfoundFeatureValue();
                          }
-                         if(flags.test(2)){ // test
+                         if (flags.test(2)) { // test
                              plearner->feedObjValue(idx);
                          }
-                     }else{
+                     } else {
                          
-                         if(!calcPlayPolicyScoreSlow<1>(score, buf, NMoves, field, *plearner)){
+                         if (!calcPlayPolicyScoreSlow<1>(score, buf, NMoves, field, *plearner)) {
                              
-                             if(flags.test(1)){ // feed feature value
+                             if (flags.test(1)) { // feed feature value
                                  plearner->feedFeatureValue();
                              }
-                             if(flags.test(0)){ // learn
+                             if (flags.test(0)) { // learn
                                  plearner->feedSupervisedActionIndex(idx);
 #if 0
                                  cerr << policy.plearner_ << endl;
                                  cerr << " score_sum = " << plearner->score_sum_ << endl;
-                                 for(int m = 0; m < NMoves; ++m){
+                                 for (int m = 0; m < NMoves; ++m) {
                                      cerr << buf[m] << " " << plearner->score_.at(m) / plearner->score_sum_;
-                                     if(m == idx){ cerr << " <-"; }
+                                     if (m == idx) { cerr << " <-"; }
                                      cerr << endl;
                                  }
                                  cerr << plearner->toFeatureString() << endl;
@@ -190,7 +190,7 @@ namespace UECda {
 #endif
                                  plearner->updateParams();
                              }
-                             if(flags.test(2)){ // test
+                             if (flags.test(2)) { // test
                                  plearner->feedObjValue(idx);
                              }
                          }
@@ -209,15 +209,15 @@ namespace UECda {
                                      learningSpace_t *const plearningSpace,
                                      threadTools_t *const ptools,
                                      int *const list = nullptr,
-                                     int nlist = 0){
-                if(list == nullptr){
+                                     int nlist = 0) {
+                if (list == nullptr) {
                     // 全試合で学習 or テスト
-                    for(int g = 0; g < mLog.games(); ++g){
+                    for (int g = 0; g < mLog.games(); ++g) {
                         learnPlayParamsGame(mLog.game(g), flags, plearningSpace, ptools);
                     }
-                }else{
+                } else {
                     // リストの試合で学習 or テスト
-                    for(int n = 0; n < nlist; ++n){
+                    for (int n = 0; n < nlist; ++n) {
                         learnPlayParamsGame(mLog.game(list[n]), flags, plearningSpace, ptools);
                     }
                 }
@@ -229,10 +229,10 @@ namespace UECda {
                                 const BitSet32 flags,
                                 learningSpace_t *const plearningSpace,
                                 threadTools_t *const ptools,
-                                bool change){
-                if(change){
+                                bool change) {
+                if (change) {
                     return learnChangeParamsGame<MODELING>(gLog, flags, plearningSpace, ptools);
-                }else{
+                } else {
                     return learnPlayParamsGame<MODELING>(gLog, flags, plearningSpace, ptools);
                 }
             }

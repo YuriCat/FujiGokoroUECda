@@ -16,7 +16,7 @@ namespace UECda {
         
         constexpr int L2JUDGE_LEVEL_MAX = 1024;
         
-        constexpr int genTA_L2FINFO(int IS_NF = _BOTH, int IS_SFOL = _BOTH){
+        constexpr int genTA_L2FINFO(int IS_NF = _BOTH, int IS_SFOL = _BOTH) {
             return (IS_NF << 0) | (IS_SFOL << 2);
         }
         
@@ -25,7 +25,7 @@ namespace UECda {
         // IS_DO 2, 3
         // IS_DM 4, 5
         
-        constexpr int genTA_L2MINFO(int IS_PASS = _BOTH){
+        constexpr int genTA_L2MINFO(int IS_PASS = _BOTH) {
             return IS_PASS << 0;
         }
         
@@ -95,18 +95,18 @@ namespace UECda {
         };
         // L2局面表現へのチェンジ
         template<class argField_t>
-        void convL2Field(const argField_t& argField, L2Field *const dstPtr){
+        void convL2Field(const argField_t& argField, L2Field *const dstPtr) {
             dstPtr->bd = argField.getBoard();
             dstPtr->fInfo.init();
         }
         // フィールド追加情報から
-        void convL2Field(const Board bd, const FieldAddInfo fInfo, L2Field *const dstPtr){
+        void convL2Field(const Board bd, const FieldAddInfo fInfo, L2Field *const dstPtr) {
             dstPtr->fInfo = fInfo;
             dstPtr->bd = bd;
         }
         
         template<int L2_FINFO, int L2_MINFO>
-        void procAndFlushL2Field(const L2Field& cur, L2Field *const pnext, const Move mv){
+        void procAndFlushL2Field(const L2Field& cur, L2Field *const pnext, const Move mv) {
             // 場を流して自分から始めることは確実とされている場合
             constexpr int IS_NF = (L2_FINFO >> 0) & 3;
             constexpr int IS_PASS = (L2_MINFO >> 0) & 3;
@@ -119,7 +119,7 @@ namespace UECda {
         }
         
         template<int L2_FINFO, int L2_MINFO>
-        int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi){
+        int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
             // テンプレート引数を使うバージョン
             // もしMAI部分に有益な情報が載らないなら、MAIの処理を消した方が速い
             
@@ -139,107 +139,107 @@ namespace UECda {
             
             const Move mv = mi.mv();
             
-            if((IS_SFOL == _YES) || cur.isUnrivaled()){ // 独壇場
-                if(IS_PASS == _YES){
+            if ((IS_SFOL == _YES) || cur.isUnrivaled()) { // 独壇場
+                if (IS_PASS == _YES) {
                     pnext->bd.flush();
                     DERR << " -FLUSHED" << endl;
-                }else{
-                    if(mi.dominatesMe()){
+                } else {
+                    if (mi.dominatesMe()) {
                         // 自己支配がかかるので、流れて自分から
                         pnext->bd.procAndFlush<_NO, _NO>(mv);
                         DERR << " -FLUSHED" << endl;
-                    }else{
+                    } else {
                         // 流れなければSFが続く
                         pnext->bd.proc<_NO, _NO>(mv);
-                        if(pnext->bd.isNF()){ // renewed
+                        if (pnext->bd.isNF()) { // renewed
                             DERR << " -FLUSHED" << endl;
-                        }else{
+                        } else {
                             pnext->setSelfFollow();
                             DERR << endl;
                         }
                     }
                 }
                 return 0;
-            }else{ // 独壇場でない
-                if((IS_NF == _YES) || ((IS_NF != _NO) && cur.isNF())){
-                    if(mi.dominatesAll()){
+            } else { // 独壇場でない
+                if ((IS_NF == _YES) || ((IS_NF != _NO) && cur.isNF())) {
+                    if (mi.dominatesAll()) {
                         pnext->bd.procAndFlush<_YES, _NO>(mv);
                         DERR << " -FLUSHED" << endl; return 0;
-                    }else{
-                        if(mi.dominatesOthers()){
+                    } else {
+                        if (mi.dominatesOthers()) {
                             pnext->bd.proc<_YES, _NO>(mv);
-                            if(pnext->bd.isNF()){ // renewed
+                            if (pnext->bd.isNF()) { // renewed
                                 DERR << " -FLUSHED" << endl; return 0;
-                            }else{
+                            } else {
                                 pnext->setSelfFollow();
                                 DERR << " -DO" << endl; return 0;
                             }
-                        }else{
+                        } else {
                             pnext->bd.proc<_YES, _NO>(mv);
-                            if(pnext->bd.isNF()){ // renewed
+                            if (pnext->bd.isNF()) { // renewed
                                 DERR << " -FLUSHED" << endl; return 0;
-                            }else{
+                            } else {
                                 pnext->flipTurnPlayer();
                                 DERR << endl; return 1;
                             }
                         }
                     }
-                }else{ // 通常場
-                    if(IS_PASS == _YES || ((IS_PASS != _NO) && mv.isPASS())){//pass
-                        if(cur.isLastAwake()){
+                } else { // 通常場
+                    if (IS_PASS == _YES || ((IS_PASS != _NO) && mv.isPASS())) {//pass
+                        if (cur.isLastAwake()) {
                             pnext->bd.flush();
                             DERR << " -FLUSHED";
-                            if(cur.isFlushLead()){
+                            if (cur.isFlushLead()) {
                                 DERR << "(LA & FL)" << endl;
                                 return 0; // 探索中にここには来ないはずだが、入り口で来るかも
-                            }else{
+                            } else {
                                 pnext->flipTurnPlayer();
                                 DERR << endl;
                                 return 1;
                             }
-                        }else{
+                        } else {
                             pnext->setLastAwake();
-                            if(!cur.isFlushLead()){
+                            if (!cur.isFlushLead()) {
                                 pnext->setFlushLead();
                             }
                             pnext->flipTurnPlayer();
                             DERR << " FIRST PASS" << endl;
                             return 1;
                         }
-                    }else{ // not pass
-                        if(cur.isLastAwake()){
-                            if(mi.dominatesMe()){
+                    } else { // not pass
+                        if (cur.isLastAwake()) {
+                            if (mi.dominatesMe()) {
                                 // 自己支配がかかるので、流れて自分から
                                 pnext->bd.procAndFlush<_NO, _NO>(mv);
                                 DERR << " -FLUSHED" << endl;
-                            }else{
+                            } else {
                                 pnext->bd.proc<_NO, _NO>(mv);
-                                if(pnext->bd.isNF()){ // renewed
+                                if (pnext->bd.isNF()) { // renewed
                                     DERR << " -FLUSHED" << endl;
-                                }else{
+                                } else {
                                     pnext->setSelfFollow();
                                     DERR << endl;
                                 }
                             }
                             return 0;
-                        }else{
-                            if(mi.dominatesAll()){
+                        } else {
+                            if (mi.dominatesAll()) {
                                 pnext->bd.procAndFlush<_NO, _NO>(mv);
                                 DERR << " -FLUSHED" << endl; return 0;
-                            }else{
-                                if(mi.dominatesOthers()){
+                            } else {
+                                if (mi.dominatesOthers()) {
                                     pnext->bd.proc<_NO,_NO>(mv);
-                                    if(pnext->bd.isNF()){ // renewed
+                                    if (pnext->bd.isNF()) { // renewed
                                         DERR << " -FLUSHED" << endl; return 0;
-                                    }else{
+                                    } else {
                                         pnext->setSelfFollow();
                                         DERR << " -DO" << endl; return 0;
                                     }
-                                }else{
+                                } else {
                                     pnext->bd.proc<_NO, _NO>(mv);
-                                    if(pnext->bd.isNF()){ // renewed
+                                    if (pnext->bd.isNF()) { // renewed
                                         DERR << " -FLUSHED" << endl; return 0;
-                                    }else{
+                                    } else {
                                         pnext->flipTurnPlayer();
                                         DERR << endl; return 1;
                                     }
@@ -279,7 +279,7 @@ namespace UECda {
             int failed;
             
         public:
-            void init(){
+            void init() {
                 nodes = 0;
                 childs = 0;
                 failed = 0;
@@ -304,7 +304,7 @@ namespace UECda {
                 init();
             }
             
-            ~L2Judge(){}
+            ~L2Judge() {}
             
             // IS_NF 空場
             // DOM_PROC 支配進行
@@ -347,26 +347,26 @@ namespace UECda {
         
         
         template<int L2_FINFO>
-        int L2Judge::judge_level1(const int qty){
+        int L2Judge::judge_level1(const int qty) {
             const int IS_NF = (L2_FINFO >> 0) & 3;
             // レベル1 自分のカード枚数のみ
             
             ++nodes;
             
-            if(IS_NF == _YES){
-                if(qty <= 1){ return L2_WIN; }
+            if (IS_NF == _YES) {
+                if (qty <= 1) { return L2_WIN; }
             }
             return L2_DRAW;
         }
         
         template<int L2_FINFO>
-        int L2Judge::judge_level2(const Hand& myHand){
+        int L2Judge::judge_level2(const Hand& myHand) {
             const int IS_NF = (L2_FINFO >> 0) & 3;
             
             // レベル2 自分の手札情報のみ
-            if(IS_NF == _YES){
-                if(judgeMate_Easy_NF(myHand)){
-                    //for(int d=0;d<depth;++d){DERR<<" ";}
+            if (IS_NF == _YES) {
+                if (judgeMate_Easy_NF(myHand)) {
+                    //for (int d=0;d<depth;++d) {DERR<<" ";}
                     //DERR<<"-EMATEWIN"<<endl;
                     //ana.restart(mode,2);
                     return L2_WIN;
@@ -376,7 +376,7 @@ namespace UECda {
         }
         
         template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
-        int L2Judge::judge(const int depth, MoveInfo *const mv_buf, const Hand& myHand, const Hand& opsHand, const L2Field& field){
+        int L2Judge::judge(const int depth, MoveInfo *const mv_buf, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
             
             constexpr int IS_NF = (L2_FINFO >> 0) & 3;
             
@@ -387,30 +387,30 @@ namespace UECda {
             
             assert(depth < 100);
             
-            switch(S_LEVEL){
-                case 0: res = L2_NONE; if(E_LEVEL <= 0)break; // fallthrough
+            switch(S_LEVEL) {
+                case 0: res = L2_NONE; if (E_LEVEL <= 0)break; // fallthrough
                 case 1:
                     res = judge_level1<L2_FINFO>(myHand.qty);
-                    if(res != L2_DRAW){ return res; }
-                    if(E_LEVEL <= 1)break; // fallthrough
+                    if (res != L2_DRAW) { return res; }
+                    if (E_LEVEL <= 1)break; // fallthrough
                 case 2:
                     res = judge_level2<L2_FINFO>(myHand);
-                    if(res != L2_DRAW){ return res; }
-                    if(E_LEVEL <= 2)break; // fallthrough
+                    if (res != L2_DRAW) { return res; }
+                    if (E_LEVEL <= 2)break; // fallthrough
                 case 3:
                     // 局面や相手の手札も考えた必勝判定
                     ASSERT(myHand.exam1stHalf(), cerr << myHand.toDebugString(););
                     ASSERT(opsHand.exam1stHalf(), cerr << opsHand.toDebugString(););
                     
                     ana.restart(mode, 1);
-                    if(IS_NF == _YES){
-                        if(judgeHandPW_NF(myHand, opsHand, field.getBoard())){
+                    if (IS_NF == _YES) {
+                        if (judgeHandPW_NF(myHand, opsHand, field.getBoard())) {
                             ana.restart(mode, 5);
                             return L2_WIN;
                         }
                     }
                     ana.restart(mode, 5);
-                    if(E_LEVEL <= 3)break; // fallthrough
+                    if (E_LEVEL <= 3)break; // fallthrough
                 case 4:
                     // 局面登録を検索
 #ifdef USE_L2BOOK
@@ -419,17 +419,17 @@ namespace UECda {
                     
                     ana.restart(mode, 1);
                     
-                    if((IS_NF == _YES) || (IS_NF != _NO && field.isNF())){
+                    if ((IS_NF == _YES) || (IS_NF != _NO && field.isNF())) {
                         ASSERT(myHand.exam_hash(), cerr << myHand.toDebugString(););
                         ASSERT(opsHand.exam_hash(), cerr << opsHand.toDebugString(););
                         
                         fhash = knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.bd));
                         res = L2::book.read(fhash);
                         //res = book.read(fhash);
-                        if(res != -1){ // 結果が既に登録されていた
+                        if (res != -1) { // 結果が既に登録されていた
 #ifdef DEBUG
                             DERR << Space(2 * depth);
-                            switch(res){
+                            switch(res) {
                                 case L2_WIN: DERR << "-HASHWIN"; break;
                                 case L2_DRAW: DERR << "-HASHDRAW"; break;
                                 case L2_LOSE: DERR << "-HASHLOSE"; break;
@@ -444,26 +444,26 @@ namespace UECda {
                     
                     ana.restart(mode, 3);
 #endif
-                    if(E_LEVEL <= 4)break; // fallthrough
+                    if (E_LEVEL <= 4)break; // fallthrough
                 case 5:
                     // 簡易評価
                     ana.restart(mode, 1);
                     
                     // 必敗判定
-                    if((IS_NF == _YES) || (IS_NF != _NO && field.isNF())){
-                        if((!myHand.seq) && (!(myHand.getPQR() & PQR_234)) && (!myHand.containsJOKER()) && (!myHand.containsS3()) && (!field.bd.isTmpOrderRev())){
+                    if ((IS_NF == _YES) || (IS_NF != _NO && field.isNF())) {
+                        if ((!myHand.seq) && (!(myHand.getPQR() & PQR_234)) && (!myHand.containsJOKER()) && (!myHand.containsS3()) && (!field.bd.isTmpOrderRev())) {
                             int myHR = IntCardToRank4x(pickIntCardHigh(myHand.cards));
                             int opsLR = IntCardToRank4x(pickIntCardLow(opsHand.cards));
-                            if(myHR < opsLR){
+                            if (myHR < opsLR) {
                                 //DERR << myHand <<" vs " << opsHand << endl; getchar();
                                 DERR << Space(2 * depth) << "-EMATELOSE" << endl;
                                 ana.restart(mode, 2);
                                 return L2_LOSE;
-                            }else{
+                            } else {
                                 Cards tmp = maskCards(opsHand.cards, Rank4xToCards(opsLR));
-                                if(tmp){
+                                if (tmp) {
                                     opsLR = IntCardToRank4x(pickIntCardLow(tmp));
-                                    if(myHR < opsLR){
+                                    if (myHR < opsLR) {
                                         //DERR << myHand << " vs " << opsHand << endl; getchar();
                                         DERR << Space(2 * depth) << "-EMATELOSE" << endl;
                                         ana.restart(mode, 2);
@@ -471,23 +471,23 @@ namespace UECda {
                                     }
                                 }
                             }
-                        }else{
+                        } else {
                             //static StaticCounter sc0;
                             //sc0.add();
                         }
                         
-                        //if( )
+                        //if ( )
                     }
                     
                     ana.restart(mode, 2);
-                    if(E_LEVEL <= 5)break; // fallthrough
+                    if (E_LEVEL <= 5)break; // fallthrough
                 default: // 完全探索
                     
                     //DERR << field.bd << endl;
                     //DERR << myHand << endl;
                     //DERR << opsHand << endl;
                     
-                    if(nodes > NODE_LIMIT){ DERR << "Last2P Node over!" << endl; failed = 1; return L2_DRAW; }
+                    if (nodes > NODE_LIMIT) { DERR << "Last2P Node over!" << endl; failed = 1; return L2_DRAW; }
                     
                     // 合法手の抽出
                     ana.restart(mode, 1);
@@ -502,13 +502,13 @@ namespace UECda {
                     
                     ana.restart(mode, 4);
                     
-                    if(IS_NF == _NO && field.getBoard().qty() >= myHand.qty && NMoves >= 2){ return L2_WIN; }
+                    if (IS_NF == _NO && field.getBoard().qty() >= myHand.qty && NMoves >= 2) { return L2_WIN; }
                     res = search<2, L2JUDGE_LEVEL_MAX, L2_FINFO>(depth, mv_buf, NMoves, myHand, opsHand, field);
                     
-                    if(res >= 0){
+                    if (res >= 0) {
                         ana.restart(mode,1);
 #ifdef USE_L2BOOK
-                        if(IS_NF){
+                        if (IS_NF) {
                             ASSERT(fhash == knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.bd)), cerr << fhash << endl;);
                             L2::book.regist(L2_WIN, fhash);
                             //book.regist(L2_WIN, fhash);
@@ -516,10 +516,10 @@ namespace UECda {
                         ana.restart(mode,3);
 #endif
                         return L2_WIN;
-                    }else if(res == -1){
+                    }else if (res == -1) {
                         ana.restart(mode,1);
 #ifdef USE_L2BOOK
-                        if(IS_NF){
+                        if (IS_NF) {
                             ASSERT(fhash == knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.bd)), cerr << fhash << endl;);
                             L2::book.regist(L2_LOSE, fhash);
                             //book.regist(L2_LOSE,fhash);
@@ -535,7 +535,7 @@ namespace UECda {
         }
         
         template<int S_LEVEL, int E_LEVEL, int L2_FINFO, int L2_MINFO>
-        int L2Judge::check(const int depth, MoveInfo *const mv_buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field){
+        int L2Judge::check(const int depth, MoveInfo *const mv_buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
             
             constexpr int IS_NF = (L2_FINFO >> 0) & 3;
             constexpr int IS_PD = (L2_FINFO >> 2) & 3; // パス支配局面
@@ -549,42 +549,42 @@ namespace UECda {
             
             ++childs;
             
-            if(E_LEVEL > 100){
+            if (E_LEVEL > 100) {
                 DERR << Space(depth * 2) << "<" << field.getTurnPlayer() << ">" << tmp;
             }
             
-            switch(S_LEVEL){
-                case 0: res = L2_NONE; if(E_LEVEL <= 0)break; // fallthrough
+            switch(S_LEVEL) {
+                case 0: res = L2_NONE; if (E_LEVEL <= 0)break; // fallthrough
                 case 1:{
                     // 1手詰み
-                    if((IS_PASS!=_YES) || (!tmp.isPASS())){ // 空場パスは考えない
-                        if(tmp.qty() >= myHand.qty){
+                    if ((IS_PASS!=_YES) || (!tmp.isPASS())) { // 空場パスは考えない
+                        if (tmp.qty() >= myHand.qty) {
                             DERR << Space(depth *2 ) << tmp << " -FIN" << endl;
                             return L2_WIN;
                         }
                     }
-                    if(E_LEVEL <= 1)break;
+                    if (E_LEVEL <= 1)break;
                 } // fallthrough
                 case 2:{
                     // 支配からの簡単詰み
-                    if(((IS_PD == _YES && (IS_NPDO == _YES)) || ((IS_NPDO == _YES) && (IS_PASS == _NO)) || ((IS_PD == _YES) && (IS_PASS == _YES))) // 無条件に支配
-                       ||((IS_PASS == _NO) && dominatesCards(tmp.mv(), opsHand.getCards(), field.getBoard()))){ // 他支配チェック
+                    if (((IS_PD == _YES && (IS_NPDO == _YES)) || ((IS_NPDO == _YES) && (IS_PASS == _NO)) || ((IS_PD == _YES) && (IS_PASS == _YES))) // 無条件に支配
+                       ||((IS_PASS == _NO) && dominatesCards(tmp.mv(), opsHand.getCards(), field.getBoard()))) { // 他支配チェック
                         tmp.setDomOthers();
                         res = judge_level1<(_YES << 0)>(myHand.qty - (IS_PASS == _YES ? 0 : tmp.qty()));
-                        if(res == L2_WIN){
+                        if (res == L2_WIN) {
                             DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                             return res;
                         }
                         ana.restart(mode, 1);
                         Hand nextHand;
                         
-                        if(!tmp.isPASS()){
+                        if (!tmp.isPASS()) {
                             ASSERT(!tmp.mv().isPASS(), DERR << tmp.data() << endl;)
                             makeMove1stHalf(myHand, &nextHand, tmp.mv());
                             
                             ana.restart(mode, 7);
                             res = judge_level2<(_YES << 0)>(nextHand);
-                            if(res == L2_WIN){
+                            if (res == L2_WIN) {
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;
                             }
@@ -597,14 +597,14 @@ namespace UECda {
                             ana.restart(mode, 7);
                             
                             res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, nextHand, opsHand, nextField);
-                            if(res == L2_WIN){
+                            if (res == L2_WIN) {
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;
                             }
-                        }else{
+                        } else {
                             ana.restart(mode, 7);
                             res=judge_level2<(_YES << 0)>(myHand);
-                            if(res == L2_WIN){
+                            if (res == L2_WIN) {
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;
                             }
@@ -613,14 +613,14 @@ namespace UECda {
                             procAndFlushL2Field<L2_FINFO, (IS_PASS << 0)>(field, &nextField, tmp.mv());
                             ana.restart(mode, 6);
                             res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, myHand, opsHand, nextField);
-                            if(res == L2_WIN){
+                            if (res == L2_WIN) {
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
                                 return res;
                             }
                         }
                         
                     }
-                    if(E_LEVEL <= 2)break;
+                    if (E_LEVEL <= 2)break;
                 } // fallthrough
                 default:{
                     L2Field nextField;
@@ -629,22 +629,22 @@ namespace UECda {
                     constexpr int NEXT_S_LEVEL = 1;
                     int conRest = 0;
                     
-                    if(IS_PASS == _NO){
-                        if(field.isDConst()){ // 支配拘束中
-                            if(!tmp.dominatesOthers()){ // 他支配でない
-                                if(hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())){ // 残り札に支配保証or空場期待がある
+                    if (IS_PASS == _NO) {
+                        if (field.isDConst()) { // 支配拘束中
+                            if (!tmp.dominatesOthers()) { // 他支配でない
+                                if (hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
                                     //DERR << tmp << ": DWorNFH_REST FAIL " << myHand << " vs " << opsHand << endl; getchar();
                                     DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -RESTLOSE" << endl;
                                     return L2_LOSE; // 拘束条件違反で負けとみなす
                                 }
-                            }else{
+                            } else {
                                 // 拘束継続
                                 conRest = 1;
                             }
-                        }else{
+                        } else {
                             // 支配保証拘束を掛ける
-                            if((IS_NF == _YES) && field.isTmpOrderSettled() && tmp.dominatesOthers()){
-                                if(hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())){ // 残り札に支配保証or空場期待がある
+                            if ((IS_NF == _YES) && field.isTmpOrderSettled() && tmp.dominatesOthers()) {
+                                if (hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
                                     // DERR << tmp << ": DWorNFH_REST START " << myHand << " vs " << opsHand << endl; getchar();
                                     conRest = 1;
                                 }
@@ -653,13 +653,13 @@ namespace UECda {
                     }
                     
                     // 支配性判定
-                    if(IS_PASS == _NO && (field.isLastAwake() || tmp.dominatesOthers())){
-                        if(dominatesCards(tmp.mv(), myHand.getCards(), field.getBoard())){
+                    if (IS_PASS == _NO && (field.isLastAwake() || tmp.dominatesOthers())) {
+                        if (dominatesCards(tmp.mv(), myHand.getCards(), field.getBoard())) {
                             tmp.setDomMe();
                         }
                     }
                     
-                    if(IS_PASS == _NO){
+                    if (IS_PASS == _NO) {
                         assert(!tmp.isPASS());
                         
                         ana.restart(mode, 1);
@@ -670,12 +670,12 @@ namespace UECda {
                         nextPlayer = procL2Field<L2_FINFO, L2_MINFO>(field, &nextField, tmp);
                         ana.restart(mode, 6);
                         
-                        if(conRest){ nextField.setDConst(); }
+                        if (conRest) { nextField.setDConst(); }
                         
                         int nextL2FINFO = genTA_L2FINFO(nextField.isNF() ? _YES : _NO, nextField.isUnrivaled() ? _YES : _NO);
                         
-                        if(nextPlayer == 0){
-                            switch(nextL2FINFO){
+                        if (nextPlayer == 0) {
+                            switch(nextL2FINFO) {
                                 case genTA_L2FINFO(_NO, _NO):
                                     res = judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX, genTA_L2FINFO(_NO, _NO)>(depth + 1, mv_buf, nextHand, opsHand, nextField); break;
                                 case  genTA_L2FINFO(_YES, _NO):
@@ -686,8 +686,8 @@ namespace UECda {
                                     //res = judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX, genTA_L2FINFO(_YES, _YES)>(depth + 1, mv_buf, nextHand, opsHand, nextField); break;
                                 default: UNREACHABLE; res = L2_NONE; break;
                             }
-                        }else{
-                            switch(nextL2FINFO){
+                        } else {
+                            switch(nextL2FINFO) {
                                 case genTA_L2FINFO(_NO,_NO):
                                     res=L2_WIN + L2_LOSE - judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX,genTA_L2FINFO(_NO,_NO)>(depth+1,mv_buf,opsHand,nextHand,nextField);break;
                                 case  genTA_L2FINFO(_YES,_NO):
@@ -699,18 +699,18 @@ namespace UECda {
                                 default: UNREACHABLE; res = L2_NONE; break;
                             }
                         }
-                    }else{ // PASS
+                    } else { // PASS
                         DERR << " " << myHand;
                         ana.restart(mode, 1);
                         nextPlayer = procL2Field<L2_FINFO, L2_MINFO>(field, &nextField, tmp);
                         ana.restart(mode, 6);
                         
-                        if(conRest){ nextField.setDConst(); }
+                        if (conRest) { nextField.setDConst(); }
                         
                         int nextL2FINFO = genTA_L2FINFO(nextField.isNF() ? _YES : _NO, nextField.isUnrivaled() ? _YES : _NO);
                         
-                        if(nextPlayer == 0){
-                            switch(nextL2FINFO){
+                        if (nextPlayer == 0) {
+                            switch(nextL2FINFO) {
                                 case genTA_L2FINFO(_NO, _NO):
                                     res = judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX, genTA_L2FINFO(_NO, _NO)>(depth + 1, mv_buf, myHand, opsHand, nextField); break;
                                 case genTA_L2FINFO(_YES, _NO):
@@ -721,8 +721,8 @@ namespace UECda {
                                     //res = judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX, genTA_L2FINFO(_YES, _YES)>(depth + 1, mv_buf, myHand, opsHand, nextField); break;
                                 default: UNREACHABLE; res = L2_NONE; break;
                             }
-                        }else{
-                            switch(nextL2FINFO){
+                        } else {
+                            switch(nextL2FINFO) {
                                 case genTA_L2FINFO(_NO, _NO):
                                     res = L2_WIN + L2_LOSE - judge<NEXT_S_LEVEL, L2JUDGE_LEVEL_MAX, genTA_L2FINFO(_NO, _NO)>(depth + 1, mv_buf, opsHand, myHand, nextField);break;
                                 case  genTA_L2FINFO(_YES, _NO):
@@ -737,7 +737,7 @@ namespace UECda {
                     }
                     
                     DERR << Space(depth * 2);
-                    switch(res){
+                    switch(res) {
                         case L2_WIN: DERR << "-WIN"; break;
                         case L2_DRAW: DERR << "-DRAW"; break;
                         case L2_LOSE: DERR << "-LOSE"; break;
@@ -754,7 +754,7 @@ namespace UECda {
         }
         
         template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
-        int L2Judge::search(const int depth, MoveInfo *const mv_buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field){
+        int L2Judge::search(const int depth, MoveInfo *const mv_buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
             
             // 反復深化をするのでなければ終了レベルは常に最大で呼ばれると思われる
             
@@ -767,69 +767,69 @@ namespace UECda {
             // 勝利手があればインデックス(>=0)、結果不明なら-2、負け確定なら-1を返す
             int unFound = 0;
             int res;
-            switch(S_LEVEL){
-                case 0: if(E_LEVEL <= 0)break; // fallthrough
+            switch(S_LEVEL) {
+                case 0: if (E_LEVEL <= 0)break; // fallthrough
                 case 1:
                     // 1手詰み
                     //DERR << "LEVEL 1" << endl;
-                    for(int m = NMoves - 1; m >= 0; --m){
+                    for (int m = NMoves - 1; m >= 0; --m) {
                         MoveInfo& tmp = mv_buf[m];
-                        if(POS_PASS == _NO || !tmp.isPASS()){
+                        if (POS_PASS == _NO || !tmp.isPASS()) {
                             res = check<1, 1, L2_FINFO, 0>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
-                        }else{
+                        } else {
                             res = check<1, 1, L2_FINFO, (_YES << 0)>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
                         }
-                        if(res == L2_WIN){ return m; }
-                        if((E_LEVEL <= 1) && res == L2_DRAW){ ++unFound; }
+                        if (res == L2_WIN) { return m; }
+                        if ((E_LEVEL <= 1) && res == L2_DRAW) { ++unFound; }
                     }
-                    if(E_LEVEL <= 1)break; // fallthrough
+                    if (E_LEVEL <= 1)break; // fallthrough
                 case 2:
                     //DERR << "LEVEL 2" << endl;
                     // 支配からの簡単詰み
-                    for(int m = NMoves - 1; m >= 0; --m){
+                    for (int m = NMoves - 1; m >= 0; --m) {
                         MoveInfo& tmp = mv_buf[m];
                         
-                        if(POS_PASS == _NO || !tmp.isPASS()){
+                        if (POS_PASS == _NO || !tmp.isPASS()) {
                             res=check<2, 2, L2_FINFO, 0>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
-                        }else{
+                        } else {
                             res=check<2, 2, L2_FINFO, (_YES << 0)>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
                         }
-                        if(res == L2_WIN){ return m; }
-                        if((E_LEVEL <= 2) && res == L2_DRAW){ ++unFound; }
+                        if (res == L2_WIN) { return m; }
+                        if ((E_LEVEL <= 2) && res == L2_DRAW) { ++unFound; }
                     }
-                    if(E_LEVEL <= 2)break; // fallthrough
+                    if (E_LEVEL <= 2)break; // fallthrough
                 default:
                     //DERR << "LEVEL 3~" << endl;
                     // 完全な探索
                     
                     Cards dw;
-                    if(IS_NF == _YES){
+                    if (IS_NF == _YES) {
                         dw = getAllDWCards(myHand.getCards(), opsHand.getCards(), field.tmpOrder(), field.fInfo.isTmpOrderSettled());
-                    }else{
+                    } else {
                         dw = CARDS_NULL; // 不要だがwarning回避
                     }
                     
-                    for(int m = NMoves - 1; m >= 0; --m){
+                    for (int m = NMoves - 1; m >= 0; --m) {
                         MoveInfo& tmp = mv_buf[m];
-                        if(!tmp.isL2GiveUp()){
-                            if(POS_PASS==_NO || !tmp.isPASS()){
-                                if((IS_NF==_YES) && tmp.dominatesAll() && !(tmp.cards() & dw)){ continue; }
+                        if (!tmp.isL2GiveUp()) {
+                            if (POS_PASS==_NO || !tmp.isPASS()) {
+                                if ((IS_NF==_YES) && tmp.dominatesAll() && !(tmp.cards() & dw)) { continue; }
                                 
                                 res = check<3, L2JUDGE_LEVEL_MAX, L2_FINFO, 0>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
-                            }else{
+                            } else {
                                 res = check<3, L2JUDGE_LEVEL_MAX, L2_FINFO, (_YES << 0)>(depth, mv_buf + NMoves, tmp, myHand, opsHand, field);
                             }
-                            if(res == L2_WIN){ return m; }
-                            if(res == L2_DRAW){
+                            if (res == L2_WIN) { return m; }
+                            if (res == L2_DRAW) {
                                 ++unFound;
-                            }else{
+                            } else {
                                 //ASSERT(res == L2_LOSE, cerr << "res = " << res << endl;);
-                                if(tmp.dominatesOthers()){
-                                    if(tmp.dominatesMe()){
-                                        if(tmp.containsJOKER() && !tmp.isSingleJOKER()){
+                                if (tmp.dominatesOthers()) {
+                                    if (tmp.dominatesMe()) {
+                                        if (tmp.containsJOKER() && !tmp.isSingleJOKER()) {
                                             // 支配共役系の枝刈り
-                                            for(int mm = m - 1; mm >= 0; --mm){
-                                                if(tmp.cards<_NO>() == mv_buf[mm].cards<_NO>()){
+                                            for (int mm = m - 1; mm >= 0; --mm) {
+                                                if (tmp.cards<_NO>() == mv_buf[mm].cards<_NO>()) {
                                                     //DERR << tmp << "-" << mv[mm] << " cut!" << endl;
                                                     mv_buf[mm].setL2GiveUp();
                                                 }
@@ -837,12 +837,12 @@ namespace UECda {
                                         }
                                     }
                                     
-                                    if((IS_NF == _YES) && field.isTmpOrderSettled()){
+                                    if ((IS_NF == _YES) && field.isTmpOrderSettled()) {
                                         // NFPDで負けた場合、排反なDW持ちのNFPDは全て枝刈り出来る
-                                        for(int mm = m - 1; mm >= 0; --mm){
-                                            if(mv_buf[mm].dominatesOthers()){
+                                        for (int mm = m - 1; mm >= 0; --mm) {
+                                            if (mv_buf[mm].dominatesOthers()) {
                                                 Cards anoMvCards = mv_buf[mm].cards();
-                                                if((dw & anoMvCards) && (!(tmp.cards() & anoMvCards))){
+                                                if ((dw & anoMvCards) && (!(tmp.cards() & anoMvCards))) {
                                                     mv_buf[mm].setL2GiveUp();
                                                 }
                                             }
@@ -854,15 +854,15 @@ namespace UECda {
                     }
                     break;
             }
-            if(unFound){
+            if (unFound) {
                 res = -2;
-            }else{
+            } else {
                 res = -1;
             }
             return res;
         }
         
-        int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo){
+        int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo) {
             assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
             int res;
             L2Field field;
@@ -871,23 +871,23 @@ namespace UECda {
             init();
             convL2Field(bd, fInfo, &field); // L2型へのチェンジ
             ana.restart(mode, 0);
-            if(field.isNF()){
+            if (field.isNF()) {
                 res = judge<1, L2JUDGE_LEVEL_MAX, (_YES << 0)>(0, buf, myHand, opsHand, field);
-            }else{
-                if(fInfo.isSelfFollow()){
+            } else {
+                if (fInfo.isSelfFollow()) {
                     res = judge<1, L2JUDGE_LEVEL_MAX, (_YES << 2)>(0, buf, myHand, opsHand, field);
-                }else{
+                } else {
                     res = judge<1, L2JUDGE_LEVEL_MAX, 0>(0, buf, myHand, opsHand, field);
                 }
             }
             ana.addNodes(nodes, mode);
             ana.addChilds(childs, mode);
-            if(failed){ ana.addFailure(mode); }
+            if (failed) { ana.addFailure(mode); }
             ana.end(mode, 1);
             return res;
         }
         
-        int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo){
+        int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo) {
             assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll() );
             int res;
             L2Field field;
@@ -898,21 +898,21 @@ namespace UECda {
             MoveInfo tmp = mi;
             
             ana.restart(mode, 0);
-            if(field.isNF()){
+            if (field.isNF()) {
                 res = check<1, L2JUDGE_LEVEL_MAX, (_YES << 0), 0>(0, buf, tmp, myHand, opsHand, field);
-            }else{
-                if(mi.isPASS()){
+            } else {
+                if (mi.isPASS()) {
                     res = check<1, L2JUDGE_LEVEL_MAX, (_NO << 0), (_YES << 0)>(0, buf, tmp, myHand, opsHand, field);
-                }else{
+                } else {
                     res = check<1, L2JUDGE_LEVEL_MAX, (_NO << 0), (_NO << 0)>(0, buf, tmp, myHand, opsHand, field);
                 }
             }
             ana.addNodes(nodes, mode);
             ana.addChilds(childs, mode);
-            if(failed){ ana.addFailure(mode); }
+            if (failed) { ana.addFailure(mode); }
             ana.end(mode, 1);
             DERR << "L2Check ";
-            switch(res){
+            switch(res) {
                 case L2_WIN: DERR << "-WIN"; break;
                 case L2_DRAW: DERR << "-DRAW"; break;
                 case L2_LOSE: DERR << "-LOSE"; break;

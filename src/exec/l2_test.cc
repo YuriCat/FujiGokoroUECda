@@ -16,7 +16,7 @@ MoveGenerator<MoveInfo, Hand> mgHand;
 Clock cl;
 std::mt19937 mt;
 
-int outputMateJudgeResult(){
+int outputMateJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     //Cards myCards = CARDS_C3 | CARDS_H3 | CARDS_D9 | CARDS_CQ | CARDS_HQ;
     //Cards oppCards = CARDS_C4 | CARDS_D4 | CARDS_S5 | CARDS_D6 /*| CARDS_H9*/ | CARDS_DK | CARDS_HK /*| CARDS_SK*/ | CARDS_JOKER;
@@ -46,9 +46,8 @@ int outputMateJudgeResult(){
      result 2 4 0 3 1
      */
     
-    Cards myCards = StringToCards("s3 s4 h7 h9 dt hq sk");
-    Cards oppCards = StringToCards("h4 c7 d7 s7 h8 c9 st");
-    
+    Cards myCards = "s3 s4 h7 h9 dt hq sk";
+    Cards oppCards = "h4 c7 d7 s7 h8 c9 st";
     {
         Hand myHand, oppHand;
         myHand.setAll(myCards);
@@ -85,7 +84,7 @@ int outputMateJudgeResult(){
 }
 
 template<class logs_t>
-int testRecordL2(const logs_t& mLogs){
+int testRecordL2(const logs_t& mLogs) {
     // 棋譜中の局面においてL2判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     // 正解を調べるのがきついこともあるのでとりあえず棋譜の結果を正解とする
@@ -101,10 +100,10 @@ int testRecordL2(const logs_t& mLogs){
     
     iterateGameLogAfterChange
     (field, mLogs,
-     [&](const auto& field){}, // first callback
+     [&](const auto& field) {}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          
-         if(field.getNAlivePlayers() == 2){
+         if (field.getNAlivePlayers() == 2) {
              const int turnPlayer = field.getTurnPlayer();
              const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
              const Hand& myHand = field.getHand(turnPlayer);
@@ -120,7 +119,7 @@ int testRecordL2(const logs_t& mLogs){
              
              l2TurnPlayer = turnPlayer;
              
-             /*if(mate != pw){
+             /*if (mate != pw) {
               cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
               cerr << move << " on " << bd << endl;
               cerr << field.ps << " " << field.fieldInfo << endl;
@@ -134,17 +133,17 @@ int testRecordL2(const logs_t& mLogs){
          }
          return 0;
      },
-     [&](const auto& field){ // last callback
+     [&](const auto& field) { // last callback
          // ここで新しい順位を得ることができる
-         if(judgeResult != L2_NONE && l2TurnPlayer >= 0){
+         if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
              judgeMatrix[field.getPlayerNewClass(l2TurnPlayer) == N_PLAYERS - 2][judgeResult == L2_WIN ?
                                                                                  2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
          }
      });
     
     cerr << "judge result (hand) = " << endl;
-    for(int i = 0; i < 2; ++i){
-        for(int j = 0; j < 3; ++j){
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 3; ++j) {
             cerr << judgeMatrix[i][j] << " ";
         }cerr << endl;
     }
@@ -154,24 +153,24 @@ int testRecordL2(const logs_t& mLogs){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     std::vector<std::string> logFileNames;
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-l")){
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-l")) {
             logFileNames.push_back(std::string(argv[c + 1]));
         }
     }
     mt.seed(1);
     
-    if(outputMateJudgeResult()){
+    if (outputMateJudgeResult()) {
         cerr << "failed case test." << endl; return -1;
     }
     cerr << "passed case test." << endl;
     
     MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
     
-    if(testRecordL2(mLogs)){
+    if (testRecordL2(mLogs)) {
         cerr << "failed record L2 judge test." << endl;
     }
     cerr << "passed record L2 judge test." << endl;

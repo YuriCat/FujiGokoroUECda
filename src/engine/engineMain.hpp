@@ -67,12 +67,12 @@ namespace UECda{
                 // 乱数系列を初期化
                 XorShift64 tdice;
                 tdice.srand(s);
-                for(int th = 0; th < N_THREADS; ++th){
+                for (int th = 0; th < N_THREADS; ++th) {
                     threadTools[th].dice.srand(tdice.rand() * (th + 111));
                 }
             }
             
-            void initMatch(){
+            void initMatch() {
                 // matchLog にプレーヤー番号が入っている状態で呼ばれる
                 shared.setMyPlayerNum(matchLog.getMyPlayerNum());
                 
@@ -81,12 +81,12 @@ namespace UECda{
                 setRandomSeed((uint32_t)time(NULL));
                 
                 // スレッドごとのデータ初期化
-                for(int th = 0; th < N_THREADS; ++th)
+                for (int th = 0; th < N_THREADS; ++th)
                     threadTools[th].init(th);
                     
 #ifndef POLICY_ONLY
                 // 世界プール監視員を設定
-                for(int th = 0; th < N_THREADS; ++th)
+                for (int th = 0; th < N_THREADS; ++th)
                     shared.ga.set(th, &threadTools[th].gal);
 #endif
                 
@@ -100,16 +100,16 @@ namespace UECda{
                 // 推定用ポリシー(分けることもあり?)
                 std::ifstream ifs;
                 ifs.open(DIRECTORY_PARAMS_IN + "play_policy_param_estimation.dat");
-                if(ifs){
+                if (ifs) {
                     shared.estimationPlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param_estimation.dat");
-                }else{
+                } else {
                     shared.estimationPlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
                 }
                 ifs.close();
                 ifs.open(DIRECTORY_PARAMS_IN + "change_policy_param_estimation.dat");
-                if(ifs){
+                if (ifs) {
                     shared.estimationChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param_estimation.dat");
-                }else{
+                } else {
                     shared.estimationChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
                 }
                 ifs.close();
@@ -123,7 +123,7 @@ namespace UECda{
                 shared.estimationChangePolicy.setTemperature(Settings::simulationTemperatureChange);
 #endif
             }
-            void initGame(){
+            void initGame() {
                 // 汎用変数の設定
                 shared.initGame();
 #ifndef POLICY_ONLY
@@ -132,9 +132,9 @@ namespace UECda{
                 // 公式には未定だが、多くの場合100試合だろうから100試合としておく
                 const int gamesForCIG = getNGamesForClassInitGame(matchLog.getLatestGameNum());
                 const int gamesForSIG = getNGamesForSeatInitGame(matchLog.getLatestGameNum());
-                for(int cl = 0; cl < N_PLAYERS; ++cl)
+                for (int cl = 0; cl < N_PLAYERS; ++cl)
                     shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
-                for(int rs = 0; rs < N_PLAYERS; ++rs) for(int cl = 0; cl < N_PLAYERS; ++cl)
+                for (int rs = 0; rs < N_PLAYERS; ++rs) for (int cl = 0; cl < N_PLAYERS; ++cl)
                     shared.daifugoSeatGameReward[rs][cl] = int(daifugoSeatReward(gamesForCIG, gamesForSIG, rs, cl) * 100);
                 
                 // 置換表初期化
@@ -148,7 +148,7 @@ namespace UECda{
                 
             }
             
-            Cards change(uint32_t change_qty){ // 交換関数
+            Cards change(uint32_t change_qty) { // 交換関数
                 const auto& gameLog = matchLog.latestGame();
                 const int myPlayerNum = matchLog.getMyPlayerNum();
                 
@@ -164,9 +164,9 @@ namespace UECda{
                 
 #ifdef RARE_PLAY
                 // レアプレーを行っていない場合は行う
-                if(!shared.rare_play_flag.test(8)
+                if (!shared.rare_play_flag.test(8)
                    && containsJOKER(myCards)
-                   && change_qty == 1){
+                   && change_qty == 1) {
                     // ジョーカー捨て
                     // 2枚交換のとき1枚のみ確定するのは面倒なので、1枚交換の時のみにする
                     shared.rare_play_flag.set(8);
@@ -180,20 +180,20 @@ namespace UECda{
                 Cards tmp = myCards;
 #endif
                 
-                if(countCards(tmp) == change_qty){ return tmp; }
+                if (countCards(tmp) == change_qty) { return tmp; }
                 
                 // 合法交換候補生成
                 Cards cand[N_MAX_CHANGES]; // 最大候補数
                 
                 int NCands = genChange(cand, tmp, change_qty);
                 
-                if(NCands == 1){
+                if (NCands == 1) {
                     assert(holdsCards(myCards, cand[0]) && countCards(cand[0]) == change_qty);
                     return cand[0];
                 }
                 
                 // 必勝チェック&枝刈り
-                for(int c = 0; c < NCands;){
+                for (int c = 0; c < NCands;) {
                     
                     assert(holdsCards(myCards, cand[c]));
                     
@@ -204,7 +204,7 @@ namespace UECda{
                     mine.set(restCards);
                     
                     // D3を持っている場合、自分からなので必勝チェック
-                    if(containsD3(myCards)){
+                    if (containsD3(myCards)) {
                         const Board bd = OrderToNullBoard(ORDER_NORMAL); // 通常オーダーの空場
                         FieldAddInfo fieldInfo;
                         fieldInfo.init();
@@ -215,7 +215,7 @@ namespace UECda{
                         fieldInfo.setMaxNCards(11);
                         Hand ops;
                         ops.set(subtrCards(CARDS_ALL, restCards));
-                        if(judgeHandMate(1, searchBuffer, mine, ops, bd, fieldInfo)){
+                        if (judgeHandMate(1, searchBuffer, mine, ops, bd, fieldInfo)) {
                             // 必勝
                             CERR << "CHANGE MATE!" << endl;
                             assert(holdsCards(myCards, cand[c]) && countCards(cand[c]) == change_qty);
@@ -225,15 +225,15 @@ namespace UECda{
                     
 #ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
                     // 残り札に革命が無い場合,Aもダメ
-                    if(isNoRev(restCards)){
-                        if(andCards(cand[c], CARDS_A)){
+                    if (isNoRev(restCards)) {
+                        if (andCards(cand[c], CARDS_A)) {
                             std::swap(cand[c], cand[--NCands]);
                             goto TO_NEXT;
                         }
                     }
                     
                 TO_NEXT:
-                    if(NCands == 1){
+                    if (NCands == 1) {
                         assert(holdsCards(myCards, cand[0]) && countCards(cand[0]) == change_qty);
                         return cand[0];
                     }
@@ -252,27 +252,27 @@ namespace UECda{
                 calcChangePolicyScoreSlow(escore, cand, NCands, myCards, change_qty, field,
                                           shared.baseChangePolicy);
                 // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
-                for(int m = 0; m < NCands; ++m)
+                for (int m = 0; m < NCands; ++m)
                     score[m] = log(max(escore[m + 1] - escore[m], 0.000001)) * Settings::temperatureChange;
                 root.feedPolicyScore(score, NCands);
                 
 #ifndef POLICY_ONLY
                 // モンテカルロ法による評価
-                if(changeCards == CARDS_NULL){
+                if (changeCards == CARDS_NULL) {
                     // 世界プールを整理する
-                    for(int th = 0; th < N_THREADS; ++th)
+                    for (int th = 0; th < N_THREADS; ++th)
                         threadTools[th].gal.clear();
 #ifdef USE_POLICY_TO_ROOT
                     root.addPolicyScoreToMonteCarloScore();
 #endif
                     // モンテカルロ開始
-                    if(Settings::NChangeThreads > 1){
+                    if (Settings::NChangeThreads > 1) {
                         std::vector<std::thread> thr;
-                        for(int ith = 0; ith < Settings::NChangeThreads; ++ith)
+                        for (int ith = 0; ith < Settings::NChangeThreads; ++ith)
                             thr.emplace_back(std::thread(&MonteCarloThread<RootInfo, Field, FujiSharedData, FujiThreadTools>,
                                                          ith, &root, &field, &shared, &threadTools[ith]));
-                        for(auto& th : thr)th.join();
-                    }else{
+                        for (auto& th : thr)th.join();
+                    } else {
                         MonteCarloThread<RootInfo, Field, FujiSharedData, FujiThreadTools>(0, &root, &field, &shared, &threadTools[0]);
                     }
                 }
@@ -280,7 +280,7 @@ namespace UECda{
                 root.sort();
                 
 #ifdef POLICY_ONLY
-                if(changeCards == CARDS_NULL && Settings::temperatureChange > 0){
+                if (changeCards == CARDS_NULL && Settings::temperatureChange > 0) {
                     // 確率的に選ぶ場合
                     BiasedSoftmaxSelector selector(score, root.candidates,
                                                    Settings::simulationTemperatureChange,
@@ -290,7 +290,7 @@ namespace UECda{
                     changeCards = cand[selector.run_all(dice.drand())];
                 }
 #endif
-                if(changeCards == CARDS_NULL){
+                if (changeCards == CARDS_NULL) {
                     // 最高評価の交換を選ぶ
                     changeCards = root.child[0].changeCards;
                 }
@@ -309,11 +309,11 @@ namespace UECda{
                 return changeCards;
             }
             
-            void afterChange(){}
-            void waitChange(){}
-            void prepareForGame(){}
+            void afterChange() {}
+            void waitChange() {}
+            void prepareForGame() {}
             
-            Move play(){
+            Move play() {
                 // 自分のプレーについての変数を更新
                 ClockMicS clms;
                 clms.start();
@@ -324,7 +324,7 @@ namespace UECda{
 #endif
                 return ret;
             }
-            Move playSub(){ // ここがプレー関数
+            Move playSub() { // ここがプレー関数
                 const auto& gameLog = shared.matchLog.latestGame();
                 
                 Move playMove = MOVE_NONE;
@@ -350,11 +350,11 @@ namespace UECda{
                 FieldAddInfo& fieldInfo = field.fieldInfo;
                 
                 // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
-                if(bd.domInevitably()){ return MOVE_PASS; }
+                if (bd.domInevitably()) { return MOVE_PASS; }
 
 #ifdef RARE_PLAY
                 // レアプレーを行っていない場合は行う
-                if(bd.isNF() && !rare_play_flag.test(0)){ // 空場パス
+                if (bd.isNF() && !rare_play_flag.test(0)) { // 空場パス
                     rare_play_flag.set(0);
                     return MOVE_PASS;
                 }
@@ -362,36 +362,36 @@ namespace UECda{
                     
                 // 合法着手生成
                 int NMoves = genMove(mv, myCards, bd);
-                if(NMoves <= 0){ // 合法着手なし
+                if (NMoves <= 0) { // 合法着手なし
                     cerr << "No valid move." << endl;
                     return MOVE_PASS;
                 }
-                if(NMoves == 1){
+                if (NMoves == 1) {
                     // 合法着手1つ。パスのみか、自分スタートで手札1枚
                     // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
 #ifdef MONITOR
-                    if(!mv[0].isPASS()){
+                    if (!mv[0].isPASS()) {
                         cerr << "final move. " << mv[0] << endl;
-                    }else{
+                    } else {
                         cerr << "no chance. PASS" << endl;
                     }
 #endif
-                    if(!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
+                    if (!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
                     return (Move)mv[0];
                 }
                 
                 // 合法着手生成(特別着手)
                 int NSpecialMoves = 0;
-                if(bd.isNF())
+                if (bd.isNF())
                     NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
-                if(containsJOKER(myCards) && containsS3(opsCards)){
-                    if(bd.isGroup())
+                if (containsJOKER(myCards) && containsS3(opsCards)) {
+                    if (bd.isGroup())
                         NSpecialMoves += genJokerGroup(mv + NMoves + NSpecialMoves, myCards, opsCards, bd);
                 }
                 NMoves += NSpecialMoves;
                 
                 // 着手多様性確保のため着手をランダムシャッフル
-                for(int i = NMoves; i > 1; --i)
+                for (int i = NMoves; i > 1; --i)
                     std::swap(mv[dice.rand() % i], mv[i - 1]);
                 
                 // 場の情報をまとめる
@@ -404,31 +404,31 @@ namespace UECda{
                 
                 setDomState(mv, NMoves, field); // 先の場も含めて支配状況をまとめて設定
                 
-                for(int m = 0; m < NMoves; ++m){
+                for (int m = 0; m < NMoves; ++m) {
                     MoveInfo *const mi = &mv[m];
                     const Move move = mi->mv();
                     
                     Cards nextCards = maskCards(myCards, move.cards());
                     // 後場情報
-                    if(bd.afterPrmOrder(move) != ORDER_NORMAL){ mi->setPrmOrderRev(); }
-                    if(bd.afterTmpOrder(move) != ORDER_NORMAL){ mi->setTmpOrderRev(); }
-                    if(bd.afterSuitsLocked(move)){ mi->setSuitLock(); }
+                    if (bd.afterPrmOrder(move) != ORDER_NORMAL) { mi->setPrmOrderRev(); }
+                    if (bd.afterTmpOrder(move) != ORDER_NORMAL) { mi->setTmpOrderRev(); }
+                    if (bd.afterSuitsLocked(move)) { mi->setSuitLock(); }
                     
-                    if(Settings::MateSearchOnRoot){ // 多人数必勝判定
-                        if(checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)){
+                    if (Settings::MateSearchOnRoot) { // 多人数必勝判定
+                        if (checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)) {
                             mi->setMPMate(); fieldInfo.setMPMate();
                         }
                     }
-                    if(Settings::L2SearchOnRoot){
-                        if(field.getNAlivePlayers() == 2){ // 残り2人の場合はL2判定
+                    if (Settings::L2SearchOnRoot) {
+                        if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                             L2Judge lj(400000, searchBuffer);
                             int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
                             //cerr << l2Result << endl;
-                            if(l2Result == L2_WIN){ // 勝ち
+                            if (l2Result == L2_WIN) { // 勝ち
                                 DERR << "l2win!" << endl;
                                 mi->setL2Mate(); fieldInfo.setL2Mate();
                                 DERR << fieldInfo << endl;
-                            }else if(l2Result == L2_LOSE){
+                            }else if (l2Result == L2_LOSE) {
                                 mi->setL2GiveUp();
                             }
                         }
@@ -438,21 +438,21 @@ namespace UECda{
                 }
                 
                 // 判定結果を報告
-                if(Settings::L2SearchOnRoot){
-                    if(field.getNAlivePlayers() == 2){
+                if (Settings::L2SearchOnRoot) {
+                    if (field.getNAlivePlayers() == 2) {
                         // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
                         // ただしL2探索を行う場合のみ
                         CERR << fieldInfo << endl;
-                        if(fieldInfo.isL2Mate()){
+                        if (fieldInfo.isL2Mate()) {
                             shared.setMyL2Mate();
-                        }else{
+                        } else {
                             fieldInfo.setL2GiveUp();
                             shared.setMyL2GiveUp();
                         }
                     }
                 }
-                if(Settings::MateSearchOnRoot){
-                    if(fieldInfo.isMPMate())
+                if (Settings::MateSearchOnRoot) {
+                    if (fieldInfo.isMPMate())
                         shared.setMyMate(field.getBestClass());
                 }
                 
@@ -460,7 +460,7 @@ namespace UECda{
                 // 着手候補一覧表示
                 cerr << "My Cards : " << OutCards(myCards) << endl;
                 cerr << bd << " " << fieldInfo << endl;
-                for(int m = 0; m < NMoves; ++m){
+                for (int m = 0; m < NMoves; ++m) {
                     Move move = mv[m].mv();
                     MoveAddInfo info = MoveAddInfo(mv[m]);
                     cerr << move << info << endl;
@@ -484,20 +484,20 @@ namespace UECda{
                 
 #ifndef POLICY_ONLY
                 // モンテカルロ法による評価(結果確定のとき以外)
-                if(!fieldInfo.isMate() && !fieldInfo.isGiveUp()){
-                    for(int th = 0; th < N_THREADS; ++th)
+                if (!fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
+                    for (int th = 0; th < N_THREADS; ++th)
                         threadTools[th].gal.clear();
 #ifdef USE_POLICY_TO_ROOT
                     root.addPolicyScoreToMonteCarloScore();
 #endif
                     // モンテカルロ開始
-                    if(Settings::NPlayThreads > 1){
+                    if (Settings::NPlayThreads > 1) {
                         std::vector<std::thread> thr;
-                        for(int ith = 0; ith < Settings::NPlayThreads; ++ith)
+                        for (int ith = 0; ith < Settings::NPlayThreads; ++ith)
                             thr.emplace_back(std::thread(&MonteCarloThread<RootInfo, Field, FujiSharedData, FujiThreadTools>,
                                                          ith, &root, &field, &shared, &threadTools[ith]));
-                        for(auto& th : thr)th.join();
-                    }else{
+                        for (auto& th : thr)th.join();
+                    } else {
                         MonteCarloThread<RootInfo, Field, FujiSharedData, FujiThreadTools>(0, &root, &field, &shared, &threadTools[0]);
                     }
                 }
@@ -508,53 +508,53 @@ namespace UECda{
                 root.sort();
                 
                 // 以下必勝を判定したときのみ
-                if(fieldInfo.isMate()){
+                if (fieldInfo.isMate()) {
                     int next = root.candidates;
                     // 1. 必勝判定で勝ちのものに限定
-                    next = root.binary_sort(next, [](const RootAction& a){ return a.move.isMate(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMate(); });
                     assert(next > 0);
                     // 2. 即上がり
-                    next = root.binary_sort(next, [](const RootAction& a){ return a.move.isFinal(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return a.move.isFinal(); });
                     // 3. 完全勝利
-                    next = root.binary_sort(next, [](const RootAction& a){ return a.move.isPW(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
                     // 4. 多人数判定による勝ち
-                    next = root.binary_sort(next, [](const RootAction& a){ return a.move.isMPMate(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMPMate(); });
 #ifdef DEFEAT_RIVAL_MATE
-                    if(next > 1 && !isNoRev(myCards)){
+                    if (next > 1 && !isNoRev(myCards)) {
                         // 5. ライバルに不利になるように革命を起こすかどうか
                         int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
-                        if(prefRev > 0) // 革命優先
-                            next = root.sort(next, [myCards](const RootAction& a){
+                        if (prefRev > 0) // 革命優先
+                            next = root.sort(next, [myCards](const RootAction& a) {
                                 return a.move.flipsPrmOrder() ? 2 :
                                 (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
                             });
-                        if(prefRev < 0) // 革命しないことを優先
-                            next = root.sort(next, [myCards](const RootAction& a){
+                        if (prefRev < 0) // 革命しないことを優先
+                            next = root.sort(next, [myCards](const RootAction& a) {
                                 return a.move.flipsPrmOrder() ? -2 :
                                 (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
                             });
                     }
 #endif
                     // 必勝時の出し方の見た目をよくする
-                    if(fieldInfo.isUnrivaled()){
+                    if (fieldInfo.isUnrivaled()) {
                         // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                         //    そうでなければパスを優先
-                        next = root.sort(next, [](const RootAction& a){ return -(int)a.move.getIncMinNMelds(); });
-                        if(root.child[0].move.getIncMinNMelds() > 0)
-                            next = root.binary_sort(next, [](const RootAction& a){ return a.move.isPASS(); });
+                        next = root.sort(next, [](const RootAction& a) { return -(int)a.move.getIncMinNMelds(); });
+                        if (root.child[0].move.getIncMinNMelds() > 0)
+                            next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPASS(); });
                     }
                     // 7. 枚数が大きいものを優先
-                    next = root.sort(next, [](const RootAction& a){ return a.move.qty(); });
+                    next = root.sort(next, [](const RootAction& a) { return a.move.qty(); });
                     // 8. 即切り役を優先
-                    next = root.binary_sort(next, [](const RootAction& a){ return a.move.domInevitably(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
                     // 9. 自分を支配していないものを優先
-                    next = root.binary_sort(next, [](const RootAction& a){ return !a.move.isDM(); });
+                    next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
                     
                     playMove = root.child[0].move.mv(); // 必勝手から選ぶ
                 }
                 
 #ifdef POLICY_ONLY
-                if(playMove == MOVE_NONE && Settings::temperaturePlay > 0){
+                if (playMove == MOVE_NONE && Settings::temperaturePlay > 0) {
                     // 確率的に選ぶ場合
                     BiasedSoftmaxSelector selector(score, root.candidates,
                                                    Settings::simulationTemperaturePlay,
@@ -564,7 +564,7 @@ namespace UECda{
                     playMove = mv[selector.run_all(dice.drand())].mv();
                 }
 #endif
-                if(playMove == MOVE_NONE){
+                if (playMove == MOVE_NONE) {
                     // 最高評価の着手を選ぶ
                     playMove = root.child[0].move.mv();
                 }
@@ -579,7 +579,7 @@ namespace UECda{
                 
                 return playMove;
             }
-            void closeGame(){
+            void closeGame() {
 #ifndef POLICY_ONLY
                 // 自分の主観的プレー時間から、
                 // マシン間の計算速度の比を概算
@@ -588,11 +588,11 @@ namespace UECda{
                 analyzePlayerModel(&shared, &threadTools[0]);
 #endif
                 
-                if(matchLog.games() % 100 == 0){
+                if (matchLog.games() % 100 == 0) {
 #ifdef MONITER
 #ifndef POLICY_ONLY
 #ifdef MODELING_PLAY
-                    for(int p = 0; p < N_PLAYERS; ++p){
+                    for (int p = 0; p < N_PLAYERS; ++p) {
                         // バイアス項を表示
                         cerr << shared.playerModelSpace.model(p).toBiasString() << endl;
                     }
@@ -610,12 +610,12 @@ namespace UECda{
                 }
                 shared.closeGame();
             }
-            void closeMatch(){
-                for(int th = 0; th < N_THREADS; ++th)
+            void closeMatch() {
+                for (int th = 0; th < N_THREADS; ++th)
                     threadTools[th].close();
                 shared.closeMatch();
             }
-            ~Client(){
+            ~Client() {
                 closeMatch();
             }
         };

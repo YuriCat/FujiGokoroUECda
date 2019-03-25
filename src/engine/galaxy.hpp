@@ -29,14 +29,14 @@ namespace UECda{
             clear();
         }
         
-        ~Galaxy(){
+        ~Galaxy() {
             close();
         }
         
         int size()const{return SIZE;}
         
-        void clear(){
-            for(int w = 0; w < SIZE; ++w){
+        void clear() {
+            for (int w = 0; w < SIZE; ++w) {
                 world[w].clear();
             }
             usedLimit = SIZE;
@@ -44,27 +44,27 @@ namespace UECda{
             nullLimit = 0;
         }
         
-        void close(){
+        void close() {
             clear();
         }
         
-        void proceed(const int p, const Move mv, const Cards c, const double compRatio){
+        void proceed(const int p, const Move mv, const Cards c, const double compRatio) {
             
         }
         
-        void checkRationality(){
+        void checkRationality() {
             
         }
         
-        world_t* access(const int w){
+        world_t* access(const int w) {
             assert(0 <= w && w < SIZE);
             return &world[w];
         }
         
-        world_t* searchSpace(const int line, const int limit){
+        world_t* searchSpace(const int line, const int limit) {
             // 空になっている分割スペースを返す
-            for(int w = line; w < line + limit; ++w){
-                if(!world[w].isActive()){//ここに登録
+            for (int w = line; w < line + limit; ++w) {
+                if (!world[w].isActive()) {//ここに登録
                     DERR << "WORLD " << w << "IS INACTIVE!" << endl;
                     return &world[w];
                 }
@@ -74,20 +74,20 @@ namespace UECda{
         }
         
         template<class dice_t>
-        world_t* pickRand(const int line, const int limit, dice_t *const dice){
+        world_t* pickRand(const int line, const int limit, dice_t *const dice) {
             // activeである世界のどれかにランダムアクセスする
             int w = line + (dice->rand() % limit);
             
-            if(0 <= w && w < SIZE && world[w].isActive()){
+            if (0 <= w && w < SIZE && world[w].isActive()) {
                 return &world[w];
-            }else{
+            } else {
                 assert(0);
                 return nullptr;
             }
         }
         
-        int regist(world_t *const wld){
-            if(!(0 <= (wld - world) && (wld - world) < SIZE && (!wld->isActive()))){
+        int regist(world_t *const wld) {
+            if (!(0 <= (wld - world) && (wld - world) < SIZE && (!wld->isActive()))) {
                 assert(0);
                 return -1;
             }
@@ -96,7 +96,7 @@ namespace UECda{
             return 0;
         }
         
-        void addActives(){
+        void addActives() {
             ++actives;
         }
     };
@@ -125,14 +125,14 @@ namespace UECda{
         variance(0.0)
         {}
         
-        ~GalaxyAnalyzer(){
+        ~GalaxyAnalyzer() {
             close();
         }
-        void close(){
+        void close() {
             
             double lsuv, lscore, lvariance, lmean, stddev, zscore;
             
-            if(population > 0){
+            if (population > 0) {
                 
                 lsuv = survivals / population;
                 lscore = score / population;
@@ -140,13 +140,13 @@ namespace UECda{
                 lmean = mean / population;
                 stddev = sqrt(lvariance);
                 
-                if(stddev > 0){
+                if (stddev > 0) {
                     zscore = (lscore - lmean) / stddev;
-                }else{
+                } else {
                     zscore = 0.0;
                 }
                 
-            }else{
+            } else {
                 lsuv = 0.0;
                 lscore = 0.0;
                 lvariance = 0.0;
@@ -161,21 +161,21 @@ namespace UECda{
             CERR << "Galaxies : z score - " << zscore << " standard score - " << (50.0 + 10.0 * zscore) << std::endl;
         }
         
-        void set(int g, galaxy_t *gal){
+        void set(int g, galaxy_t *gal) {
             assert(0 <= g && g < N);
             pgal[g] = gal;
         }
         
-        void proceed(int p, const Move& mv, const double compRatio){
+        void proceed(int p, const Move& mv, const double compRatio) {
             
             assert(compRatio > 0);
             
             Cards c = mv.cards();
-            if(anyCards(c)){
+            if (anyCards(c)) {
                 
-                for(int g = 0; g < N; ++g){
+                for (int g = 0; g < N; ++g) {
                     
-                    if(pgal[g]->actives > 0){
+                    if (pgal[g]->actives > 0) {
                         
                         double sp = 0.0;
                         double pops = (double)pgal[g]->actives;
@@ -185,20 +185,20 @@ namespace UECda{
                         
                         //int newW = 0;
                         
-                        for(int w = 0; w < pgal[g]->size(); ++w){
+                        for (int w = 0; w < pgal[g]->size(); ++w) {
                             world_t& tmpW = *pgal[g]->access(w);
-                            if(tmpW.isActive()){
+                            if (tmpW.isActive()) {
                                 //完全矛盾による世界の自然死を判定
-                                if(!holdsCards(tmpW.getCards(p), c)){//矛盾
+                                if (!holdsCards(tmpW.getCards(p), c)) {//矛盾
                                     DERR << "World " << w << " died..." << endl;
                                     tmpW.clear();//そんな世界は存在しなかった
                                     dieds++;
-                                }else{
+                                } else {
                                     //世界死がおきなかった
                                     
                                     /*tmpW.proceed(pc,usedCards);
                                      
-                                     if( newNActive < w ){
+                                     if ( newNActive < w ) {
                                      //世界を詰める
                                      
                                      }

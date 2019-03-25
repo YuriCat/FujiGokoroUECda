@@ -188,7 +188,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     }
     namespace ChangePolicySpace {
         template<typename T>
-        int commentToPolicyParam(std::ostream& out, const T param[FEA_NUM_ALL]){
+        int commentToPolicyParam(std::ostream& out, const T param[FEA_NUM_ALL]) {
             auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
             
             out << "****** CHANGE POLICY ******" << endl;
@@ -197,12 +197,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 out << "1PQR or SEQ" << endl;
                 int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
                 out << "  SEQ" << endl;
-                for (int i = 0; i < 11; ++i){ os(base + i); }out << endl;
-                for (int i = 0; i < 10; ++i){ os(base + 11 + i); }out << endl;
-                for (int i = 0; i < 9; ++i){ os(base + 21 + i); }out << endl;
+                for (int i = 0; i < 11; ++i) { os(base + i); }out << endl;
+                for (int i = 0; i < 10; ++i) { os(base + 11 + i); }out << endl;
+                for (int i = 0; i < 9; ++i) { os(base + 21 + i); }out << endl;
                 out << "  GROUP" << endl;
-                for (int i = 0; i < 13; ++i){
-                    for (int j = 0; j < 4; ++j){ os(base + 30 + 4 * i + j); }out << endl;
+                for (int i = 0; i < 13; ++i) {
+                    for (int j = 0; j < 4; ++j) { os(base + 30 + 4 * i + j); }out << endl;
                 }
             }
 
@@ -232,7 +232,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return PlayPolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
     template<class T>
-    int foutComment(const ChangePolicy<T>& pol, const std::string& fName){
+    int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
         std::ofstream ofs(fName, std::ios::out);
         return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
@@ -305,7 +305,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         int distanceToOwner = 0;
         if (owner != tp) {
             distanceToOwner = 1;
-            for (int s = getPreviousSeat<N_PLAYERS>(turnSeat); s != ownerSeat; s = getPreviousSeat<N_PLAYERS>(s)){
+            for (int s = getPreviousSeat<N_PLAYERS>(turnSeat); s != ownerSeat; s = getPreviousSeat<N_PLAYERS>(s)) {
                 if (field.isAlive(field.getSeatPlayer(s))) distanceToOwner++;
             }
             if (field.isAlive(owner)) distanceToOwner++;
@@ -553,7 +553,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     constexpr int base = FEA_IDX(FEA_MOVE_JOKER_AGAINST_S3);
                     if (mv.isSingleJOKER()) {
                         int key;
-                        if(containsS3(afterCards)) key = base; // 自分でS3を被せられる
+                        if (containsS3(afterCards)) key = base; // 自分でS3を被せられる
                         else if (fieldInfo.isLastAwake() || !containsCard(opsCards, CARDS_S3)) key = base + 1; // safe
                         else key = base + 2; // dangerous
                         Foo(key)
@@ -688,7 +688,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                 Foo(key)
                             }
                         }
-                        if (containsJOKER(afterCards)){
+                        if (containsJOKER(afterCards)) {
                             int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
                                                         RANK_MAX + 2, 0);
                             Foo(key)
@@ -697,7 +697,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     FASSERT(s,);
                     
                     // MOパターン
-                    if(!mv.isSeq()){
+                    if (!mv.isSeq()) {
                         // グループ
                         constexpr int base = FEA_IDX(FEA_GR_MO);
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
@@ -710,16 +710,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                     Foo(key)
                                 }
                             }
-                        }else{
-                            for(int f = RANK_MIN; f <= RANK_MAX; ++f){
+                        } else {
+                            for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
                                 uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
-                                if (os){
+                                if (os) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), os));
                                     Foo(key)
                                 }
                             }
-                            if(containsJOKER(opsCards)){
+                            if (containsJOKER(opsCards)) {
                                 int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
                                                             RANK_MAX + 2, mv.qty());
                                 // suits - suits のパターン数より少ないのでOK
@@ -757,13 +757,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         if (mv.containsJOKER()) FooM(base + 2)
                         else if (mv.domInevitably()) FooM(base + 3)
                         if (mv.isGroup()) FooM(base + 0)
-                        else if(mv.isSeq()) FooM(base + 1)
+                        else if (mv.isSeq()) FooM(base + 1)
                         if (mv.flipsPrmOrder()) FooM(base + 4)
                     } else {
                         const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.isGroup() ? 1 : 0));
                         if (!mv.isPASS()) {
                             if (mv.containsJOKER()) {
-                                if(mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
+                                if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
                                 else FooM(base + 2)
                             } else if (mv.domInevitably()) FooM(base + 3)
                         } else FooM(base + 0)
@@ -787,7 +787,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                   const Cards myCards,
                                   const int NChangeCards,
                                   const field_t& field,
-                                  policy_t& pol){ // learnerとして呼ばれうるため const なし
+                                  policy_t& pol) { // learnerとして呼ばれうるため const なし
         
         using namespace ChangePolicySpace;
         
@@ -803,7 +803,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         
         // インデックス計算用
         //bits256_t myCardsL = bits256_t::zero();
-        //for(int r = 0; r < 4; ++r)myCardsL[r] = pdep64(myCards >> (r * 16), 0x0F0F0F0F);
+        //for (int r = 0; r < 4; ++r)myCardsL[r] = pdep64(myCards >> (r * 16), 0x0F0F0F0F);
         
         //bits256_t ccIndex = bits256_t::zero();
         //bits128_t dstIndex = bits256_t::filled16();
@@ -811,7 +811,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         //typename policy_t::real_t *baseAddress = pol.param_ + FEA_IDX(FEA_CHANGE_CC) + ;
         
         
-        for(int m = 0; m < NChanges; ++m){
+        for (int m = 0; m < NChanges; ++m) {
             
             pol.template initCalculatingCandidateScore();
             
@@ -830,68 +830,68 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 
                 Cards tmp = afterPlainCards;
                 Cards seq3 = polymRanks<3>(tmp);
-                if(seq3){
+                if (seq3) {
                     Cards seq4 = polymRanks<2>(seq3);
-                    if(seq4){
+                    if (seq4) {
                         Cards seq5 = polymRanks<2>(seq4);
-                        if(seq5){
+                        if (seq5) {
                             // 6枚以上の階段も5枚階段と同じパラメータで扱う(ダブルカウントしないように注意)
                             maskCards(&seq4, extractRanks<2>(seq5));
                             maskCards(&seq3, extractRanks<3>(seq5));
                             maskCards(&tmp, extractRanks<5>(seq5));
-                            while(1){
+                            while(1) {
                                 IntCard ic = pickIntCardLow(seq5);
                                 
                                 i = base + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
                                 
                                 maskCards(&seq5, extractRanks<5>(IntCardToCards(ic)));
-                                if(!seq5){ break; }
+                                if (!seq5) { break; }
                             }
                         }
-                        if(seq4){
+                        if (seq4) {
                             maskCards(&tmp, extractRanks<4>(seq4));
                             maskCards(&seq3, extractRanks<2>(seq4));
-                            while(1){
+                            while(1) {
                                 IntCard ic = popIntCard(&seq4);
                                 
                                 i = base + 9 + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
                                 
-                                if(!seq4){ break; }
+                                if (!seq4) { break; }
                             }
                         }
                     }
-                    if(seq3){
+                    if (seq3) {
                         maskCards(&tmp, extractRanks<3>(seq3));
-                        while(1){
+                        while(1) {
                             IntCard ic = popIntCard(&seq3);
                             i = base + 19 + IntCardToRank(ic) - RANK_3;
                             Foo(i);
-                            if(!seq3){ break; }
+                            if (!seq3) { break; }
                         }
                     }
                 }
                 
-                if(tmp){
+                if (tmp) {
                     base += 30 - 4;
                     //CERR << OutCards(tmp);
                     tmp = CardsToPQR(tmp); // 枚数位置型に変換
                     //CERR << OutCards(tmp) << endl; getchar();
-                    while(1){
+                    while(1) {
                         IntCard ic = popIntCard(&tmp);
                         
                         i = base + ic; // 枚数位置型なのでそのままインデックスになる
                         Foo(i);
                         
-                        if(!tmp){break;}
+                        if (!tmp) {break;}
                     }
                 }
             }
             
             { // D3 BONUS
                 constexpr int base = FEA_IDX(FEA_CHANGE_HAND_D3);
-                if(containsCard(afterCards, CARDS_D3)){
+                if (containsCard(afterCards, CARDS_D3)) {
                     i = base;
                     Foo(i);
                 }
@@ -899,15 +899,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             
             { // JOKER_S3 BONUS
                 constexpr int base = FEA_IDX(FEA_CHANGE_HAND_JOKER_S3);
-                if(containsCard(afterCards, CARDS_S3)){
-                    if(containsCard(afterCards, CARDS_JOKER)){ // mine
+                if (containsCard(afterCards, CARDS_S3)) {
+                    if (containsCard(afterCards, CARDS_JOKER)) { // mine
                         i = base;
                         Foo(i);
-                    }else{ // ops
+                    } else { // ops
                         i = base + 1;
                         Foo(i);
                     }
-                }else if(containsCard(afterCards, CARDS_JOKER)){
+                }else if (containsCard(afterCards, CARDS_JOKER)) {
                     i = base + 2;
                     Foo(i);
                 }
@@ -916,9 +916,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             { // MAX, MIN RANK
                 Cards tmpPqr = afterPqr;
                 int hr1;
-                if(containsJOKER(afterCards)){
+                if (containsJOKER(afterCards)) {
                     hr1 = RANK_MAX + 1;
-                }else{
+                } else {
                     IntCard ic = popIntCardHigh(&tmpPqr);
                     hr1 = IntCardToRank(ic);
                 }
@@ -933,12 +933,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             }
             
             { // DOUBLE PRESENT, PART SEQ PRESENT
-                if(NChangeCards == 2){
-                    if(!any2Cards(CardsToER(changePlainCards))){ // 同じ階級のカードをあげる
+                if (NChangeCards == 2) {
+                    if (!any2Cards(CardsToER(changePlainCards))) { // 同じ階級のカードをあげる
                         Foo(FEA_IDX(FEA_CHANGE_DOUBLE));
-                    }else if(polymRanks<2>(changePlainCards)){ // 同じスートの連続した2階級
+                    }else if (polymRanks<2>(changePlainCards)) { // 同じスートの連続した2階級
                         Foo(FEA_IDX(FEA_CHANGE_PART_SEQ));
-                    }else if(polymJump(changePlainCards)){ // 同じスートの1つ飛ばし階級
+                    }else if (polymJump(changePlainCards)) { // 同じスートの1つ飛ばし階級
                         Foo(FEA_IDX(FEA_CHANGE_PART_SEQ) + 1);
                     }
                 }
@@ -947,8 +947,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             { // 2 CARDS
                 constexpr int base = FEA_IDX(FEA_CHANGE_CC);
                 using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
-                if(containsJOKER(changeCards)){
-                    for(int r = RANK_MIN; r <= RANK_MAX; ++r){
+                if (containsJOKER(changeCards)) {
+                    for (int r = RANK_MIN; r <= RANK_MAX; ++r) {
                         FooX(base + Index::get(RANK_MAX + 2, r, (pqr >> (r * 4)) & SUITS_ALL), -1);
                         Foo(base + Index::get(RANK_MAX + 2, r, (afterPqr >> (r * 4)) & SUITS_ALL));
                         // suits - suits のパターン数より少ないのでOK
@@ -963,7 +963,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     unsigned int r4x = IntCardToRank4x(ic);
                     unsigned int rank = r4x / 4;
                     // プレーンカード同士の関係
-                    for(int r = RANK_MIN; r <= RANK_MAX; ++r){
+                    for (int r = RANK_MIN; r <= RANK_MAX; ++r) {
                         FooX(base + Index::get(rank, r, getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL, (myCards >> (r * 4)) & SUITS_ALL)), -1);
                         Foo(base + Index::get(rank, r, getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL, (afterCards >> (r * 4)) & SUITS_ALL)));
                     }
@@ -1050,53 +1050,53 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     }
     template<class cards_t, class field_t, class policy_t, class dice_t>
     int changeWithBestPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                             const field_t& field, const policy_t& pol, dice_t *const pdice){
+                             const field_t& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
         calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
         int bestIndex[N_MAX_CHANGES];
         bestIndex[0] = -1;
         int NBestMoves = 0;
         double bestScore = -DBL_MAX;
-        for(int m = 0; m < NChanges; ++m){
+        for (int m = 0; m < NChanges; ++m) {
             double s = score[m + 1] - score[m];
             //cerr << OutCards(buf[m]) << " : " << log(s) << endl;
-            if(s > bestScore){
+            if (s > bestScore) {
                 bestIndex[0] = m;
                 bestScore = s;
                 NBestMoves = 1;
-            }else if(s == bestScore){
+            }else if (s == bestScore) {
                 bestIndex[NBestMoves] = m;
                 ++NBestMoves;
             }
         }
-        if(NBestMoves <= 1){
+        if (NBestMoves <= 1) {
             return bestIndex[0];
-        }else{
+        } else {
             return bestIndex[pdice->rand() % NBestMoves];
         }
     }
     template<int STOCK = 0, class move_t, class field_t, class policy_t, class dice_t>
-    int playWithBestPolicy(move_t *const buf, const int NMoves, const field_t& field, const policy_t& pol, dice_t *const pdice){
+    int playWithBestPolicy(move_t *const buf, const int NMoves, const field_t& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_MOVES + 1];
         calcPlayPolicyScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
         int bestIndex[N_MAX_MOVES];
         bestIndex[0] = -1;
         int NBestMoves = 0;
         double bestScore = -DBL_MAX;
-        for(int m = 0; m < NMoves; ++m){
+        for (int m = 0; m < NMoves; ++m) {
             double s = score[m];
-            if(s > bestScore){
+            if (s > bestScore) {
                 bestIndex[0] = m;
                 bestScore = s;
                 NBestMoves = 1;
-            }else if(s == bestScore){
+            }else if (s == bestScore) {
                 bestIndex[NBestMoves] = m;
                 ++NBestMoves;
             }
         }
-        if(NBestMoves <= 1){
+        if (NBestMoves <= 1) {
             return bestIndex[0];
-        }else{
+        } else {
             return bestIndex[pdice->rand() % NBestMoves];
         }
     }

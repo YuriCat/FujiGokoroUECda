@@ -207,13 +207,13 @@ namespace UECda {
         template<int IS_NF = _BOTH>
         uint32_t getFlushLeadPlayer() const {
             // 全員パスの際に誰から始まるか
-            if (TRI_BOOL_YES(IS_NF, isNF())) { return getTurnPlayer(); }
+            if (TRI_BOOL_YES(IS_NF, isNF())) return getTurnPlayer();
             uint32_t own = getPMOwner();
             if (!isAlive(own)) { // すでにあがっている
                 // own~tp間のaliveなプレーヤーを探す
                 while (1) {
                     own = getNextSeatPlayer(own);
-                    if (isAlive(own)) { break; }
+                    if (isAlive(own)) break;
                 }
             }
             return own;
@@ -222,19 +222,16 @@ namespace UECda {
             return getSeatPlayer(getNextSeat<N_PLAYERS>(getPlayerSeat(p)));
         }
         void rotateTurnPlayer(uint32_t tp) {
-            do{
+            do {
                 tp = getNextSeatPlayer(tp);
-            }while(!isAwake(tp));
+            } while (!isAwake(tp));
             setTurnPlayer(tp);
         }
         
         void flushTurnPlayer() {
             uint32_t tp = getPMOwner();
-            if (isAlive(tp)) {
-                setTurnPlayer(tp);
-            }else{
-                rotateTurnPlayer(tp);
-            }
+            if (isAlive(tp)) setTurnPlayer(tp);
+            else rotateTurnPlayer(tp);
         }
         
         void setPlayerAsleep(const int p) { ps.setAsleep(p); }
@@ -255,26 +252,30 @@ namespace UECda {
         
         uint32_t searchOpsMinNCards(int pn) const { // 自分以外の最小枚数
             uint32_t nc = N_CARDS;
-            for (int p = 0; p < N_PLAYERS; p++)
-                if (isAlive(p) && p != pn)nc = min(nc, getNCards(p));
+            for (int p = 0; p < N_PLAYERS; p++) {
+                if (isAlive(p) && p != pn) nc = min(nc, getNCards(p));
+            }
             return nc;
         }
         uint32_t searchOpsMinNCardsAwake(int pn) const { // 自分以外のAwakeなプレーヤーの最小枚数
             uint32_t nc = N_CARDS;
-            for (int p = 0; p < N_PLAYERS; p++)
-                if (isAwake(p) && p != pn)nc = min(nc, getNCards(p));
+            for (int p = 0; p < N_PLAYERS; p++) {
+                if (isAwake(p) && p != pn) nc = min(nc, getNCards(p));
+            }
             return nc;
         }
         uint32_t searchOpsMaxNCards(int pn) const { // 自分以外の最大枚数
             uint32_t nc = 0;
-            for (int p = 0; p < N_PLAYERS; p++)
-                if (isAlive(p) && p != pn)nc = max(nc, getNCards(p));
+            for (int p = 0; p < N_PLAYERS; p++) {
+                if (isAlive(p) && p != pn) nc = max(nc, getNCards(p));
+            }
             return nc;
         }
         uint32_t searchOpsMaxNCardsAwake(int pn) const { // 自分以外のAwakeなプレーヤーの最小枚数
             uint32_t nc = 0;
-            for (int p = 0; p < N_PLAYERS; p++)
-                if (isAwake(p) && p != pn)nc = max(nc, getNCards(p));
+            for (int p = 0; p < N_PLAYERS; p++) {
+                if (isAwake(p) && p != pn) nc = max(nc, getNCards(p));
+            }
             return nc;
         }
         
@@ -346,8 +347,8 @@ namespace UECda {
             uint64_t dhash = CardsToHashKey(dc);
             
             // 全体の残り手札の更新
-            addCards(&usedCards[tp], dc);
-            subtrCards(&remCards, dc);
+            usedCards[tp] |= dc;
+            remCards -= dc;
             remQty -= dq;
             remHash ^= dhash;
             
@@ -368,8 +369,8 @@ namespace UECda {
             uint64_t dhash = CardsToHashKey(dc);
             
             // 全体の残り手札の更新
-            addCards(&usedCards[tp], dc);
-            subtrCards(&remCards, dc);
+            usedCards[tp] |= dc;
+            remCards -= dc;
             remQty -= dq;
             remHash ^= dhash;
             
@@ -515,7 +516,7 @@ namespace UECda {
                     
                     addCards(&sum, c);
                     NSum += hand[p].getQty();
-                }else{
+                } else {
                     // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
                     if (hand[p].qty > 0) {
                         cerr << "dead but qty > 0" << endl;
@@ -993,7 +994,7 @@ namespace UECda {
                 dst->hand[p].setHash(myHash);
                 dst->opsHand[p].set(subtrCards(remCards, world.getCards(p)));
                 dst->opsHand[p].setHash(remHash ^ myHash);
-            }else{
+            } else {
                 // alive でないプレーヤーも手札枚数だけセットしておく
                 dst->hand[p].qty = 0;
             }

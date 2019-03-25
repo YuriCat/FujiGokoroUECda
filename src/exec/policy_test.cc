@@ -16,7 +16,7 @@ XorShift64 dice((unsigned int)time(NULL));
 ChangePolicy<policy_value_t> changePolicy;
 PlayPolicy<policy_value_t> playPolicy;
 
-int outputParams(){
+int outputParams() {
     // 方策関数中で気になるパラメータを出力
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_GR_CARDS)
                              + ORDER_NORMAL * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
@@ -47,7 +47,7 @@ int outputParams(){
 }
 
 template<class logs_t>
-int testChangePolicyWithRecord(const logs_t& mLog){
+int testChangePolicyWithRecord(const logs_t& mLog) {
     // 棋譜中の交換との一致率計算
     // 棋譜ファイルは1つのみ受ける(相手が変わる場合には最初からなのでまたこの関数を呼ぶ)
 
@@ -65,7 +65,7 @@ int testChangePolicyWithRecord(const logs_t& mLog){
      [&](const auto& field, int from, int to, Cards ch)->int{ // change callback
          Cards change[N_MAX_CHANGES + 1];
          const int cl = field.getPlayerClass(from);
-         if(cl < MIDDLE){
+         if (cl < MIDDLE) {
              const Cards myCards = field.getCards(from);
              const int changeQty = N_CHANGE_CARDS(cl);
              const int NChanges = genChange(change, myCards, changeQty);
@@ -86,10 +86,10 @@ int testChangePolicyWithRecord(const logs_t& mLog){
      },
      [](const auto& field)->void{}); // last callback
 
-    for(int p = 0; p < N_PLAYERS; ++p){
+    for (int p = 0; p < N_PLAYERS; ++p) {
         cerr << mLog.player(p);
         double sum = 0;
-        for(int i = 0; i < 2; ++i){
+        for (int i = 0; i < 2; ++i) {
             double prob = sameCount[p][i] / (double)trials[p][i];
             cerr << " " << prob << " (" << sameCount[p][i] << " / " << trials[p][i] << ")";
             cerr << " in " << time[p][i] / (double)trials[p][i] << " clock";
@@ -103,7 +103,7 @@ int testChangePolicyWithRecord(const logs_t& mLog){
 }
 
 template<class logs_t>
-int testPlayPolicyWithRecord(const logs_t& mLog){
+int testPlayPolicyWithRecord(const logs_t& mLog) {
     // 棋譜中の役提出との一致率計算
     int sameCount[N_PLAYERS] = {0};
     int trials[N_PLAYERS] = {0};
@@ -133,7 +133,7 @@ int testPlayPolicyWithRecord(const logs_t& mLog){
      },
      [](const auto& field)->void{}); // last callback
     
-    for(int p = 0; p < N_PLAYERS; ++p){
+    for (int p = 0; p < N_PLAYERS; ++p) {
         cerr << mLog.player(p);
         double prob = sameCount[p] / (double)trials[p];
         cerr << " " << prob << " (" << sameCount[p] << " / " << trials[p] << ")";
@@ -143,7 +143,7 @@ int testPlayPolicyWithRecord(const logs_t& mLog){
 }
 
 template<class logs_t>
-int testSelector(const logs_t& mLog){
+int testSelector(const logs_t& mLog) {
     // 方策の最終段階の実験
     double sameProb[4][7][5] = {0}; // 確率ベースでの一致率
     double entropy[4][7][5] = {0}; // 方策エントロピー
@@ -167,7 +167,7 @@ int testSelector(const logs_t& mLog){
          int recordIndex = searchMove(play, moves, MoveInfo(pl));
          
          // ここから条件を少しずつ変更
-         for(int i = 0; i < 7; ++i){
+         for (int i = 0; i < 7; ++i) {
              {
                  // softmax
                  double tscore[N_MAX_MOVES];
@@ -177,12 +177,12 @@ int testSelector(const logs_t& mLog){
                  
                  SoftmaxSelector selector(tscore, moves, temp);
                  selector.to_prob();
-                 if(recordIndex >= 0){
+                 if (recordIndex >= 0) {
                      sameProb[0][i][0] += selector.prob(recordIndex);
                  }
                  entropy[0][i][0] += selector.entropy();
              }
-             for(int j = 0; j < 5; ++j){
+             for (int j = 0; j < 5; ++j) {
                  {
                      // truncated
                      double tscore[N_MAX_MOVES];
@@ -194,7 +194,7 @@ int testSelector(const logs_t& mLog){
                      ThresholdSoftmaxSelector selector(tscore, moves, temp, threshold);
                      selector.cut();
                      selector.to_prob();
-                     if(recordIndex >= 0){
+                     if (recordIndex >= 0) {
                          sameProb[1][i][j] += selector.prob(recordIndex);
                      }
                      entropy[1][i][j] += selector.entropy();
@@ -212,7 +212,7 @@ int testSelector(const logs_t& mLog){
                      selector.amplify();
                      selector.to_prob();
                      
-                     if(recordIndex >= 0){
+                     if (recordIndex >= 0) {
                          sameProb[2][i][j] += selector.prob(recordIndex);
                      }
                      entropy[2][i][j] += selector.entropy();
@@ -231,7 +231,7 @@ int testSelector(const logs_t& mLog){
                      selector.amplify();
                      selector.to_prob();
                      
-                     if(recordIndex >= 0){
+                     if (recordIndex >= 0) {
                          sameProb[3][i][j] += selector.prob(recordIndex);
                      }
                      entropy[3][i][j] += selector.entropy();
@@ -244,35 +244,35 @@ int testSelector(const logs_t& mLog){
      [](const auto& field)->void{}); // last callback
     
     cerr << "Softmax Selector" << endl;
-    for(int i = 0; i < 7; ++i){
+    for (int i = 0; i < 7; ++i) {
         cerr << "(" << sameProb[0][i][0] / trials << ", " << entropy[0][i][0] / trials << ") " << endl;
     }
     cerr << "Truncated Softmax Selector" << endl;
-    for(int i = 0; i < 7; ++i){
-        for(int j = 0; j < 5; ++j){
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 5; ++j) {
             cerr << "(" << sameProb[1][i][j] / trials << ", " << entropy[1][i][j] / trials << ") ";
         }cerr << endl;
     }
     cerr << "Polynomially Biased Softmax Selector" << endl;
-    for(int i = 0; i < 7; ++i){
-        for(int j = 0; j < 5; ++j){
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 5; ++j) {
             cerr << "(" << sameProb[2][i][j] / trials << ", " << entropy[2][i][j] / trials << ") ";
         }cerr << endl;
     }
     cerr << "Exponentially Biased Softmax Selector" << endl;
-    for(int i = 0; i < 7; ++i){
-        for(int j = 0; j < 5; ++j){
+    for (int i = 0; i < 7; ++i) {
+        for (int j = 0; j < 5; ++j) {
             cerr << "(" << sameProb[3][i][j] / trials << ", " << entropy[3][i][j] / trials << ") ";
         }cerr << endl;
     }
     return 0;
 }
 
-/*int testPlayPolicyDiff(){
+/*int testPlayPolicyDiff() {
     // policy の計算において差分計算部分が計算出来ているか確認
-    for(int m = 0; m < mLogs.matches(); ++m){
+    for (int m = 0; m < mLogs.matches(); ++m) {
         const auto& mLog = mLogs.match(m);
-        for(int g = 0; g < mLog.games(); ++g){
+        for (int g = 0; g < mLog.games(); ++g) {
             const auto& gLog = mLog.game(g);
             iterateGameLogAfterChange<PlayouterField>
             (gLog,
@@ -286,9 +286,9 @@ int testSelector(const logs_t& mLog){
                      
                      Cards p = change[index];
                      
-                     if(ch == p){
+                     if (ch == p) {
                          result[cl][0] += 1;
-                     }else{
+                     } else {
                          result[cl][1] += 1;
                          
                          cerr << OutCards(myCards) << " -> ";
@@ -304,22 +304,22 @@ int testSelector(const logs_t& mLog){
     
 }*/
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     {
         std::ifstream ifs("blauweregen_config.txt");
-        if(ifs){ ifs >> DIRECTORY_PARAMS_IN; }
-        if(ifs){ ifs >> DIRECTORY_PARAMS_OUT; }
-        if(ifs){ ifs >> DIRECTORY_LOGS; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
+        if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     std::vector<std::string> logFileNames;
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-i")){ // input directory
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-l")){ // log path
+        }else if (!strcmp(argv[c], "-l")) { // log path
             logFileNames.push_back(std::string(argv[c + 1]));
-        }else if(!strcmp(argv[c], "-ld")){ // log directory path
+        }else if (!strcmp(argv[c], "-ld")) { // log directory path
             std::vector<std::string> tmpLogFileNames = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
             logFileNames.insert(logFileNames.end(), tmpLogFileNames.begin(), tmpLogFileNames.end());
         }
@@ -330,7 +330,7 @@ int main(int argc, char* argv[]){
     
     outputParams();
     
-    for(const std::string& log : logFileNames){
+    for (const std::string& log : logFileNames) {
         MinMatchLog<MinGameLog<MinPlayLog>> mLog(log);
         
         testChangePolicyWithRecord(mLog);

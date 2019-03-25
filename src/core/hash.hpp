@@ -31,7 +31,7 @@ namespace UECda {
         0x29bf249af2b02a7b, 0xc64ed74ce9ea7c77, 0xc05774752bed93f3, 0x5fc31db82af16d07,
     };
     
-    uint64_t IntCardToHashKey(IntCard ic){
+    uint64_t IntCardToHashKey(IntCard ic) {
         assert(0 <= ic && ic < 64);
         return cardsHashKeyTable[ic];
     }
@@ -55,7 +55,7 @@ namespace UECda {
     uint64_t CardsToHashKey(Cards c) {
         // Cards型一般
         uint64_t key = HASH_CARDS_NULL;
-        while(anyCards(c)){
+        while(anyCards(c)) {
             key ^= IntCardToHashKey(popIntCardLow(&c));
         }
         return key;
@@ -64,7 +64,7 @@ namespace UECda {
     uint64_t OtherCardsToHashKey(Cards c) {
         // Cards型、全体から引いたもの
         uint64_t key = HASH_CARDS_ALL;
-        while(anyCards(c)){
+        while(anyCards(c)) {
             key ^= IntCardToHashKey(popIntCardLow(&c));
         }
         return key;
@@ -75,30 +75,30 @@ namespace UECda {
     // 交換不可能なもの
     
     // 支配保証判定など、複数のカード集合間に成立する関係を保存する場合に使うかも
-    uint64_t CardsCardsToHashKey(Cards c0, Cards c1){
+    uint64_t CardsCardsToHashKey(Cards c0, Cards c1) {
         return crossBits64(CardsToHashKey(c0), CardsToHashKey(c1));
     }
     
-    uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1){
+    uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
         return crossBits64(key0, key1);
     }
     
     template<int N>
-    uint64_t CardsArrayToHashKey(const Cards c[]){
+    uint64_t CardsArrayToHashKey(const Cards c[]) {
         uint64_t hash_c[N];
-        for(int n = 0; n < N; ++n){
+        for (int n = 0; n < N; ++n) {
             hash_c[n] = CardsToHashKey(c[n]);
         }
         return crossBits64<N>(hash_c);
     }
     
     template<int N>
-    uint64_t knitCardsArrayHashKey(const Cards hash_c[]){
+    uint64_t knitCardsArrayHashKey(const Cards hash_c[]) {
         return crossBits64<N>(hash_c);
     }
     
     template<int N>
-    uint64_t procCardsArrayHashKey(const uint64_t okey, const int n, const uint64_t dkey){
+    uint64_t procCardsArrayHashKey(const uint64_t okey, const int n, const uint64_t dkey) {
         return procCrossedHash<N>(okey, n, dkey);
     }
     
@@ -111,11 +111,11 @@ namespace UECda {
     
     // 空場
     // 空場のときは、場の変数はオーダー関連だけである事が多いのでそのまま
-    constexpr uint64_t NullBoardToHashKey(Board bd){
+    constexpr uint64_t NullBoardToHashKey(Board bd) {
         return (uint64_t)bd;
     }
     constexpr uint64_t NullStateToHashKey(uint64_t aliveKey, uint64_t fullAwakeKey,
-                                          PlayersState ps, int ntp){
+                                          PlayersState ps, int ntp) {
         return aliveKey ^ fullAwakeKey ^ ntp;
     }
     
@@ -131,34 +131,34 @@ namespace UECda {
         0x237395283fc3e25a, 0x56564d4dda42ec2a, 0x7786549ce8365630, 0x0e338bf62ab5547e,
     };
     
-    uint64_t BoardToHashKey(Board bd){
+    uint64_t BoardToHashKey(Board bd) {
         return (uint32_t)bd & (MOVE_FLAG_CHARA | MOVE_FLAG_STATUS);
     }
-    uint64_t StateToAliveHashKey(PlayersState ps){
+    uint64_t StateToAliveHashKey(PlayersState ps) {
         uint64_t key = 0;
-        for(int p = 0; p < N_PLAYERS; ++p){
-            if(!ps.isAlive(p))key ^= deadHashKeyTable[p];
+        for (int p = 0; p < N_PLAYERS; ++p) {
+            if (!ps.isAlive(p))key ^= deadHashKeyTable[p];
         }
         return key;
     }
-    uint64_t StateToFullAwakeHashKey(PlayersState ps){
+    uint64_t StateToFullAwakeHashKey(PlayersState ps) {
         uint64_t key = 0;
-        for(int p = 0; p < N_PLAYERS; ++p){
-            if(ps.isAlive(p))key ^= awakeHashKeyTable[p];
+        for (int p = 0; p < N_PLAYERS; ++p) {
+            if (ps.isAlive(p))key ^= awakeHashKeyTable[p];
         }
         return key;
     }
-    uint64_t StateToHashKey(uint64_t aliveKey, PlayersState ps, int ntp){
+    uint64_t StateToHashKey(uint64_t aliveKey, PlayersState ps, int ntp) {
         uint64_t key = aliveKey;
-        for(int p = 0; p < N_PLAYERS; ++p){
-            if(ps.isAwake(p))key ^= awakeHashKeyTable[p];
+        for (int p = 0; p < N_PLAYERS; ++p) {
+            if (ps.isAwake(p))key ^= awakeHashKeyTable[p];
         }
         return key ^ ntp;
     }
-    uint64_t procStateHashKeyNonPass(uint64_t okey, int p, int ntp){
+    uint64_t procStateHashKeyNonPass(uint64_t okey, int p, int ntp) {
         return okey ^ p ^ ntp;
     }
-    uint64_t procStateHashKeyPass(uint64_t okey, int p, int ntp){
+    uint64_t procStateHashKeyPass(uint64_t okey, int p, int ntp) {
         assert(0 <= p && p < N_PLAYERS);
         return okey ^ awakeHashKeyTable[p] ^ p ^ ntp;
     }
@@ -175,10 +175,10 @@ namespace UECda {
     
     // N を対象人数とする
     template<int N, class callback_t>
-    uint64_t NumCardsToHashKey(const callback_t& callback){
+    uint64_t NumCardsToHashKey(const callback_t& callback) {
         // callbackはプレーヤー番号を引数にとって手札枚数を返す関数
         uint64_t key = 0ULL;
-        for(int p = 0; p < N; ++p){
+        for (int p = 0; p < N; ++p) {
             int nc = callback(p);
             ASSERT(0 <= nc && nc < 16, cerr << nc << endl;);
             key |= numCardsHashHeyTable[nc] & genCrossNumber<N>(p);
@@ -187,7 +187,7 @@ namespace UECda {
     }
     
     template<int N>
-    uint64_t procNumCardsHashKey(uint64_t hash, int p, uint32_t new_nc){
+    uint64_t procNumCardsHashKey(uint64_t hash, int p, uint32_t new_nc) {
         ASSERT(0 <= new_nc && new_nc < 16, cerr << new_nc << endl;);
         ASSERT(0 <= p && p < N, cerr << p << "(" << N << ")" << endl;);
         const uint64_t mask = genCrossNumber<N>(p);
@@ -205,12 +205,12 @@ namespace UECda {
         0x9a257a985d22921b, 0xe8237fa57f5d50ed,
     };
     
-    uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd){
+    uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
         return CardsCardsToHashKey(c0, c1) ^ NullBoardToHashKey(bd);
     }
     
     // すでにハッシュ値が部分的に計算されている場合
-    uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey){
+    uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
         return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
     }
     
@@ -223,25 +223,25 @@ namespace UECda {
 
     // すでにハッシュ値が部分的に計算されている場合
     constexpr uint64_t knitHash_L3CI_NF(uint64_t h0, uint64_t h1, uint64_t h2,
-                                        Board bd){
+                                        Board bd) {
         return crossHash(h0, h1, h2) ^ NullBoardToHashKey(bd);
     }
     
     constexpr uint64_t knitHash_L4CI_NF(uint64_t h0, uint64_t h1,
                                         uint64_t h2, uint64_t h3,
-                                        Board bd){
+                                        Board bd) {
         return crossHash(h0, h1, h2, h3) ^ NullBoardToHashKey(bd);
     }
     
     constexpr uint64_t knitHash_L5CI_NF(uint64_t h0, uint64_t h1, uint64_t h2,
                                         uint64_t h3, uint64_t h4,
-                                        Board bd){
+                                        Board bd) {
         return crossHash(h0, h1, h2, h3, h4) ^ NullBoardToHashKey(bd);
     }
     
     
     template<int N>
-    uint64_t knitHash_LnCI(const uint64_t hash_c[], uint64_t hash_bd){
+    uint64_t knitHash_LnCI(const uint64_t hash_c[], uint64_t hash_bd) {
         return crossHash<N>(hash_c) ^ hash_bd;
     }
     
@@ -262,15 +262,15 @@ namespace UECda {
     // 後退情報
     constexpr uint64_t knitHash_RetInfo(uint64_t hash_mine,
                                         uint64_t hash_ops,
-                                        uint64_t hash_ncards){
+                                        uint64_t hash_ncards) {
         return crossHash(hash_mine, hash_ops) ^ hash_ncards;
     }
     
-    /*uint64_t procHash_RetInfo_myCards( uint64_t hash, uint64_t hash_mine ){
+    /*uint64_t procHash_RetInfo_myCards( uint64_t hash, uint64_t hash_mine ) {
      return hash ^ (hash_mine&genCrossNumber<2>(0));
      }
      
-     uint64_t procHash_RetInfo_opsCards( uint64_t hash, uint64_t hash_ops ){
+     uint64_t procHash_RetInfo_opsCards( uint64_t hash, uint64_t hash_ops ) {
      return hash ^ (hash_ops&genCrossNumber<2>(1));
      }
      */
@@ -278,7 +278,7 @@ namespace UECda {
     
     
     /*
-     uint64_t genHash_RetField(Cards mine,Cards ops,Board bd){
+     uint64_t genHash_RetField(Cards mine,Cards ops,Board bd) {
      //最も単純なもの
      return crossHash(genHash_Cards(mine),genHash_Cards(ops))^genHash_Board(bd);
      }
@@ -287,12 +287,12 @@ namespace UECda {
     constexpr uint64_t knitRetFieldHashKey(uint64_t hash_mine,
                                            uint64_t hash_ops,
                                            uint64_t hash_ncards,
-                                           uint64_t hash_bd){
+                                           uint64_t hash_bd) {
         return crossHash(hash_mine, hash_ops) ^ hash_ncards ^ hash_bd;
     }
     
     constexpr uint64_t knitRetFieldHashKey(uint64_t hash_ri,
-                                           uint64_t hash_bd){
+                                           uint64_t hash_bd) {
         return hash_ri ^ hash_bd;
     }
     
@@ -320,7 +320,7 @@ namespace UECda {
     // 場
     
     /*template<int N>
-     uint64_t genHash_LnSbjProField_NF(Cards myOrg,Cards used[],Board bd){
+     uint64_t genHash_LnSbjProField_NF(Cards myOrg,Cards used[],Board bd) {
      //最も単純なもの
      return genHash_Cards(myOrg) ^ crossHash(genHash_nCards<N>(used)) ^ genHash_Board_NF(bd);
      }
@@ -328,13 +328,13 @@ namespace UECda {
     
     constexpr uint64_t knitLnSbjProFieldHashKey(uint64_t hash_org,
                                                 uint64_t hash_used,
-                                                uint64_t hash_bd){
+                                                uint64_t hash_bd) {
         // 最も単純なもの
         return hash_org ^ hash_used ^ hash_bd;
     }
     /*
      template<int N>
-     uint64_t procHash_LnSbjProField(uint64_t hash,int p,Cards c,Board lastB,Board newB){
+     uint64_t procHash_LnSbjProField(uint64_t hash,int p,Cards c,Board lastB,Board newB) {
      // 進行
      assert(0 <= p && p < N);
      return hash^(genHash_Cards(c) & genCrossNumber<N>(p)) ^ genHash_Board(lastB) ^ genHash_Board(newB);

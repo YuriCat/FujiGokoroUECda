@@ -44,13 +44,13 @@ namespace UECda {
             MoveInfo buf[1024];
             const int NMoves = genMove(buf, field.getMyCards(), field.getBoard());
             
-            for(int i = 0; i < NMoves; ++i) {
+            for (int i = 0; i < NMoves; ++i) {
                 CERR << i << " : " << buf[i] << endl;
             }
             MoveInfo mv;
-            if(NMoves == 1 && buf[0].isPASS()) {
+            if (NMoves == 1 && buf[0].isPASS()) {
                 mv = buf[0];
-            }else{
+            } else {
                 mv = buf[dice.rand() % NMoves];
             }
             CERR << mv << " by " << OutCards(field.getMyCards()) << endl;
@@ -71,13 +71,13 @@ namespace UECda {
             Cards cand[N_MAX_CHANGES]; // 最大候補数
             const int NCands = genChange(cand, myCards, change_qty);
             
-            for(int i = 0; i < NCands; ++i) {
+            for (int i = 0; i < NCands; ++i) {
                 cerr << i << " : " << OutCards(cand[i]) << endl;
             }
             int chosen = -1;
             while(1) {
                 std::cin >> chosen;
-                if(0 <= chosen && chosen < NCands) { break; }
+                if (0 <= chosen && chosen < NCands) { break; }
             }
             return cand[chosen];
         }
@@ -86,11 +86,11 @@ namespace UECda {
             MoveInfo buf[512];
             const int NMoves = genMove(buf, field.getMyCards(), field.getBoard());
             
-            for(int i = 0; i < NMoves; ++i) {
+            for (int i = 0; i < NMoves; ++i) {
                 cerr << i << " : " << buf[i] << endl;
             }
             
-            if(NMoves == 1 && buf[0].isPASS()) {
+            if (NMoves == 1 && buf[0].isPASS()) {
                 cerr << "forced pass." << endl;
                 return MOVE_PASS;
             }
@@ -98,7 +98,7 @@ namespace UECda {
             int chosen = -1;
             while(1) {
                 std::cin >> chosen;
-                if(0 <= chosen && chosen < NMoves) { break; }
+                if (0 <= chosen && chosen < NMoves) { break; }
             }
             return buf[chosen].mv();
         }

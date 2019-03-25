@@ -304,8 +304,8 @@ namespace UECda {
                  }
                  }*/
                 if (containsJOKER()) {
-                    subtrCards(&res, Rank4xSuitsToCards(jokerRank4x(), s));
-                    addJOKER(&res);
+                    res -= Rank4xSuitsToCards(jokerRank4x(), s);
+                    res |= CARDS_JOKER;
                 }
             }
             //tock();

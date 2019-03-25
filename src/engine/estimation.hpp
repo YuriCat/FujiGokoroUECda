@@ -161,8 +161,7 @@ namespace UECda {
                 // 自分の分だけは実際のものにする
                 ana.start();
                 DERR << "START DEAL-RAND" << endl << OutCards(distCards) << endl;
-                std::array<Cards, N> tmp;
-                tmp.fill(CARDS_NULL);
+                BitCards tmp[N] = {0};
                 tmp[myClass] = myCards;
                 Cards dCards = maskCards(remCards, myCards);
                 BitArray32<4, N> tmpNOwn = NOwn;
@@ -170,7 +169,7 @@ namespace UECda {
                 ASSERT(tmpNOwn.sum() == countCards(dCards),
                        cerr << "tmpNOwn = " << tmpNOwn << endl;
                        cerr << "distributedCards = " << OutCards(dCards) << "(" << countCards(dCards) << ")" << endl;);
-                dist64<N>(tmp.data(), dCards, tmpNOwn, pdice);
+                dist64<N>(tmp, dCards, tmpNOwn, pdice);
                 for (int r = 0; r < N; r++) {
                     dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
                 }
@@ -184,10 +183,10 @@ namespace UECda {
                 // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
                 ana.start();
                 DERR << "START DEAL-ABSSBJ" << endl << OutCards(distCards) << endl;
-                std::array<Cards, N> tmp = detCards;
-                dist64<N>(tmp.data(), distCards, NDeal, pdice);
+                BitCards tmp[N] = {0};
+                dist64<N>(tmp, distCards, NDeal, pdice);
                 for (int r = 0; r < N; r++) {
-                    dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
+                    dst[infoClassPlayer[r]] = detCards[r] | andCards(remCards, tmp[r]);
                 }
                 checkDeal(dst);
                 DERR << "END DEAL-ABSSBJ" << endl;
@@ -336,7 +335,7 @@ namespace UECda {
                         NOwn.assign(p, own);
                         NOrg.assign(p, org);
                         NDet.assign(p, org - own);
-                        addCards(&detCards[p], field.getUsedCards(p)); // 既に使用されたカードは確定
+                        detCards[p] |= field.getUsedCards(p); // 既に使用されたカードは確定
                     }
                     firstTurnPlayerClass = field.getFirstTurnPlayer();
                 } else {
@@ -368,7 +367,7 @@ namespace UECda {
                         NOwn.assign(r, own);
                         NOrg.assign(r, org);
                         NDet.assign(r, org - own);
-                        addCards(&detCards[r], field.getUsedCards(p)); // 既に使用されたカードは確定
+                        detCards[r] |= field.getUsedCards(p); // 既に使用されたカードは確定
                     }
                     // 交換中でなく、カード交換に関与した場合
                     if (!phase.isInChange() && myClass != MIDDLE) {
@@ -489,9 +488,9 @@ namespace UECda {
                 
                 if (flag.test(0)) {
                     // 初期化ゲームではとりあえずランダム
-                    std::array<Cards, N> tmp = detCards;
-                    dist64<N>(tmp.data(), distCards, NDeal, pdice);
-                    for (auto p = 0; p < N; p++) dst[p] = andCards(remCards, tmp[p]);
+                    BitCards tmp[N] = {0};
+                    dist64<N>(tmp, distCards, NDeal, pdice);
+                    for (auto p = 0; p < N; p++) dst[p] = detCards[p] | andCards(remCards, tmp[p]);
                     return 0;
                 }
                 if (flag.test(1)) {
@@ -518,9 +517,8 @@ namespace UECda {
                 switch (myClass) {
                     case DAIFUGO:
                     {
-                        Cards R1_R3, R1, R2, R3, R4;
-                        Cards R1_R3Rest;
-                        Cards c;
+                        BitCards R1_R3, R1, R2, R3, R4, R1_R3Rest;
+
                         while (trials++ <= MAX_REJECTION) {
                             // セットされたウェイトに従って大貧民に分配
                             R4 = detCards[DAIHINMIN];
@@ -551,7 +549,7 @@ namespace UECda {
                             R1 = CARDS_NULL;
                             R3 = CARDS_NULL;
                             if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                            c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
+                            Cards c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
                             if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue;
                             R1 -= c;
                             R3 |= c;
@@ -570,9 +568,8 @@ namespace UECda {
                     break;
                     case FUGO:
                     {
-                        Cards R0_R4, R0, R2, R3, R4;
-                        Cards R0_R4Rest;
-                        Cards c;
+                        BitCards R0_R4, R0, R2, R3, R4, R0_R4Rest;
+
                         while (trials++ <= MAX_REJECTION) {
                             // セットされたウェイトに従って貧民に分配
                             R3 = detCards[HINMIN];
@@ -601,8 +598,7 @@ namespace UECda {
                             // 大富豪-大貧民系
                             R0 = CARDS_NULL; R4 = CARDS_NULL;
                             if (!dist2Rest_64<2>(&R0_R4Rest, &R0, &R4, R0_R4, NOrg[0], NOrg[4], detCards[0], detCards[4], pdice)) continue;
-                            
-                            c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
+                            Cards c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
                             if (!holdsCards(c, R0_R4Rest) || (c & detCards[DAIFUGO])) continue;
                             R0 -= c;
                             R4 |= c;
@@ -621,10 +617,8 @@ namespace UECda {
                     break;
                     case HEIMIN:
                     {
-                        Cards R0_R4, R1_R3, R0, R1, R3, R4;
-                        Cards c;
-                        Cards R0_R4Rest, R1_R3Rest;
-                        
+                        BitCards R0_R4, R1_R3, R0, R1, R3, R4, R0_R4Rest, R1_R3Rest;
+
                         while (trials++ <= MAX_REJECTION) {
                             // カードを大富豪-大貧民系と富豪-貧民系に分ける
                             R0_R4 = CARDS_NULL; R1_R3 = CARDS_NULL;
@@ -633,7 +627,7 @@ namespace UECda {
                             // 富豪-貧民系
                             R1 = CARDS_NULL;R3 = CARDS_NULL;
                             if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                            c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
+                            Cards c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
                             if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue;
                             R1 -= c;
                             R3 |= c;
@@ -667,9 +661,8 @@ namespace UECda {
                     break;
                     case HINMIN:
                     {
-                        Cards R0_R2_R4, R0_R4, R0, R1, R2, R4;
-                        Cards R0_R4Rest;
-                        Cards c;
+                        BitCards R0_R2_R4, R0_R4, R0, R1, R2, R4, R0_R4Rest;
+
                         while (trials++ <= MAX_REJECTION) {
                             // カードを大富豪-大貧民系と富豪と平民に分ける
                             R1 = detCards[FUGO] | recvCards;
@@ -677,7 +670,7 @@ namespace UECda {
                                 R0_R2_R4 = CARDS_NULL;
                                 dist2_64(&R0_R2_R4, &R1, distCards, NDeal[0] + NDeal[2] + NDeal[4], NDeal[1], pdice);
                                 // 富豪の交換が実際に沿うか検証
-                                c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
+                                Cards c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
                                 if (!holdsCards(detCards[3], c)) continue; // 矛盾
                                 R1 -= c;
                             } else {
@@ -697,7 +690,7 @@ namespace UECda {
                             // 大富豪-大貧民系
                             R0 = CARDS_NULL; R4 = CARDS_NULL;
                             if (!dist2Rest_64<2>(&R0_R4Rest, &R0, &R4, R0_R4, NOrg[0], NOrg[4], detCards[0], detCards[4], pdice)) continue;
-                            c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
+                            Cards c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
                             if (!holdsCards(c, R0_R4Rest) || (c & detCards[DAIFUGO])) continue; // 矛盾
                             R0 -= c;
                             R4 |= c;
@@ -717,9 +710,7 @@ namespace UECda {
                     break;
                     case DAIHINMIN:
                     {
-                        Cards R1_R2_R3, R1_R3, R0, R1, R2, R3;
-                        Cards R1_R3Rest;
-                        Cards c;
+                        BitCards R1_R2_R3, R1_R3, R0, R1, R2, R3, R1_R3Rest;
                         
                         while (trials++ <= MAX_REJECTION) {
                             // カードを富豪-貧民系と大富豪と平民に分ける
@@ -728,7 +719,7 @@ namespace UECda {
                                 R1_R2_R3 = CARDS_NULL;
                                 dist2_64(&R1_R2_R3, &R0, distCards, NDeal[1] + NDeal[2] + NDeal[3], NDeal[0], pdice);
                                 // 大富豪の交換が実際に沿うか検証
-                                c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
+                                Cards c = change<2>(infoClassPlayer[DAIFUGO], R0, shared, ptools);
                                 if (!holdsCards(detCards[DAIHINMIN], c)) continue; // 矛盾
                                 R0 -= c;
                             } else {
@@ -748,7 +739,7 @@ namespace UECda {
                             // 富豪-貧民系
                             R1 = CARDS_NULL; R3 = CARDS_NULL;
                             if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                            c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
+                            Cards c = change<1>(infoClassPlayer[FUGO], R1, shared, ptools);
                             if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue; // 矛盾
                             R1 -= c;
                             R3 |= c;
@@ -906,30 +897,29 @@ namespace UECda {
                 distCards = maskCards(remCards, myCards);
                 
                 // 自分
-                addCards(&detCards[myClass], myCards);
+                detCards[myClass] |= myCards;
                 NDeal.assign(myClass, 0);
                 NDet.assign_part(myClass, NOrg);
                 
                 // 初手がすでに済んでいる場合、初手プレーヤーにD3
                 if (!phase.isInChange()
                     && turnNum > 0
-                    && containsD3(distCards)) {
-                    addCards(&detCards[firstTurnPlayerClass], CARDS_D3);
-                    subtrCards(&distCards, CARDS_D3);
+                    && distCards.contains(INTCARD_D3)) {
+                    detCards[firstTurnPlayerClass] |= CARDS_D3;
+                    distCards -= CARDS_D3;
                     NDeal.minus(firstTurnPlayerClass, 1);
                     NDet.plus(firstTurnPlayerClass, 1);
                 }
-                if (!flag.test(0)
-                    && !phase.isInChange()) {
+                if (!flag.test(0) && !phase.isInChange()) {
                     if (myClass < MIDDLE) { // 自分が上位のとき
                         // 交換であげたカードのうちまだ確定扱いでないもの
                         if (!phase.isInChange()) { // 交換時はまだ不明
-                            Cards sCards = andCards(distCards, sentCards);
+                            Cards sCards = distCards & sentCards;
                             if (sCards) {
                                 int nc = countCards(sCards);
                                 int myChangePartnerClass = getChangePartnerClass(myClass);
-                                addCards(&detCards[myChangePartnerClass], sCards);
-                                subtrCards(&distCards, sCards);
+                                detCards[myChangePartnerClass] |= sCards;
+                                distCards -= sCards;
                                 NDeal.minus(myChangePartnerClass, nc);
                                 NDet.plus(myChangePartnerClass, nc);
                             }

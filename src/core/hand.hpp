@@ -26,7 +26,7 @@ namespace UECda {
         Cards p8; // ランク重合型(一つ飛んだランク)
         Cards seq; // 3枚階段型
         
-        BitArray64<4, 16> qr; // ランク枚数型
+        CardArray qr; // ランク枚数型
         Cards pqr; // ランク枚数位置型
         Cards sc; // 圧縮型
         Cards nd[2]; // 無支配型(通常、革命)
@@ -50,7 +50,7 @@ namespace UECda {
         constexpr operator Cards() const { return cards; }
         
         Cards getCards() const { return cards; }
-        BitArray64<4, 16> getQR() const { return qr; }
+        CardArray getQR() const { return qr; }
         Cards getSeq() const { return seq; }
         uint32_t getQty() const { return qty; }
         uint64_t getHash() const { return hash; }
@@ -191,7 +191,7 @@ namespace UECda {
             uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
             uint32_t r4x = mv.rank4x();
             
-            subtrCards(&cards, dc); // 通常型は引けば良い
+            cards -= dc; // 通常型は引けば良い
             qty -= dq; // 枚数進行
             jk -= djk; // ジョーカー枚数進行
             
@@ -268,7 +268,7 @@ namespace UECda {
             uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
             uint32_t r4x = mv.rank4x();
             
-            subtrCards(&cards, dc); // 通常型は引けば良い
+            cards -= dc; // 通常型は引けば良い
             qty -= dq; // 枚数進行
             jk -= djk; // ジョーカー枚数進行
             
@@ -628,7 +628,7 @@ namespace UECda {
                     return false;
                 } // 枚数型があってない
             }
-            if (qr & (~CARDS_ALL)) {
+            if (qr & ~CARDS_ALL) {
                 cerr << "Hand : exam_qr()" << OutCards(cards) << " -> " << BitArray64<4>(qr) << endl;
                 return false;
             }
@@ -746,11 +746,11 @@ namespace UECda {
             oss << "qty = " << getQty() << endl;
             oss << "jk = " << getJKQty() << endl;
             oss << "seq = " << OutCards(getSeq()) << endl;
-            oss << "qr = " << BitArray64<4, 16>(getQR()) << endl;
-            oss << "pqr = " << BitArray64<4, 16>(getPQR()) << endl;
-            oss << "sc = " << BitArray64<4, 16>(getSC()) << endl;
-            oss << "nd[0] = " << BitArray64<4, 16>(getND(0)) << endl;
-            oss << "nd[1] = " << BitArray64<4, 16>(getND(1)) << endl;
+            oss << "qr = " << CardArray(getQR()) << endl;
+            oss << "pqr = " << CardArray(getPQR()) << endl;
+            oss << "sc = " << CardArray(getSC()) << endl;
+            oss << "nd[0] = " << CardArray(getND(0)) << endl;
+            oss << "nd[1] = " << CardArray(getND(1)) << endl;
             oss << std::hex << getHash() << std::dec << endl;
             
             oss << "correct data : " << endl;
@@ -759,11 +759,11 @@ namespace UECda {
             oss << "qty = " << tmpHand.getQty() << endl;
             oss << "jk = " << tmpHand.getJKQty() << endl;
             oss << "seq = " << OutCards(tmpHand.getSeq()) << endl;
-            oss << "qr = " << BitArray64<4, 16>(tmpHand.getQR()) << endl;
-            oss << "pqr = " << BitArray64<4, 16>(tmpHand.getPQR()) << endl;
-            oss << "sc = " << BitArray64<4, 16>(tmpHand.getSC()) << endl;
-            oss << "nd[0] = " << BitArray64<4, 16>(tmpHand.getND(0)) << endl;
-            oss << "nd[1] = " << BitArray64<4, 16>(tmpHand.getND(1)) << endl;
+            oss << "qr = " << CardArray(tmpHand.getQR()) << endl;
+            oss << "pqr = " << CardArray(tmpHand.getPQR()) << endl;
+            oss << "sc = " << CardArray(tmpHand.getSC()) << endl;
+            oss << "nd[0] = " << CardArray(tmpHand.getND(0)) << endl;
+            oss << "nd[1] = " << CardArray(tmpHand.getND(1)) << endl;
             oss << std::hex << tmpHand.getHash() << std::dec << endl;
             
             return oss.str();

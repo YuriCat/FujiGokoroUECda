@@ -7,7 +7,7 @@
 namespace UECda{
 
     template<class matchLog_t>
-    void broadcastBMatch(const matchLog_t& mLog){ // 全試合開始前実況
+    void broadcastBMatch(const matchLog_t& mLog) { // 全試合開始前実況
         // 自分のプロフィールや設定を確認する
         cerr << "Client's Name : " << MY_NAME << " " << MY_VERSION << endl;
         cerr << "Client's Coach :" << MY_COACH << endl;
@@ -16,26 +16,26 @@ namespace UECda{
     }
     
     template<class matchLog_t>
-    void broadcastBGame(const matchLog_t& mLog){ // 1ゲーム開始前実況
+    void broadcastBGame(const matchLog_t& mLog) { // 1ゲーム開始前実況
         const typename matchLog_t::gameLog_t& gLog = mLog.latestGame();
         cerr << "Game " << mLog.getLatestGameNum() << " is about to start." << endl;
         cerr << "Game Type...";
-        if(gLog.isInitGame()){
+        if (gLog.isInitGame()) {
             cerr << "INIT GAME" << endl;
-        }else{
+        } else {
             cerr << "ADVANTAGE GAME  " << endl;
         }
-        for(int s = 0; s < N_PLAYERS; ++s){
+        for (int s = 0; s < N_PLAYERS; ++s) {
             int pNum = mLog.getSeatPlayer(s);
             int pos = mLog.getPosition(pNum) + 1; // 最上位を1位に変更
             cerr << "[Seat " << s << "] : Player " << pNum;
             cerr << "  Class " << gLog.getPlayerClass(pNum);
             cerr << "  Score " << mLog.getScore(pNum) << " ( " << pos;
-            switch(pos % 100){
+            switch(pos % 100) {
                 case 11: case 12:
                     cerr << "th"; break;
                 default:
-                    switch(pos % 10){
+                    switch(pos % 10) {
                         case 1: cerr << "st"; break;
                         case 2: cerr << "nd"; break;
                         case 3: cerr << "rd"; break;
@@ -44,27 +44,27 @@ namespace UECda{
                     break;
             }
             cerr << " place)";
-            if(pNum == mLog.getMyPlayerNum()){ cerr << " <- Me"; }
+            if (pNum == mLog.getMyPlayerNum()) { cerr << " <- Me"; }
             cerr << endl;
         }
     }
     
     template<class matchLog_t>
-    void broadcastPlayerState(const matchLog_t& mLog){ // プレーヤー状態実況
+    void broadcastPlayerState(const matchLog_t& mLog) { // プレーヤー状態実況
         const typename matchLog_t::gameLog_t& gLog = mLog.latestGame();
-        for(int s = 0; s < N_PLAYERS; ++s){
+        for (int s = 0; s < N_PLAYERS; ++s) {
             int pNum = mLog.getSeatPlayer(s);
             cerr << "[Seat " << s << "] : Player " << pNum;
             cerr << "  Class " << gLog.getPlayerClass(pNum);
-            if(ps.isAlive(pNum)){
-                if(ps.isAwake(pNum)){
+            if (ps.isAlive(pNum)) {
+                if (ps.isAwake(pNum)) {
                     cerr << "          ";
-                }else{
+                } else {
                     cerr << "  ASLEEP  ";
                 }
-            }else if(ps.isExcluded(pNum)){
+            }else if (ps.isExcluded(pNum)) {
                 cerr << " EXCLUDED ";
-            }else{
+            } else {
                 cerr << "  DEAD(";
                 cerr << getPlayerNewClass(pNum);
                 cerr << ") ";
@@ -97,19 +97,19 @@ namespace UECda{
     
     void broadcastPlay(uint32_t p, Move move)const{ // プレー実況
         cerr << "[PLAY] ";
-        if(p == getMyPlayerNum()){
+        if (p == getMyPlayerNum()) {
             cerr << "MY PLAY  ";
-        }else{
+        } else {
             cerr << "Player " << p << "  ";
         }
         cerr << move;
         int qty = getNCards(p);
-        if(qty <= 0){
+        if (qty <= 0) {
             cerr << " passed away...  Class " << getPlayerNewClass(p);
-        }else{
-            if(qty == 1){
+        } else {
+            if (qty == 1) {
                 cerr << " 1 card";
-            }else{
+            } else {
                 cerr << " " << qty << " cards";
             }
             cerr << " still remains.";
@@ -125,7 +125,7 @@ namespace UECda{
         cerr << "My decided move : ";
         cerr << move;
         //決定手が決まっている場合はそれも表示
-        for(int m = nextMoves.size() - 1; m >= 0; --m)
+        for (int m = nextMoves.size() - 1; m >= 0; --m)
             cerr << " -> " << nextMoves.getData(m);
         cerr << endl;
     }

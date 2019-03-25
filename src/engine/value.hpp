@@ -240,19 +240,19 @@ namespace UECda {
         9.9436,-1.0,-1.0,-1.0,-1.0, -1.0,7.5885,4.1021,1.8449,0.4319, -1.0,7.6224,4.1456,1.9043,0.4657, -1.0,7.3346,3.7390,1.5502,0.1042, -1.0,7.2498,3.6192,1.4228,0.0,
     };
     
-    float standardReward(int gamesForCIG, int cl){
-        if(N_PLAYERS == 5){
+    float standardReward(int gamesForCIG, int cl) {
+        if (N_PLAYERS == 5) {
             gamesForCIG = min(gamesForCIG, N_REWARD_CALCULATED_GAMES - 1);
             return standardRewardTable5[gamesForCIG][cl];
-        }else{
+        } else {
             return N_PLAYERS - 1 - cl;
         }
     }
-    float daifugoSeatReward(int gamesForCIG, int gamesForSIG, int relativeSeat, int cl){
-        if(N_PLAYERS == 5){
+    float daifugoSeatReward(int gamesForCIG, int gamesForSIG, int relativeSeat, int cl) {
+        if (N_PLAYERS == 5) {
             gamesForCIG = min(gamesForCIG, N_REWARD_CALCULATED_GAMES - 1);
             return daifugoSeatRewardTable5[gamesForCIG][gamesForSIG][relativeSeat][cl];
-        }else{
+        } else {
             return N_PLAYERS - 1 - cl;
         }
     }

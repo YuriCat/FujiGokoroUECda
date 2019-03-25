@@ -82,9 +82,9 @@ namespace UECda {
                         pfield->playMove.setMPMate();
                         pfield->fieldInfo.setMPMate();
                     } else {
-                        if (pfield->NActiveMoves <= 1){
+                        if (pfield->NActiveMoves <= 1) {
                             pfield->setPlayMove(pfield->mv[0]);
-                        }else{
+                        } else {
                             double score[N_MAX_MOVES + 1];
 
                             // 行動評価関数を計算
@@ -112,7 +112,7 @@ namespace UECda {
                                                                Settings::simulationTemperaturePlay,
                                                                Settings::simulationAmplifyCoef,
                                                                Settings::simulationAmplifyExponent);
-                                if (Settings::simulationPlayModel){
+                                if (Settings::simulationPlayModel) {
 #ifdef MODELING_PLAY
                                     addPlayerPlayBias(score, pfield->mv, pfield->NActiveMoves, *pfield, pshared->playerModelSpace.model(tp), Settings::playerBiasCoef * progress);
 #endif
@@ -181,14 +181,14 @@ namespace UECda {
                                threadTools_t *const ptools) {
             //cerr << pfield->toString();
             // 試合全部行う
-            if(!pfield->isInitGame()){
+            if (!pfield->isInitGame()) {
                 // 献上
                 //pfield->makePresents(); dealt callbackの時点で行われている
                 pfield->removePresentedCards(); // 代わりにこちらの操作を行う
                 // 交換
                 //double score[N_MAX_CHANGES + 1];
                 Cards change[N_MAX_CHANGES];
-                for(int cl = 0; cl < MIDDLE; ++cl){
+                for (int cl = 0; cl < MIDDLE; ++cl) {
                     const int from = pfield->getClassPlayer(cl);
                     const int to = pfield->getClassPlayer(getChangePartnerClass(cl));
                     const int changes = genChange(change, pfield->getCards(from), N_CHANGE_CARDS(cl));

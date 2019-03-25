@@ -27,7 +27,7 @@ ChangePolicy<policy_value_t> baseChangePolicy;
 PlayPolicy<policy_value_t> basePlayPolicy;
 
 template<class logs_t>
-int testPlayPolicyModeling(const logs_t& mLog){
+int testPlayPolicyModeling(const logs_t& mLog) {
     // 相手モデリングによる着手の変化について実験
     // 棋譜ファイルは1つのみ受ける(相手が変わる場合には最初からなのでまたこの関数を呼ぶ)
     
@@ -37,13 +37,13 @@ int testPlayPolicyModeling(const logs_t& mLog){
     playerModelSpace.init(0);
     Field field;
     
-    for(int p = 0; p < N_PLAYERS; ++p){
+    for (int p = 0; p < N_PLAYERS; ++p) {
         cerr << mLog.player(p) << " ";
     }cerr << endl;
     
-    for(int g = 0; g < mLog.games(); ++g){
+    for (int g = 0; g < mLog.games(); ++g) {
         
-        if(g % numCheckGames == 0){
+        if (g % numCheckGames == 0) {
             // 元の方策からの変化を解析
             
             // モデリングの結果を全試合に対して解析
@@ -55,7 +55,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
             double KLDivergence[N_PLAYERS] = {0};
             double plays[N_PLAYERS]= {0};
             
-            for(int gg = g + 1; gg < mLog.games(); ++gg){
+            for (int gg = g + 1; gg < mLog.games(); ++gg) {
                 const auto& ggLog = mLog.game(gg);
                 
                 iterateGameLogAfterChange
@@ -69,7 +69,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
                      const int p = field.getTurnPlayer();
                      const int moves = genMove(play, field.getHand(p), field.getBoard());
                      
-                     if(moves <= 1){ return 0; }
+                     if (moves <= 1) { return 0; }
                      
                      // ベース方策計算
                      calcPlayPolicyScoreSlow<0>(score, play, moves, field, basePlayPolicy);
@@ -91,7 +91,7 @@ int testPlayPolicyModeling(const logs_t& mLog){
                      
                      // 一致率解析
                      int recordIndex = searchMove(play, moves, MoveInfo(pl));
-                     if(recordIndex >= 0){
+                     if (recordIndex >= 0) {
                          samePlayProb[p] += score2[recordIndex];
                          wMAE[p] += weightedMeanAbsoluteError(score, score2, moves);
                          KLDivergence[p] += kullbackLeiblerDivergence(score, score2, moves);
@@ -106,10 +106,10 @@ int testPlayPolicyModeling(const logs_t& mLog){
             
             // 解析結果表示
             cerr << " at " << g << " games." << endl;
-            /*for(int p = 0; p < N_PLAYERS; ++p){
+            /*for (int p = 0; p < N_PLAYERS; ++p) {
              cerr << samePlayProb[p] << " " << plays[p] << endl;
              }*/
-            for(int p = 0; p < N_PLAYERS; ++p){
+            for (int p = 0; p < N_PLAYERS; ++p) {
                 cerr << (samePlayProb[p] / plays[p]);
                 cerr << " (" << (wMAE[p] / plays[p]) << ") ";
             }cerr << endl;
@@ -131,22 +131,22 @@ int testPlayPolicyModeling(const logs_t& mLog){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     {
         std::ifstream ifs("blauweregen_config.txt");
-        if(ifs){ ifs >> DIRECTORY_PARAMS_IN; }
-        if(ifs){ ifs >> DIRECTORY_PARAMS_OUT; }
-        if(ifs){ ifs >> DIRECTORY_LOGS; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
+        if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     std::vector<std::string> logFileNames;
     
     threadTools.dice.srand((unsigned int)time(NULL));
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-i")){ // input directory
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-l")){ // log path
+        }else if (!strcmp(argv[c], "-l")) { // log path
             logFileNames.push_back(std::string(argv[c + 1]));
         }
     }
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]){
     baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
     basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
     
-    for(const std::string& log : logFileNames){
+    for (const std::string& log : logFileNames) {
         MinMatchLog<MinGameLog<MinPlayLog>> mLog(log);
         testPlayPolicyModeling(mLog);
     }

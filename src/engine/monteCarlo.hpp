@@ -15,7 +15,7 @@ namespace UECda {
         (const int threadId, root_t *const proot,
          const field_t *const pfield,
          sharedData_t *const pshared,
-         threadTools_t *const ptools){
+         threadTools_t *const ptools) {
             
             constexpr uint32_t MINNEC_N_TRIALS = 4; // 全体での最小限のトライ数。UCB-Rootにしたので実質不要になった
             
@@ -35,7 +35,7 @@ namespace UECda {
             int threadNTrials[256]; // 当スレッドでのトライ数(候補ごと)
             int threadNTrialsSum = 0; // 当スレッドでのトライ数(合計)
             
-            for(int c = 0; c < candidates; ++c)threadNTrials[c] = 0;
+            for (int c = 0; c < candidates; ++c)threadNTrials[c] = 0;
             
             int threadMaxNTrials = 0; // 当スレッドで現時点で最大のトライ数
             
@@ -54,7 +54,7 @@ namespace UECda {
             pf.dice = &ptools->dice;
             pf.mv = ptools->buf;
             
-            if(proot->rivalPlayerNum >= 0){
+            if (proot->rivalPlayerNum >= 0) {
                 pf.attractedPlayers.set(proot->rivalPlayerNum);
             }
             
@@ -64,35 +64,35 @@ namespace UECda {
             // 諸々の準備が終わったので時間計測開始
             clock.start();
             
-            while(!proot->exitFlag){ // 最大で最高回数までプレイアウトを繰り返す
+            while(!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
                 
                 world_t *pWorld = nullptr;
                 
                 //サンプル着手決定
                 int tryingIndex = -1;
-                if(candidates == 2){
+                if (candidates == 2) {
                     // 2つの時は同数(分布サイズ単位)に割り振る
-                    if(child[0].size() == child[1].size())
+                    if (child[0].size() == child[1].size())
                         tryingIndex = dice.rand() % 2;
                     else
                         tryingIndex = child[0].size() < child[1].size()
                         ? 0 : 1;
-                }else{
+                } else {
                     // UCB-root アルゴリズムに変更
                     double bestScore = -DBL_MAX;
                     const double allSize = proot->monteCarloAllScore.size();
-                    for(int c = 0; c < candidates; ++c){
+                    for (int c = 0; c < candidates; ++c) {
                         double tmpScore;
                         double size = child[c].size();
-                        if(child[c].simulations < MINNEC_N_TRIALS){
+                        if (child[c].simulations < MINNEC_N_TRIALS) {
                             // 最低プレイアウト数をこなしていないものは、大きな値にする
                             // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
                             tmpScore = (double)((1U << 16) - (child[c].simulations << 8) + (dice.rand() % (1U << 6)));
-                        }else{
+                        } else {
                             ASSERT(size, cerr << child[c].toString() << endl;);
                             tmpScore = child[c].mean() + 0.7 * sqrt(sqrt(allSize) / size); // ucbr値
                         }
-                        if(tmpScore > bestScore){
+                        if (tmpScore > bestScore) {
                             bestScore = tmpScore;
                             tryingIndex = c;
                         }
@@ -116,17 +116,17 @@ namespace UECda {
                             // 仕方が無いので既にある世界からランダムに選ぶ
                             pWorld = nullptr;
                         }
-                    }else{
+                    } else {
                         // 全ての世界からランダムに選ぶ
                     }
                 } else {
                     // 世界作成が終わっていない
-                    if (pastNTrials < threadNWorlds){
+                    if (pastNTrials < threadNWorlds) {
                         // まだ全ての世界でこの着手を検討していないので順番通りの世界で検討
                         //pWorld = gal->access(threadMaxNWorlds * threadId + pastNTrials);
                         pWorld = gal.access(pastNTrials);
                         
-                        if(!pWorld -> isActive()){
+                        if (!pWorld -> isActive()) {
                             // 何らかの事情で世界作成スケジュールがずれている
                             // 仕方が無いので既にある世界からランダムに選ぶ
                             pWorld = nullptr;

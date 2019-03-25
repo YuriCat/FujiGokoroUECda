@@ -99,49 +99,49 @@ namespace UECda {
         using data_t = uint64_t;
         
         // set
-        void setFinal(){    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW(){       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW(){     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW(){     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate(){   i_.set(LCT64_MPMATE); }
-        void setL2Mate(){   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp(){ i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp(){ i_.set(LCT64_L2GIVEUP); }
+        void setFinal() {    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW() {       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW() {     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW() {     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate() {   i_.set(LCT64_MPMATE); }
+        void setL2Mate() {   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp() { i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp() { i_.set(LCT64_L2GIVEUP); }
         
-        void setSelfFollow(){ i_.set(LCT64_SELFFOLLOW,
+        void setSelfFollow() { i_.set(LCT64_SELFFOLLOW,
                                             LCT64_UNRIVALED,
                                             LCT64_LASTAWAKE,
                                             LCT64_FLUSHLEAD,
                                             LCT64_NPDOM,
                                             LCT64_PDOM); }
-        void setUnrivaled(){ i_.set(LCT64_UNRIVALED,
+        void setUnrivaled() { i_.set(LCT64_UNRIVALED,
                                            LCT64_FLUSHLEAD,
                                            LCT64_NPDOM,
                                            LCT64_PDOM); }
-        void setLastAwake(){ i_.set(LCT64_LASTAWAKE,
+        void setLastAwake() { i_.set(LCT64_LASTAWAKE,
                                            LCT64_NPDOM,
                                            LCT64_BDOMOTHERS); }
-        void setFlushLead(){ i_.set(LCT64_FLUSHLEAD); }
-        void setNPDom(){ i_.set(LCT64_NPDOM); }
-        void setPassDom(){ i_.set(LCT64_PDOM); }
-        void setBDO(){ i_.set(LCT64_BDOMOTHERS); }
-        void setBDM(){ i_.set(LCT64_BDOMME); }
-        void setBDALL(){ i_.set(LCT64_BDOMOTHERS,
+        void setFlushLead() { i_.set(LCT64_FLUSHLEAD); }
+        void setNPDom() { i_.set(LCT64_NPDOM); }
+        void setPassDom() { i_.set(LCT64_PDOM); }
+        void setBDO() { i_.set(LCT64_BDOMOTHERS); }
+        void setBDM() { i_.set(LCT64_BDOMME); }
+        void setBDALL() { i_.set(LCT64_BDOMOTHERS,
                                        LCT64_BDOMME); }
-        void setNoChance(){ setBDM(); }
+        void setNoChance() { setBDM(); }
         
-        void settlePrmOrder(){ i_.set(LCT64_TMPORDSETTLED); }
-        void settleTmpOrder(){ i_.set(LCT64_TMPORDSETTLED,
+        void settlePrmOrder() { i_.set(LCT64_TMPORDSETTLED); }
+        void settleTmpOrder() { i_.set(LCT64_TMPORDSETTLED,
                                              LCT64_PRMORDSETTLED); }
         
-        void setDConst(){ i_.set(LCT64_DCONST); }
+        void setDConst() { i_.set(LCT64_DCONST); }
         
-        void setMinNMelds(uint32_t n){ i_ |= uint64_t(n & 15U) << LCT64_MINNMELDS; }
+        void setMinNMelds(uint32_t n) { i_ |= uint64_t(n & 15U) << LCT64_MINNMELDS; }
         
-        void setMinNCards(uint32_t n){ i_ |= n & 15U;}
-        void setMaxNCards(uint32_t n){ i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
-        void setMinNCardsAwake(uint32_t n){ i_ |= (n & 15U) << 8; }
-        void setMaxNCardsAwake(uint32_t n){ i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
+        void setMinNCards(uint32_t n) { i_ |= n & 15U;}
+        void setMaxNCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
+        void setMinNCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
+        void setMaxNCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
         
         uint64_t test(int n)const{ return i_.test(n); }
         
@@ -183,58 +183,58 @@ namespace UECda {
         uint32_t getMinNCardsAwake()const { return (i_ >> 8) & 15U; }
         uint32_t getMaxNCardsAwake()const { return (i_ >> 12) & 15U; }
         
-        void initHalf(){ i_.reset(); }
+        void initHalf() { i_.reset(); }
         
-        void init(){
+        void init() {
             // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
             i_ = 0x0000F0F0ULL;
         }
         
-        void initTmpInfo(){
+        void initTmpInfo() {
             // 一時情報は初期化し、永続情報は残す
             i_ = (i_ & MASK64_TMPINFO) | 0x0000F0F0ULL;
         }
-        void procTmpInfo(){
+        void procTmpInfo() {
             i_ &= i_ & (MASK64_TMPINFO | 0xFFFFULL);
         }
         
         constexpr data_t data()const { return i_.data(); }
         
-        constexpr FieldAddInfo():i_(){}
+        constexpr FieldAddInfo():i_() {}
         constexpr FieldAddInfo(const FieldAddInfo& arg):
-        i_(arg.data()){} // コピー
+        i_(arg.data()) {} // コピー
         
     protected:
         BitSetInRegister<data_t> i_;
     };
     
-    ostream& operator <<(ostream& out, const FieldAddInfo& i){ // 出力
+    ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
         out << "Field :";
-        if(i.isFinal())out << " -FIN";
-        else if(i.isPW())out << " -PW";
-        else if(i.isBNPW())out << " -BNPW";
-        else if(i.isBRPW())out << " -BRPW";
-        else if(i.isMPMate())out << " -MPMATE";
+        if (i.isFinal())out << " -FIN";
+        else if (i.isPW())out << " -PW";
+        else if (i.isBNPW())out << " -BNPW";
+        else if (i.isBRPW())out << " -BRPW";
+        else if (i.isMPMate())out << " -MPMATE";
         
-        if(i.isL2Mate())out << " -L2MATE";
+        if (i.isL2Mate())out << " -L2MATE";
         
-        if(i.isMPGiveUp())out << " -MPGIVEUP";
-        if(i.isL2GiveUp())out << " -L2GIVEUP";
+        if (i.isMPGiveUp())out << " -MPGIVEUP";
+        if (i.isL2GiveUp())out << " -L2GIVEUP";
         
-        if(i.isSelfFollow())out << " -SFOL";
-        if(i.isUnrivaled())out << " -UNRIV";
-        if(i.isLastAwake())out << " -LA";
-        if(i.isFlushLead())out << " -FLEAD";
-        if(i.isNonPassDom())out << " -NPD";
-        if(i.isPassDom())out << " -PD";
+        if (i.isSelfFollow())out << " -SFOL";
+        if (i.isUnrivaled())out << " -UNRIV";
+        if (i.isLastAwake())out << " -LA";
+        if (i.isFlushLead())out << " -FLEAD";
+        if (i.isNonPassDom())out << " -NPD";
+        if (i.isPassDom())out << " -PD";
         
-        if(i.isBDALL()){
+        if (i.isBDALL()) {
             out << " -BDALL";
-        }else{
-            if(i.isBDO()){
+        } else {
+            if (i.isBDO()) {
                 out << " -BDO";
             }
-            if(i.isBDM()){
+            if (i.isBDM()) {
                 out << " -BDM";
             }
         }
@@ -242,7 +242,7 @@ namespace UECda {
     }
     
     void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
-                           FieldAddInfo *const pnext){
+                           FieldAddInfo *const pnext) {
         pnext->initTmpInfo();
         pnext->setMinNCardsAwake(fieldInfo.getMinNCards());
         pnext->setMaxNCardsAwake(fieldInfo.getMaxNCards());
@@ -251,7 +251,7 @@ namespace UECda {
         pnext->setFlushLead();
     }
     void procUnrivaled(const FieldAddInfo& fieldInfo,
-                       FieldAddInfo *const pnext){
+                       FieldAddInfo *const pnext) {
         *pnext = fieldInfo;
         pnext->procTmpInfo();
         pnext->setUnrivaled();
@@ -275,78 +275,78 @@ namespace UECda {
         
         uint64_t test(int n)const{ return i_.test(n); }
         
-        constexpr MoveInfo(): MoveInRegister<data_t>(){}
-        constexpr MoveInfo(uint64_t arg): MoveInRegister<data_t>(arg){}
+        constexpr MoveInfo(): MoveInRegister<data_t>() {}
+        constexpr MoveInfo(uint64_t arg): MoveInRegister<data_t>(arg) {}
         constexpr move_t mv()const{ return Move((uint32_t)data()); }
         
         // 合法着手生成のときに一緒にクリアする
-        void setNULL(){i_ = MOVEINFO_NULL;}
-        void setPASS(){i_ = MOVEINFO_PASS;}
-        void setSingleJOKER(){i_ = MOVEINFO_SINGLEJOKER;}
-        void setS3Flush(){i_ = MOVEINFO_S3FLUSH;}
+        void setNULL() {i_ = MOVEINFO_NULL;}
+        void setPASS() {i_ = MOVEINFO_PASS;}
+        void setSingleJOKER() {i_ = MOVEINFO_SINGLEJOKER;}
+        void setS3Flush() {i_ = MOVEINFO_S3FLUSH;}
         
         // MoveAddInfo
         // 上位32ビットの演算
-        void setFinal(){    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW(){       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW(){     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW(){     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate(){   i_.set(LCT64_MPMATE); }
-        void setL2Mate(){   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp(){ i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp(){ i_.set(LCT64_L2GIVEUP); }
+        void setFinal() {    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW() {       i_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW() {     i_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW() {     i_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate() {   i_.set(LCT64_MPMATE); }
+        void setL2Mate() {   i_.set(LCT64_L2MATE); }
+        void setMPGiveUp() { i_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp() { i_.set(LCT64_L2GIVEUP); }
         
         // 当座支配
-        void setDO(){i_ |= 1ULL<<(32+12);}
-        void setDM(){i_ |= 1ULL<<(32+13);}
-        void setDALL(){i_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
-        void setDomOthers(){setDO();}
-        void setDomMe(){setDO();}
-        void setDomAll(){setDO();}
+        void setDO() {i_ |= 1ULL<<(32+12);}
+        void setDM() {i_ |= 1ULL<<(32+13);}
+        void setDALL() {i_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
+        void setDomOthers() {setDO();}
+        void setDomMe() {setDO();}
+        void setDomAll() {setDO();}
         
         // 当座でない支配
         // 当座支配フラグを一緒に付けるかは要検討
-        void setP_DO(){setP_NFDO();}
-        void setP_DM(){setP_NFDM();}
-        void setP_DALL(){setP_NFDALL();}
-        void setE_DO(){setE_NFDO();}
-        void setE_DM(){setE_NFDM();}
-        void setE_DALL(){setE_NFDALL();}
-        void setP_NFDO(){i_|=1ULL<<(32+18);setE_NFDO();}
-        void setP_NFDM(){i_|=1ULL<<(32+19);setE_NFDM();}
-        void setP_NFDALL(){i_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
-        void setE_NFDO(){i_|=1ULL<<(32+20);setDO();}
-        void setE_NFDM(){i_|=1ULL<<(32+21);setDM();}
-        void setE_NFDALL(){i_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
+        void setP_DO() {setP_NFDO();}
+        void setP_DM() {setP_NFDM();}
+        void setP_DALL() {setP_NFDALL();}
+        void setE_DO() {setE_NFDO();}
+        void setE_DM() {setE_NFDM();}
+        void setE_DALL() {setE_NFDALL();}
+        void setP_NFDO() {i_|=1ULL<<(32+18);setE_NFDO();}
+        void setP_NFDM() {i_|=1ULL<<(32+19);setE_NFDM();}
+        void setP_NFDALL() {i_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
+        void setE_NFDO() {i_|=1ULL<<(32+20);setDO();}
+        void setE_NFDM() {i_|=1ULL<<(32+21);setDM();}
+        void setE_NFDALL() {i_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
         
-        void setP_NFDALL_only(){
+        void setP_NFDALL_only() {
             i_|=(1ULL<<(32+18))|(1ULL<<(32+19))|(1ULL<<(32+20))|(1ULL<<(32+21));
         } // P_NFDOだが当座支配は付けない。S3とジョーカーのダブルに適用
         
-        void setTmpOrderRev(){i_|=1ULL<<(32+14);}
-        void setPrmOrderRev(){i_|=1ULL<<(32+15);}
-        void setSuitLock(){i_|=1ULL<<(32+16);}
-        void setRankLock(){i_|=1ULL<<(32+17);}
+        void setTmpOrderRev() {i_|=1ULL<<(32+14);}
+        void setPrmOrderRev() {i_|=1ULL<<(32+15);}
+        void setSuitLock() {i_|=1ULL<<(32+16);}
+        void setRankLock() {i_|=1ULL<<(32+17);}
         
         // min_melds
-        void setIncMinNMelds(uint32_t dec){i_|=((uint64_t)(dec))<<(32+8);}
+        void setIncMinNMelds(uint32_t dec) {i_|=((uint64_t)(dec))<<(32+8);}
         
         // edagari
-        void excludeMyPlay(){i_|=1ULL<<(32+24);}
-        void excludeMyPonder(){i_|=1ULL<<(32+25);}
-        void excludeAllPonder(){i_|=1ULL<<(32+26);}
+        void excludeMyPlay() {i_|=1ULL<<(32+24);}
+        void excludeMyPonder() {i_|=1ULL<<(32+25);}
+        void excludeAllPonder() {i_|=1ULL<<(32+26);}
         
-        void excludeAll(){
+        void excludeAll() {
             excludeMyPlay();
             excludeMyPonder();
             excludeAllPonder();
         }
         
         // kousoku
-        void setDConst(){i_|=1ULL<<(32+28);}
-        void setDW_NFH(){i_|=1ULL<<(32+29);}
+        void setDConst() {i_|=1ULL<<(32+28);}
+        void setDW_NFH() {i_|=1ULL<<(32+29);}
         
-        void init(){i_&=0x00000000FFFFFFFF;}
+        void init() {i_&=0x00000000FFFFFFFF;}
         
         // get
         uint64_t isFinal()const {    return test(LCT64_FINAL); }
@@ -385,58 +385,58 @@ namespace UECda {
         uint64_t isDW_NFH()const {return i_ & (1ULL<<(32+29));}
     };
     
-    std::ostream& operator<<(std::ostream& out, const MoveInfo& mi){
+    std::ostream& operator<<(std::ostream& out, const MoveInfo& mi) {
         out << mi.mv(); // Move型として出力
         return out;
     }
     
     class MoveAddInfo : public MoveInfo{
     public:
-        constexpr MoveAddInfo(){}
-        constexpr MoveAddInfo(const MoveInfo& arg):MoveInfo::MoveInfo(arg){}
+        constexpr MoveAddInfo() {}
+        constexpr MoveAddInfo(const MoveInfo& arg):MoveInfo::MoveInfo(arg) {}
     };
     
-    ostream& operator <<(ostream& out, const MoveAddInfo& i){ // 出力
+    ostream& operator <<(ostream& out, const MoveAddInfo& i) { // 出力
         
         // 勝敗
-        if(i.isFinal())out << " -FIN";
-        else if(i.isPW())out << " -PW";
-        else if(i.isBNPW())out << " -BNPW";
-        else if(i.isBRPW())out << " -BRPW";
-        else if(i.isMPMate())out << " -MPMATE";
+        if (i.isFinal())out << " -FIN";
+        else if (i.isPW())out << " -PW";
+        else if (i.isBNPW())out << " -BNPW";
+        else if (i.isBRPW())out << " -BRPW";
+        else if (i.isMPMate())out << " -MPMATE";
         
-        if(i.isL2Mate())out << " -L2MATE";
+        if (i.isL2Mate())out << " -L2MATE";
         
-        if(i.isMPGiveUp())out << " -MPGIVEUP";
-        if(i.isL2GiveUp())out << " -L2GIVEUP";
+        if (i.isMPGiveUp())out << " -MPGIVEUP";
+        if (i.isL2GiveUp())out << " -L2GIVEUP";
         
         // 後場
-        if(i.isTmpOrderRev())out << " -TREV";
-        if(i.isSuitLock())out << " -SLOCK";
+        if (i.isTmpOrderRev())out << " -TREV";
+        if (i.isSuitLock())out << " -SLOCK";
         
         // パラメータ
         out << " -MNM(" << i.getIncMinNMelds() << ")";
         
         // 当座支配
-        if(i.dominatesAll()){
+        if (i.dominatesAll()) {
             out<<" -DALL";
-        }else{
-            if(i.dominatesOthers()){
+        } else {
+            if (i.dominatesOthers()) {
                 out << " -DO";
             }
-            if(i.dominatesMe()){
+            if (i.dominatesMe()) {
                 out << " -DM";
             }
         }
         
         // 当座以外の支配
-        if(i.isP_NFDALL()){
+        if (i.isP_NFDALL()) {
             out << " -PNFDALL";
-        }else{
-            if(i.isP_NFDO()){
+        } else {
+            if (i.isP_NFDO()) {
                 out << " -PNFDO";
             }
-            if(i.isP_NFDM()){
+            if (i.isP_NFDM()) {
                 out << " -PNFDM";
             }
         }
@@ -458,19 +458,19 @@ namespace UECda {
         BitArray32<4, 8> i;
         
         uint32_t isMyWon()const{ return i & (1U << 12); }
-        void setMyWon(){ i |= (1U << 12); }
-        void setMyTurn(){ i |= (1U << 13); }
-        void resetMyTurn(){ i &= ~(1U << 13); }
+        void setMyWon() { i |= (1U << 12); }
+        void setMyTurn() { i |= (1U << 13); }
+        void resetMyTurn() { i &= ~(1U << 13); }
         uint32_t isMyTurn()const{ return i&(1U << 13); }
-        void setMyPlayerNum(int num){ i.set(0, num); }
+        void setMyPlayerNum(int num) { i.set(0, num); }
         uint32_t getMyPlayerNum()const{ return i[0]; }
-        void setMyClass(int r){ i.set(1, r); }
+        void setMyClass(int r) { i.set(1, r); }
         uint32_t getMyClass()const{ return i[1]; }
-        void setMyPosition(int pos){ i.set(6, pos); }
+        void setMyPosition(int pos) { i.set(6, pos); }
         uint32_t getMyPosition()const{ return i[6]; }
         
-        void setMyChangeImpQty(int qty){ i.set(4, qty); }
-        void setMyChangeReqQty(int qty){ i.set(5, qty); }
+        void setMyChangeImpQty(int qty) { i.set(4, qty); }
+        void setMyChangeReqQty(int qty) { i.set(5, qty); }
         // 関与枚数
         uint32_t getMyChangeImpQty()const{ return i[4]; }
         uint32_t getMyChangeReqQty()const{ return i[5]; }
@@ -478,11 +478,11 @@ namespace UECda {
         uint32_t isMyImpChange()const{ return i.get_part(4); }
         uint32_t isMyReqChange()const{ return i.get_part(5); }
         
-        void setNewClass(const int r){ i.set(7, r); }
+        void setNewClass(const int r) { i.set(7, r); }
         uint32_t getNewClass()const{ return i[7]; }
         
         
-        void init(){ i = 0; }
+        void init() { i = 0; }
         
         
         // 4 既に勝利
@@ -491,9 +491,9 @@ namespace UECda {
         // 7 既に反則負け
         // 8-11 確定した今ゲームの順位
         
-        MiniStats(){}
-        MiniStats(const MiniStats& arg):i(arg.i){}
-        ~MiniStats(){}
+        MiniStats() {}
+        MiniStats(const MiniStats& arg):i(arg.i) {}
+        ~MiniStats() {}
     };
     
     /**************************ゲームフェーズ**************************/
@@ -510,29 +510,29 @@ namespace UECda {
         // init game 16
         // subjective 17
         
-        void setInChange(){ set(0); }
-        void resetInChange(){ reset(0); }
+        void setInChange() { set(0); }
+        void resetInChange() { reset(0); }
         constexpr uint32_t isInChange()const { return test(0); }
         
-        void setFirstTurn(){ set(1); }
-        void resetFirstTurn(){ reset(1); }
+        void setFirstTurn() { set(1); }
+        void resetFirstTurn() { reset(1); }
         constexpr uint32_t isFirstTurn()const { return test(1); }
         
-        void setInPlay(){ set(2); }
-        void resetInPlay(){ reset(2); }
+        void setInPlay() { set(2); }
+        void resetInPlay() { reset(2); }
         constexpr uint32_t isInPlay()const { return test(2); }
         
-        void setInitGame(){ set(16); }
-        void resetInitGame(){ reset(16); }
+        void setInitGame() { set(16); }
+        void resetInitGame() { reset(16); }
         constexpr uint32_t isInitGame()const { return test(16); }
         
-        void setSubjective(){ set(17); }
+        void setSubjective() { set(17); }
         constexpr uint32_t isSubjective()const { return test(17); }
         
-        void init(){ reset(); }
+        void init() { reset(); }
         
-        constexpr GamePhase() : BitSet32(){}
-        constexpr GamePhase(const GamePhase& arg) : BitSet32(arg){}
+        constexpr GamePhase() : BitSet32() {}
+        constexpr GamePhase(const GamePhase& arg) : BitSet32(arg) {}
     };
     
     /**************************プレーヤーの状態**************************/
@@ -558,39 +558,39 @@ namespace UECda {
         constexpr operator uint32_t()const { return (uint32_t)i; }
         
         // set
-        void setAsleep(const int p){
+        void setAsleep(const int p) {
             ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << (uint32_t)i << endl;); // 現在Awake
             i -= (BMASK << 24) + ((BMASK << 16) << p);
         }
-        void setDead(const int p){
+        void setDead(const int p) {
             // プレーヤーがあがった
             ASSERT(isAwake(p), cerr << "p = " << p <<endl;);
             ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在AliveかつAwakeの必要
             i -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
         }
-        void setDeadOnly(const int p){
+        void setDeadOnly(const int p) {
             // プレーヤーがあがった
             ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在Aliveの必要
             i -= (BMASK << 8) + ((1U << 0) << p);
         }
-        void setAwake(const int p){
+        void setAwake(const int p) {
             assert(!isAwake(p));
             i += (BMASK << 24) + ((BMASK << 16) << p);
         }
-        void setAlive(const int p){
+        void setAlive(const int p) {
             // プレーヤー復活
             assert(!isAwake(p)); assert(!isAlive(p));
             i += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
         }
         
-        void setAllAsleep(){
+        void setAllAsleep() {
             i &= (PMASK << 0) | (NMASK << 8);
         }
         
-        void setNAlive(const int n){
+        void setNAlive(const int n) {
             i.replace(1, n);
         }
-        void setNAwake(const int n){
+        void setNAwake(const int n) {
             i.replace(3, n);
         }
         // get
@@ -632,32 +632,32 @@ namespace UECda {
             return bsf32(i);
         }
         
-        void flush(){
+        void flush() {
             // 場が流れる
             data_t alive = i & ((PMASK << 0) | (NMASK << 8)); // alive情報
             i = alive | (alive << 16); // awake情報をalive情報に置き換える
         }
-        void init(){
+        void init() {
             i = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
         }
         
         bool exam_alive()const{
-            if(getNAlive() <= 0 || N < getNAlive()){
+            if (getNAlive() <= 0 || N < getNAlive()) {
                 cerr << "PlayersState : illegal NAlive " << getNAlive() << endl;
                 return false;
             }
-            if(getNAlive() != countNAlive()){
+            if (getNAlive() != countNAlive()) {
                 cerr << "PlayersState : NAlive != count()" << endl;
                 return false;
             }
             return true;
         }
         bool exam_awake()const{
-            if(getNAwake() <= 0 || N < getNAwake()){
+            if (getNAwake() <= 0 || N < getNAwake()) {
                 cerr << "PlayersState : illegal NAwake " << getNAwake() << endl;
                 return false;
             }
-            if(getNAwake() != countNAwake()){
+            if (getNAwake() != countNAwake()) {
                 cerr << "PlayersState : NAwake != count()" << endl;
                 return false;
             }
@@ -667,15 +667,15 @@ namespace UECda {
         //validator
         bool exam()const{
             //各要素
-            if(!exam_alive()){ return false; }
-            if(!exam_awake()){ return false; }
+            if (!exam_alive()) { return false; }
+            if (!exam_awake()) { return false; }
             
             //awakeとaliveの関係
-            if(getNAlive() < getNAwake()){
+            if (getNAlive() < getNAwake()) {
                 cerr << "PlayersState : NAlive < NAwake" << endl;
                 return false;
             }
-            if(!holdsBits(i[0], i[2])){
+            if (!holdsBits(i[0], i[2])) {
                 cerr << "PlayersState : !holds( alive, awake )" << endl;
                 return false;
             }
@@ -683,29 +683,29 @@ namespace UECda {
         }
         bool examNF()const{
             // awake情報とalive情報が同じはず
-            if(((uint32_t)i) >> 16 != ((uint32_t)i & ((1U << 16) - 1))){return false;}
+            if (((uint32_t)i) >> 16 != ((uint32_t)i & ((1U << 16) - 1))) {return false;}
             return true;
         }
         bool examSemiNF()const{
             return exam();
         }
         
-        constexpr PlayersState() : i(){}
-        constexpr PlayersState(const PlayersState& arg) : i(arg.i){}
+        constexpr PlayersState() : i() {}
+        constexpr PlayersState(const PlayersState& arg) : i(arg.i) {}
     };
     
-    std::ostream& operator<<(std::ostream& out, const PlayersState& arg){ // 出力
+    std::ostream& operator<<(std::ostream& out, const PlayersState& arg) { // 出力
         // 勝敗
         out << "al{";
-        for(int i = 0; i < PlayersState::N; ++i){
-            if(arg.isAlive(i)){
+        for (int i = 0; i < PlayersState::N; ++i) {
+            if (arg.isAlive(i)) {
                 out << i;
             }
         }
         out << "}";
         out << " aw{";
-        for(int i = 0; i < PlayersState::N; ++i){
-            if(arg.isAwake(i)){
+        for (int i = 0; i < PlayersState::N; ++i) {
+            if (arg.isAwake(i)) {
                 out << i;
             }
         }	

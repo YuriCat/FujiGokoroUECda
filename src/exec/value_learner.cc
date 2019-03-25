@@ -58,7 +58,7 @@ public:
     auto& playLearner(int p = 0)noexcept{ return playLearner_; }
     auto& changeLearner(int p = 0)noexcept{ return changeLearner_; }
     
-    LearningSpace(){
+    LearningSpace() {
         playPolicy_.setLearner(&playLearner_);
         changePolicy_.setLearner(&changeLearner_);
         
@@ -69,7 +69,7 @@ public:
 
 LearningSpace ls; // 重いのでグローバルに置く
 
-int learn(std::vector<std::string> logFileNames, std::string outDirName, int mode){
+int learn(std::vector<std::string> logFileNames, std::string outDirName, int mode) {
     
     using namespace UECda::Fuji;
     
@@ -80,7 +80,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     
     ThreadTools *const ptools = &threadTools;
     
-    if(outDirName == ""){
+    if (outDirName == "") {
         outDirName = DIRECTORY_PARAMS_OUT;
     }
     
@@ -104,7 +104,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     
     const int learnGames = min((int)(games * learnGameRate), games);
     const int testGames = games - learnGames;
-    if(mode & MODE_FLAG_SHUFFLE){
+    if (mode & MODE_FLAG_SHUFFLE) {
         mLogs.shuffleRandomList(0, games, mt);
     }
     
@@ -119,7 +119,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     BitSet32 flag(0);
     flag.set(1);
     
-    if(mode & MODE_FLAG_CHANGE){
+    if (mode & MODE_FLAG_CHANGE) {
         // 交換学習データ
         changeLearner.initFeatureValue();
         iterateGameRandomly(mLogs, 0, learnGames, [flag, ptools](const auto& gLog, const auto& mLog)->void{
@@ -127,7 +127,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         });
         changeLearner.closeFeatureValue();
         changeLearner.foutFeatureSurvey(outDirName + "change_policy_feature_survey.dat");
-        for(int ph = 0; ph < 2; ++ph){
+        for (int ph = 0; ph < 2; ++ph) {
             cerr << "change - training record : " << changeLearner.toRecordString(ph) << endl;
         }
         
@@ -137,12 +137,12 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             PolicyGradient::learnChangeParamsGame(gLog, flag, &ls, ptools); // 特徴解析
         });
         changeLearner.closeFeatureValue();
-        for(int ph = 0; ph < 2; ++ph){
+        for (int ph = 0; ph < 2; ++ph) {
             cerr << "change - test     record : " << changeLearner.toRecordString(ph) << endl;
         }
     }
     
-    if(mode & MODE_FLAG_PLAY){
+    if (mode & MODE_FLAG_PLAY) {
         // 着手学習データ
         playLearner.initFeatureValue();
         iterateGameRandomly(mLogs, 0, learnGames, [flag, ptools](const auto& gLog, const auto& mLog)->void{
@@ -167,14 +167,14 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     //learning
     cerr << "started learning." << endl;
     
-    if(mode & MODE_FLAG_CHANGE){
+    if (mode & MODE_FLAG_CHANGE) {
         changeLearner.finFeatureSurvey(outDirName + "change_policy_feature_survey.dat");
     }
-    if(mode & MODE_FLAG_PLAY){
+    if (mode & MODE_FLAG_PLAY) {
         playLearner.finFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
     }
     
-    for (int j = 0; j < LearningSettings::iterations; ++j){
+    for (int j = 0; j < LearningSettings::iterations; ++j) {
         
         cerr << "iteration " << j << endl;
         
@@ -189,7 +189,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                                   LearningSettings::L2Rate * exp(-j * LearningSettings::attenuatingRate),
                                   LearningSettings::batchSize);
         
-        if(mode & MODE_FLAG_SHUFFLE){
+        if (mode & MODE_FLAG_SHUFFLE) {
             mLogs.shuffleRandomList(0, learnGames, mt);
         }
         
@@ -198,18 +198,18 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         flag.set(2);
         
         // 学習フェーズ
-        if(mode & MODE_FLAG_CHANGE){
+        if (mode & MODE_FLAG_CHANGE) {
             changeLearner.initObjValue();
             iterateGameRandomly(mLogs, 0, learnGames, [flag, ptools](const auto& gLog, const auto& mLog)->void{
                 PolicyGradient::learnChangeParamsGame(gLog, flag, &ls, ptools); // 学習
             });
             changePolicy.fout(outDirName + "change_policy_param.dat");
             foutComment(changePolicy, outDirName + "change_policy_comment.txt");
-            for(int ph = 0; ph < 2; ++ph){
+            for (int ph = 0; ph < 2; ++ph) {
                 cerr << "Change Training : " << changeLearner.toObjValueString(ph) << endl;
             }
         }
-        if(mode & MODE_FLAG_PLAY){
+        if (mode & MODE_FLAG_PLAY) {
             playLearner.initObjValue();
             iterateGameRandomly(mLogs, 0, learnGames, [flag, ptools](const auto& gLog, const auto& mLog)->void{
                 PolicyGradient::learnPlayParamsGame(gLog, flag, &ls, ptools); // 学習
@@ -219,20 +219,20 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             cerr << "Play   Training : " << playLearner.toObjValueString() << endl;
         }
         
-        if(testGames > 0){
+        if (testGames > 0) {
             // テストフェーズ
             flag.reset(0);
             
-            if(mode & MODE_FLAG_CHANGE){
+            if (mode & MODE_FLAG_CHANGE) {
                 changeLearner.initObjValue();
                 iterateGameRandomly(mLogs, learnGames, games, [flag, ptools](const auto& gLog, const auto& mLog)->void{
                     PolicyGradient::learnChangeParamsGame(gLog, flag, &ls, ptools); // テスト
                 });
-                for(int ph = 0; ph < 2; ++ph){
+                for (int ph = 0; ph < 2; ++ph) {
                     cerr << "Change Test     : " << changeLearner.toObjValueString(ph) << endl;
                 }
             }
-            if(mode & MODE_FLAG_PLAY){
+            if (mode & MODE_FLAG_PLAY) {
                 playLearner.initObjValue();
                 iterateGameRandomly(mLogs, learnGames, games, [flag, ptools](const auto& gLog, const auto& mLog)->void{
                     PolicyGradient::learnPlayParamsGame(gLog, flag, &ls, ptools); // テスト
@@ -246,7 +246,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     return 0;
 }
 
-int main(int argc, char* argv[]){ // For UECda
+int main(int argc, char* argv[]) { // For UECda
     
     // 基本的な初期化
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -256,36 +256,36 @@ int main(int argc, char* argv[]){ // For UECda
     // ファイルパスの取得
     {
         std::ifstream ifs("blauweregen_config.txt");
-        if(ifs){ ifs >> DIRECTORY_PARAMS_IN; }
-        if(ifs){ ifs >> DIRECTORY_PARAMS_OUT; }
-        if(ifs){ ifs >> DIRECTORY_LOGS; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
+        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
+        if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     
     std::vector<std::string> logFileNames;
     std::string outDirName = "";
     
     int mode = MODE_FLAG_CHANGE | MODE_FLAG_PLAY | MODE_FLAG_SHUFFLE;
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-t")){
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-t")) {
             mode |= MODE_FLAG_TEST;
-        }else if(!strcmp(argv[c], "-c")){
+        }else if (!strcmp(argv[c], "-c")) {
             mode &= (~MODE_FLAG_PLAY);
-        }else if(!strcmp(argv[c], "-p")){
+        }else if (!strcmp(argv[c], "-p")) {
             mode &= (~MODE_FLAG_CHANGE);
-        }else if(!strcmp(argv[c], "-i")){
+        }else if (!strcmp(argv[c], "-i")) {
             LearningSettings::iterations = atoi(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-l")){
+        }else if (!strcmp(argv[c], "-l")) {
             logFileNames.push_back(std::string(argv[c + 1]));
-        }else if(!strcmp(argv[c], "-ld")){
+        }else if (!strcmp(argv[c], "-ld")) {
             std::vector<std::string> tmpLogFileNames = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
             logFileNames.insert(logFileNames.end(), tmpLogFileNames.begin(), tmpLogFileNames.end());
-        }else if(!strcmp(argv[c], "-o")){
+        }else if (!strcmp(argv[c], "-o")) {
             outDirName = std::string(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-f")){
+        }else if (!strcmp(argv[c], "-f")) {
             mode &= (~MODE_FLAG_SHUFFLE);
-        }else if(!strcmp(argv[c], "-ar")){
+        }else if (!strcmp(argv[c], "-ar")) {
             LearningSettings::attenuatingRate = atof(argv[c + 1]);
-        }else if(!strcmp(argv[c], "-lr")){
+        }else if (!strcmp(argv[c], "-lr")) {
             LearningSettings::learningRate = atof(argv[c + 1]);
         }
     }

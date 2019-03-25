@@ -3,6 +3,9 @@
 #include <iostream>
 #include <array>
 #include <map>
+#include <iterator>
+
+#include "util.hpp"
 
 namespace UECda {
 
@@ -88,6 +91,16 @@ namespace UECda {
         return out;
     }
 
+    IntCard StringToIntCard(const std::string& str) {
+        if (str.size() != 2) return INTCARD_NONE;
+        if (str == "JO") return INTCARD_JOKER;
+        int sn = CharToSuitNum(str[0]);
+        int r = CharToRank(str[1]);
+        if (r == RANK_NONE) return INTCARD_NONE;
+        if (sn == SUITNUM_NONE) return INTCARD_NONE;
+        return RankSuitNumToIntCard(r, sn);
+    }
+
     struct OutIntCardM {
         IntCard ic;
         constexpr OutIntCardM(const IntCard& arg) :ic(arg) {}
@@ -121,7 +134,7 @@ namespace UECda {
     
     using BitCard = uint64_t; // 1枚だけの時用
     using BitCards = uint64_t;
-    using Cards = uint64_t;
+    //using Cards = uint64_t;
     
     // 基本定数
     constexpr BitCards CARDS_HORIZON = 1ULL;
@@ -176,30 +189,31 @@ namespace UECda {
     constexpr BitCards CARDS_A  = 0x000F000000000000;
     constexpr BitCards CARDS_2  = 0x00F0000000000000;
     constexpr BitCards CARDS_O  = 0x0F00000000000000;
-    constexpr BitCards CARDS_OO = 0xF000000000000000;
+
+    constexpr BitCards CARDS_JOKER_RANK = 0xF000000000000000;
     
     // ランクの指定からカード集合を生成する
-    constexpr Cards RankToCards(uint32_t r) {
+    inline constexpr BitCards RankToCards(uint32_t r) {
         // あるランクのカード全て
         return CARDS_HORIZONRANK << (r << 2);
     }
-    constexpr Cards RankRangeToCards(uint32_t r0, uint32_t r1) {
+    inline constexpr BitCards RankRangeToCards(uint32_t r0, uint32_t r1) {
         // ランク間（両端含む）のカード全て
         // r0 <= r1 でない場合は CARDS_NULL
         return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
-        & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
+               & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
     }
     
-    constexpr Cards Rank4xToCards(uint32_t r4x) {
+    inline constexpr BitCards Rank4xToCards(uint32_t r4x) {
         // あるランク4xのカード全て
         return CARDS_HORIZONRANK << r4x;
     }
     
-    constexpr Cards RankRange4xToCards(uint32_t r4x_0, uint32_t r4x_1) {
+    inline constexpr BitCards RankRange4xToCards(uint32_t r4x_0, uint32_t r4x_1) {
         // ランク4x間（両端含む）のカード全て
         // r4x_0 <= r4x_1でない場合はNULL
         return ~((CARDS_HORIZON << r4x_0) - 1ULL)
-        & ((CARDS_HORIZON << (r4x_1 + 4)) - 1ULL);
+               & ((CARDS_HORIZON << (r4x_1 + 4)) - 1ULL);
     }
     
     // スート
@@ -269,37 +283,27 @@ namespace UECda {
     constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
     constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
     
-    void addCards(BitCards *const c0, BitCards c1) { (*c0) |= c1; }
-    void addJOKER(BitCards *const cptr) { (*cptr) |= CARDS_JOKER; }
-    
-    void addIntCard(BitCards *const pc, IntCard ic) { addCards(pc, IntCardToCards(ic)); }
-    
     // 限定
     constexpr BitCards commonCards(BitCards c0, BitCards c1) { return c0 & c1; }
     constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
-    void andCards(BitCards *const cptr, BitCards c) { (*cptr) &= c; }
     
     // 削除（オーバーを引き起こさない）
     // maskは指定以外とのandをとることとしている。
     // 指定部分とのandはand処理で行う
     constexpr BitCards maskCards(BitCards c0, BitCards c1) { return c0 & ~c1; }
-    void maskCards(BitCards *const c0, BitCards c1) { (*c0) &= ~c1; }
-    constexpr BitCards maskJOKER(Cards c) { return maskCards(c, CARDS_JOKER); }
-    void maskJOKER(BitCards *const cptr) { maskCards(cptr, CARDS_JOKER); }
+    constexpr BitCards maskJOKER(BitCards c) { return maskCards(c, CARDS_JOKER); }
+    
     
     // 状態逆転（追加や削除のため用いた場合はオーバー処理で不具合となる危険性あり）
     constexpr BitCards invCards(BitCards c0, BitCards c1) { return c0 ^ c1; }
-    void invCards(BitCards *const c0, BitCards c1) { (*c0) ^= c1; }
     constexpr BitCards invJOKER(BitCards c0) { return invCards(c0, CARDS_JOKER); }
-    void invJOKER(BitCards *const cptr) { invCards(cptr, CARDS_JOKER); }
+   
     
     // カード減算
     // 全ての（安定でなくても良い）カード減算処理から最も高速なものとして定義したいところだが、
     // 現在では整数としての引き算処理。
     constexpr BitCards subtrCards(BitCards c0, BitCards c1) { return c0 - c1; }
-    void subtrCards(Cards *const cptr, BitCards c) { (*cptr) -= c; }
     constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
-    void subtrJOKER(BitCards *const cptr) { subtrCards(cptr, CARDS_JOKER); }
     
     // 要素数
     constexpr uint32_t countFewCards(BitCards c) { return countFewBits64(c); } // 要素が比較的少ない時の速度優先
@@ -310,18 +314,17 @@ namespace UECda {
     // Cards型基本判定
     
     // 要素の部分一致
-    constexpr BitCards hasSameCards(BitCards c0, BitCards c1) { return commonCards(c0, c1); }
-    constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
+    inline constexpr BitCards hasSameCards(BitCards c0, BitCards c1) { return commonCards(c0, c1); }
+    inline constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
     
     // 包括関係
-    constexpr BitCards containsCard(BitCards c0, BitCard c1) { return andCards(c0, c1); } // 単体に対してはandでok
-    constexpr BitCards containsIntCard(BitCards c, IntCard ic) { return containsCard(c, IntCardToCards(ic)); }
-    constexpr BitCards containsJOKER(BitCards c) { return andCards(c, CARDS_JOKER); }
-    constexpr BitCards containsS3(BitCards c) { return andCards(c, CARDS_S3); }
-    constexpr BitCards containsD3(BitCards c) { return andCards(c, CARDS_D3); }
-    constexpr BitCards contains8(BitCards c) { return andCards(c, CARDS_8); }
-
-    constexpr bool holdsCards(BitCards c0, BitCards c1) { return holdsBits(c0, c1); }
+    inline constexpr BitCards containsCard(BitCards c0, BitCard c1) { return andCards(c0, c1); } // 単体に対してはandでok
+    inline constexpr BitCards containsIntCard(BitCards c, IntCard ic) { return containsCard(c, IntCardToCards(ic)); }
+    inline constexpr BitCards containsJOKER(BitCards c) { return andCards(c, CARDS_JOKER); }
+    inline constexpr BitCards containsS3(BitCards c) { return andCards(c, CARDS_S3); }
+    inline constexpr BitCards containsD3(BitCards c) { return andCards(c, CARDS_D3); }
+    inline constexpr BitCards contains8(BitCards c) { return andCards(c, CARDS_8); }
+    inline constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
     
     // 空判定
     constexpr BitCards anyCards(BitCards c) { return c; }
@@ -329,147 +332,72 @@ namespace UECda {
     // validation
     constexpr bool examCards(BitCards c) { return holdsCards(CARDS_ALL, c); }
     constexpr bool examImaginaryCards(BitCards c) { return holdsCards(CARDS_IMG_ALL, c); }
-    
-    // Cards型生成
-    BitCards StringToCards(const std::string& str) {
-        BitCards c = CARDS_NULL;
-        std::vector<std::string> v = split(str, ' ');
-        for (const auto& s : v) {
-            IntCard ic = StringToIntCardM(s);
-            if (ic != INTCARD_NONE) {
-                addIntCard(&c, ic);
-            }
-        }
-        return c;
-    }
+
     // Cards型特殊演算
     
     // 特定順序の要素を選ぶ（元のデータは変えない）
-    inline Cards pickLow(const Cards c, int n) {
+    inline BitCards pickLow(const BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         return lowestNBits(c, n);
     }
     template <int N = 1>
-    inline Cards pickLow(const Cards c) {
+    inline BitCards pickLow(const BitCards c) {
         assert(N > 0);
         assert((int)countCards(c) >= N);
         return pickLow(c, N);
     }
-    template <> inline constexpr Cards pickLow<1>(const Cards c) {
+    template <> inline constexpr BitCards pickLow<1>(const BitCards c) {
         return lowestBit(c);
     }
-    template <> inline Cards pickLow<2>(const Cards c) {
-        Cards res = lowestBit(c);
+    template <> inline BitCards pickLow<2>(const BitCards c) {
+        BitCards res = lowestBit(c);
         return res | lowestBit(c - res);
     }
     
-    inline Cards pickHigh(const Cards c, int n) {
+    inline BitCards pickHigh(const BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         return highestNBits(c, n);
     }
     template <int N = 1>
-    inline Cards pickHigh(const Cards c) {
+    inline BitCards pickHigh(const BitCards c) {
         assert(N > 0);
         assert((int)countCards(c) >= N);
         return pickHigh(c, N);
     }
-    template <> inline Cards pickHigh<1>(const Cards c) {
+    template <> inline BitCards pickHigh<1>(const BitCards c) {
         return highestBit(c);
     }
-    template <> inline Cards pickHigh<2>(const Cards c) {
-        Cards r = highestBit(c);
+    template <> inline BitCards pickHigh<2>(const BitCards c) {
+        BitCards r = highestBit(c);
         return r | highestBit(c - r);
-    }
-    
-    // 特定順序の要素の取り出し(元のデータから引く)
-    inline Cards popHigh(Cards *const c) {
-        assert(*c);
-        Cards r = 1ULL << bsr64(*c);
-        (*c) -= r;
-        return r;
-    }
-    
-    inline Cards popHigh2(Cards *const c) {
-        assert(countCards(*c) >= 2U);
-        Cards r1 = 1ULL << bsr64(*c);
-        (*c) -= r1;
-        Cards r2 = 1ULL << bsr64(*c);
-        (*c) -= r2;
-        return r1 | r2;
-    }
-    
-    inline Cards popLow(Cards *const c) {
-        assert(anyCards(*c));
-        Cards r = (*c) & (-(*c));
-        subtrCards(c, r);
-        return r;
     }
     
     // Cards pop
     
     // IntCard型で1つ取り出し
-    inline IntCard pickIntCardLow(const Cards c) {
+    inline IntCard pickIntCardLow(const BitCards c) {
         return (IntCard)bsf64(c);
     }
     
-    inline IntCard pickIntCardHigh(const Cards c) {
+    inline IntCard pickIntCardHigh(const BitCards c) {
         ASSERT(anyCards(c),);
         return (IntCard)bsr64(c);
     }
     
-    inline IntCard popIntCardLow(Cards *const c) {
-        IntCard ic = pickIntCardLow(*c);
-        (*c) &= ((*c) - 1ULL);
-        return ic;
-    }
-    
-    inline IntCard popIntCardHigh(Cards *const c) {
-        IntCard ic = pickIntCardHigh(*c);
-        subtrCards(c, IntCardToCards(ic));
-        return ic;
-    }
-    
-    // 適当に（ランダムではない）１つ取り出し
-    // 順序がどうでも良い取り出し操作の中で最速な操作で実装したい
-    inline Cards pop(Cards *const c) {
-        Cards r = (*c) & (-(*c));
-        (*c) -= r;
-        return r;
-    }
-    
-    inline constexpr Cards pick(const Cards c) {
+    inline constexpr BitCards pick(const BitCards c) {
         return c & (-c);
     }
     
-    inline IntCard pickIntCard(const Cards c) {
+    inline IntCard pickIntCard(const BitCards c) {
         return pickIntCardLow(c);
     }
     
-    inline IntCard popIntCard(Cards *const c) {
-        return popIntCardLow(c);
-    }
-    
-    // 完全ランダム取り出し
-    // ビット分割関数(bitPartition.hpp)を使う
     template <int N = 1, class dice64_t>
-    inline Cards popRand(Cards *const c, dice64_t *const dice) {
-        static_assert(N >= 0, " popRand N < 0 ");
-        Cards res;
-        switch (N) {
-            case 0: res = CARDS_NULL; break;
-            case 1: res = pop1Bit64(c, dice); break;
-                //case 2:res=pickNBits64(c,2,countCards(c)-2,dice);break;
-            default: UNREACHABLE; break;
-        }
-        return res;
-    }
-    
-    template <int N = 1, class dice64_t>
-    inline Cards pickRand(const Cards c, dice64_t *const dice) {
+    inline BitCards pickRand(const BitCards c, dice64_t *const dice) {
         static_assert(N >= 0, " pickRand N < 0 ");
-        Cards res;
+        BitCards res;
         switch (N) {
             case 0: res = CARDS_NULL; break;
             case 1: res = pick1Bit64(c, dice); break;
@@ -480,14 +408,14 @@ namespace UECda {
     }
     
     // n番目(nは1から)に高い,低いもの
-    inline Cards pickNthHigh(Cards c, int n) {
+    inline BitCards pickNthHigh(BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
         return NthHighestBit(c, n);
     }
     
-    inline Cards pickNthLow(Cards c, int n) {
+    inline BitCards pickNthLow(BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
@@ -495,14 +423,14 @@ namespace UECda {
     }
     
     // n番目(nは1から)に高い,低いもの以外
-    inline Cards maskNthHigh(Cards c, int n) {
+    inline BitCards maskNthHigh(BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
         return subtrCards(c, pickNthHigh(c, n));
     }
     
-    inline Cards maskNthLow(Cards c, int n) {
+    inline BitCards maskNthLow(BitCards c, int n) {
         assert(n > 0);
         assert((int)countCards(c) >= n);
         
@@ -512,28 +440,28 @@ namespace UECda {
     // 基準c1より高い、低い(同じは含まず)もの
     
     // 単体。変なカードも入るが...
-    inline Cards pickHigher(Cards c1) {
+    inline BitCards pickHigher(BitCards c1) {
         return allHigherBits(c1);
     }
     
-    inline Cards pickLower(Cards c1) {
+    inline BitCards pickLower(BitCards c1) {
         return allLowerBits(c1);
     }
     
-    inline Cards pickHigher(Cards c0, Cards c1) {
+    inline BitCards pickHigher(BitCards c0, BitCards c1) {
         return c0 & allHigherBits(c1);
     }
     
-    inline Cards pickLower(Cards c0, Cards c1) {
+    inline BitCards pickLower(BitCards c0, BitCards c1) {
         return c0 & allLowerBits(c1);
     }
     
     // 基準c1より高い、低い(同じは含まず)もの以外
-    inline Cards maskHigher(Cards c0, Cards c1) {
+    inline BitCards maskHigher(BitCards c0, BitCards c1) {
         return c0 & ~allHigherBits(c1);
     }
     
-    inline Cards maskLower(Cards c0, Cards c1) {
+    inline BitCards maskLower(BitCards c0, BitCards c1) {
         return c0 & ~allLowerBits(c1);
     }
     
@@ -549,6 +477,269 @@ namespace UECda {
     }
     inline constexpr BitCards weakerMask(Rank r, Order ord) {
         return ord == ORDER_NORMAL ? lowerMask(r) : higherMask(r);
+    }
+
+    /**************************カード集合表現(クラス版)**************************/
+
+    struct CardsAsSet {
+        // ビット単位で1つずつ取り出す用
+        BitCards c_;
+        constexpr CardsAsSet(BitCards c): c_(c) {}
+    
+        class const_iterator : public std::iterator<std::input_iterator_tag, BitCards> {
+            friend CardsAsSet;
+        public:
+            BitCards operator *() const {
+                // 下1ビットを取り出す
+                return c_ & -c_;
+            }
+            bool operator !=(const const_iterator& itr) const {
+                return pclass_ != itr.pclass_ || c_ != itr.c_;
+            }
+            const_iterator& operator ++() {
+                c_ = popLsb<BitCards>(c_);
+                return *this;
+            }
+        protected:
+            explicit const_iterator(const CardsAsSet *pclass): pclass_(pclass), c_(pclass->c_) {}
+            explicit const_iterator(const CardsAsSet *pclass, BitCards c): pclass_(pclass), c_(c) {}
+            const CardsAsSet *const pclass_;
+            BitCards c_;
+        };
+
+        const_iterator begin() const { return const_iterator(this); }
+        const_iterator end() const { return const_iterator(this, 0); }
+    };
+    
+    struct Cards {
+        BitCards c_;
+
+        // 定数
+        constexpr Cards() : c_() {}
+        constexpr Cards(BitCards c): c_(c) {}
+        constexpr Cards(const Cards& c): c_(c.c_) {}
+
+        Cards(const std::string& str) {
+            clear();
+            std::vector<std::string> v = split(str, ' ');
+            for (const std::string& s : v) {
+                IntCard ic = StringToIntCardM(s);
+                // 大文字形式かもしれないので試す
+                if (ic == INTCARD_NONE) ic = StringToIntCard(s);
+                if (ic != INTCARD_NONE) insert(ic);
+            }
+        }
+        Cards(const char *cstr): Cards(std::string(cstr)) {}
+     
+        // 生のBitCards型への変換
+        constexpr operator BitCards() const { return c_; }
+        
+        constexpr bool empty() const { return !anyCards(c_); }
+        constexpr bool any() const { return anyCards(c_); }
+        constexpr bool any2() const { return any2Cards(c_); }
+        
+        constexpr bool anyJOKER() const { return UECda::containsJOKER(c_); }
+        constexpr bool contains(IntCard ic) const { return UECda::containsIntCard(c_, ic); }
+        
+        constexpr BitCards operator ~() const { return ~c_; }
+        constexpr BitCards operator &(BitCards c) const { return c_ & c; }
+        constexpr BitCards operator |(BitCards c) const { return c_ | c; }
+        constexpr BitCards operator ^(BitCards c) const { return c_ ^ c; }
+        constexpr BitCards operator +(BitCards c) const { return c_ + c; }
+        constexpr BitCards operator -(BitCards c) const { return c_ - c; }
+        constexpr BitCards operator <<(int i) const { return c_ << i; }
+        constexpr BitCards operator >>(int i) const { return c_ >> i; }
+        constexpr BitCards operator <<(unsigned int i) const { return c_ << i; }
+        constexpr BitCards operator >>(unsigned int i) const { return c_ >> i; }
+
+        constexpr int joker() const { return countJOKER(); }
+        constexpr Cards plain() const { return UECda::maskJOKER(c_); }
+
+        int count() const { return countCards(c_); }
+        constexpr int countInCompileTime() const { return countFewCards(c_); }
+        constexpr int countJOKER() const { return int(UECda::containsJOKER(c_)); }
+        int countPlain() const { return countCards(plain()); }
+
+        constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
+        constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
+
+        // 指定されたランクのスート集合を得る
+        constexpr unsigned int operator[] (int r) const { return (c_ >> (r * 4)) & 15; }
+        
+        Cards& operator |=(BitCards c) { c_ |= c; return *this; }
+        Cards& operator &=(BitCards c) { c_ &= c; return *this; }
+        Cards& operator ^=(BitCards c) { c_ ^= c; return *this; }
+        Cards& operator +=(BitCards c) { c_ += c; return *this; }
+        Cards& operator -=(BitCards c) { c_ -= c; return *this; }
+        Cards& operator <<=(int i) { c_ <<= i; return *this; }
+        Cards& operator >>=(int i) { c_ >>= i; return *this; }
+        Cards& operator <<=(unsigned int i) { c_ <<= i; return *this; }
+        Cards& operator >>=(unsigned int i) { c_ >>= i; return *this; }
+
+        Cards& clear() { c_ = 0; return *this; }
+        Cards& fill() { c_ = CARDS_ALL; return *this; }
+
+        Cards& merge(BitCards c) { return (*this) |= c; }
+        Cards& mask(BitCards c) { return (*this) &= ~c; }
+        Cards& maskJOKER() { return mask(CARDS_JOKER_RANK); }
+
+        Cards& insert(IntCard ic) { return (*this) |= IntCardToCards(ic); }
+        Cards& insertJOKER() { return (*this) |= CARDS_JOKER; }
+
+        Cards& remove(IntCard ic) { return mask(IntCardToCards(ic)); }
+        Cards& forceRemove(IntCard ic) {
+            assert(contains(ic));
+            return (*this) -= IntCardToCards(ic);
+        }
+        Cards& forceRemoveAll(BitCards c) {
+            assert(holds(c));
+            return (*this) -= c;
+        }
+        
+        Cards& inv(BitCards c) { return (*this) ^= c; }
+        Cards& inv() { return inv(CARDS_ALL); }
+        
+        // pick, pop
+        IntCard lowest() const {
+            assert(any());
+            return UECda::pickIntCardLow(c_);
+        }
+        IntCard highest() const {
+            assert(any());
+            return UECda::pickIntCardHigh(c_);
+        }
+        IntCard popLowest() {
+            assert(any());
+            IntCard ic = lowest();
+            c_ = popLsb(c_);
+            return ic;
+        }
+        IntCard popHighest() {
+            assert(any());
+            IntCard ic = highest();
+            remove(ic);
+            return ic;
+        }
+
+        class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
+            friend Cards;
+        public:
+            IntCard operator *() const {
+                return IntCard(bsf<BitCards>(c_));
+            }
+            bool operator !=(const const_iterator& itr) const {
+                return pclass_ != itr.pclass_ || c_ != itr.c_;
+            }
+            const_iterator& operator ++() {
+                // 下1ビットのみ消す
+                c_ &= c_ - 1;
+                return *this;
+            }
+        protected:
+            explicit const_iterator(const Cards *pclass): pclass_(pclass), c_(pclass->c_) {}
+            explicit const_iterator(const Cards *pclass, BitCards c): pclass_(pclass), c_(c) {}
+            const Cards *const pclass_;
+            BitCards c_;
+        };
+
+        const_iterator begin() const { return const_iterator(this); }
+        const_iterator end() const { return const_iterator(this, 0); }
+
+        constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
+    };
+
+    std::ostream& operator <<(std::ostream& out, const Cards& c) {
+        out << "{";
+        int cnt = 0;
+        for (IntCard ic : c) {
+            if (cnt++ > 0) out << " "; 
+            out << OutIntCard(ic);
+        }
+        out << " }";
+        return out;
+    }
+
+    struct CardArray : public BitArray64<4, 16> {
+        constexpr CardArray(): BitArray64<4, 16>() {}
+        constexpr CardArray(BitCards c): BitArray64<4, 16>(c) {}
+        constexpr CardArray(const BitArray64<4, 16>& a): BitArray64<4, 16>(a) {}
+        constexpr CardArray(const Cards& c): BitArray64<4, 16>(c.c_) {}
+        operator BitCards() const { return BitCards(data()); }
+    };
+    
+    void addCards(Cards *const c0, BitCards c1) { (*c0) |= c1; }
+    void addJOKER(Cards *const cptr) { (*cptr) |= CARDS_JOKER; }
+    
+    void addIntCard(Cards *const pc, IntCard ic) { addCards(pc, IntCardToCards(ic)); }
+    
+    void andCards(Cards *const cptr, BitCards c) { (*cptr) &= c; }
+    
+    void maskCards(Cards *const c0, BitCards c1) { (*c0) &= ~c1; }
+    void maskJOKER(Cards *const cptr) { maskCards(cptr, CARDS_JOKER); }
+    void invCards(Cards *const c0, BitCards c1) { (*c0) ^= c1; }
+    void invJOKER(Cards *const cptr) { invCards(cptr, CARDS_JOKER); }
+
+    // 特定順序の要素の取り出し(元のデータから引く)
+    inline Cards popHigh(Cards *const c) {
+        assert(*c);
+        BitCards r = 1ULL << bsr64(*c);
+        (*c) -= r;
+        return r;
+    }
+    
+    inline Cards popHigh2(Cards *const c) {
+        assert(countCards(*c) >= 2U);
+        BitCards r1 = 1ULL << bsr64(*c);
+        (*c) -= r1;
+        BitCards r2 = 1ULL << bsr64(*c);
+        (*c) -= r2;
+        return r1 | r2;
+    }
+    
+    inline Cards popLow(Cards *const c) {
+        assert(anyCards(*c));
+        BitCards r = (*c) & (-(*c));
+        *c -= r;
+        return r;
+    }
+
+    inline IntCard popIntCardLow(Cards *const c) {
+        IntCard ic = pickIntCardLow(*c);
+        (*c) &= ((*c) - 1ULL);
+        return ic;
+    }
+    
+    inline IntCard popIntCardHigh(Cards *const c) {
+        IntCard ic = pickIntCardHigh(*c);
+        *c -= IntCardToCards(ic);
+        return ic;
+    }
+
+    // 適当に（ランダムではない）１つ取り出し
+    // 順序がどうでも良い取り出し操作の中で最速な操作で実装したい
+    inline BitCards pop(Cards *const c) {
+        BitCards r = (*c) & (-(*c));
+        (*c) -= r;
+        return r;
+    }
+
+    inline IntCard popIntCard(Cards *const c) {
+        return popIntCardLow(c);
+    }
+
+    // 完全ランダム取り出し
+    // ビット分割関数(bitPartition.hpp)を使う
+    template <int N = 1, class dice64_t>
+    inline BitCards popRand(Cards *const c, dice64_t *const dice) {
+        static_assert(N >= 0, " popRand N < 0 ");
+        BitCards res;
+        switch (N) {
+            case 0: res = CARDS_NULL; break;
+            case 1: res = pop1Bit64(c->c_, dice); break;
+                //case 2:res=pickNBits64(c,2,countCards(c)-2,dice);break;
+            default: UNREACHABLE; break;
+        }
+        return res;
     }
 
     // ランク重合
@@ -589,24 +780,24 @@ namespace UECda {
     // ランクを１つずつ上げてorをとるのが基本だが、
     // 4以上の場合は倍々で増やしていった方が少ない命令で済む
     template <int N = 3>
-    inline Cards extractRanks(const Cards c) {
+    inline BitCards extractRanks(const BitCards c) {
         return ((c << ((N - 1) << 2)) | extractRanks<N - 1>(c));
     }
         
-    template <> inline constexpr Cards extractRanks<0>(const Cards c) { return CARDS_NULL; }
-    template <> inline constexpr Cards extractRanks<1>(const Cards c) { return c; }
-    template <> inline constexpr Cards extractRanks<2>(const Cards c) { return c | (c << 4); }
-    template <> inline constexpr Cards extractRanks<3>(const Cards c) { return c | (c << 4) | (c << 8); }
-    template <> inline Cards extractRanks<4>(const Cards c) {
+    template <> inline constexpr BitCards extractRanks<0>(const BitCards c) { return CARDS_NULL; }
+    template <> inline constexpr BitCards extractRanks<1>(const BitCards c) { return c; }
+    template <> inline constexpr BitCards extractRanks<2>(const BitCards c) { return c | (c << 4); }
+    template <> inline constexpr BitCards extractRanks<3>(const BitCards c) { return c | (c << 4) | (c << 8); }
+    template <> inline BitCards extractRanks<4>(const BitCards c) {
         Cards r = c | (c << 4);
         return r | (r << 8);
     }
-    template <> inline Cards extractRanks<5>(const Cards c) {
+    template <> inline BitCards extractRanks<5>(const BitCards c) {
         Cards r = c | (c << 4);
         return r | (c << 8) | (r << 12);
     }
         
-    Cards extractRanks(Cards c, uint32_t num) { // 展開数が変数の場合
+    Cards extractRanks(BitCards c, uint32_t num) { // 展開数が変数の場合
         assert(num > 0);
         for (int n = num - 1U; n; --n) {
             c = extractRanks<2>(c);
@@ -948,7 +1139,7 @@ namespace UECda {
     std::ostream& operator <<(std::ostream& out, const OutCards& arg) {
         assert(holdsCards(CARDS_IMG_ALL, arg.c));
         out << "{";
-        BitCards tmp = arg.c;
+        Cards tmp = arg.c;
         while (anyCards(tmp)) {
             out << " " << OutIntCard(popIntCardLow(&tmp));
         }
@@ -1053,14 +1244,14 @@ namespace UECda {
 
     // イテレーション
     template <typename callback_t>
-    void iterateIntCard(BitCards c, const callback_t& callback) {
+    void iterateIntCard(Cards c, const callback_t& callback) {
         while (anyCards(c)) {
             IntCard ic = popIntCard(&c);
             callback(ic);
         }
     }
     template <typename callback_t>
-    void iterateCard(BitCards c, const callback_t& callback) {
+    void iterateCard(Cards c, const callback_t& callback) {
         while (anyCards(c)) {
             Cards tc = pop(&c);
             callback(tc);
@@ -1117,15 +1308,15 @@ namespace UECda {
         return PQR_1 << (q - 1);
     }
     
-    BitArray64<4, 16> CardsToQR_slow(BitCards c) {
-        BitArray64<4, 16> ret = 0;
+    CardArray CardsToQR_slow(BitCards c) {
+        CardArray ret = 0;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             ret.set(r, countCards(RankToCards(r) & c));
         }
         return ret.data();
     }
-    BitArray64<4, 16> CardsToENR_slow(BitCards c, int n) {
-        BitArray64<4, 16> ret = 0;
+    CardArray CardsToENR_slow(BitCards c, int n) {
+        CardArray ret = 0;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             if (countCards(c & RankToCards(r)) >= n) {
                 ret.set(r, 1);
@@ -1133,8 +1324,8 @@ namespace UECda {
         }
         return ret.data();
     }
-    BitArray64<4, 16> CardsToNR_slow(BitCards c, int n) {
-        BitArray64<4, 16> ret = 0;
+    CardArray CardsToNR_slow(BitCards c, int n) {
+        CardArray ret = 0;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             if (countCards(c & RankToCards(r)) == n) {
                 ret.set(r, 1);
@@ -1142,9 +1333,9 @@ namespace UECda {
         }
         return ret.data();
     }
-    BitCards QRToPQR_slow(BitArray64<4, 16> qr) {
-        BitArray64<4, 16> arr = qr;
-        BitArray64<4, 16> ret = CARDS_NULL;
+    BitCards QRToPQR_slow(CardArray qr) {
+        CardArray arr = qr;
+        CardArray ret = CARDS_NULL;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             if (arr[r]) {
                 ret.set(r, 1 << (arr[r] - 1));
@@ -1152,17 +1343,17 @@ namespace UECda {
         }
         return ret.data();
     }
-    BitCards QRToSC_slow(BitArray64<4, 16> qr) {
-        BitArray64<4, 16> arr = qr;
-        BitArray64<4, 16> ret = CARDS_NULL;
+    BitCards QRToSC_slow(CardArray qr) {
+        CardArray arr = qr;
+        CardArray ret = CARDS_NULL;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             ret.set(r, (1 << arr[r]) - 1);
         }
         return ret.data();
     }
-    BitCards PQRToSC_slow(BitArray64<4, 16> qr) {
-        BitArray64<4, 16> arr = qr;
-        BitArray64<4, 16> ret = CARDS_NULL;
+    BitCards PQRToSC_slow(CardArray qr) {
+        CardArray arr = qr;
+        CardArray ret = CARDS_NULL;
         for (int r = RANK_U; r <= RANK_O; ++r) {
             if (arr[r]) {
                 uint32_t q = bsf(arr[r]) + 1;
@@ -1173,37 +1364,34 @@ namespace UECda {
     }
     
     // パラレル演算関数
-    inline BitArray64<4, 16> CardsToQR(const BitCards c) {
+    inline CardArray CardsToQR(BitCards c) {
         // 枚数が各4ビットに入る
         BitCards a = (c & PQR_13) + ((c >> 1) & PQR_13);
         return (a & PQR_12) + ((a >> 2) & PQR_12);
     }
-    inline BitCards CardsToFR(const BitCards c) {
-        // ランク中の4ビット全てあればPQR_1の位置にビットが立つ
+
+    // ランク中に丁度 n ビットあれば PQR_1 の位置にビットが立つ
+    inline BitCards CardsToFR(BitCards c) {
         BitCards a = c & (c >> 1);
         return a & (a >> 2) & PQR_1;
     }
-    inline BitCards CardsTo3R(const BitCards c) {
-        // ランク中に丁度3ビットあればPQR_1の位置にビットが立つ
+    inline BitCards CardsTo3R(BitCards c) {
         BitCards ab_cd = c & (c >> 1);
         BitCards axb_cxd = c ^ (c >> 1);
         return ((ab_cd & (axb_cxd >> 2)) | ((ab_cd >> 2) & axb_cxd)) & PQR_1;
     }
-    inline BitCards CardsTo2R(const BitCards c) {
-        // ランク中に丁度2ビットあればPQR_1の位置にビットが立つ
+    inline BitCards CardsTo2R(BitCards c) {
         BitCards qr = CardsToQR(c);
         return (qr >> 1) & ~qr & PQR_1;
     }
-    inline BitCards CardsTo1R(const BitCards c) {
-        // ランク中に丁度1ビットあればPQR_1の位置にビットが立つ
+    inline BitCards CardsTo1R(BitCards c) {
         return CardsTo3R(~c);
     }
-    inline BitCards CardsTo0R(const BitCards c) {
-        // ランク中に1ビットもなければPQR_1の位置にビットが立つ
+    inline BitCards CardsTo0R(BitCards c) {
         return CardsToFR(~c);
     }
         
-    inline BitCards CardsToNR(const BitCards c, int q) {
+    inline BitCards CardsToNR(BitCards c, int q) {
         Cards nr;
         switch (q) {
             case 0: nr = CardsTo0R(c); break;
@@ -1216,13 +1404,13 @@ namespace UECda {
         return nr;
     }
         
-    inline BitCards CardsToER(const BitCards c) {
+    inline BitCards CardsToER(BitCards c) {
         // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
         BitCards a = c | (c >> 1);
         return (a | (a >> 2)) & PQR_1;
     }
     
-    inline BitCards CardsToPQR(const BitCards arg) {
+    inline BitCards CardsToPQR(BitCards arg) {
         // ランクごとの枚数を示す位置にビットが立つようにする
         // 2ビットごとの枚数を計算
         BitCards a = (arg & PQR_13) + ((arg >> 1) & PQR_13);
@@ -1243,23 +1431,23 @@ namespace UECda {
         return r;
     }
     
-    inline BitCards QRToPQR(const BitArray64<4, 16> qr) {
+    inline BitCards QRToPQR(const CardArray qr) {
         // qr -> pqr 変換
-        const Cards iqr = ~qr;
-        const Cards qr_l1 = (qr << 1);
-        const Cards r = (PQR_1 & qr & (iqr >> 1)) | (PQR_2 & qr & (iqr << 1)) | ((qr & qr_l1) << 1) | (qr_l1 & PQR_4);
+        const BitCards iqr = ~qr;
+        const BitCards qr_l1 = (qr << 1);
+        const BitCards r = (PQR_1 & qr & (iqr >> 1)) | (PQR_2 & qr & (iqr << 1)) | ((qr & qr_l1) << 1) | (qr_l1 & PQR_4);
         return r;
     }
     
-    inline BitCards PQRToSC(const BitCards pqr) {
+    inline BitCards PQRToSC(BitCards pqr) {
         // pqr -> sc はビットを埋めていくだけ
-        Cards r = pqr;
+        BitCards r = pqr;
         r |= (r & PQR_234) >> 1;
         r |= (r & PQR_34) >> 2;
         return r;
     }
     
-    inline void PQRToND(const BitCards pqr, uint32_t jk, Cards *const nd) {
+    inline void PQRToND(BitCards pqr, uint32_t jk, Cards *const nd) {
         // pqr -> nd[2] 変換
         // ジョーカーの枚数の情報も必要
         assert(jk == 0 || jk == 1); // 0or1枚
@@ -1269,21 +1457,21 @@ namespace UECda {
 
         // pqrの1ランクシフトが無支配限度
         // 以降、tmpのビットの示す位置は実際にカードがあるランクよりずれている事に注意
-        Cards tmp0 = pqr >> 4;
-        Cards tmp1 = pqr << 4;
+        BitCards tmp0 = pqr >> 4;
+        BitCards tmp1 = pqr << 4;
         while (tmp0) { // 無支配ゾーンがまだ広いはず
             IntCard ic = pickIntCardHigh(tmp0);
             int r = IntCardToRank(ic);
             int sn = IntCardToSuitNum(ic);
             nd[0] |= ORQ_NDTable[0][r][sn]; // このゾーンに対して返せることが確定
-            tmp0 &= (~nd[0]); // もう関係なくなった部分は外す
+            tmp0 &= ~nd[0]; // もう関係なくなった部分は外す
         }
         while (tmp1) { // 無支配ゾーンがまだ広いはず
             IntCard ic = pickIntCardLow(tmp1);
             int r = IntCardToRank(ic);
             int sn = IntCardToSuitNum(ic);
             nd[1] |= ORQ_NDTable[1][r][sn]; // このゾーンに対して返せることが確定
-            tmp1 &= (~nd[1]); // もう関係なくなった部分は外す
+            tmp1 &= ~nd[1]; // もう関係なくなった部分は外す
         }
         
         // ジョーカーがある場合は1枚分ずらして、全てのシングルを加える
@@ -1298,8 +1486,8 @@ namespace UECda {
     }
 
     // 役の作成可能性判定
-    Cards canMakePlainGroup(Cards c, int q) {
-        Cards ret;
+    BitCards canMakePlainGroup(BitCards c, int q) {
+        BitCards ret;
         switch (q) {
             case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする(canMakeGroupでジョーカーありの場合のため)
             case 1: ret = maskJOKER(c); break;
@@ -1310,7 +1498,7 @@ namespace UECda {
         }
         return ret;
     }
-    Cards canMakeGroup(Cards c, int q) {
+    BitCards canMakeGroup(BitCards c, int q) {
         return canMakePlainGroup(c, containsJOKER(c) ? (q - 1) : q);
     }
     
@@ -1318,7 +1506,7 @@ namespace UECda {
     // あるカード集合（スート限定がなされていてもよい）の中にn枚グループが作成可能かの判定
     // ただしジョーカーの分は最初から引いておく
     // 高速な処理には場合分けが必要か
-    inline bool judgeSuitComp(Cards c, int n) {
+    inline bool judgeSuitComp(BitCards c, int n) {
         if (c) {
             if (n == 1) {
                 return true;
@@ -1329,10 +1517,10 @@ namespace UECda {
                         return true;
                     } else {
                         if (c & PQR_34) { // 4枚
-                            if (n <= 4) { return true; }
+                            if (n <= 4) return true;
                         } else {
                             if (((c & PQR_2) >> 1) & c) { // 3枚
-                                if (n == 3) { return true; }
+                                if (n == 3) return true;
                             }
                         }
                     }
@@ -1375,225 +1563,7 @@ namespace UECda {
     
     CardsInitializer cardsInitializer;
     
-    /**************************カード集合表現(クラス版)**************************/
     
-    /*struct Cards : public BitSet64 {
-        
-        // 定数
-        constexpr Cards() : BitSet64() {}
-        constexpr Cards(const BitCards ac) : BitSet64(ac) {}
-        constexpr Cards(const Cards& ac) : BitSet64(ac.cards()) {}
-        
-        Cards& fill() {
-            set(CARDS_ALL);
-        }
-     
-        // 生のBitCards型への変換
-        BitCards cards() const { return static_cast<BitCards>(data()); }
-        BitCards& cards() { return data(); }
-        
-        bool anyJOKER() const { return anyJOKER(cards()); }
-        bool anyPlain() const { return anyPlain(cards()); }
-        bool any() const { return anyCards(cards()); }
-        bool any2() const { return any2Cards(cards()); }
-        
-        bool containsJOKER() const{ return containsJOKER(cards()); }
-        bool containsS3() const{ return containsS3(cards()); }
-        bool containsD3() const{ return containsD3(cards()); }
-        
-        uint32_t countPlain() const {
-             return countCards(maskJOKER(cards()));
-        }
-        
-        Cards& set(BitCards ac) {
-            (*this) = ac;
-        }
-        Cards& set(Cards ac) {
-            (*this) = ac.cards();
-        }
-        Cards& add(BitCards ac) {
-            addCards(&cards(), ac);
-            return *this;
-        }
-        Cards& addJOKER() {
-            addJOKER(&cards());
-            return *this;
-        }
-        Cards& addIntCard(IntCard ic) {
-            addIntCard(&cards(), ic);
-            return *this;
-        }
-        Cards& sub(BitCards ac) {
-            subtrCards(&cards(), ac);
-        }
-        
-        Cards& inv(Cards argc) {
-            invCards(&cards, argc);
-        }
-        Cards& inv() {
-            invCards(&cards, CARDS_ALL);
-        }
-        Cards& mask(BitCards ac) {
-            maskCards(&cards(), ac);
-            return *this;
-        }
-        Cards& maskJOKER() {
-            UECda::maskJOKER(&cards());
-            return *this;
-        }
-
-        // 包括性
-        bool holds(const BitCards ac) const {
-            return holdsCards(cards, ac);
-        }
-        
-        
-        // pick, pop
-        IntCard pickIntCardLow() const {
-            assert(any());
-            return UECda::pickIntCardLow(cards());
-        }
-        IntCard pickIntCardHigh() const {
-            assert(any());
-            return UECda::pickIntCardHigh(cards());
-        }
-        IntCard popIntCardLow() {
-            assert(any());
-            return UECda::popIntCardLow(&cards());
-        }
-        IntCard popIntCardHigh() {
-            assert(any());
-            return UECda::popIntCardHigh(&cards());
-        }
-        Cards pickLow() const{
-            assert(any());
-            pickL
-        }
-        Cards pickHigh() const{
-            assert(any());
-        }
-        Cards pickHigh() const{
-            assert(any());
-        }
-        Cards pickLow() const{
-            assert(any());
-        }
-        
-        // 複数pick, pop
-        template <int N = 1>Cards pickLow(
-        ) const{
-            assert(count() >= N);
-        }
-        
-        template <int N = 1,int JK = 1>
-        void pickHigh(Cards96<cards_t,NJK> *const dst) const {
-            assert(count() >= N);
-            if (JK && jk >= (uint32_t)N) {
-                dst->cards=CARDS_NULL;
-                dst->jk = (uint32_t)N;
-            } else {
-                dst->cards=::pickHigh(cards,(uint32_t)N-jk);
-                dst->jk=jk;
-            }
-        }
-        
-        template <int N = 1,int JK = 1> void popLow(Cards96<cards_t,NJK> *const dst) {
-            assert( count() >= N );
-            uint32_t nex=countPlain();
-            if ( (!JK) || nex >= (uint32_t)N ) {
-                Cards tmp=::pickLow<N>(cards);
-                dst->cards=tmp;
-                dst->jk=0;
-                subtr(tmp);
-            } else {
-                dst->cards=cards;
-                dst->jk=(uint32_t)N - nex;
-                cards=CARDS_NULL;
-                jk-=(uint32_t)N - nex;
-            }
-        }
-        
-        template <int N=1,int JK=1> void popHigh(Cards96<cards_t,NJK> *const dst) {
-            assert( count() >= N );
-            if ( JK && jk >= (uint32_t)N ) {
-                dst->cards=CARDS_NULL;
-                dst->jk=(uint32_t)N;
-                jk-=(uint32_t)N;
-            } else {
-                Cards tmp=::pickHigh(cards,(uint32_t)N-jk);
-                dst->cards=tmp;
-                dst->jk=jk;
-                subtr(tmp);
-                jk=0;
-            }
-        }
-        
-        template <int N=1,int JK=1,class dice_t> void popRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice) {
-            assert( count() >= n );
-            if ( !JK ) {
-                Cards tmp=pickNBits64(cards,n,countPlain()-n,pdice);
-                subtr(tmp);
-                dst->cards=tmp;
-                dst->jk=0;
-            } else {
-                dst->clear();
-                Cards tmp=cards;
-                if ( jk ) {
-                    addCards(&tmp,CARDS_JOKER);
-                    if ( jk==2 ) {
-                        addCards(&tmp,CARDS_JOKER<<1);
-                    }
-                }
-                Cards ret=pickNBits64(tmp,n,count()-n,pdice);
-                dst->cards=pickCDHS(ret);
-                dst->jk=countCards(ret-pickCDHS(ret));
-                subtr(*dst);
-            }
-        }
-        
-        template <int N=1,int JK=1,class dice_t> void pickRand(Cards96<cards_t,NJK> *const dst,int n,dice_t *const pdice) const{
-            assert( count() >= n );
-            if ( !JK ) {
-                Cards tmp=pickNBits64(cards,n,countPlain()-n,pdice);
-                dst->cards=tmp;
-                dst->jk=0;
-            } else {
-                dst->clear();
-                Cards tmp=cards;
-                if ( jk ) {
-                    addCards(&tmp,CARDS_JOKER);
-                    if ( jk==2 ) {
-                        addCards(&tmp,CARDS_JOKER<<1);
-                    }
-                }
-                Cards ret=pickNBits64(tmp,n,count()-n,pdice);
-                dst->cards=pickCDHS(ret);
-                dst->jk=countCards(ret-pickCDHS(ret));
-            }
-        }
-        
-        //階段の作成可能性
-        template <int N=MIN_SEQ_QTY,int JK_QTY=-1>Cards canMakeSeq() {
-            //持っているジョーカーの枚数と異なる枚数でJK_QTYを指定されてもよいことにする
-            switch ( JK_QTY ) {
-                case 0: return polymRanks<N>(cards);break;
-                case 1: return polymRanksWithJOKER<N,1>(cards);break;
-                case 2: return polymRanksWithJOKER<N,2>(cards);break;
-                default:
-                    assert( jk<=N_JOKERS );
-                    switch ( jk ) {
-                        case 0: return canMakeSeq<N,0>();break;
-                        case 1: return canMakeSeq<N,1>();break;
-                        case 2: return canMakeSeq<N,2>();break;
-                        default: assert(0);break;
-                    }
-                    break;
-            }
-        }
-        
-        //static関数
-     
-    };*/
     /**************************役集合表現**************************/
     
     // 着手の逐次生成用の軽い役集合表現

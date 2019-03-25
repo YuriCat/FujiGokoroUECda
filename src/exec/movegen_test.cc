@@ -22,13 +22,13 @@ Clock cl;
 std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
-static_assert(countFewCards(c) == N_MAX_OWNED_CARDS_PLAY, "sample is not correct.");\
+assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
 int moves = mgCards.genLead(buffer, c);\
 cerr << moves << " moves were generated for " << OutCards(c) << endl;\
-for(int m = 0; m < moves; ++m){ cerr << Move(buffer[m]) << " "; }\
+for (int m = 0; m < moves; ++m) { cerr << Move(buffer[m]) << " "; }\
 cerr << endl;}
 
-int outputGenerationResult(){
+int outputGenerationResult() {
     // 気になるケースやコーナーケース、代表的なケースでの着手生成の結果を出力する
 
     // コーナーケースでの生成着手数
@@ -51,16 +51,16 @@ int outputGenerationResult(){
 }
 
 template<class move_t, class field_t>
-int testMoveValidity(const move_t *const mv0, const int moves, const field_t& field){
+int testMoveValidity(const move_t *const mv0, const int moves, const field_t& field) {
     // moves 個生成された着手をチェック
     const Cards c = field.getCards(field.getTurnPlayer());
     
     // 客観的合法性
     
     // 主観的合法性
-    for(const move_t *tmp = mv0; tmp != mv0 + moves; ++tmp){
-        if(!isSubjectivelyValid(field.getBoard(), tmp->mv(), c,
-                                field.getNCards(field.getTurnPlayer()))){
+    for (const move_t *tmp = mv0; tmp != mv0 + moves; ++tmp) {
+        if (!isSubjectivelyValid(field.getBoard(), tmp->mv(), c,
+                                field.getNCards(field.getTurnPlayer()))) {
             // 主観的合法性違反
             cerr << "invalid move" << OutCards(c) << "(" << field.getNCards(field.getTurnPlayer()) << ")";
             cerr << " -> " << *tmp << " on " << field.getBoard() << endl;
@@ -69,9 +69,9 @@ int testMoveValidity(const move_t *const mv0, const int moves, const field_t& fi
     }
     
     // 排他性
-    for(const move_t *tmp = mv0; tmp != mv0 + moves; ++tmp){
-        for(const move_t *tmp2 = mv0; tmp2 != tmp; ++tmp2){
-            if(tmp->meldPart() == tmp2->meldPart()){
+    for (const move_t *tmp = mv0; tmp != mv0 + moves; ++tmp) {
+        for (const move_t *tmp2 = mv0; tmp2 != tmp; ++tmp2) {
+            if (tmp->meldPart() == tmp2->meldPart()) {
                 // 同じ役であった
                 cerr << "same meld " << OutCards(c) << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.getBoard() << endl;
                 return -1;
@@ -83,7 +83,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const field_t& fi
     
 }
 
-int testRecordMoves(const std::vector<std::string>& logs){
+int testRecordMoves(const std::vector<std::string>& logs) {
     // 棋譜中の局面においてテスト
     MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logs);
     
@@ -93,9 +93,9 @@ int testRecordMoves(const std::vector<std::string>& logs){
     Field field;
     
     // プリミティブ型での着手生成
-    if(iterateGameLogAfterChange
+    if (iterateGameLogAfterChange
        (field, mLogs,
-        [&](const auto& field){}, // first callback
+        [&](const auto& field) {}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();
             Cards cards = field.getCards(turnPlayer);
@@ -108,31 +108,31 @@ int testRecordMoves(const std::vector<std::string>& logs){
             genCount[0] += 1;
             
             // 重大な問題がないかチェック
-            if(testMoveValidity(buffer, moves, field)){
+            if (testMoveValidity(buffer, moves, field)) {
                 return -4;
             }
             
             // 棋譜の着手が生成されているかチェック
-            if(searchMove(buffer, moves, MoveInfo(move)) < 0){
+            if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
                 cerr << "ungenerated record move " << move;
                 cerr << " " << std::hex << move.meldPart() << std::dec;
                 cerr << " by " << OutCards(cards) << " on " << bd << endl;
-            }else{
+            } else {
                 genHolded[0] += 1;
             }
             
             return 0;
         },
-        [&](const auto& field){} // last callback
-        )){
+        [&](const auto& field) {} // last callback
+        )) {
            cerr << "failed move generation by Cards." << endl;
            return -1;
        }
     
     // より複雑なデータ構造を用いた着手生成
-    if(iterateGameLogAfterChange
+    if (iterateGameLogAfterChange
        (field, mLogs,
-        [&](const auto& field){}, // first callback
+        [&](const auto& field) {}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();
             Board bd = field.getBoard();
@@ -145,23 +145,23 @@ int testRecordMoves(const std::vector<std::string>& logs){
             genCount[1] += 1;
 
             // 重大な問題がないかチェック
-            if(testMoveValidity(buffer, moves, field)){
+            if (testMoveValidity(buffer, moves, field)) {
                 return -4;
             }
             
             // 棋譜の着手が生成されているかチェック
-            if(searchMove(buffer, moves, MoveInfo(move)) < 0){
+            if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
                 cerr << "ungenerated record move " << move;
                 cerr << " " << std::hex << move.meldPart() << std::dec;
                 cerr << " by " << OutCards(hand.getCards()) << " on " << bd << endl;
-            }else{
+            } else {
                 genHolded[1] += 1;
             }
             
             return 0;
         },
-        [&](const auto& field){} // last callback
-        )){
+        [&](const auto& field) {} // last callback
+        )) {
            cerr << "failed move generation by Hand." << endl;
            return -1;
        }
@@ -173,9 +173,9 @@ int testRecordMoves(const std::vector<std::string>& logs){
     cerr << "generation time (hand)  = " << genTime[1] / (double)genCount[1] << endl;
     
     // 着手生成の一貫性
-    if(iterateGameLogAfterChange
+    if (iterateGameLogAfterChange
        (field, mLogs,
-        [&](const auto& field){}, // first callback
+        [&](const auto& field) {}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.getTurnPlayer();
             Board bd = field.getBoard();
@@ -187,24 +187,24 @@ int testRecordMoves(const std::vector<std::string>& logs){
             // Hand 型で生成
             int movesHand = genMove(buffer + movesCards, hand, bd);
             
-            if(movesCards != movesHand){
+            if (movesCards != movesHand) {
                 cerr << "different numbers of moves ";
                 cerr << movesCards << " (by Cards) <-> " << movesHand << " (by Hand)" << endl;
                 return -4;
             }
             
-            for(int i = 0; i < movesCards; ++i){
+            for (int i = 0; i < movesCards; ++i) {
                 int cnt = 0;
-                for(int j = 0; j < movesHand; ++j){
-                    if(buffer[i].mv() == buffer[movesCards + j].mv()){
+                for (int j = 0; j < movesHand; ++j) {
+                    if (buffer[i].mv() == buffer[movesCards + j].mv()) {
                         cnt += 1;
                     }
                 }
-                if(cnt <= 0){
+                if (cnt <= 0) {
                     cerr << buffer[i] << " was generated by Cards but not by Hand." << endl;
                     return -4;
                 }
-                if(cnt >= 2){
+                if (cnt >= 2) {
                     cerr << buffer[i] << " generated by Cards were generated ";
                     cerr << cnt << " times by Hand." << endl;
                     return -4;
@@ -213,8 +213,8 @@ int testRecordMoves(const std::vector<std::string>& logs){
             
             return 0;
         },
-        [&](const auto& field){} // last callback
-        )){
+        [&](const auto& field) {} // last callback
+        )) {
            cerr << "failed Cards <-> Hand generation consistency test." << endl;
            return -1;
        }
@@ -223,23 +223,23 @@ int testRecordMoves(const std::vector<std::string>& logs){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     std::vector<std::string> logFileNames;
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-l")){
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-l")) {
             logFileNames.push_back(std::string(argv[c + 1]));
         }
     }
     mt.seed(1);
     
-    if(outputGenerationResult()){
+    if (outputGenerationResult()) {
         cerr << "failed case test." << endl;
         return -1;
     }
     cerr << "passed case test." << endl;
-    if(testRecordMoves(logFileNames)){
+    if (testRecordMoves(logFileNames)) {
         cerr << "failed record moves generation test." << endl;
         return -1;
     }

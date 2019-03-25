@@ -12,7 +12,7 @@ MoveGenerator<MoveInfo, Cards> mgCards;
 MoveGenerator<MoveInfo, Hand> mgHand;
 Clock cl;
 
-int analyzeRecords(const std::vector<std::string>& logs){
+int analyzeRecords(const std::vector<std::string>& logs) {
     
     MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 16384> mLogs(logs);
     
@@ -58,7 +58,7 @@ int analyzeRecords(const std::vector<std::string>& logs){
     std::array<std::pair<int, int>, 256> nullPassBuffer;
     int nullPassTemp;
     
-    for(int p = 0; p < N_PLAYERS; ++p){
+    for (int p = 0; p < N_PLAYERS; ++p) {
         nullPassResult[p].fill(0);
     }
     
@@ -75,7 +75,7 @@ int analyzeRecords(const std::vector<std::string>& logs){
     MoveInfo buffer[8192];
     
     // 棋譜を読んで解析
-    for(int m = 0; m < mLogs.matches(); ++m){
+    for (int m = 0; m < mLogs.matches(); ++m) {
         const auto& mLog = mLogs.match(m);
         
         games += mLog.games();
@@ -83,7 +83,7 @@ int analyzeRecords(const std::vector<std::string>& logs){
         maxGames = max(maxGames, mLog.games());
         minGames = min(minGames, mLog.games());
         
-        for(int g = 0; g < mLog.games(); ++g){
+        for (int g = 0; g < mLog.games(); ++g) {
             const auto& gLog = mLog.game(g);
             
             turns += gLog.plays();
@@ -94,7 +94,7 @@ int analyzeRecords(const std::vector<std::string>& logs){
             Field field;
             iterateGameLogAfterChange
             (field, gLog,
-             [&](const auto& field){ // first callback
+             [&](const auto& field) { // first callback
                  nullPassTemp = 0;
              },
              [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
@@ -107,11 +107,11 @@ int analyzeRecords(const std::vector<std::string>& logs){
                  fieldsPerNAlive[NAlive - 1] += 1;
                  fieldsPerNAsleep[NAsleep] += 1;
                  
-                 if(field.isNF()){
+                 if (field.isNF()) {
                      nullFields += 1;
                      nullFieldsPerNAlive[NAlive - 1] += 1;
                      nullFieldsPerNAsleep[NAsleep] += 1;
-                     if(move.isPASS()){
+                     if (move.isPASS()) {
                          nullPass += 1;
                          nullPassPerNAlive[NAlive - 1] += 1;
                          nullPassPerNAsleep[NAsleep] += 1;
@@ -120,22 +120,22 @@ int analyzeRecords(const std::vector<std::string>& logs){
                          nullPassBuffer[nullPassTemp].second = NAlive;
                          nullPassTemp += 1;
                      }
-                 }else{
+                 } else {
                      normalFields += 1;
                      normalFieldsPerNAlive[NAlive - 1] += 1;
                      normalFieldsPerNAsleep[NAsleep] += 1;
-                     if(move.isPASS()){
+                     if (move.isPASS()) {
                          normalPass += 1;
                          normalPassPerNAlive[NAlive - 1] += 1;
                          normalPassPerNAsleep[NAsleep] += 1;
                      }
                      
                      int moves = genFollowExceptPASS(buffer, field.getCards(turnPlayer), field.getBoard());
-                     if(moves > 0){
+                     if (moves > 0) {
                          normalUnforcedFields += 1;
                          normalUnforcedFieldsPerNAlive[NAlive - 1] += 1;
                          normalUnforcedFieldsPerNAsleep[NAsleep] += 1;
-                         if(move.isPASS()){
+                         if (move.isPASS()) {
                              normalUnforcedPass += 1;
                              normalUnforcedPassPerNAlive[NAlive - 1] += 1;
                              normalUnforcedPassPerNAsleep[NAsleep] += 1;
@@ -143,14 +143,14 @@ int analyzeRecords(const std::vector<std::string>& logs){
                      }
                  }
                  
-                 if(move.isPASS()){
+                 if (move.isPASS()) {
                      pass += 1;
                  }
                  
                  return 0;
              },
-             [&](const auto& field){ // last callback
-                 for(int i = 0; i < nullPassTemp; ++i){
+             [&](const auto& field) { // last callback
+                 for (int i = 0; i < nullPassTemp; ++i) {
                      nullPassResult[nullPassBuffer[i].second - 1][field.getPlayerNewClass(nullPassBuffer[i].first)] += 1;
                  }
              });
@@ -197,19 +197,19 @@ int analyzeRecords(const std::vector<std::string>& logs){
     return 0;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
     
     std::vector<std::string> logFileNames;
     std::string logIdentifier = ".dat";
     
-    for(int c = 1; c < argc; ++c){
-        if(!strcmp(argv[c], "-l")){
+    for (int c = 1; c < argc; ++c) {
+        if (!strcmp(argv[c], "-l")) {
             logFileNames.push_back(std::string(argv[c + 1]));
-        }else if(!strcmp(argv[c], "-ld")){
+        }else if (!strcmp(argv[c], "-ld")) {
             const std::string logDirectory = std::string(argv[c + 1]);
             const std::vector<std::string> added = getFilePathVectorRecursively(std::string(argv[c + 1]), logIdentifier);
             logFileNames.insert(logFileNames.end(), added.begin(), added.end());
-        }else if(!strcmp(argv[c], "-li")){
+        }else if (!strcmp(argv[c], "-li")) {
             logIdentifier = std::string(argv[c + 1]);
         }
     }
