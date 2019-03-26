@@ -31,22 +31,22 @@ namespace UECda {
     
     /**************************ゲーム段階**************************/
     
-    constexpr bool isNoBack(const Cards mine, const Cards ops)noexcept{
+    constexpr bool isNoBack(const Cards mine, const Cards ops) {
         return true; // イレブンバックはUECdaにはない
     }
-    constexpr bool isNoBack(const Cards mine)noexcept{
+    constexpr bool isNoBack(const Cards mine) {
         return true; // イレブンバックはUECdaにはない
     }
     
-    bool isNoRev(const Cards mine, const Cards ops)noexcept{
+    bool isNoRev(const Cards mine, const Cards ops) {
         // 無革命性の証明
-        return ((!canMakeGroup(ops, 4)) && (!canMake5Seq(ops))
-                && ((!canMakeGroup(mine, 4)) && (!canMake5Seq(mine))));
+        return !groupCards(ops, 4) && !canMake5Seq(ops)
+                && !groupCards(mine, 4) && !canMake5Seq(mine);
     }
     
-    bool isNoRev(const Cards mine)noexcept{
+    bool isNoRev(const Cards mine) {
         // 無革命性の証明
-        return ((!canMakeGroup(mine, 4)) && (!canMake5Seq(mine)));
+        return !groupCards(mine, 4) && !canMake5Seq(mine);
     }
     
     /**************************支配保証、空場期待**************************/

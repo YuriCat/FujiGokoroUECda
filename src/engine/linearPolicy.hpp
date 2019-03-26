@@ -329,7 +329,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             } else {
                 // 着手パラメータ
                 const int aftOrd = bd.afterTmpOrder(mv.mv());
-                const int q4 = min(mv.qty(), 4U);
+                const int q4 = min(mv.qty(), 4);
                 
                 const Cards afterCards = subtrCards(myCards, mv.cards());
                 const Cards afterPqr = CardsToPQR(afterCards);

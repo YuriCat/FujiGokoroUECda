@@ -25,7 +25,7 @@ std::mt19937 mt;
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
 int moves = mgCards.genLead(buffer, c);\
 cerr << moves << " moves were generated for " << OutCards(c) << endl;\
-for (int m = 0; m < moves; ++m) { cerr << Move(buffer[m]) << " "; }\
+for (int m = 0; m < moves; ++m) { cerr << buffer[m].mv() << " "; }\
 cerr << endl;}
 
 int outputGenerationResult() {

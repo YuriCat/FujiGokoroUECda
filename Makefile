@@ -2,8 +2,7 @@
 # 1. General Compiler Settings
 #
 CXX       = g++
-CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-unused-function -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-parameter -fno-exceptions -fno-rtti \
-            -pedantic -Wno-long-long -msse4.2 -D__STDC_CONSTANT_MACROS
+CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -fno-exceptions -fno-rtti -pedantic -march=native
 INCLUDES  =
 LIBRARIES = -lpthread
 
@@ -11,15 +10,15 @@ LIBRARIES = -lpthread
 # 2. Target Specific Settings
 #
 ifeq ($(TARGET),teacher)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
+	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM -DTEACHER
         output_dir := out/teacher/
 endif
 ifeq ($(TARGET),match)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
+	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM -DMATCH
         output_dir := out/match/
 endif
 ifeq ($(TARGET),release)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM
+	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM
         output_dir := out/release/
 endif
 ifeq ($(TARGET),debug)
@@ -27,7 +26,7 @@ ifeq ($(TARGET),debug)
         output_dir := out/debug/
 endif
 ifeq ($(TARGET),default)
-	CXXFLAGS += -Ofast -g -ggdb -fno-fast-math
+	CXXFLAGS += -O3 -g -ggdb -fno-fast-math
         output_dir := out/default/
 endif
 

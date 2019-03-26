@@ -155,10 +155,7 @@ int testRecordMoveMate(const logs_t& mLogs) {
          const Hand& myHand = field.getHand(turnPlayer);
          const Hand& opsHand = field.getOpsHand(turnPlayer);
          Board bd = field.getBoard();
-         MoveInfo mi = MoveInfo(move);
-         if (!bd.isNF()) {
-             return 0;
-         }
+         if (!bd.isNF()) return 0;
 
          cl.start();
          bool mate = judgeHandPW_NF(myHand, opsHand, bd);

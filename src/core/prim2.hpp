@@ -267,39 +267,39 @@ namespace UECda {
     constexpr uint64_t MOVEINFO_S3FLUSH = (uint64_t)MOVE_S3FLUSH;
     constexpr uint64_t MOVEINFO_NONE = (uint64_t)MOVE_NONE;
     
-    class MoveInfo : public MoveInRegister<uint64_t>{
+    class MoveInfo : public MoveBase <BitSet64> {
         
     public:
         using data_t = uint64_t;
         using move_t = Move;
         
-        uint64_t test(int n)const{ return i_.test(n); }
+        uint64_t test(int n)const{ return m_.test(n); }
         
-        constexpr MoveInfo(): MoveInRegister<data_t>() {}
-        constexpr MoveInfo(uint64_t arg): MoveInRegister<data_t>(arg) {}
-        constexpr move_t mv()const{ return Move((uint32_t)data()); }
+        constexpr MoveInfo(): MoveBase<BitSet64>() {}
+        constexpr MoveInfo(uint64_t arg): MoveBase<BitSet64>(arg) {}
+        constexpr move_t mv()const{ return Move(m_); }
         
         // 合法着手生成のときに一緒にクリアする
-        void setNULL() {i_ = MOVEINFO_NULL;}
-        void setPASS() {i_ = MOVEINFO_PASS;}
-        void setSingleJOKER() {i_ = MOVEINFO_SINGLEJOKER;}
-        void setS3Flush() {i_ = MOVEINFO_S3FLUSH;}
+        void setNULL() {m_ = MOVEINFO_NULL;}
+        void setPASS() {m_ = MOVEINFO_PASS;}
+        void setSingleJOKER() {m_ = MOVEINFO_SINGLEJOKER;}
+        void setS3Flush() {m_ = MOVEINFO_S3FLUSH;}
         
         // MoveAddInfo
         // 上位32ビットの演算
-        void setFinal() {    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW() {       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW() {     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW() {     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate() {   i_.set(LCT64_MPMATE); }
-        void setL2Mate() {   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp() { i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp() { i_.set(LCT64_L2GIVEUP); }
+        void setFinal() {    m_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW() {       m_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW() {     m_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW() {     m_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate() {   m_.set(LCT64_MPMATE); }
+        void setL2Mate() {   m_.set(LCT64_L2MATE); }
+        void setMPGiveUp() { m_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp() { m_.set(LCT64_L2GIVEUP); }
         
         // 当座支配
-        void setDO() {i_ |= 1ULL<<(32+12);}
-        void setDM() {i_ |= 1ULL<<(32+13);}
-        void setDALL() {i_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
+        void setDO() {m_ |= 1ULL<<(32+12);}
+        void setDM() {m_ |= 1ULL<<(32+13);}
+        void setDALL() {m_ |= (1ULL<<(32+12))|(1ULL<<(32+13));}
         void setDomOthers() {setDO();}
         void setDomMe() {setDO();}
         void setDomAll() {setDO();}
@@ -312,29 +312,29 @@ namespace UECda {
         void setE_DO() {setE_NFDO();}
         void setE_DM() {setE_NFDM();}
         void setE_DALL() {setE_NFDALL();}
-        void setP_NFDO() {i_|=1ULL<<(32+18);setE_NFDO();}
-        void setP_NFDM() {i_|=1ULL<<(32+19);setE_NFDM();}
-        void setP_NFDALL() {i_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
-        void setE_NFDO() {i_|=1ULL<<(32+20);setDO();}
-        void setE_NFDM() {i_|=1ULL<<(32+21);setDM();}
-        void setE_NFDALL() {i_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
+        void setP_NFDO() {m_|=1ULL<<(32+18);setE_NFDO();}
+        void setP_NFDM() {m_|=1ULL<<(32+19);setE_NFDM();}
+        void setP_NFDALL() {m_|=(1ULL<<(32+18))|(1ULL<<(32+19));setE_NFDALL();}
+        void setE_NFDO() {m_|=1ULL<<(32+20);setDO();}
+        void setE_NFDM() {m_|=1ULL<<(32+21);setDM();}
+        void setE_NFDALL() {m_|=(1ULL<<(32+20))|(1ULL<<(32+21));setDALL();}
         
         void setP_NFDALL_only() {
-            i_|=(1ULL<<(32+18))|(1ULL<<(32+19))|(1ULL<<(32+20))|(1ULL<<(32+21));
+            m_|=(1ULL<<(32+18))|(1ULL<<(32+19))|(1ULL<<(32+20))|(1ULL<<(32+21));
         } // P_NFDOだが当座支配は付けない。S3とジョーカーのダブルに適用
         
-        void setTmpOrderRev() {i_|=1ULL<<(32+14);}
-        void setPrmOrderRev() {i_|=1ULL<<(32+15);}
-        void setSuitLock() {i_|=1ULL<<(32+16);}
-        void setRankLock() {i_|=1ULL<<(32+17);}
+        void setTmpOrderRev() {m_|=1ULL<<(32+14);}
+        void setPrmOrderRev() {m_|=1ULL<<(32+15);}
+        void setSuitLock() {m_|=1ULL<<(32+16);}
+        void setRankLock() {m_|=1ULL<<(32+17);}
         
         // min_melds
-        void setIncMinNMelds(uint32_t dec) {i_|=((uint64_t)(dec))<<(32+8);}
+        void setIncMinNMelds(uint32_t dec) {m_|=((uint64_t)(dec))<<(32+8);}
         
         // edagari
-        void excludeMyPlay() {i_|=1ULL<<(32+24);}
-        void excludeMyPonder() {i_|=1ULL<<(32+25);}
-        void excludeAllPonder() {i_|=1ULL<<(32+26);}
+        void excludeMyPlay() {m_|=1ULL<<(32+24);}
+        void excludeMyPonder() {m_|=1ULL<<(32+25);}
+        void excludeAllPonder() {m_|=1ULL<<(32+26);}
         
         void excludeAll() {
             excludeMyPlay();
@@ -343,10 +343,10 @@ namespace UECda {
         }
         
         // kousoku
-        void setDConst() {i_|=1ULL<<(32+28);}
-        void setDW_NFH() {i_|=1ULL<<(32+29);}
+        void setDConst() {m_|=1ULL<<(32+28);}
+        void setDW_NFH() {m_|=1ULL<<(32+29);}
         
-        void init() {i_&=0x00000000FFFFFFFF;}
+        void init() {m_&=0x00000000FFFFFFFF;}
         
         // get
         uint64_t isFinal()const {    return test(LCT64_FINAL); }
@@ -357,32 +357,32 @@ namespace UECda {
         uint64_t isMPGiveUp()const { return test(LCT64_MPGIVEUP); }
         uint64_t isL2Mate()const {   return test(LCT64_L2MATE); }
         uint64_t isL2GiveUp()const { return test(LCT64_L2GIVEUP); }
-        uint64_t isMate()const {     return i_ & FLAG64_MATE; }
-        uint64_t isGiveUp()const {   return i_ & FLAG64_GIVEUP; }
+        uint64_t isMate()const {     return m_ & FLAG64_MATE; }
+        uint64_t isGiveUp()const {   return m_ & FLAG64_GIVEUP; }
         
-        uint64_t isDO()const {return i_&(1ULL<<(32+12));}
-        uint64_t isDM()const {return i_&(1ULL<<(32+13));}
-        bool isDALL()const {return i_.holds(32+12,32+13);}
+        uint64_t isDO()const {return m_&(1ULL<<(32+12));}
+        uint64_t isDM()const {return m_&(1ULL<<(32+13));}
+        bool isDALL()const {return m_.holds(32+12,32+13);}
         
         uint64_t dominatesOthers()const {return isDO();}
         uint64_t dominatesMe()const {return isDM();}
         uint64_t dominatesAll()const {return isDALL();}
         
-        uint32_t getIncMinNMelds()const {return ((uint32_t)(i_>>(32+8)))&15U;}
+        uint32_t getIncMinNMelds()const {return ((uint32_t)(m_>>(32+8)))&15U;}
         
-        uint64_t isTmpOrderRev()const {return i_ & (1ULL<<(32+14));}
-        uint32_t getTmpOrder()const {return (uint32_t(i_>>(32+14)))&1U;}
-        uint64_t isSuitLock()const {return i_&(1ULL<<(32+16));}
+        uint64_t isTmpOrderRev()const {return m_ & (1ULL<<(32+14));}
+        uint32_t getTmpOrder()const {return (uint32_t(m_>>(32+14)))&1U;}
+        uint64_t isSuitLock()const {return m_&(1ULL<<(32+16));}
         
-        uint64_t isP_NFDO()const {return i_ & (1ULL<<(32+18));}
-        uint64_t isP_NFDM()const {return i_ & (1ULL<<(32+19));}
-        bool isP_NFDALL()const {return i_.holds(32+18,32+19);}
-        uint64_t isE_NFDO()const {return i_ & (1ULL<<(32+20));}
-        uint64_t isE_NFDM()const {return i_ & (1ULL<<(32+21));}
-        bool isE_NFDALL()const {return i_.holds(32+20,32+21);}
+        uint64_t isP_NFDO()const {return m_ & (1ULL<<(32+18));}
+        uint64_t isP_NFDM()const {return m_ & (1ULL<<(32+19));}
+        bool isP_NFDALL()const {return m_.holds(32+18,32+19);}
+        uint64_t isE_NFDO()const {return m_ & (1ULL<<(32+20));}
+        uint64_t isE_NFDM()const {return m_ & (1ULL<<(32+21));}
+        bool isE_NFDALL()const {return m_.holds(32+20,32+21);}
         
-        uint64_t isDConst()const {return i_ & (1ULL<<(32+28));}
-        uint64_t isDW_NFH()const {return i_ & (1ULL<<(32+29));}
+        uint64_t isDConst()const {return m_ & (1ULL<<(32+28));}
+        uint64_t isDW_NFH()const {return m_ & (1ULL<<(32+29));}
     };
     
     std::ostream& operator<<(std::ostream& out, const MoveInfo& mi) {

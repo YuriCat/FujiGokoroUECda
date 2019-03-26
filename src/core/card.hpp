@@ -56,19 +56,13 @@ namespace UECda {
     constexpr bool examImaginaryIntCard(IntCard ic) {
         return INTCARD_CU <= ic && ic <= INTCARD_JOKER;
     }
-    
-    template <typename rank_t, typename suit_t>
-    constexpr IntCard RankSuitsToIntCard(rank_t r, suit_t s) {
+    IntCard RankSuitsToIntCard(int r, unsigned int s) {
         return (r << 2) + SuitToSuitNum(s);
     }
-    
-    template <typename r4x_t, typename suit_t>
-    constexpr IntCard Rank4xSuitsToIntCard(r4x_t r4x, suit_t s) {
+    IntCard Rank4xSuitsToIntCard(int r4x, unsigned int s) {
         return r4x + SuitToSuitNum(s);
     }
-    
-    template <typename rank_t>
-    constexpr IntCard RankSuitNumToIntCard(rank_t r, int sn) {
+    constexpr IntCard RankSuitNumToIntCard(int r, int sn) {
         return (r << 2) + sn;
     }
     
@@ -193,18 +187,18 @@ namespace UECda {
     constexpr BitCards CARDS_JOKER_RANK = 0xF000000000000000;
     
     // ランクの指定からカード集合を生成する
-    inline constexpr BitCards RankToCards(uint32_t r) {
+    inline constexpr BitCards RankToCards(int r) {
         // あるランクのカード全て
         return CARDS_HORIZONRANK << (r << 2);
     }
-    inline constexpr BitCards RankRangeToCards(uint32_t r0, uint32_t r1) {
+    inline constexpr BitCards RankRangeToCards(int r0, int r1) {
         // ランク間（両端含む）のカード全て
         // r0 <= r1 でない場合は CARDS_NULL
         return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
                & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
     }
     
-    inline constexpr BitCards Rank4xToCards(uint32_t r4x) {
+    inline constexpr BitCards Rank4xToCards(int r4x) {
         // あるランク4xのカード全て
         return CARDS_HORIZONRANK << r4x;
     }
@@ -511,8 +505,12 @@ namespace UECda {
         const_iterator end() const { return const_iterator(this, 0); }
     };
     
-    struct Cards {
+    union Cards {
         BitCards c_;
+        struct {
+            unsigned long long plain_: 60;
+            signed int joker_: 4;
+        } bf_;
 
         // 定数
         constexpr Cards() : c_() {}
@@ -557,7 +555,7 @@ namespace UECda {
 
         int count() const { return countCards(c_); }
         constexpr int countInCompileTime() const { return countFewCards(c_); }
-        constexpr int countJOKER() const { return int(UECda::containsJOKER(c_)); }
+        constexpr int countJOKER() const { return UECda::containsJOKER(c_) ? 1 : 0; }
         int countPlain() const { return countCards(plain()); }
 
         constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
@@ -1486,10 +1484,10 @@ namespace UECda {
     }
 
     // 役の作成可能性判定
-    BitCards canMakePlainGroup(BitCards c, int q) {
+    BitCards plainGroupCards(BitCards c, int q) {
         BitCards ret;
         switch (q) {
-            case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする(canMakeGroupでジョーカーありの場合のため)
+            case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする
             case 1: ret = maskJOKER(c); break;
             case 2: ret = CardsToQR(c) & PQR_234; break;
             case 3: ret = (CardsToQR(c) + PQR_1) & PQR_34; break;
@@ -1498,30 +1496,27 @@ namespace UECda {
         }
         return ret;
     }
-    BitCards canMakeGroup(BitCards c, int q) {
-        return canMakePlainGroup(c, containsJOKER(c) ? (q - 1) : q);
+    BitCards groupCards(BitCards c, int q) {
+        return plainGroupCards(c, containsJOKER(c) ? (q - 1) : q);
     }
     
     // スート圧縮判定
     // あるカード集合（スート限定がなされていてもよい）の中にn枚グループが作成可能かの判定
     // ただしジョーカーの分は最初から引いておく
     // 高速な処理には場合分けが必要か
-    inline bool judgeSuitComp(BitCards c, int n) {
+    inline bool canMakeGroup(BitCards c, int n) {
         if (c) {
-            if (n == 1) {
-                return true;
-            } else {
-                c = CardsToQR(c);
-                if (c & PQR_234) { // 2枚以上
-                    if (n == 2) {
-                        return true;
+            if (n <= 1) return true;
+            c = CardsToQR(c);
+            if (c & PQR_234) { // 2枚以上
+                if (n == 2) {
+                    return true;
+                } else {
+                    if (c & PQR_34) { // 4枚
+                        if (n <= 4) return true;
                     } else {
-                        if (c & PQR_34) { // 4枚
-                            if (n <= 4) return true;
-                        } else {
-                            if (((c & PQR_2) >> 1) & c) { // 3枚
-                                if (n == 3) return true;
-                            }
+                        if (((c & PQR_2) >> 1) & c) { // 3枚
+                            if (n == 3) return true;
                         }
                     }
                 }

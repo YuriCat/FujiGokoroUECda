@@ -348,6 +348,9 @@ int testND(const std::vector<Cards>& sample) {
 }
 
 int main(int argc, char* argv[]) {
+
+    cerr << "sizeof(BitCards) = " << sizeof(BitCards) << endl;
+    cerr << "sizeof(Cards) = " << sizeof(Cards) << endl;
     
     std::vector<Cards> sample;
     XorShift64 dice((unsigned int)time(NULL));

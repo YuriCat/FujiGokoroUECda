@@ -108,12 +108,12 @@ namespace UECda {
     
     int CharToRank(char c) {
         int r = rankChar.find(c);
-        if (r == std::string::npos) { return RANK_NONE; }
+        if (r == std::string::npos) return RANK_NONE;
         return r;
     }
     int CharToRankM(char c) {
         int r = rankCharM.find(c);
-        if (r == std::string::npos) { return RANK_NONE; }
+        if (r == std::string::npos) return RANK_NONE;
         return r;
     }
     
@@ -226,7 +226,7 @@ namespace UECda {
         -1, 0, 1, 0, 2, 1, 3, 0, 3, 2, 4, 1, 5, 2, 3, 0, 0, 5
     };
     
-    int SuitToSuitNum(uint32_t suit) {
+    int SuitToSuitNum(unsigned int suit) {
         return bsf32(suit);
     }
     
@@ -367,7 +367,7 @@ namespace UECda {
         }
         
         // (suits, suits, suits) pattern index
-        int suitsSuitsSuitsCountIndex[5][5][5][5][5][5][5] = {0};
+        //int suitsSuitsSuitsCountIndex[5][5][5][5][5][5][5] = {0};
         std::map<std::array<uint32_t, ipow(2, 3) - 1>, int> sssMap;
         for (uint32_t s0 = 0; s0 < 16; ++s0) {
             for (uint32_t s1 = 0; s1 < 16; ++s1) {
@@ -386,7 +386,7 @@ namespace UECda {
                     } else {
                         cnt = sssMap[pattern];
                     }
-                    suitsSuitsSuitsCountIndex[c0][c1][c2][c01][c02][c12][c012] = cnt;
+                    //suitsSuitsSuitsCountIndex[c0][c1][c2][c01][c02][c12][c012] = cnt;
                     suitsSuitsSuitsIndexTable[s0][s1][s2] = cnt;
                 }
             }
@@ -394,7 +394,7 @@ namespace UECda {
         ASSERT(sssMap.size() == N_PATTERNS_SUITS_SUITS_SUITS,
                cerr << sssMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_SUITS << endl;);
         
-        int suitSuitsSuitsCountIndex[5][5][5][5][5]= {0};
+        //int suitSuitsSuitsCountIndex[5][5][5][5][5] = {0};
         std::map<std::array<uint32_t, ipow(2, 3) - 3>, int> s1ssMap;
         for (uint32_t s0 = 1; s0 < 16; s0 <<= 1) {
             for (uint32_t s1 = 0; s1 < 16; ++s1) {
@@ -412,7 +412,7 @@ namespace UECda {
                     } else {
                         cnt = s1ssMap[pattern];
                     }
-                    suitSuitsSuitsCountIndex[c1][c2][c01][c02][c12] = cnt;
+                    //suitSuitsSuitsCountIndex[c1][c2][c01][c02][c12] = cnt;
                     suitSuitsSuitsIndexTable[s0][s1][s2] = cnt;
                 }
             }

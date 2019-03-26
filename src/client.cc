@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) { // for UECda
             if (myTurn) { // 自分のターン
                 
                 // 現時点での所持手札を再度記録
-                Cards myCards = TableToCards(recv_table, false);
+                //Cards myCards = TableToCards(recv_table, false);
                 
                 ClockMicS clms_mine;
                 clms_mine.start();

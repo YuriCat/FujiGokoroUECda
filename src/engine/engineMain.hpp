@@ -180,7 +180,7 @@ namespace UECda{
                 Cards tmp = myCards;
 #endif
                 
-                if (countCards(tmp) == change_qty) { return tmp; }
+                if (countCards(tmp) == change_qty) return tmp;
                 
                 // 合法交換候補生成
                 Cards cand[N_MAX_CHANGES]; // 最大候補数
@@ -377,7 +377,7 @@ namespace UECda{
                     }
 #endif
                     if (!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
-                    return (Move)mv[0];
+                    return mv[0].mv();
                 }
                 
                 // 合法着手生成(特別着手)

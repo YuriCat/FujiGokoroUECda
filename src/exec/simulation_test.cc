@@ -7,7 +7,7 @@
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
-#include "../eigine/linearPolicy.hpp"
+#include "../engine/linearPolicy.hpp"
 #include "../engine/playerModel.hpp"
 #include "../engine/playerBias.hpp"
 

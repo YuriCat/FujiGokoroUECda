@@ -186,7 +186,7 @@ namespace UECda {
                 BitCards tmp[N] = {0};
                 dist64<N>(tmp, distCards, NDeal, pdice);
                 for (int r = 0; r < N; r++) {
-                    dst[infoClassPlayer[r]] = detCards[r] | andCards(remCards, tmp[r]);
+                    dst[infoClassPlayer[r]] = remCards & (detCards[r] | tmp[r]);
                 }
                 checkDeal(dst);
                 DERR << "END DEAL-ABSSBJ" << endl;
@@ -219,15 +219,15 @@ namespace UECda {
                     for (r = 0; r < N; r++) {
                         if (weightSum[r] > ran) break;
                     }
-                    addIntCard(&tmp[r], ic);
+                    tmp[r].insert(ic);
                     tmpNDeal[r]--;
                 }
                 
                 for (int r = 0; r < N; r++) {
-                    dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
+                    dst[infoClassPlayer[r]] = remCards & tmp[r];
                 }
                 checkDeal(dst);
-                DERR << "EAND DEAL-BIAS" << endl << OutCards(distCards) << endl;
+                DERR << "EAND DEAL-BIAS" << endl << distCards << endl;
                 ana.end(2);
             }
             
@@ -490,7 +490,7 @@ namespace UECda {
                     // 初期化ゲームではとりあえずランダム
                     BitCards tmp[N] = {0};
                     dist64<N>(tmp, distCards, NDeal, pdice);
-                    for (auto p = 0; p < N; p++) dst[p] = detCards[p] | andCards(remCards, tmp[p]);
+                    for (auto p = 0; p < N; p++) dst[p] = remCards & (detCards[p] | tmp[p]);
                     return 0;
                 }
                 if (flag.test(1)) {

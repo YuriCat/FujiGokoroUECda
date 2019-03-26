@@ -109,7 +109,6 @@ int testRecordL2(const logs_t& mLogs) {
              const Hand& myHand = field.getHand(turnPlayer);
              const Hand& oppHand = field.getHand(oppPlayer);
              Board bd = field.getBoard();
-             MoveInfo mi = MoveInfo(move);
              
              cl.start();
              L2Judge judge(65536, buffer);
