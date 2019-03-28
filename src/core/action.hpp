@@ -57,7 +57,7 @@ namespace UECda {
         if (b.suitsLocked()) c &= SuitsToCards(b.suits());
         if (c) {
             int br4x = b.rank4x();
-            if (!b.isTmpOrderRev()) { // normal order
+            if (b.order() == 0) { // normal order
                 c &= RankRange4xToCards(br4x + 4, RANK4X_MAX);
             } else { // reversed
                 c &= RankRange4xToCards(RANK4X_MIN, br4x - 4);
@@ -76,15 +76,13 @@ namespace UECda {
     
 #define GEN(q, s) GEN_BASE(q, s,)
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
-#define GEN_R(q, s) GEN_BASE(q, s, mv->setRev())
-#define GEN_JR(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js);mv->setRev())
     
     template <class move_t>
     inline int genFollowDouble(move_t *const mv0, const Cards hand, const Board b) {
         const Cards x = hand;
         const int br4x = b.rank4x();
         Cards valid;
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
         } else { // オーダー逆転中
             valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
@@ -203,7 +201,7 @@ namespace UECda {
         const int br4x = b.rank4x();
         const Cards x = Cards(hand);
         Cards valid;
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
         } else { // オーダー逆転中
             valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
@@ -288,7 +286,7 @@ namespace UECda {
         const Cards x = Cards(hand);
         const int br4x = b.rank4x();
         Cards valid;
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
         } else { // オーダー逆転中
             valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
@@ -296,13 +294,13 @@ namespace UECda {
         Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
         for (IntCard ic : c4) {
             int r4x = IntCardToRank4x(ic);
-            GEN_R(4, SUITS_CDHS);
+            GEN(4, SUITS_CDHS);
         }
         if (containsJOKER(hand)) {
             Cards c3 = genNRankInGenFollowGroup(hand, valid, 3);
             for (IntCard ic : c3) {
                 int r4x = IntCardToRank4x(ic);
-                GEN_JR(4, SUITS_CDHS, ~(uint32_t)(x >> r4x) & SUITS_CDHS);
+                GEN_J(4, SUITS_CDHS, ~(uint32_t)(x >> r4x) & SUITS_CDHS);
             }
         }
         return mv - mv0;
@@ -317,8 +315,7 @@ namespace UECda {
             c = c.plain();
             ++mv;
         }
-        while (c) {
-            IntCard ic = popIntCardLow(&c);
+        for (IntCard ic : c) {
             mv->setNULL();
             mv->setSingle(IntCardToRank(ic), IntCardToSuits(ic));
             ++mv;
@@ -401,7 +398,7 @@ namespace UECda {
                     GEN_J(3, 11, 8);
                     GEN_J(3, 13, 8);
                     GEN_J(3, 14, 8);
-                    GEN_JR(4, 15, 8);
+                    GEN_J(4, 15, 8);
                 } break;
                 case 8: {
                     if (!jk) break; // ジョーカーがなければ飛ばす
@@ -441,7 +438,7 @@ namespace UECda {
                     GEN_J(3, 7, 4);
                     GEN_J(3, 13, 4);
                     GEN_J(3, 14, 4);
-                    GEN_JR(4, 15, 4);
+                    GEN_J(4, 15, 4);
                 } break;
                 case 12: {
                     GEN(2, 12);
@@ -465,7 +462,7 @@ namespace UECda {
                     GEN_J(3, 7, 2);
                     GEN_J(3, 11, 2);
                     GEN_J(3, 14, 2);
-                    GEN_JR(4, 15, 2);
+                    GEN_J(4, 15, 2);
                 } break;
                 case 14: {
                     GEN(2, 6);
@@ -479,7 +476,7 @@ namespace UECda {
                     GEN_J(3, 7, 1);
                     GEN_J(3, 11, 1);
                     GEN_J(3, 13, 1);
-                    GEN_JR(4, 15, 1);
+                    GEN_J(4, 15, 1);
                 } break;
                 case 15: {
                     GEN(2, 3);
@@ -492,9 +489,8 @@ namespace UECda {
                     GEN(3, 11);
                     GEN(3, 13);
                     GEN(3, 14)
-                    GEN_R(4, 15);
                     if (!jk) break; // ジョーカーがなければ飛ばす
-                    GEN_JR(5, 15, 15);
+                    GEN_J(5, 15, 15);
                 } break;
                 default: UNREACHABLE; break;
             }
@@ -515,13 +511,9 @@ namespace UECda {
     
 #undef GEN
 #undef GEN_J
-#undef GEN_R
-#undef GEN_JR
     
 #define GEN_BASE(q, oc, op) {\
-Cards tc = (oc);\
-while (tc) {\
-IntCard ic = popIntCardLow(&tc);\
+for (IntCard ic : (oc)) {\
 int r = IntCardToRank(ic);\
 uint32_t s = IntCardToSuits(ic);\
 mv->setNULL();\
@@ -532,13 +524,11 @@ op;\
 
 #define GEN(q, oc) GEN_BASE(q, oc,)
 #define GEN_J(q, oc, jdr) GEN_BASE(q, oc, mv->setJokerRank(r + jdr);mv->setJokerSuits(s))
-#define GEN_R(q, oc) GEN_BASE(q, oc, mv->setRev())
-#define GEN_JR(q, oc, jdr) GEN_BASE(q, oc, mv->setJokerRank(r + jdr);mv->setJokerSuits(s);mv->setRev())
     
     template <class move_t>
     int genAllSeqWithJoker(move_t *const mv0, const Cards x) {
         Cards c = maskJOKER(x);
-        if (!c) { return 0; }
+        if (!c) return 0;
         move_t *mv = mv0;
         
         // 3枚階段
@@ -582,20 +572,20 @@ op;\
         const Cards c5 = c4 & c3_1;
         // プレーンを作成
         const Cards seq5 = c5;
-        GEN_R(5, seq5);
+        GEN(5, seq5);
         // 2_2型を作成
         const Cards seq2_2 = c2_2 & ~seq5;
-        GEN_JR(5, seq2_2, 2);
+        GEN_J(5, seq2_2, 2);
         // 3_1型と1_3型を作成
         const Cards seq3_1 = c3_1 & ~seq5;
         const Cards seq1_3 = c1_3 & ~seq5;
-        GEN_JR(5, seq3_1, 3);
-        GEN_JR(5, seq1_3, 1);
+        GEN_J(5, seq3_1, 3);
+        GEN_J(5, seq1_3, 1);
         // 4型を両側で作成
         const Cards seq4_ = c4 & ~seq5;
         const Cards seq_4 = (c4 >> 4) & ~seq5;
-        GEN_JR(5, seq_4, 0);
-        GEN_JR(5, seq4_, 4);
+        GEN_J(5, seq_4, 0);
+        GEN_J(5, seq4_, 4);
         
         // 6枚階段
         if (c3) {
@@ -606,22 +596,22 @@ op;\
             const Cards c6 = c5 & c4_1;
             // プレーンを作成
             const Cards seq6 = c6;
-            GEN_R(6, seq6);
+            GEN(6, seq6);
             // 3_2型と2_3型を作成
             const Cards seq3_2 = c3_2 & ~seq6;
             const Cards seq2_3 = c2_3 & ~seq6;
-            GEN_JR(6, seq3_2, 3);
-            GEN_JR(6, seq2_3, 2);
+            GEN_J(6, seq3_2, 3);
+            GEN_J(6, seq2_3, 2);
             // 4_1型と1_4型を作成
             const Cards seq4_1 = c4_1 & ~seq6;
             const Cards seq1_4 = c1_4 & ~seq6;
-            GEN_JR(6, seq4_1, 4);
-            GEN_JR(6, seq1_4, 1);
+            GEN_J(6, seq4_1, 4);
+            GEN_J(6, seq1_4, 1);
             // 5型を両側で作成
             const Cards seq5_ = c5 & ~seq6;
             const Cards seq_5 = (c5 >> 4) & ~seq6;
-            GEN_JR(6, seq_5, 0);
-            GEN_JR(6, seq5_, 5);
+            GEN_J(6, seq_5, 0);
+            GEN_J(6, seq5_, 5);
         }
         
         // 7枚以上階段は未実装
@@ -635,16 +625,12 @@ op;\
         move_t *mv = mv0;
         Cards c = polymRanks<3>(x);
         for (int q = 3; anyCards(c); q++) {
-            Cards tmp = c;
-            while (1) {
-                IntCard ic = popIntCardLow(&tmp);
+            for (IntCard ic : c) {
                 int rank = IntCardToRank(ic);
                 uint32_t suit = IntCardToSuits(ic);
                 mv->setNULL();
                 mv->setSeq(q, rank, suit);
-                if (q >= 5) mv->setRev();
                 ++mv;
-                if (!tmp) break;
             }
             // 次の枚数を考える
             c = polymRanks<2>(c); // ランク a かつランク a + 1 の n 枚階段があればランク a の n + 1 枚階段が出来る
@@ -656,7 +642,6 @@ op;\
     int genAllSeq(move_t *const mv, const Cards c) {
         if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
         else return genAllSeqWithJoker(mv, c);
-        return cnt;
     }
     
     template <class move_t>
@@ -670,7 +655,7 @@ op;\
         uint32_t r = b.rank();
         uint32_t q = b.qty();
         assert(q >= 3);
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             if (r + (q << 1) > RANK_MAX + 1) return 0;
             c &= RankRangeToCards(r + q, RANK_MAX);
         } else { // オーダー逆転中
@@ -683,13 +668,11 @@ op;\
         if (!c) return 0;
         if (b.suitsLocked()) c &= SuitsToCards(b.suits());
         move_t *mv = mv0;
-        while (c) {
-            IntCard ic = popIntCardLow(&c);
+        for (IntCard ic : c) {
             int r = IntCardToRank(ic);
             uint32_t s = IntCardToSuits(ic);
             mv->setNULL();
             mv->setSeq(q, r, s);
-            if (q >= 5) mv->setRev();
             ++mv;
         }
         return mv - mv0;
@@ -703,7 +686,7 @@ op;\
         Cards c = plain;
         Cards rCards; // 合法カードゾーン
         Cards validSeqZone; // 合法階段ゾーン
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             if (r + (qty << 1) > RANK_MAX + 2) return 0;
             rCards = RankRangeToCards(r + qty, RANK_MAX + 1);
             validSeqZone = RankRangeToCards(r + qty, RANK_MAX + 1);
@@ -782,20 +765,20 @@ op;\
                 
                 // プレーンを作成
                 const Cards seq5 = c5 & validSeqZone;
-                GEN_R(5, seq5);
+                GEN(5, seq5);
                 // 2_2型を作成
                 const Cards seq2_2 = c2_2 & validSeqZone & ~seq5;
-                GEN_JR(5, seq2_2, 2);
+                GEN_J(5, seq2_2, 2);
                 // 3_1型と1_3型を作成
                 const Cards seq3_1 = c3_1 & validSeqZone & ~seq5;
                 const Cards seq1_3 = c1_3 & validSeqZone & ~seq5;
-                GEN_JR(5, seq3_1, 3);
-                GEN_JR(5, seq1_3, 1);
+                GEN_J(5, seq3_1, 3);
+                GEN_J(5, seq1_3, 1);
                 // 4型を両側で作成
                 const Cards seq4_ = c4 & validSeqZone & ~seq5;
                 const Cards seq_4 = (c4 >> 4) & validSeqZone & ~seq5;
-                GEN_JR(5, seq_4, 0);
-                GEN_JR(5, seq4_, 4);
+                GEN_J(5, seq_4, 0);
+                GEN_J(5, seq4_, 4);
             } break;
             default: break; // 6枚以上階段は未実装
         }
@@ -805,8 +788,6 @@ op;\
 #undef GEN_BASE
 #undef GEN
 #undef GEN_J
-#undef GEN_R
-#undef GEN_JR
     
     /**************************特別着手生成**************************/
     
@@ -826,10 +807,7 @@ op;\
     }
     
 #define GEN_BASE(q, s, op) {mv->setNULL();\
-mv->setGroupByRank4x(q, r4x, s);\
-op;\
-if (q >= 4) { mv->setRev(); }\
-++mv;}
+mv->setGroupByRank4x(q, r4x, s);op;\mv++;}
 
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
     
@@ -842,7 +820,7 @@ if (q >= 4) { mv->setRev(); }\
         
         move_t *mv = mv0;
         int br4x = b.rank4x();
-        if (!b.isTmpOrderRev()) { // 通常
+        if (b.order() == 0) { // 通常
             c &= RankRange4xToCards(br4x + 4, RANK4X_MAX);
         } else { // オーダー逆転中
             c &= RankRange4xToCards(RANK4X_MIN, br4x - 4);
@@ -957,27 +935,25 @@ if (q >= 4) { mv->setRev(); }\
             st = RANK_MIN; ed = RANK_MAX;
         } else {
             int br = b.rank();
-            if (!b.isTmpOrderRev()) { // 通常
+            if (b.order() == 0) { // 通常
                 st = br + 1; ed = RANK_MAX;
             } else { // オーダー逆転中
                 st = RANK_MIN; ed = br - 1;
             }
         }
-        for (int r = st; r <= ed; ++r) {
-            for (uint32_t s = 1; s <= SUITS_ALL; ++s) {
+        for (int r = st; r <= ed; r++) {
+            for (uint32_t s = 1; s <= SUITS_ALL; s++) {
                 if (b.isNull() || b.suits() == s) {
                     int q = countSuits(s);
                     if (holdsCards(c, RankSuitsToCards(r, s))) {
                         mv->setNULL();
                         mv->setGroup(r, s, countSuits(s));
-                        if (q >= 4) { mv->setRev(); }
                         ++mv;
-                    }else if (containsJOKER(c)) {
+                    } else if (containsJOKER(c)) {
                         for (uint32_t js = SUIT_MIN; s <= SUIT_MAX; s <<= 1) {
                             if ((s & js) && holdsCards(c, RankSuitsToCards(r, s - js))) {
                                 mv->setNULL();
                                 mv->setGroup(r, s, countSuits(s));
-                                if (q >= 4) { mv->setRev(); }
                                 mv->setJokerSuits(js);
                                 ++mv;
                             }
@@ -990,25 +966,10 @@ if (q >= 4) { mv->setRev(); }\
     }
     
     template <class move_t>
-    inline int genFollow(move_t *mv, const Cards c, const Board b) {
+    inline int genFollow(move_t *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
-        int ret = 1;
         mv->setNULL();
-        ++mv;
-        if (!b.isSeq()) {
-            uint32_t qty = b.qty();
-            switch (qty) {
-                case 0: break;
-                case 1: ret += genFollowSingle<move_t>(mv, c, b); break;
-                case 2: ret += genFollowDouble<move_t>(mv, c, b); break;
-                case 3: ret += genFollowTriple<move_t>(mv, c, b); break;
-                case 4: ret += genFollowQuadruple<move_t>(mv, c, b); break;
-                default: break;
-            }
-        } else {
-            ret += genFollowSeq<move_t>(mv, c, b);
-        }
-        return ret;
+        return 1 + genFollowExceptPASS(mv + 1, c, b);
     }
     
     template <class move_t>
@@ -1016,8 +977,7 @@ if (q >= 4) { mv->setRev(); }\
         // 返り値は、生成した手の数
         int ret = 0;
         if (!b.isSeq()) {
-            const uint32_t qty = b.qty();
-            switch (qty) {
+            switch (b.qty()) {
                 case 0: break;
                 case 1: ret += genFollowSingle(mv, c, b); break;
                 case 2: ret += genFollowDouble(mv, c, b); break;
@@ -1083,17 +1043,14 @@ if (q >= 4) { mv->setRev(); }\
             ana.end(4);
             return cnt;
         }
-        int genFollow(move_t *mv, const Cards c, const Board b) {
+        int genFollow(move_t *const mv, const Cards c, const Board b) {
             // 返り値は、生成した手の数
             ana.start();
-            int ret = 1;
             mv->setNULL();
-            ++mv;
             ana.end(6);
-            ret += genFollowExceptPASS(mv, c, b);
-            return ret;
+            return 1 + genFollowExceptPASS(mv + 1, c, b);
         }
-        int genFollowExceptPASS(move_t *mv, const Cards c, const Board b) {
+        int genFollowExceptPASS(move_t *const mv, const Cards c, const Board b) {
             // 返り値は、生成した手の数
             int ret = 0;
             if (b.isSeq()) {

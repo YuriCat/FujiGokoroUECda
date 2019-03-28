@@ -15,7 +15,6 @@ struct ThreadTools {
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 enum {
     MODE_FLAG_TEST = 1,
@@ -101,19 +100,15 @@ void analyzeThread(int threadIndex, int st, int ed, BitSet32 flag,
 
 int learn(std::vector<std::string> logFileNames, std::string outDirName, int mode) {
     
-    using namespace UECda::Fuji;
-    
     XorShift64 dice((uint32_t)time(NULL));
     std::mt19937 mt((uint32_t)time(NULL));
     
-    if (outDirName == "") {
-        outDirName = DIRECTORY_PARAMS_OUT;
-    }
+    if (outDirName == "") outDirName = DIRECTORY_PARAMS_OUT;
     
     // 学習クラスとスレッドツールをスレッド数分確保
     const int threads = LearningSettings::threads;
     ls.clear();
-    for (int th = 0; th < threads; ++th) {
+    for (int th = 0; th < threads; th++) {
         ls.emplace_back(LearningSpace(&changePolicy, &playPolicy));
         threadTools.emplace_back(ThreadTools());
     }
@@ -126,7 +121,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     matchRecords_t mLogs(logFileNames);
     
     // preparing
-    for (int th = 0; th < threads; ++th) {
+    for (int th = 0; th < threads; th++) {
         ls.at(th).changeLearner().setLearnParam(LearningSettings::temperature, 0, 0, 0, 0);
         ls.at(th).playLearner().setLearnParam(LearningSettings::temperature, 0, 0, 0, 0);
     }

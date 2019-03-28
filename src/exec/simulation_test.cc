@@ -11,12 +11,12 @@
 #include "../engine/playerModel.hpp"
 #include "../engine/playerBias.hpp"
 
-struct ThreadTools{
+struct ThreadTools {
     MoveInfo buffer[8192];
     XorShift64 dice;
 };
 
-struct SubjectivePlayouterField : public PlayouterField{
+struct SubjectivePlayouterField : public PlayouterField {
     // シミュレーション用局面情報の主観化
     int myPlayerNum;
     
@@ -35,7 +35,6 @@ struct SubjectivePlayouterField : public PlayouterField{
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 Clock cl;
 ThreadTools threadTools;

@@ -9,13 +9,12 @@
 
 MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs;
 
-Fuji::FujiSharedData shared;
-Fuji::FujiThreadTools threadTools[N_THREADS];
+EngineSharedData shared;
+EngineThreadTools threadTools[N_THREADS];
 
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 struct RatingSurvey {
     int games;
@@ -57,18 +56,18 @@ template<class gameLog_t, class matchLog_t>
 int calcNextRate(const gameLog_t& gLog, const matchLog_t& mLog, const int simulations, const double coef, bool absolute, RatingSurvey *const pdst) {
     // シミュレーションを行ってレーティング更新
     std::array<double, N_PLAYERS> orgRate;
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         orgRate[p] = pdst->playerRate[mLog.player(p)];
     }
     
     std::array<double, N_PLAYERS> diff;
     if (!absolute) {
-        diff = UECda::Fuji::calcDiffRateByRelativeWpWithSimulation(orgRate, gLog, simulations, coef, &shared, &threadTools[0]);
+        diff = calcDiffRateByRelativeWpWithSimulation(orgRate, gLog, simulations, coef, &shared, &threadTools[0]);
     } else {
-        diff = UECda::Fuji::calcDiffRateByAbsoluteWpWithSimulation(orgRate, gLog, simulations, coef, &shared, &threadTools[0]);
+        diff = calcDiffRateByAbsoluteWpWithSimulation(orgRate, gLog, simulations, coef, &shared, &threadTools[0]);
     }
     
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         const std::string& name = mLog.player(p);
         pdst->playerRate[name] += diff[p];
         pdst->playerRateMean[name] = (pdst->playerRateMean[name] * pdst->games + pdst->playerRate[name]) / (pdst->games + 1);
@@ -83,13 +82,13 @@ template<class result_t, class gameLog_t, class matchLog_t>
 int calcNextRateWithRelativeResult(const gameLog_t& gLog, const matchLog_t& mLog, const result_t& simulationResult, const double coef, RatingSurvey *const pdst) {
     // 先に計算されたシミュレーション結果を用いてレーティング更新
     std::array<double, N_PLAYERS> orgRate;
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         orgRate[p] = pdst->playerRate[mLog.player(p)];
     }
 
-    std::array<double, N_PLAYERS> diff = UECda::Fuji::calcDiffRateByRelativeWp(gLog, UECda::Fuji::calcExpectedRelativeWp(orgRate, simulationResult), coef);
+    std::array<double, N_PLAYERS> diff = calcDiffRateByRelativeWp(gLog, calcExpectedRelativeWp(orgRate, simulationResult), coef);
     
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         const std::string& name = mLog.player(p);
         pdst->playerRate[name] += diff[p];
         pdst->playerRateMean[name] = (pdst->playerRateMean[name] * pdst->games + pdst->playerRate[name]) / (pdst->games + 1);
@@ -104,13 +103,13 @@ template<class result_t, class gameLog_t, class matchLog_t>
 int calcNextRateWithAbsoluteResult(const gameLog_t& gLog, const matchLog_t& mLog, const result_t& simulationResult, const double coef, RatingSurvey *const pdst) {
     // 先に計算されたシミュレーション結果を用いてレーティング更新
     std::array<double, N_PLAYERS> orgRate;
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         orgRate[p] = pdst->playerRate[mLog.player(p)];
     }
     
-    std::array<double, N_PLAYERS> diff = UECda::Fuji::calcDiffRateByAbsoluteWp(gLog, UECda::Fuji::calcExpectedAbsoluteWp(orgRate, simulationResult), coef);
+    std::array<double, N_PLAYERS> diff = calcDiffRateByAbsoluteWp(gLog, calcExpectedAbsoluteWp(orgRate, simulationResult), coef);
 
-    for (int p = 0; p < N_PLAYERS; ++p) {
+    for (int p = 0; p < N_PLAYERS; p++) {
         const std::string& name = mLog.player(p);
         pdst->playerRate[name] += diff[p];
         pdst->playerRateMean[name] = (pdst->playerRateMean[name] * pdst->games + pdst->playerRate[name]) / (pdst->games + 1);
@@ -193,7 +192,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
         std::map<std::string, double> scoreSum;
         std::map<std::string, int> gameSum;
         iterateGameRandomlyWithIndex(mLogs, 0, mLogs.games(), [&scoreSum, &gameSum](int index, const auto& gLog, const auto& mLog)->void{
-            for (int p = 0; p < N_PLAYERS; ++p) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 scoreSum[mLog.player(p)] += REWARD(gLog.getPlayerNewClass(p));
                 gameSum[mLog.player(p)] += 1;
             }

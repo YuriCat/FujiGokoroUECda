@@ -54,11 +54,8 @@
 using namespace UECda;
 
 const char* one_to_yes(int n) {
-    if (n) {
-        return "YES";
-    } else {
-        return "NO";
-    }
+    if (n) return "YES";
+    else return "NO";
 }
 
 std::string DIR_IN(""), DIR_OUT(""), DIR_LOG("");
@@ -66,13 +63,12 @@ std::string record_file = "";
 
 MinMatchLog<MinGameLog<MinPlayLog>> match_log;
 MinGameLog<MinPlayLog> game_log;
-Fuji::FujiSharedData shared;
-Fuji::FujiThreadTools threadTools[N_THREADS];
+EngineSharedData shared;
+EngineThreadTools threadTools[N_THREADS];
 
 void outputLog() {
     // 棋譜書き出し
-    //log name
-    if (record_file.size()==0) {//ディレクトリが指定されていない時
+    if (record_file.size() == 0) { //ディレクトリが指定されていない時
         int record_num = 0;
         char str_file[256];
         {
@@ -1367,7 +1363,7 @@ int main(int argc, char *argv[]) {
         
         // レーティング計算
         if (rating) {
-            std::array<double, N_PLAYERS> dist = UECda::Fuji::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
+            std::array<double, N_PLAYERS> dist = UECda::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
             for (int p = 0; p < N_PLAYERS; ++p) {
                 playerRate[p] += dist[p];
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;

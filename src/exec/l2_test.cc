@@ -8,7 +8,6 @@
 #include "../engine/lastTwo.hpp"
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 MoveInfo buffer[8192];
 MoveGenerator<MoveInfo> mgCards;

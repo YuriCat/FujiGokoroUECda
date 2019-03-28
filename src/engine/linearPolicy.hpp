@@ -487,7 +487,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // rev(only normal order)
                 {
                     constexpr int base = FEA_IDX(FEA_REV_CLASS);
-                    if (!bd.isPrmOrderRev() && mv.flipsPrmOrder()) {
+                    if (!bd.isRev() && mv.isRev()) {
                         int relativeClass = field.getPlayerClass(tp);
                         for (int r = 0; r < (int)field.getPlayerClass(tp); r++) {
                             if (!field.isAlive(field.getClassPlayer(r))) relativeClass--;
@@ -758,7 +758,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         else if (mv.domInevitably()) FooM(base + 3)
                         if (mv.isGroup()) FooM(base + 0)
                         else if (mv.isSeq()) FooM(base + 1)
-                        if (mv.flipsPrmOrder()) FooM(base + 4)
+                        if (mv.isRev()) FooM(base + 4)
                     } else {
                         const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.isGroup() ? 1 : 0));
                         if (!mv.isPASS()) {

@@ -87,8 +87,8 @@ namespace UECda {
         constexpr uint32_t suitsLocked() const { return b & MOVE_FLAG_SUITSLOCK; }
         constexpr uint32_t rankLocked() const { return b & MOVE_FLAG_RANKLOCK; }
         
-        constexpr uint32_t isTmpOrderRev() const { return b & MOVE_FLAG_TMPORD; }
-        constexpr uint32_t isPrmOrderRev() const { return b & MOVE_FLAG_PRMORD; }
+        constexpr bool order() const { return b & MOVE_FLAG_TMPORD; }
+        constexpr bool isRev() const { return b & MOVE_FLAG_PRMORD; }
         
         constexpr uint32_t containsJOKER() const { return b & MOVE_FLAG_JK; }
         
@@ -114,12 +114,11 @@ namespace UECda {
             return (b & MOVE_FLAG_INVALID) || domInevitably();
         }
         
-        template <int IS_SEQ = _BOTH>
         bool isSpecialRankSeq() const {
-            if ((IS_SEQ == _NO) || ((IS_SEQ != _YES) && !isSeq())) return false;
+            if (!isSeq()) return false;
             uint32_t r = rank();
             uint32_t q = qty();
-            return (r < RANK_MIN) || (RANK_MAX < (r + q - 1));
+            return r < RANK_MIN || RANK_MAX < r + q - 1;
         }
         
         int typeNum() const {
@@ -135,13 +134,16 @@ namespace UECda {
         
         // 進行
         void procOrder(Move m) {
-            b ^= m.orderPart(); 
+            if (m.isRev()) {
+                flipTmpOrder();
+                flipPrmOrder();
+            }
+            if (m.isBack()) flipTmpOrder();
         }
         
         void flush() {
-            // 一時オーダーを永続オーダーに合わせる
-            // TODO: ...現ルールではやらなくてよいので未実装
             b &= MOVE_FLAG_ORD;
+            fixTmpOrder(prmOrder());
         }
         
         void lockSuits() { b |= MOVE_FLAG_SUITSLOCK; }
@@ -179,11 +181,6 @@ namespace UECda {
             // 局面を更新し、強引に場を流す
             if (!m.isPASS()) procOrder(m); // オーダーフリップ
             flush();
-        }
-
-        void procPermanentInfo(Move m) {
-            // 永続的な情報の更新
-            
         }
         
         void procExceptFlush(Move m) {

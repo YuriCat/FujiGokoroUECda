@@ -15,17 +15,12 @@ std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS(""
 
 // クライアント
 #ifdef HUMAN_MODE
-#include "ai/human.hpp"
-using namespace UECda::Human;
 #elif RANDOM_MODE
-#include "ai/randomAI.hpp"
-using namespace UECda::RandomAI;
 #else
 #include "engine/engineMain.hpp"
-using namespace UECda::Fuji;
 #endif
 
-Client client;
+SmartEngine client;
 
 int main(int argc, char* argv[]) { // for UECda
     
@@ -62,7 +57,7 @@ int main(int argc, char* argv[]) { // for UECda
     bool seedSet = false;
     int seed = -1;
     
-    for (int c = 1; c < argc; ++c) {
+    for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
         }else if (!strcmp(argv[c], "-o")) { // output directory

@@ -444,12 +444,16 @@ namespace UECda {
             if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
             else return rank() == RANK_8;
         }
-        constexpr bool flipsPrmOrder() const {
+        constexpr bool isRev() const {
             if (isSeq()) return qty() >= 5;
             else return qty() >= 4;
         }
-        constexpr bool flipsTmpOrder() const { return false; }
-        constexpr uint32_t changesPrmState() const { return flipsPrmOrder(); }
+        constexpr bool isBack() const {
+            return false;
+        }
+        constexpr uint32_t changesPrmState() const {
+            return isRev();
+        }
         
         int typeNum() const {
             uint32_t q = qty();
