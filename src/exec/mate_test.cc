@@ -10,8 +10,7 @@
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo, Cards> mgCards;
-MoveGenerator<MoveInfo, Hand> mgHand;
+MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
@@ -264,7 +263,7 @@ int testRecordMoveMate(const logs_t& mLogs) {
          const Hand& opsHand = field.getOpsHand(turnPlayer);
          Board bd = field.getBoard();
          
-         const int moves = mgHand.genMove(buffer, myHand, bd);
+         const int moves = mgCards.genMove(buffer, myHand, bd);
          if (moves <= 1) { return 0; }
          
          cl.start();

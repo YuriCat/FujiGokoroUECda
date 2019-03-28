@@ -113,6 +113,9 @@ namespace UECda {
     constexpr unsigned int getPreviousSeat(unsigned int s) {
         return (s + N - 1) % (unsigned int)cmax(N, 1);
     }
+
+    // ここにルールを書いていく
+
     
     // UECdaが提供しているデータ構造。
     // プレーヤー番号などの基本型は、特に断りがなければ

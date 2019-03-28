@@ -176,7 +176,7 @@ namespace UECda {
         }
         
         void makeMove1stHalf(const Move mv) {
-            makeMove1stHalf(mv, mv.cards<_NO>());
+            makeMove1stHalf(mv, mv.cards());
         }
         void makeMove1stHalf(const Move mv, const Cards dc) {
             makeMove1stHalf(mv, dc, mv.qty());
@@ -252,7 +252,7 @@ namespace UECda {
         }
         
         void makeMove(const Move mv) {
-            makeMove(mv, mv.cards<_NO>());
+            makeMove(mv, mv.cards());
         }
         void makeMove(const Move mv, const Cards dc) {
             makeMove(mv, dc, mv.qty());
@@ -410,7 +410,7 @@ namespace UECda {
             makeMoveAll(mv, dc, CardsToHashKey(dc));
         }
         void makeMoveAll(Move mv) {
-            makeMoveAll(mv, mv.cards<_NO>());
+            makeMoveAll(mv, mv.cards());
         }
         
         void unmakeMove(const Move mv, const Cards dc, uint32_t dq) {
@@ -534,7 +534,7 @@ namespace UECda {
         }
         
         void unmakeMove(Move mv) {
-            Cards dc = mv.cards<_NO>();
+            Cards dc = mv.cards();
             unmakeMove(mv, dc);
         }
         void unmakeMove(Move mv, Cards dc) {
@@ -542,7 +542,7 @@ namespace UECda {
         }
         
         void unmakeMoveAll(Move mv) {
-            unmakeMoveAll(mv, mv.cards<_NO>());
+            unmakeMoveAll(mv, mv.cards());
         }
         void unmakeMoveAll(Move mv, Cards dc) {
             unmakeMoveAll(mv, dc, CardsToHashKey(dc));
@@ -862,7 +862,7 @@ namespace UECda {
         makeMove1stHalf(arg, dst, mv, dc, mv.qty());
     }
     void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv) {
-        makeMove1stHalf(arg, dst, mv, mv.cards<_NO>());
+        makeMove1stHalf(arg, dst, mv, mv.cards());
     }
     
     void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc, uint32_t dq) {
@@ -1030,7 +1030,7 @@ namespace UECda {
         makeMove(arg, dst, mv, dc, mv.qty());
     }
     void makeMove(const Hand& arg, Hand *const dst, const Move mv) {
-        makeMove(arg, dst, mv, mv.cards<_NO>());
+        makeMove(arg, dst, mv, mv.cards());
     }
     
     void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq, uint64_t dhash) {
@@ -1045,6 +1045,6 @@ namespace UECda {
         makeMoveAll(arg, dst, mv, dc, CardsToHashKey(dc));
     }
     void makeMoveAll(const Hand& arg, Hand *const dst, Move mv) {
-        makeMoveAll(arg, dst, mv, mv.cards<_NO>());
+        makeMoveAll(arg, dst, mv, mv.cards());
     }
 }

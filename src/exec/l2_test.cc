@@ -11,8 +11,7 @@ using namespace UECda;
 using namespace UECda::Fuji;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo, Cards> mgCards;
-MoveGenerator<MoveInfo, Hand> mgHand;
+MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
@@ -128,6 +127,7 @@ int testRecordL2(const logs_t& mLogs) {
               }*/
              
              // L2に入った瞬間だけテストする
+             //cerr << field.toString() << endl;
              return -1;
          }
          return 0;
@@ -135,8 +135,12 @@ int testRecordL2(const logs_t& mLogs) {
      [&](const auto& field) { // last callback
          // ここで新しい順位を得ることができる
          if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
-             judgeMatrix[field.getPlayerNewClass(l2TurnPlayer) == N_PLAYERS - 2][judgeResult == L2_WIN ?
-                                                                                 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
+             int turnResult = field.getPlayerNewClass(l2TurnPlayer);
+             judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
+             /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
+                 cerr << "bad result" << endl;
+                 getchar();
+             }*/
          }
      });
     

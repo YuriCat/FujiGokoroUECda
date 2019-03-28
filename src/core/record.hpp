@@ -373,13 +373,13 @@ namespace UECda {
         // クライアント用の着手記録
         // ルールが微妙に違っても対処できるようにこのクラスが局面の一次情報クラスとして振舞う
     public:
-        uint32_t getTurnPlayer()const{
+        uint32_t getTurnPlayer() const {
             return infoSpecialPlayer[0];
         }
-        uint32_t getPMOwner()const{
+        uint32_t getPMOwner() const {
             return infoSpecialPlayer[1];
         }
-        uint32_t getNCards(int p)const{
+        uint32_t getNCards(int p) const {
             return infoNCards[p];
         }
         void set(Move amove, Cards adc,

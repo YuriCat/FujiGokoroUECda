@@ -10,8 +10,7 @@
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo, Cards> mgCards;
-MoveGenerator<MoveInfo, Hand> mgHand;
+MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 

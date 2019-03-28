@@ -7,9 +7,6 @@
 #include "../core/field.hpp"
 #include "../engine/linearPolicy.hpp"
 
-#include "../engine/playerModel.hpp"
-#include "../engine/playerBias.hpp"
-
 struct ThreadTools{
     MoveInfo buffer[8192];
     XorShift64 dice;

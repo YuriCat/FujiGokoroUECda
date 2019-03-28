@@ -115,7 +115,7 @@ namespace UECda {
             pnext->fInfo = cur.fInfo;
             pnext->fInfo.initTmpInfo();
             
-            pnext->bd.procAndFlush<IS_NF, IS_PASS>(mv);
+            pnext->bd.procAndFlush(mv);
         }
         
         template<int L2_FINFO, int L2_MINFO>
@@ -146,11 +146,11 @@ namespace UECda {
                 } else {
                     if (mi.dominatesMe()) {
                         // 自己支配がかかるので、流れて自分から
-                        pnext->bd.procAndFlush<_NO, _NO>(mv);
+                        pnext->bd.procAndFlush(mv);
                         DERR << " -FLUSHED" << endl;
                     } else {
                         // 流れなければSFが続く
-                        pnext->bd.proc<_NO, _NO>(mv);
+                        pnext->bd.proc(mv);
                         if (pnext->bd.isNF()) { // renewed
                             DERR << " -FLUSHED" << endl;
                         } else {
@@ -163,11 +163,11 @@ namespace UECda {
             } else { // 独壇場でない
                 if ((IS_NF == _YES) || ((IS_NF != _NO) && cur.isNF())) {
                     if (mi.dominatesAll()) {
-                        pnext->bd.procAndFlush<_YES, _NO>(mv);
+                        pnext->bd.procAndFlush(mv);
                         DERR << " -FLUSHED" << endl; return 0;
                     } else {
                         if (mi.dominatesOthers()) {
-                            pnext->bd.proc<_YES, _NO>(mv);
+                            pnext->bd.proc(mv);
                             if (pnext->bd.isNF()) { // renewed
                                 DERR << " -FLUSHED" << endl; return 0;
                             } else {
@@ -175,7 +175,7 @@ namespace UECda {
                                 DERR << " -DO" << endl; return 0;
                             }
                         } else {
-                            pnext->bd.proc<_YES, _NO>(mv);
+                            pnext->bd.proc(mv);
                             if (pnext->bd.isNF()) { // renewed
                                 DERR << " -FLUSHED" << endl; return 0;
                             } else {
@@ -210,10 +210,10 @@ namespace UECda {
                         if (cur.isLastAwake()) {
                             if (mi.dominatesMe()) {
                                 // 自己支配がかかるので、流れて自分から
-                                pnext->bd.procAndFlush<_NO, _NO>(mv);
+                                pnext->bd.procAndFlush(mv);
                                 DERR << " -FLUSHED" << endl;
                             } else {
-                                pnext->bd.proc<_NO, _NO>(mv);
+                                pnext->bd.proc(mv);
                                 if (pnext->bd.isNF()) { // renewed
                                     DERR << " -FLUSHED" << endl;
                                 } else {
@@ -224,11 +224,11 @@ namespace UECda {
                             return 0;
                         } else {
                             if (mi.dominatesAll()) {
-                                pnext->bd.procAndFlush<_NO, _NO>(mv);
+                                pnext->bd.procAndFlush(mv);
                                 DERR << " -FLUSHED" << endl; return 0;
                             } else {
                                 if (mi.dominatesOthers()) {
-                                    pnext->bd.proc<_NO,_NO>(mv);
+                                    pnext->bd.proc(mv);
                                     if (pnext->bd.isNF()) { // renewed
                                         DERR << " -FLUSHED" << endl; return 0;
                                     } else {
@@ -236,7 +236,7 @@ namespace UECda {
                                         DERR << " -DO" << endl; return 0;
                                     }
                                 } else {
-                                    pnext->bd.proc<_NO, _NO>(mv);
+                                    pnext->bd.proc(mv);
                                     if (pnext->bd.isNF()) { // renewed
                                         DERR << " -FLUSHED" << endl; return 0;
                                     } else {
@@ -492,7 +492,7 @@ namespace UECda {
                     // 合法手の抽出
                     ana.restart(mode, 1);
                     
-                    const int NMoves = genMove<IS_NF>(mv_buf, myHand, field.getBoard());
+                    const int NMoves = genMove(mv_buf, myHand, field.getBoard());
                     
                     DERR << "NMoves = " << NMoves << endl;
                     
@@ -829,7 +829,7 @@ namespace UECda {
                                         if (tmp.containsJOKER() && !tmp.isSingleJOKER()) {
                                             // 支配共役系の枝刈り
                                             for (int mm = m - 1; mm >= 0; --mm) {
-                                                if (tmp.cards<_NO>() == mv_buf[mm].cards<_NO>()) {
+                                                if (tmp.cards() == mv_buf[mm].cards()) {
                                                     //DERR << tmp << "-" << mv[mm] << " cut!" << endl;
                                                     mv_buf[mm].setL2GiveUp();
                                                 }

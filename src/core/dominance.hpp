@@ -52,12 +52,11 @@ namespace UECda {
             zone &= ORQToSCValidZone(b.afterTmpOrder(m), m.rank(), m.qty());
             return !canMakeSeq((oc & zone) | (oc & CARDS_JOKER), m.qty());
         }
-        return false;
     }
     
     // 引数として場を取った場合
     // パスの時は場を更新してから判定しても仕方ないので注意
-    bool dominatesCards(const Board b, const Cards cards) {
+    /*bool dominatesCards(const Board b, const Cards cards) {
         if (b.isNull()) return false;
         if (b.domInevitably()) return true; // ジョーカースペ3の場もこれで判定出来るようにしている
         
@@ -89,8 +88,7 @@ namespace UECda {
             }
             return !canMakeGroup(andCards(cards, zone), qty);
         }
-        UNREACHABLE;
-    }
+    }*/
     
     bool dominatesHand(const Move mv, const Hand& opsHand, const Board b) {
         // Hand型への支配(着手を引数に取る場合)

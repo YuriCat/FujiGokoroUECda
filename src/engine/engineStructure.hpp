@@ -6,7 +6,6 @@
 #include "../core/field.hpp"
 
 #include "galaxy.hpp"
-#include "playerModel.hpp"
 #include "linearPolicy.hpp"
 
 namespace UECda {
@@ -52,24 +51,10 @@ namespace UECda {
             // 基本方策
             ChangePolicy<policy_value_t> baseChangePolicy;
             PlayPolicy<policy_value_t> basePlayPolicy;
-            
-#if defined(RL_POLICY)
-            // 方策学習
-            ChangePolicyLearner<policy_value_t> changeLearner;
-            PlayPolicyLearner<policy_value_t> playLearner;
-#endif
-            
+
 #ifndef POLICY_ONLY
             using galaxy_t = FujiThreadTools::galaxy_t;
             GalaxyAnalyzer<galaxy_t, N_THREADS> ga;
-            MyTimeAnalyzer timeAnalyzer;
-            
-            // 推定用方策
-            ChangePolicy<policy_value_t> estimationChangePolicy;
-            PlayPolicy<policy_value_t> estimationPlayPolicy;
-            
-            // 相手方策モデリング
-            PlayerModelSpace playerModelSpace;
 #endif
             // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
             int mateClass; // 初めてMATEと判定した階級の宣言
@@ -80,13 +65,13 @@ namespace UECda {
             std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> myMateResult; // MATEの宣言結果
             
             void setMyMate(int bestClass) { // 詰み宣言
-                if (mateClass == -1)mateClass = bestClass;
+                if (mateClass == -1) mateClass = bestClass;
             }
             void setMyL2Mate() { // L2詰み宣言
-                if (L2Class == -1)L2Class = N_PLAYERS - 2;
+                if (L2Class == -1) L2Class = N_PLAYERS - 2;
             }
             void setMyL2GiveUp() { // L2敗北宣言
-                if (L2Class == -1)L2Class = N_PLAYERS - 1;
+                if (L2Class == -1) L2Class = N_PLAYERS - 1;
             }
             
             void feedL2Result(int realClass) {
@@ -106,31 +91,21 @@ namespace UECda {
             }
             
             void feedResult(int myClass) {
-                if (myClass >= N_PLAYERS - 2) // ラスト2人
-                    feedL2Result(myClass);
-                if (mateClass != -1) // MATE宣言あり
-                    feedMyMateResult(myClass);
+                // ラスト2人
+                if (myClass >= N_PLAYERS - 2) feedL2Result(myClass);
+                // MATE宣言あり
+                if (mateClass != -1) feedMyMateResult(myClass);
             }
             
             void initMatch() {
                 // スタッツ初期化
-                for (auto& a : myMateResult)a.fill(0);
-                for (auto& a : myL2Result)a.fill(0);
+                for (auto& a : myMateResult) a.fill(0);
+                for (auto& a : myL2Result) a.fill(0);
                 // 計算量解析初期化
                 modeling_time = 0;
                 estimating_by_time = 0;
-                
-#if defined(RL_POLICY)
-                // 方策学習初期化
-                changeLearner.setClassifier(&baseChangePolicy);
-                playLearner.setClassifier(&basePlayPolicy);
-#endif
             }
-            void setMyPlayerNum(int p) {
-#ifndef POLICY_ONLY
-                playerModelSpace.init(p);
-#endif
-            }
+            void setMyPlayerNum(int p) {}
             void initGame() {
                 SharedData::initGame();
                 mateClass = L2Class = -1;
@@ -150,9 +125,6 @@ namespace UECda {
                 feedResult(myNewClass);
             }
             void closeMatch() {
-#ifndef POLICY_ONLY
-                playerModelSpace.closeMatch();
-#endif
                 //#ifdef MONITOR
                 // 全体スタッツ表示
                 

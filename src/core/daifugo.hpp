@@ -53,13 +53,12 @@ namespace UECda {
         RANK_NONE = -1
     };
     
-    constexpr bool isEightSeqRank(int rank, int qty) { // 階段が８切りかどうか
-        return (rank <= RANK_8) && (RANK_8 < rank + qty);
-    }
-    
     constexpr inline int flipRank(int r) {
         // オーダー逆転時の仮ランクを使用する場合
         return RANK_3 + RANK_2 - r;
+    }
+    bool isEightSeqRank(int rank, int qty) {
+        return rank <= RANK_8 && RANK_8 < rank + qty;
     }
     
     // 出力

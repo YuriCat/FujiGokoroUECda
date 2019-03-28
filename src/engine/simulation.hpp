@@ -6,18 +6,8 @@
 #include "../core/prim2.hpp"
 #include "../core/field.hpp"
 #include "../core/action.hpp"
-
-#ifdef MODELING_PLAY
-#include "playerBias.hpp"
-#endif
-
-#ifdef SEARCH_LEAF_MATE
 #include "../core/mate.hpp"
-#endif
-
-#ifdef SEARCH_LEAF_L2
 #include "lastTwo.hpp"
-#endif
 
 namespace UECda {
     namespace Fuji {
@@ -61,7 +51,6 @@ namespace UECda {
                     pfield->setPlayMove(pfield->mv[0]);
                 } else {
                     // search mate-move
-                    //int idxMate = searchHandMate(0, pfield->mv, pfield->NActiveMoves, pfield->hand[tp], pfield->opsHand[tp], pfield->bd, 1, 1);
                     int idxMate = -1;
 #ifdef SEARCH_LEAF_MATE
                     if (Settings::MateSearchInSimulation) {
@@ -98,11 +87,6 @@ namespace UECda {
                                                                   Settings::simulationTemperaturePlay,
                                                                   Settings::simulationAmplifyCoef,
                                                                   1 / log(Settings::simulationAmplifyExponent));
-                                if (Settings::simulationPlayModel) {
-#ifdef MODELING_PLAY
-                                    addPlayerPlayBias(score, pfield->mv, pfield->NActiveMoves, *pfield, pshared->playerModelSpace.model(tp), Settings::playerBiasCoef * progress);
-#endif
-                                }
                                 selector.amplify();
                                 selector.to_prob();
                                 idx = selector.select(ptools->dice.drand());
@@ -112,11 +96,6 @@ namespace UECda {
                                                                Settings::simulationTemperaturePlay,
                                                                Settings::simulationAmplifyCoef,
                                                                Settings::simulationAmplifyExponent);
-                                if (Settings::simulationPlayModel) {
-#ifdef MODELING_PLAY
-                                    addPlayerPlayBias(score, pfield->mv, pfield->NActiveMoves, *pfield, pshared->playerModelSpace.model(tp), Settings::playerBiasCoef * progress);
-#endif
-                                }
                                 selector.amplify();
                                 selector.to_prob();
                                 idx = selector.select(ptools->dice.drand());

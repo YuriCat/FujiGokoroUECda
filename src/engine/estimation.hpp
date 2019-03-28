@@ -6,8 +6,6 @@
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 
-#include "playerBias.hpp"
-
 // Walker's Alias Method はこちらを参考に
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
@@ -808,8 +806,7 @@ namespace UECda {
                 int NCands = genChange(cand, cards, C_QTY);
                 Field field;
                 // 交換方策によって交換してみる
-                int index = changeWithPolicy(cand, NCands, cards, C_QTY, field,
-                                             shared.estimationChangePolicy, &ptools->dice);
+                int index = changeWithPolicy(cand, NCands, cards, C_QTY, field, shared.baseChangePolicy, &ptools->dice);
                 return cand[index];
             }
             
@@ -963,7 +960,6 @@ namespace UECda {
                 const int by_time = shared.estimating_by_time;
                 
                 // 対数尤度
-                double timeLH = 0;
                 double playLH = 0;
                 
                 BitSet32 pwFlag;
@@ -981,12 +977,11 @@ namespace UECda {
                  // after change callback
                  [](const auto& field)->void{},
                  // play callback
-                 [&pwFlag, &playLH, &timeLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
+                 [&pwFlag, &playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
                  (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
                      const uint32_t tp = field.getTurnPlayer();
                      
                      const Cards usedCards = chosenMove.cards();
-                     const PlayerModel *const ppm = &shared.playerModelSpace.model(tp);
                      const Board bd = field.getBoard();
                      const Cards myCards = field.getCards(tp);
                      const Hand& myHand = field.getHand(tp);
@@ -1009,21 +1004,6 @@ namespace UECda {
                          
                          // フェーズ(空場0、通常場1、パス支配場2)
                          const int ph = bd.isNF() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
-#ifdef ESTIMATION_BY_TIME
-                         if (by_time && field.getTurnNum() != 0 && ph == 1 && chosenMove.isPASS()) {
-                             const auto& timeModel = ppm->timeModel();
-                             
-                             int idx = dominatesHand(bd, myHand) ? 1 : 0; // pass only
-                             
-                             uint32_t ts = min(6U, max(1U, log2i(usedTime * time_rate / 256 ) / 2) - 1U);
-                             ASSERT(0 <= ts && ts <= 6, cerr << "ts = " << ts << endl;);
-                             if (timeModel.time_dist7[idx][ts]) {
-                                 timeLH += log((double)timeModel.time_dist7[idx][ts] / (double)timeModel.dist_sum[idx]);
-                             } else {
-                                 timeLH -= 99999;
-                             }
-                         }
-#endif
                          // プレー尤度計算
                          if (NMoves > 1) {
                              // search move
@@ -1035,16 +1015,13 @@ namespace UECda {
                                  playLH += log(1 / (double)(NMoves + 1));
                              } else {
                                  std::array<double, N_MAX_MOVES> score;
-                                 calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.estimationPlayPolicy);
+                                 calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
                                  // Mateの手のスコアを設定
                                  double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
                                  for (int m = 0; m < NMoves; m++) {
                                      if (mv[m].isMate())score[m] = maxScore + 4;
                                  }
                                  SoftmaxSelector selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
-                                 if (Settings::simulationPlayModel) {
-                                     addPlayerPlayBias(score.data(), mv, NMoves, field, *ppm, Settings::playerBiasCoef);
-                                 }
                                  selector.to_prob();
                                  if (selector.sum != 0) {
                                      playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
@@ -1056,7 +1033,7 @@ namespace UECda {
                      }
                      return 0;
                 });
-                return playLH + timeLH;
+                return playLH;
             }
         };
         

@@ -31,7 +31,7 @@ namespace UECda {
     // ジョーカーや階段、グループが存在する事を考慮に入れるかによって分けると
     // さらに高速化が期待出来る
     
-    namespace Mate{
+    namespace Mate {
         /*#ifdef USE_MATEBOOK
          const std::string MateBook_name="MateBook";
          const int MATEBOOK_SIZE=(1<<14)-3;
@@ -521,11 +521,10 @@ namespace UECda {
     
     // 必勝判定
     
-    template<int IS_NF, int IS_UNRIVALED>
+    template <int IS_NF, int IS_UNRIVALED>
     bool judgeHandMate(const int depth, MoveInfo *const buf,
                        const Hand& myHand, const Hand& opsHand,
                        const Board& argBd, const FieldAddInfo& fieldInfo) {
-        //DERR << "judge" << endl;
         // 簡単詰み
         if (TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeMate_Easy_NF(myHand)) {
             return true;
@@ -536,7 +535,7 @@ namespace UECda {
         }
         if (TRI_BOOL_NO(IS_NF, !argBd.isNF()) || depth > 0) {
             // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
-            const int NMoves = genMove<IS_NF>(buf, myHand, argBd);
+            const int NMoves = genMove(buf, myHand, argBd);
             if (searchHandMate<IS_NF, IS_UNRIVALED>(depth, buf, NMoves,
                                                    myHand, opsHand, argBd, fieldInfo) != -1) {
                 return true;
@@ -578,7 +577,7 @@ namespace UECda {
         return false;
     }
 
-    template<int IS_NF, int IS_UNRIVALED>
+    template <int IS_NF, int IS_UNRIVALED>
     bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                        const Hand& myHand, const Hand& opsHand,
                        const Board& argBd, const FieldAddInfo& fieldInfo) {

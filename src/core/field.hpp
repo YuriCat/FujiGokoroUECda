@@ -176,6 +176,7 @@ namespace UECda {
         
         uint32_t getPosition(int p) const { return infoPosition[p]; }
         
+        int turn() const { return infoSpecialPlayer[0]; }
         uint32_t getTurnPlayer() const { return infoSpecialPlayer[0]; }
         uint32_t getPMOwner() const { return infoSpecialPlayer[1]; }
         uint32_t getFirstTurnPlayer() const { return infoSpecialPlayer[3]; }
@@ -713,16 +714,16 @@ namespace UECda {
                         ps.setDead(tp);
                         attractedPlayers.reset(tp);
                         procBoardStateDead(tp);
-                        procAndKillHand(tp, mv.mv(), mv.cards<_NO>(), mv.qty());
+                        procAndKillHand(tp, mv.mv(), mv.cards(), mv.qty());
                     } else {
-                        procHand(tp, mv.mv(), mv.cards<_NO>(), mv.qty());
+                        procHand(tp, mv.mv(), mv.cards(), mv.qty());
                     }
                 }
             } else {
-                procHand(tp, mv.mv(), mv.cards<_NO>(), mv.qty());
+                procHand(tp, mv.mv(), mv.cards(), mv.qty());
             }
             
-            bd.proc<_BOTH, _NO>(mv.mv());
+            bd.proc(mv.mv());
             setPMOwner(tp);
             addTurnNum();
             if (bd.isNF()) { // 流れた
@@ -783,12 +784,12 @@ namespace UECda {
                     return -1;
                 }
                 procBoardStateDead(tp);
-                procAndKillHand(tp, mv, mv.cards<_NO>(), mv.qty());
+                procAndKillHand(tp, mv, mv.cards(), mv.qty());
             } else {
-                procHand(tp, mv, mv.cards<_NO>(), mv.qty());
+                procHand(tp, mv, mv.cards(), mv.qty());
             }
             
-            bd.proc<_BOTH, _NO>(mv);
+            bd.proc(mv);
             setPMOwner(tp);
             addTurnNum();
             if (bd.isNF()) { // 流れた

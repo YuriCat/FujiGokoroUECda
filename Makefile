@@ -2,7 +2,7 @@
 # 1. General Compiler Settings
 #
 CXX       = g++
-CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -fno-exceptions -fno-rtti -pedantic -march=native
+CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -fno-exceptions -fno-rtti -march=native
 INCLUDES  =
 LIBRARIES = -lpthread
 
@@ -10,15 +10,15 @@ LIBRARIES = -lpthread
 # 2. Target Specific Settings
 #
 ifeq ($(TARGET),teacher)
-	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM -DTEACHER
+	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
         output_dir := out/teacher/
 endif
 ifeq ($(TARGET),match)
-	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM -DMATCH
+	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
         output_dir := out/match/
 endif
 ifeq ($(TARGET),release)
-	CXXFLAGS += -O3 -DNDEBUG -DMINIMUM
+	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM
         output_dir := out/release/
 endif
 ifeq ($(TARGET),debug)
@@ -26,7 +26,7 @@ ifeq ($(TARGET),debug)
         output_dir := out/debug/
 endif
 ifeq ($(TARGET),default)
-	CXXFLAGS += -O3 -g -ggdb -fno-fast-math
+	CXXFLAGS += -Ofast -g -ggdb -fno-fast-math
         output_dir := out/default/
 endif
 
@@ -43,7 +43,7 @@ directories  ?= $(output_dir)
 # 4. Public Targets
 #
 default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation estimator_learner l2_test modeling_test policy_test value_generator dominance_test cards_test movegen_test policy_client mate_test client server policy_learner record_analyzer rating_calculator
+	$(MAKE) TARGET=$@ preparation l2_test policy_test value_generator dominance_test cards_test movegen_test policy_client mate_test client server policy_learner record_analyzer rating_calculator
 
 match:
 	$(MAKE) TARGET=$@ preparation client policy_client

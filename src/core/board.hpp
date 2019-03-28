@@ -38,7 +38,9 @@ namespace UECda {
         void setExceptOrder(const uint32_t info) { b |= info; }
         void fixExceptOrder(const uint32_t info) { b = (b & MOVE_FLAG_ORD) | info; }
         
-        void resetDom() { b &= ~MOVE_FLAG_DOM; }
+        void resetDom() {
+            b &= ~MOVE_FLAG_INVALID;
+        }
         
         // 2体情報をメンバ関数で返す関数
         // 半マスク化みたいな感じ
@@ -91,8 +93,10 @@ namespace UECda {
         constexpr uint32_t containsJOKER() const { return b & MOVE_FLAG_JK; }
         
         constexpr bool isSingleJOKER() const { return (b & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
-        constexpr bool isS3Flush() const { return holdsBits(b, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
-        constexpr uint32_t domInevitably() const { return b & MOVE_FLAG_INEVITDOM; }
+        //constexpr bool isS3Flush() const { return holdsBits(b, (MOVE_FLAG_SINGLE | MOVE_FLAG_CONDDOM)); }
+        constexpr uint32_t domInevitably() const { //return b & MOVE_FLAG_INEVITDOM;
+            return Move(b).domInevitably();
+        }
         
         constexpr uint32_t isSeq() const { return b & MOVE_FLAG_SEQ; }
         constexpr uint32_t isGroup() const { return b & MOVE_FLAG_GROUP; }
@@ -103,7 +107,11 @@ namespace UECda {
         }
         
         bool isOver5Seq() const { // 5枚以上階段
-            return isSeq() && (qtyPart() > (4U << MOVE_LCT_QTY));
+            return isSeq() && qtyPart() > (4U << MOVE_LCT_QTY);
+        }
+
+        bool isInvalid() const {
+            return (b & MOVE_FLAG_INVALID) || domInevitably();
         }
         
         template <int IS_SEQ = _BOTH>
@@ -126,7 +134,9 @@ namespace UECda {
         }
         
         // 進行
-        void procOrder(Move m) { b ^= m.orderPart(); } // オーダーフリップのみ
+        void procOrder(Move m) {
+            b ^= m.orderPart(); 
+        }
         
         void flush() {
             // 一時オーダーを永続オーダーに合わせる
@@ -136,24 +146,17 @@ namespace UECda {
         
         void lockSuits() { b |= MOVE_FLAG_SUITSLOCK; }
         
-        void procPASS() const {}//何もしない
+        void procPASS() const {} //何もしない
         
-        template <int IS_NF = _BOTH, int IS_PASS = _BOTH>
         void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
-            if (IS_PASS == _YES || ((IS_PASS != _NO) && m.isPASS())) {
-                procPASS();
-            } else {
-                if (IS_NF == _YES) {
-                    procOrder(m);
-                    if (m.domInevitably()) { // 無条件完全支配
-                        flush();
-                    } else {
+            if (m.isPASS()) procPASS();
+            else {
+                procOrder(m);
+                if (m.domInevitably()) { // 無条件完全支配
+                    flush();
+                } else {
+                    if (isNF()) {
                         setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
-                    }
-                } else if (IS_NF == _NO) {
-                    procOrder(m);
-                    if (m.domInevitably()) { // 無条件完全支配
-                        flush();
                     } else {
                         if (domConditionally(m)) { // 条件付完全支配(Joker->S3のみ)
                             flush();
@@ -161,68 +164,42 @@ namespace UECda {
                             // スートロック
                             if (!suitsLocked()) {
                                 // スートが一緒だったらロック処理
-                                if (locksSuits(m)) { lockSuits(); }
+                                if (locksSuits(m)) lockSuits();
                             }
                             // 一時情報入れ替え
                             b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                             | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
                         }
                     }
-                } else { // IS_NF不明
-                    procOrder(m);
-                    if (m.domInevitably()) { // 無条件完全支配
-                        flush();
-                    } else {
-                        if (isNF()) {
-                            setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
-                        } else {
-                            if (domConditionally(m)) { // 条件付完全支配(Joker->S3のみ)
-                                flush();
-                            } else {
-                                // スートロック
-                                if (!suitsLocked()) {
-                                    // スートが一緒だったらロック処理
-                                    if (locksSuits(m)) { lockSuits(); }
-                                }
-                                // 一時情報入れ替え
-                                b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
-                                | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
-                            }
-                        }
-                    }
                 }
             }
         }
         
-        template <int IS_NF = _BOTH, int IS_PASS = _BOTH>
         void procAndFlush(Move m) {
             // 局面を更新し、強引に場を流す
-            if (IS_PASS == _NO || ((IS_PASS != _YES) && (!m.isPASS()))) { // パスならオーダーフリップいらず
-                procOrder(m); // オーダーフリップ
-            }
-            if (IS_NF == _NO || ((IS_NF != _YES) && (!isNF()))) {
-                flush();
-            }
+            if (!m.isPASS()) procOrder(m); // オーダーフリップ
+            flush();
+        }
+
+        void procPermanentInfo(Move m) {
+            // 永続的な情報の更新
+            
         }
         
         void procExceptFlush(Move m) {
             // 局面を更新するが場を流さない
             procOrder(m);
-            
             // スートロック
             if (!suitsLocked()) {
                 // スートが一緒だったらロック処理
-                if (locksSuits(m)) { lockSuits(); }
+                if (locksSuits(m)) lockSuits();
             }
-            
-            if (domConditionally(m)) { // Joker->S3のみ
+            if (m.domInevitably() && domConditionally(m)) { // Joker->S3のみ
                 b = ((b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                       | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD)));
                 // ８切りと同じように無条件支配フラグをたてておく
-                b |= MOVE_FLAG_INEVITDOM;
-                b &= ~MOVE_FLAG_CONDDOM; // 代わりに条件フラグは外す
-            }
-            else{
+                b |= MOVE_FLAG_INVALID;
+            } else{
                 b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                       | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
             }
@@ -270,9 +247,7 @@ namespace UECda {
         // 不完全情報の上での合法性判定
         // c はそのプレーヤーが所持可能なカード
         // q はそのプレーヤーの手札枚数（公開されている情報）
-        if (mv.isPASS()) {
-            return true;
-        }
+        if (mv.isPASS()) return true;
         // 枚数オーバー
         if (mv.qty() > q) return false;
         // 持っていないはずの札を使った場合
@@ -289,11 +264,7 @@ namespace UECda {
                 }
             } else {
                 if (b.isSingleJOKER()) {
-                    if (!mv.isS3Flush()) { // ジョーカー->S3でなかった
-                        return false;
-                    } else {
-                        return true;
-                    }
+                    return mv.isS3Flush();
                 }
                 if (mv.isSingleJOKER()) {
                     if (!b.isSingle()) return false;

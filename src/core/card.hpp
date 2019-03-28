@@ -531,24 +531,13 @@ namespace UECda {
      
         // 生のBitCards型への変換
         constexpr operator BitCards() const { return c_; }
-        
+
         constexpr bool empty() const { return !anyCards(c_); }
         constexpr bool any() const { return anyCards(c_); }
         constexpr bool any2() const { return any2Cards(c_); }
         
         constexpr bool anyJOKER() const { return UECda::containsJOKER(c_); }
         constexpr bool contains(IntCard ic) const { return UECda::containsIntCard(c_, ic); }
-        
-        constexpr BitCards operator ~() const { return ~c_; }
-        constexpr BitCards operator &(BitCards c) const { return c_ & c; }
-        constexpr BitCards operator |(BitCards c) const { return c_ | c; }
-        constexpr BitCards operator ^(BitCards c) const { return c_ ^ c; }
-        constexpr BitCards operator +(BitCards c) const { return c_ + c; }
-        constexpr BitCards operator -(BitCards c) const { return c_ - c; }
-        constexpr BitCards operator <<(int i) const { return c_ << i; }
-        constexpr BitCards operator >>(int i) const { return c_ >> i; }
-        constexpr BitCards operator <<(unsigned int i) const { return c_ << i; }
-        constexpr BitCards operator >>(unsigned int i) const { return c_ >> i; }
 
         constexpr int joker() const { return countJOKER(); }
         constexpr Cards plain() const { return UECda::maskJOKER(c_); }

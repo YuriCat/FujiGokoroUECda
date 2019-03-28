@@ -8,8 +8,6 @@
 
 using namespace UECda;
 
-MoveGenerator<MoveInfo, Cards> mgCards;
-MoveGenerator<MoveInfo, Hand> mgHand;
 Clock cl;
 
 int analyzeRecords(const std::vector<std::string>& logs) {

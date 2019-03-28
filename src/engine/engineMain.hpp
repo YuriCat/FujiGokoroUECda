@@ -21,36 +21,16 @@
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
-
-#ifndef POLICY_ONLY
-
-// 相手の行動モデル
-#include "timeAnalysis.hpp"
-#include "playerModel.hpp"
-
-// プレイアウト関連
-
-// 仮想世界プール
-#include "galaxy.hpp"
-
-#endif // !POLICY_ONLY
-
-// 学習
 #include "policyGradient.hpp"
 
 #ifndef POLICY_ONLY
-
-// モンテカルロ
+#include "galaxy.hpp"
 #include "monteCarlo.hpp"
-
-// 相手の行動解析
-#include "playerAnalysis.hpp"
-
 #endif // ！POLICY_ONLY
 
-namespace UECda{
-    namespace Fuji{
-        class Client{
+namespace UECda {
+    namespace Fuji {
+        class Client {
         private:
             FujiThreadTools threadTools[N_THREADS];
             
@@ -86,8 +66,7 @@ namespace UECda{
                     
 #ifndef POLICY_ONLY
                 // 世界プール監視員を設定
-                for (int th = 0; th < N_THREADS; ++th)
-                    shared.ga.set(th, &threadTools[th].gal);
+                for (int th = 0; th < N_THREADS; ++th) shared.ga.set(th, &threadTools[th].gal);
 #endif
                 
                 auto& playPolicy = shared.basePlayPolicy;
@@ -95,33 +74,10 @@ namespace UECda{
                 
                 shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
                 shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-                
-#ifndef POLICY_ONLY
-                // 推定用ポリシー(分けることもあり?)
-                std::ifstream ifs;
-                ifs.open(DIRECTORY_PARAMS_IN + "play_policy_param_estimation.dat");
-                if (ifs) {
-                    shared.estimationPlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param_estimation.dat");
-                } else {
-                    shared.estimationPlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-                }
-                ifs.close();
-                ifs.open(DIRECTORY_PARAMS_IN + "change_policy_param_estimation.dat");
-                if (ifs) {
-                    shared.estimationChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param_estimation.dat");
-                } else {
-                    shared.estimationChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-                }
-                ifs.close();
-#endif
-                
+
                 // 方策の温度
                 shared.basePlayPolicy.setTemperature(Settings::simulationTemperaturePlay);
                 shared.baseChangePolicy.setTemperature(Settings::simulationTemperatureChange);
-#ifndef POLICY_ONLY
-                shared.estimationPlayPolicy.setTemperature(Settings::simulationTemperaturePlay);
-                shared.estimationChangePolicy.setTemperature(Settings::simulationTemperatureChange);
-#endif
             }
             void initGame() {
                 // 汎用変数の設定
@@ -318,10 +274,6 @@ namespace UECda{
                 ClockMicS clms;
                 clms.start();
                 Move ret = playSub();
-#ifndef POLICY_ONLY
-                shared.timeAnalyzer.my_play_time_sum += clms.stop();
-                shared.timeAnalyzer.my_plays += 1;
-#endif
                 return ret;
             }
             Move playSub() { // ここがプレー関数
@@ -350,7 +302,7 @@ namespace UECda{
                 FieldAddInfo& fieldInfo = field.fieldInfo;
                 
                 // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
-                if (bd.domInevitably()) { return MOVE_PASS; }
+                if (bd.isInvalid()) return MOVE_PASS;
 
 #ifdef RARE_PLAY
                 // レアプレーを行っていない場合は行う
@@ -580,34 +532,6 @@ namespace UECda{
                 return playMove;
             }
             void closeGame() {
-#ifndef POLICY_ONLY
-                // 自分の主観的プレー時間から、
-                // マシン間の計算速度の比を概算
-                shared.timeAnalyzer.modifyTimeRate();
-                // ログから行動モデル解析
-                analyzePlayerModel(&shared, &threadTools[0]);
-#endif
-                
-                if (matchLog.games() % 100 == 0) {
-#ifdef MONITER
-#ifndef POLICY_ONLY
-#ifdef MODELING_PLAY
-                    for (int p = 0; p < N_PLAYERS; ++p) {
-                        // バイアス項を表示
-                        cerr << shared.playerModelSpace.model(p).toBiasString() << endl;
-                    }
-#endif
-#endif
-#endif
-                    
-#ifdef RL_POLICY
-                    // 強化学習で得たパラメータをファイルに書き出し
-                    std::ostringstream oss;
-                    oss << DIRECTORY_PARAMS_OUT << "play_policy_comment_rl.txt";
-                    foutComment(shared.basePlayPolicy, oss.str());
-                    shared.basePlayPolicy.fout(DIRECTORY_PARAMS_OUT + "play_policy_rl.dat");
-#endif
-                }
                 shared.closeGame();
             }
             void closeMatch() {
