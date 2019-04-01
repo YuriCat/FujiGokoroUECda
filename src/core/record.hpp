@@ -584,8 +584,8 @@ namespace UECda {
             oss << endl;
             oss << "changed ";
             
-            Cards changeCards[N_PLAYERS] = {0ULL};
-
+            Cards changeCards[N_PLAYERS];
+            for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
             for (int c = 0; c < base::changes(); c++) {
                 changeCards[base::change(c).from()] = base::change(c).cards();
             }
