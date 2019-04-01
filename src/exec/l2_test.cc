@@ -120,7 +120,7 @@ int testRecordL2(const logs_t& mLogs) {
               cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
               cerr << move << " on " << bd << endl;
               cerr << field.ps << " " << field.fieldInfo << endl;
-              cerr << Out2CardTables(myHand.getCards(), opsHand.getCards());
+              cerr << Out2CardTables(myHand.cards, opsHand.cards);
               cerr << endl;
               getchar();
               }*/

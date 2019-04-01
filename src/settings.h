@@ -23,7 +23,7 @@
 
 //#define MINIMUM // 本番用
 //#define MONITOR // 着手決定関連の表示
-//#define BROADCAST // 試合進行実況
+#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
 // 試合に必要でないリッチ設定 本番用では自動オフ
@@ -43,7 +43,7 @@
 // 並列化
 // スレッド数(ビルド時決定)
 // 0以下を設定すると勝手に1になります
-#define N_THREADS (8)
+#define N_THREADS (4)
 
 // 末端報酬を階級リセットから何試合前まで計算するか
 constexpr int N_REWARD_CALCULATED_GAMES = 32;

@@ -242,14 +242,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         int r = 0;
         int cnt = 0;
         if (ord == ORDER_NORMAL) {
-            while (pqr) {
-                IntCard ic = popIntCardLow(&pqr);
+            for (IntCard ic : pqr) {
                 r += IntCardToRank(ic);
                 ++cnt;
             }
         } else {
-            while (pqr) {
-                IntCard ic = popIntCardLow(&pqr);
+            for (IntCard ic : pqr) {
                 r += RANK_3 + RANK_2 - IntCardToRank(ic);
                 ++cnt;
             }
@@ -286,8 +284,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         const int ownerSeat = field.getPlayerSeat(owner);
         const Hand& myHand = field.getHand(tp);
         const Hand& opsHand = field.getOpsHand(tp);
-        const Cards myCards = myHand.getCards();
-        const int NMyCards = myHand.getQty();
+        const Cards myCards = myHand.cards;
+        const int NMyCards = myHand.qty;
         const uint32_t oq = myHand.qty;
         const Cards curPqr = myHand.pqr;
         const FieldAddInfo& fieldInfo = field.fieldInfo;
@@ -312,7 +310,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         }
         
         // 自分以外のプレーヤーの手札の和
-        const Cards opsCards = opsHand.getCards();
+        const Cards opsCards = opsHand.cards;
         const Cards opsPlainCards = maskJOKER(opsCards);
         
         pol.template initCalculatingScore(NMoves);
@@ -360,8 +358,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                 maskCards(&seq4, extractRanks<2>(seq5));
                                 maskCards(&seq3, extractRanks<3>(seq5));
                                 maskCards(&tmp, extractRanks<5>(seq5));
-                                while (1) {
-                                    IntCard ic = pickIntCardLow(seq5);
+                                for (IntCard ic : seq5) {
                                     Foo(base + IntCardToRank(ic) - RANK_3);
                                     maskCards(&seq5, extractRanks<5>(IntCardToCards(ic)));
                                     if (!seq5) break;
@@ -370,8 +367,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             if (seq4) {
                                 maskCards(&tmp, extractRanks<4>(seq4));
                                 maskCards(&seq3, extractRanks<2>(seq4));
-                                while (1) {
-                                    IntCard ic = popIntCard(&seq4);
+                                for (IntCard ic : seq4) {
                                     Foo(base + 9 + IntCardToRank(ic) - RANK_3);
                                     if (!seq4) break;
                                 }
@@ -379,8 +375,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         }
                         if (seq3) {
                             maskCards(&tmp, extractRanks<3>(seq3));
-                            while (1) {
-                                IntCard ic = popIntCard(&seq3);
+                            for (IntCard ic : seq3) {
                                 Foo(base + 19 + IntCardToRank(ic) - RANK_3);
                                 if (!seq3) break;
                             }
@@ -389,8 +384,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     if (tmp) {
                         base += 30 - 4;
                         tmp = CardsToPQR(tmp); // 枚数位置型に変換
-                        while (1) {
-                            IntCard ic = popIntCard(&tmp);
+                        for (IntCard ic : tmp) {
                             Foo(base + ic); // 枚数位置型なのでそのままインデックスになる
                             if (!tmp) break;
                         }
@@ -839,52 +833,38 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             maskCards(&seq4, extractRanks<2>(seq5));
                             maskCards(&seq3, extractRanks<3>(seq5));
                             maskCards(&tmp, extractRanks<5>(seq5));
-                            while(1) {
-                                IntCard ic = pickIntCardLow(seq5);
-                                
+                            for (IntCard ic : seq5) {
                                 i = base + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
-                                
                                 maskCards(&seq5, extractRanks<5>(IntCardToCards(ic)));
-                                if (!seq5) { break; }
                             }
                         }
                         if (seq4) {
                             maskCards(&tmp, extractRanks<4>(seq4));
                             maskCards(&seq3, extractRanks<2>(seq4));
-                            while(1) {
-                                IntCard ic = popIntCard(&seq4);
-                                
+                            for (IntCard ic : seq4) {
                                 i = base + 9 + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
-                                
-                                if (!seq4) { break; }
                             }
                         }
                     }
                     if (seq3) {
                         maskCards(&tmp, extractRanks<3>(seq3));
-                        while(1) {
-                            IntCard ic = popIntCard(&seq3);
+                        for (IntCard ic : seq3) {
                             i = base + 19 + IntCardToRank(ic) - RANK_3;
                             Foo(i);
-                            if (!seq3) { break; }
+                            if (!seq3) break;
                         }
                     }
                 }
                 
                 if (tmp) {
                     base += 30 - 4;
-                    //CERR << OutCards(tmp);
                     tmp = CardsToPQR(tmp); // 枚数位置型に変換
-                    //CERR << OutCards(tmp) << endl; getchar();
-                    while(1) {
-                        IntCard ic = popIntCard(&tmp);
-                        
+                    for (IntCard ic : tmp) {
                         i = base + ic; // 枚数位置型なのでそのままインデックスになる
                         Foo(i);
-                        
-                        if (!tmp) {break;}
+                        if (!tmp) break;
                     }
                 }
             }
@@ -907,7 +887,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         i = base + 1;
                         Foo(i);
                     }
-                }else if (containsCard(afterCards, CARDS_JOKER)) {
+                } else if (containsCard(afterCards, CARDS_JOKER)) {
                     i = base + 2;
                     Foo(i);
                 }
@@ -922,9 +902,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     IntCard ic = popIntCardHigh(&tmpPqr);
                     hr1 = IntCardToRank(ic);
                 }
-                const int hr2 = IntCardToRank(pickIntCardHigh(tmpPqr));
-                const int lr1 = IntCardToRank(popIntCardLow(&tmpPqr));
-                const int lr2 = IntCardToRank(pickIntCardLow(tmpPqr));
+                const int hr2 = IntCardToRank(tmpPqr.highest());
+                const int lr1 = IntCardToRank(tmpPqr.popLowest());
+                const int lr2 = IntCardToRank(tmpPqr.lowest());
                 
                 FooX(FEA_IDX(FEA_CHANGE_HAND_MAX1_RANK), hr1);
                 FooX(FEA_IDX(FEA_CHANGE_HAND_MAX2_RANK), hr2);
@@ -957,13 +937,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 
                 // 交換するランクのカードと他のカードとの関係
                 const Cards diffRanks = CardsToER(changeCards);
-                Cards tmp = diffRanks;
-                while (tmp) {
-                    IntCard ic = popIntCard(&tmp);
+                for (IntCard ic : diffRanks) {
                     unsigned int r4x = IntCardToRank4x(ic);
                     unsigned int rank = r4x / 4;
                     // プレーンカード同士の関係
-                    for (int r = RANK_MIN; r <= RANK_MAX; ++r) {
+                    for (int r = RANK_MIN; r <= RANK_MAX; r++) {
                         FooX(base + Index::get(rank, r, getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL, (myCards >> (r * 4)) & SUITS_ALL)), -1);
                         Foo(base + Index::get(rank, r, getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL, (afterCards >> (r * 4)) & SUITS_ALL)));
                     }
@@ -1057,9 +1035,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         bestIndex[0] = -1;
         int NBestMoves = 0;
         double bestScore = -DBL_MAX;
-        for (int m = 0; m < NChanges; ++m) {
+        for (int m = 0; m < NChanges; m++) {
             double s = score[m + 1] - score[m];
-            //cerr << OutCards(buf[m]) << " : " << log(s) << endl;
             if (s > bestScore) {
                 bestIndex[0] = m;
                 bestScore = s;

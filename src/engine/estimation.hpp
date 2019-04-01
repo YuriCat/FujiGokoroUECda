@@ -90,11 +90,11 @@ namespace UECda {
         uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
         uint64_t all = arg | rest0 | rest1;
         
-        DERR << "all(" << countBits64(all) << ")" << OutCards(all) << endl;
+        DERR << "all(" << countBits64(all) << ")" << all << endl;
         DERR << "goal (" << N0 << "," << N1 << ")" << endl;
-        DERR << "div(" << countBits64(arg) << ")" << OutCards(arg) << endl;
-        DERR << "rest0(" << countBits64(rest0) << ")"<< OutCards(rest0) << endl;
-        DERR << "rest1(" << countBits64(rest1) << ")"<< OutCards(rest1) << endl;
+        DERR << "div(" << countBits64(arg) << ")" << arg << endl;
+        DERR << "rest0(" << countBits64(rest0) << ")" << rest0 << endl;
+        DERR << "rest1(" << countBits64(rest1) << ")" << rest1 << endl;
         
         // まず確定ビットを探す
         if (rest0) {
@@ -156,7 +156,7 @@ namespace UECda {
             // 完全ランダム分配
             // 自分の分だけは実際のものにする
             ana.start();
-            DERR << "START DEAL-RAND" << endl << OutCards(distCards) << endl;
+            DERR << "START DEAL-RAND" << endl << distCards << endl;
             BitCards tmp[N] = {0};
             tmp[myClass] = myCards;
             Cards dCards = maskCards(remCards, myCards);
@@ -164,7 +164,7 @@ namespace UECda {
             tmpNOwn.assign(myClass, 0);
             ASSERT(tmpNOwn.sum() == countCards(dCards),
                     cerr << "tmpNOwn = " << tmpNOwn << endl;
-                    cerr << "distributedCards = " << OutCards(dCards) << "(" << countCards(dCards) << ")" << endl;);
+                    cerr << "distributedCards = " << dCards << "(" << countCards(dCards) << ")" << endl;);
             dist64<N>(tmp, dCards, tmpNOwn, pdice);
             for (int r = 0; r < N; r++) {
                 dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
@@ -178,7 +178,7 @@ namespace UECda {
         void dealWithAbsSbjInfo(Cards *const dst, dice64_t *const pdice) const {
             // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
             ana.start();
-            DERR << "START DEAL-ABSSBJ" << endl << OutCards(distCards) << endl;
+            DERR << "START DEAL-ABSSBJ" << endl << distCards << endl;
             BitCards tmp[N] = {0};
             dist64<N>(tmp, distCards, NDeal, pdice);
             for (int r = 0; r < N; r++) {
@@ -195,7 +195,7 @@ namespace UECda {
             if (flag.test(0)) return dealWithAbsSbjInfo(dst, pdice);
 
             ana.start();
-            DERR << "START DEAL-BIAS" << endl << OutCards(distCards) << endl;
+            DERR << "START DEAL-BIAS" << endl << distCards << endl;
             
             std::array<Cards, N> tmp = detCards;
             int tmpNDeal[N];
@@ -251,7 +251,7 @@ namespace UECda {
                 double bestLHS = -9999;
                 double candLHS[HARATE_MAX];
                 
-                DERR << "START DEAL-REJEC" << endl << OutCards(distCards) << endl;
+                DERR << "START DEAL-REJEC" << endl << distCards << endl;
                 
                 for (uint32_t t = 0; t < HARate; t++) {
                     if (dealWithRejection_ChangePart(cand[t], shared, ptools) != 0) {
@@ -279,7 +279,7 @@ namespace UECda {
                 for (int p = 0; p < N; p++) dst[p] = cand[bestCand][p];
                 for (int p = 0; p < N; p++) {
                     DERR << "r:" << infoClass[p] << " ";
-                    DERR << OutCards(dst[p]) << endl;
+                    DERR << dst[p] << endl;
                 }
                 DERR << bestLHS << endl;
             }
@@ -439,11 +439,11 @@ namespace UECda {
         
         // inner function
         void checkDeal(Cards *const dst) const {
-            for (int p = 0; p < N; p++) DERR << OutCards(dst[p]) << endl;
+            for (int p = 0; p < N; p++) DERR << dst[p] << endl;
             for (int r = 0; r < N; r++) {
                 ASSERT(countCards(dst[infoClassPlayer[r]]) == NOwn[r],
                         cerr << "class = " << r << " NOwn = "<< NOwn[r];
-                        cerr << " cards = " << OutCards(dst[infoClassPlayer[r]]) << endl;);
+                        cerr << " cards = " << dst[infoClassPlayer[r]] << endl;);
             }
         }
         
@@ -522,7 +522,7 @@ namespace UECda {
                             // Walker's Alias methodで献上下界を決めてランダム分配
                             Cards tmpDist = selectInWA(pdice->drand());
                             ASSERT(countCards(tmpDist) >= NDeal[DAIHINMIN],
-                                    cerr << OutCards(tmpDist) << " -> " << NDeal[DAIHINMIN] << endl;);
+                                   cerr << tmpDist << " -> " << NDeal[DAIHINMIN] << endl;);
                             R4 |= pickNBits64(tmpDist, NDeal[DAIHINMIN], countCards(tmpDist) - NDeal[DAIHINMIN], pdice);
                         }
                         
@@ -573,7 +573,7 @@ namespace UECda {
                             // Walker's Alias methodで献上下界を決めてランダム分配
                             Cards tmpDist = selectInWA(pdice->drand());
                             ASSERT(countCards(tmpDist) >= NDeal[HINMIN],
-                                    cerr << OutCards(tmpDist) << " -> " << NDeal[HINMIN] << endl;);
+                                    cerr << tmpDist << " -> " << NDeal[HINMIN] << endl;);
                             R3 |= pickNBits64(tmpDist, NDeal[HINMIN], countCards(tmpDist) - NDeal[HINMIN], pdice);
                         }
                         assert(countCards(R3 & remCards) == NOwn[HINMIN]);
@@ -826,7 +826,6 @@ namespace UECda {
             
             if (T > 0) {
                 Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
-                //cerr << "presented lower bound candidate = " << OutCards(tmp) << endl;
                 int index = 0;
                 while (tmp) {
                     const IntCard ic = popIntCardLow(&tmp);
@@ -942,7 +941,7 @@ namespace UECda {
             }
             for (int p = 0; p < N; p++) {
                 DERR << "r:" << p << " p:" << infoClassPlayer[p] << " Org:" << NOrg[p] << " Own:" << NOwn[p]
-                << " Det:" << NDet[p] << " Deal:" << NDeal[p] << " " << OutCards(detCards[p]) << endl;
+                << " Det:" << NDet[p] << " Deal:" << NDeal[p] << " " << detCards[p] << endl;
             }
         }
  

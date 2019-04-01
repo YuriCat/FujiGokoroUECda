@@ -339,25 +339,7 @@ namespace UECda {
         void setJokerRank4x(uint32_t r4x) { m_ |= r4x     << MOVE_LCT_JKRANK4X; } // 4倍型
         void setJokerSuits(uint32_t s)    { m_ |= s       << MOVE_LCT_JKSUITS; }
         void setSpecialJokerSuits()       { m_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
-        
-        // 特殊効果
-        void resetEffects() { m_ &= ~MOVE_FLAG_EFFECTS; }
-        void setEffects() {
-            // 普通は合法着手生成の段階で付ける
-            // 棋譜から読んだ着手にはここで付ける
-            if (isSeq()) {
-                if (qty() >= 5) setRev();
-            } else {
-                if (rank() == RANK_3 && suits() == SUITS_S && qty() == 1) {
-                    m_ = MOVE_S3FLUSH;
-                } else if (qty() == 1 && suits() == SUITS_NULL) {
-                    m_ = MOVE_SINGLEJOKER;
-                } else {
-                    if (qty() >= 4) setRev();
-                }
-            }
-        }
-        
+
         // タイプを指定してまとめて処理
         // 特殊効果フラグはここでの分岐処理は避け、呼び出し元で対応
         void setSingle(int rank, int suits) {
@@ -536,9 +518,6 @@ namespace UECda {
                     res |= CARDS_JOKER;
                 }
             }
-            //tock();
-            //cout<<m<<OutCards(res);
-            
             return res;
         }
         
@@ -663,7 +642,7 @@ namespace UECda {
     }
     
     std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
-        out << MeldChar(m) << OutCards(m.cards());
+        out << MeldChar(m) << m.cards();
         return out;
     }
     
@@ -736,9 +715,8 @@ namespace UECda {
                 m.setJokerSuits(s);
             }
         }
-        m.setEffects();
         DERR << "pointer &m = " << (uint64_t)(&m) << endl;
-        DERR << "chara " << OutCards(chara) << " used " << OutCards(used) << " -> " << MeldChar(m) << endl;
+        DERR << "chara " << chara << " used " << used << " -> " << MeldChar(m) << endl;
         return m;
     }
     
@@ -832,7 +810,6 @@ namespace UECda {
                 mv.setJokerSuits(mv.suits());
             }
         }
-        mv.setEffects();
         return mv;
     }
     

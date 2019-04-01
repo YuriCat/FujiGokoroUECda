@@ -34,7 +34,7 @@ namespace UECda {
             const int numCandidates = genChange(cand, myCards, numChange);
             
             for (int i = 0; i < numCandidates; i++) {
-                CERR << i << " : " << OutCards(candidate[i]) << endl;
+                CERR << i << " : " << candidate[i] << endl;
             }
             if (numCandidates == 1) return candidate[0];
             else return candidate[dice.rand() % numCandidates];
@@ -53,7 +53,7 @@ namespace UECda {
             } else {
                 mv = buf[dice.rand() % NMoves];
             }
-            CERR << mv << " by " << OutCards(field.getMyCards()) << endl;
+            CERR << mv << " by " << field.getMyCards() << endl;
             return mv.mv();
         }
         ~RandomEngine() { closeMatch(); }
@@ -72,7 +72,7 @@ namespace UECda {
             const int NCands = genChange(cand, myCards, change_qty);
             
             for (int i = 0; i < NCands; ++i) {
-                cerr << i << " : " << OutCards(cand[i]) << endl;
+                cerr << i << " : " << cand[i] << endl;
             }
             int chosen = -1;
             while(1) {

@@ -449,7 +449,7 @@ namespace UECda {
                 
                 // 必敗判定
                 if ((IS_NF == _YES) || (IS_NF != _NO && field.isNF())) {
-                    if ((!myHand.seq) && (!(myHand.getPQR() & PQR_234)) && (!myHand.containsJOKER()) && (!myHand.containsS3()) && field.bd.order() == 0) {
+                    if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.containsJOKER() && !myHand.containsS3() && field.bd.order() == 0) {
                         int myHR = IntCardToRank4x(pickIntCardHigh(myHand.cards));
                         int opsLR = IntCardToRank4x(pickIntCardLow(opsHand.cards));
                         if (myHR < opsLR) {
@@ -566,7 +566,7 @@ namespace UECda {
             case 2:{
                 // 支配からの簡単詰み
                 if (((IS_PD == _YES && (IS_NPDO == _YES)) || ((IS_NPDO == _YES) && (IS_PASS == _NO)) || ((IS_PD == _YES) && (IS_PASS == _YES))) // 無条件に支配
-                    ||((IS_PASS == _NO) && dominatesCards(tmp.mv(), opsHand.getCards(), field.getBoard()))) { // 他支配チェック
+                    ||((IS_PASS == _NO) && dominatesCards(tmp.mv(), opsHand.cards, field.getBoard()))) { // 他支配チェック
                     tmp.setDomOthers();
                     res = judge_level1<(_YES << 0)>(myHand.qty - (IS_PASS == _YES ? 0 : tmp.qty()));
                     if (res == L2_WIN) {
@@ -630,7 +630,7 @@ namespace UECda {
                 if (IS_PASS == _NO) {
                     if (field.isDConst()) { // 支配拘束中
                         if (!tmp.dominatesOthers()) { // 他支配でない
-                            if (hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
+                            if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
                                 //DERR << tmp << ": DWorNFH_REST FAIL " << myHand << " vs " << opsHand << endl; getchar();
                                 DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -RESTLOSE" << endl;
                                 return L2_LOSE; // 拘束条件違反で負けとみなす
@@ -642,7 +642,7 @@ namespace UECda {
                     } else {
                         // 支配保証拘束を掛ける
                         if ((IS_NF == _YES) && field.isTmpOrderSettled() && tmp.dominatesOthers()) {
-                            if (hasDWorNFH(myHand.getCards() - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
+                            if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
                                 // DERR << tmp << ": DWorNFH_REST START " << myHand << " vs " << opsHand << endl; getchar();
                                 conRest = 1;
                             }
@@ -652,7 +652,7 @@ namespace UECda {
                 
                 // 支配性判定
                 if (IS_PASS == _NO && (field.isLastAwake() || tmp.dominatesOthers())) {
-                    if (dominatesCards(tmp.mv(), myHand.getCards(), field.getBoard())) {
+                    if (dominatesCards(tmp.mv(), myHand.cards, field.getBoard())) {
                         tmp.setDomMe();
                     }
                 }
@@ -802,7 +802,7 @@ namespace UECda {
                 
                 Cards dw;
                 if (IS_NF == _YES) {
-                    dw = getAllDWCards(myHand.getCards(), opsHand.getCards(), field.tmpOrder(), field.fInfo.isTmpOrderSettled());
+                    dw = getAllDWCards(myHand.cards, opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled());
                 } else {
                     dw = CARDS_NULL; // 不要だがwarning回避
                 }

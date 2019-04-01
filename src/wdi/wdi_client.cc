@@ -83,7 +83,7 @@ namespace UECda{
 		virtual int recvDealtCards(const Cards& ac) {
             
             if ((int)countCards(ac) != f.infoNDealtCards[f.getMyPlayerNum()]) {
-                cerr << OutCards(ac) << "(" << (int)countCards(ac) << ")";
+                cerr << ac << "(" << (int)countCards(ac) << ")";
                 cerr << f.infoNDealtCards[f.getMyPlayerNum()] << endl;
                 cerr << "ClientField : illegal dealt cards." << endl;
                 return -1;

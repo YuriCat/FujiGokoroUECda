@@ -40,13 +40,13 @@ namespace UECda {
     
     bool isNoRev(const Cards mine, const Cards ops) {
         // 無革命性の証明
-        return !groupCards(ops, 4) && !canMake5Seq(ops)
-                && !groupCards(mine, 4) && !canMake5Seq(mine);
+        return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
+                && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
     }
     
     bool isNoRev(const Cards mine) {
         // 無革命性の証明
-        return !groupCards(mine, 4) && !canMake5Seq(mine);
+        return !groupCards(mine, 4) && !canMakeSeq(mine, 5);
     }
     
     /**************************支配保証、空場期待**************************/
@@ -65,11 +65,11 @@ namespace UECda {
                 if (order == ORDER_NORMAL) {
                     IntCard ic = pickIntCardHigh(ops);
                     int r4x = IntCardToRank4x(ic);
-                    addCards(&dw, mine & RankRange4xToCards(r4x, RANK4X_MAX));
+                    addCards(&dw, mine & RankRange4xToCards(r4x, RANK_MAX * 4));
                 } else {
                     IntCard ic = pickIntCardLow(ops);
                     int r4x = IntCardToRank4x(ic);
-                    addCards(&dw, mine & RankRange4xToCards(RANK4X_MIN, r4x));
+                    addCards(&dw, mine & RankRange4xToCards(RANK_MIN * 4, r4x));
                 }
             }
         }
@@ -128,16 +128,16 @@ namespace UECda {
     static inline Cards getAllNFHCards(const Cards mine, const Cards ops,
                                        const int order, const uint64_t set) {
         // 全ての単空場期待カードを返す
-        if (!set) { return CARDS_NULL; }
+        if (!set) return CARDS_NULL;
         Cards ret;
         if (order == ORDER_NORMAL) {
             IntCard ic = pickIntCardLow(ops);
             int r4x = IntCardToRank4x(ic);
-            ret = mine & RankRange4xToCards(RANK4X_MIN, r4x);
+            ret = mine & RankRange4xToCards(RANK_MIN * 4, r4x);
         } else {
             IntCard ic = pickIntCardHigh(ops);
             int r4x = IntCardToRank4x(ic);
-            ret = mine & RankRange4xToCards(r4x, RANK4X_MAX);
+            ret = mine & RankRange4xToCards(r4x, RANK_MAX  *4);
         }
         if (containsS3(ret)) {
             if (containsJOKER(addCards(mine, ops))) ret -= CARDS_S3;

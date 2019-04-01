@@ -129,7 +129,7 @@ int testRankCards() {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent Rank -> Cards conversion!" << endl;
-            cerr << OutRank(r) << " : " << OutCards(test) << " <-> " << OutCards(ans) << endl;
+            cerr << OutRank(r) << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }
@@ -143,7 +143,7 @@ int testRankCards() {
             if (test != ans) {
                 cerr << "inconsistent [Rank, Rank] -> Cards conversion!" << endl;
                 cerr << "[" << OutRank(r) << ", " << OutRank(rr) << "]";
-                cerr << " : " << OutCards(test) << " <-> " << OutCards(ans) << endl;
+                cerr << " : " << test << " <-> " << ans << endl;
                 return -1;
             }
         }
@@ -156,7 +156,7 @@ int testRankCards() {
 
 int testRank4xCards() {
     uint64_t time[3] = {0};
-    for (int r4x = RANK4X_U; r4x <= RANK4X_O; r4x += 4) {
+    for (int r4x = RANK_U * 4; r4x <= RANK_O * 4; r4x += 4) {
         cl.start();
         Cards test = Rank4xToCards(r4x);
         time[0] += cl.restart();
@@ -164,13 +164,13 @@ int testRank4xCards() {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent Rank4x -> Cards conversion!" << endl;
-            cerr << OutRank(r4x / 4) << " : " << OutCards(test) << " <-> " << OutCards(ans) << endl;
+            cerr << OutRank(r4x / 4) << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }
-    for (int r4x = RANK4X_U; r4x <= RANK4X_O; r4x += 4) {
+    for (int r4x = RANK_U * 4; r4x <= RANK_O * 4; r4x += 4) {
         Cards ans = CARDS_NULL;
-        for (int rr4x = r4x; rr4x <= RANK4X_O; rr4x += 4) {
+        for (int rr4x = r4x; rr4x <= RANK_O * 4; rr4x += 4) {
             cl.start();
             Cards test = RankRange4xToCards(r4x, rr4x);
             time[2] += cl.stop();
@@ -178,7 +178,7 @@ int testRank4xCards() {
             if (test != ans) {
                 cerr << "inconsistent [Rank4x, Rank4x] -> Cards conversion!" << endl;
                 cerr << "[" << OutRank(r4x / 4) << ", " << OutRank(rr4x / 4) << "]";
-                cerr << " : " << OutCards(test) << " <-> " << OutCards(ans) << endl;
+                cerr << " : " << test << " <-> " << ans << endl;
                 return -1;
             }
         }
@@ -200,7 +200,7 @@ int testSuitCards() {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent Suits -> Cards conversion!" << endl;
-            cerr << OutSuits(s) << " : " << OutCards(test) << " <-> " << OutCards(ans) << endl;
+            cerr << OutSuits(s) << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }
@@ -220,7 +220,7 @@ int testQR(const std::vector<Cards>& sample) {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent Cards -> QR conversion!" << endl;
-            cerr << OutCards(c) << " : " << test << " <-> " << ans << endl;
+            cerr << c << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }
@@ -244,12 +244,12 @@ int testPQR(const std::vector<Cards>& sample) {
         time[2] += cl.stop();
         if (test0 != ans) {
             cerr << "inconsistent Cards -> PQR conversion!" << endl;
-            cerr << OutCards(c) << " : " << test0 << " <-> " << ans << endl;
+            cerr << c << " : " << test0 << " <-> " << ans << endl;
             return -1;
         }
         if (test1 != ans) {
             cerr << "inconsistent QR -> PQR conversion!" << endl;
-            cerr << OutCards(c) << " : " << test1 << " <-> " << ans << endl;
+            cerr << c << " : " << test1 << " <-> " << ans << endl;
             return -1;
         }
     }
@@ -271,7 +271,7 @@ int testENR(const std::vector<Cards>& sample) {
         
         if (test1 != ans1) {
             cerr << "inconsistent Cards -> E1R conversion!" << endl;
-            cerr << OutCards(c) << " : " << test1 << " <-> " << ans1 << endl;
+            cerr << c << " : " << test1 << " <-> " << ans1 << endl;
             return -1;
         }
         
@@ -283,7 +283,7 @@ int testENR(const std::vector<Cards>& sample) {
         
         if (test0 != ans0) {
             cerr << "inconsistent Cards -> E3R conversion!" << endl;
-            cerr << OutCards(c) << " : " << test3 << " <-> " << ans3 << endl;
+            cerr << c << " : " << test3 << " <-> " << ans3 << endl;
             return -1;
         }*/
     }
@@ -307,7 +307,7 @@ int testNR(const std::vector<Cards>& sample) {
             
             if (test != ans) {
                 cerr << "inconsistent Cards -> " << n << "R conversion!" << endl;
-                cerr << OutCards(c) << " : " << test << " <-> " << ans << endl;
+                cerr << c << " : " << test << " <-> " << ans << endl;
                 return -1;
             }
         }
@@ -333,7 +333,7 @@ int testSC(const std::vector<Cards>& sample) {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent PQR (QR) -> SC conversion!" << endl;
-            cerr << OutCards(c) << " : " << test << " <-> " << ans << endl;
+            cerr << c << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }

@@ -49,16 +49,6 @@ namespace UECda {
         
         constexpr operator Cards() const { return cards; }
         
-        Cards getCards() const { return cards; }
-        CardArray getQR() const { return qr; }
-        Cards getSeq() const { return seq; }
-        uint32_t getQty() const { return qty; }
-        uint64_t getHash() const { return hash; }
-        Cards getPQR() const { return pqr; }
-        Cards getSC() const { return sc; }
-        uint32_t getJKQty() const { return jk; }
-        Cards getND(int i) const { assert(i == 0 || i == 1); return nd[i]; }
-        
         constexpr uint64_t containsJOKER() const {
             return UECda::containsJOKER(cards);
         }
@@ -263,7 +253,7 @@ namespace UECda {
             // 更新するものは最初にチェック
             assert(exam());
             assert(!mv.isPASS());
-            ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << OutCards(dc) << " from " << OutCards(cards) << endl; );
+            ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << dc << " from " << cards << endl; );
             
             uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
             uint32_t r4x = mv.rank4x();
@@ -419,7 +409,7 @@ namespace UECda {
             assert(exam());
             assert(!mv.isPASS());
             ASSERT(isExclusiveCards(cards, dc),
-                   cerr << "Hand::unmakeMove : inclusive unmaking-move. " << OutCards(dc) << " to " << OutCards(cards) << endl; );
+                   cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
             
             uint32_t djk = mv.containsJOKER() ? 1 : 0;
             uint32_t r4x = mv.rank4x();
@@ -591,14 +581,14 @@ namespace UECda {
         // 当然だが基本のcardsがおかしかったらどうにもならない
         bool exam_cards() const {
             if (!holdsCards(CARDS_ALL, cards)) {
-                cerr << "Hand : exam_cards() <<" << OutCards(cards) << endl;
+                cerr << "Hand : exam_cards() <<" << cards << endl;
                 return false;
             }
             return true;
         }
         bool exam_hash() const {
             if (hash != CardsToHashKey(cards)) {
-                cerr << "Hand : exam_hash()" << OutCards(cards) << " <-> ";
+                cerr << "Hand : exam_hash()" << cards << " <-> ";
                 cerr << std::hex << hash << std::dec << endl;
                 return false;
             }
@@ -606,7 +596,7 @@ namespace UECda {
         }
         bool exam_qty() const {
             if (qty != count()) {
-                cerr << "Hand : exam_qty() " << OutCards(cards) << " <-> " << qty << endl;
+                cerr << "Hand : exam_qty() " << cards << " <-> " << qty << endl;
                 return false;
             }
             return true;
@@ -619,49 +609,49 @@ namespace UECda {
             return true;
         }
         bool exam_qr() const {
-            for (int r4x = RANK4X_IMG_MIN; r4x <= RANK4X_IMG_MAX; r4x += 4) {
-                Cards rc = Rank4xToCards(r4x) & cards;
-                uint32_t rq = countCards(rc);
-                uint32_t rqr = CardsRank4xToSuits(qr, r4x);
+            for (int r = RANK_IMG_MIN; r <= RANK_IMG_MAX; r++) {
+                Cards rc = RankToCards(r) & cards;
+                uint32_t rq = rc.count();
+                uint32_t rqr = qr[r];
                 if (rqr != rq) {
-                    cerr << "Hand : exam_qr()" << OutCards(cards) << " -> " << BitArray64<4>(qr) << endl;
+                    cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
                     return false;
                 } // 枚数型があってない
             }
             if (qr & ~CARDS_ALL) {
-                cerr << "Hand : exam_qr()" << OutCards(cards) << " -> " << BitArray64<4>(qr) << endl;
+                cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
                 return false;
             }
             return true;
         }
         bool exam_pqr() const {
-            for (int r4x = RANK4X_IMG_MIN; r4x <= RANK4X_IMG_MAX; r4x += 4) {
-                Cards rc = Rank4xToCards(r4x) & cards;
-                uint32_t rq = countCards(rc);
-                uint32_t rpqr = CardsRank4xToSuits(pqr, r4x);
+            for (int r = RANK_IMG_MIN; r <= RANK_IMG_MAX; r++) {
+                Cards rc = RankToCards(r) & cards;
+                uint32_t rq = rc.count();
+                uint32_t rpqr = pqr[r];
                 if (anyCards(rc)) {
                     if (1U << (rq - 1) != rpqr) {
-                        cerr << "Hand : exam_pqr()" << OutCards(cards) << " -> " << OutCards(pqr) << endl;
+                        cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
                         return false;
                     } // pqrの定義
                 } else {
                     if (rpqr) {
-                        cerr << "Hand : exam_pqr()" << OutCards(cards) << " -> " << OutCards(pqr) << endl;
+                        cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
                         return false;
                     }
                 }
             }
             if (pqr & ~CARDS_ALL_PLAIN) {
-                cerr << "Hand : exam_pqr()" << OutCards(cards) << " -> " << OutCards(pqr) << endl;
+                cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
                 return false;
             }
             return true;
         }
         bool exam_sc() const {
-            for (int r4x = RANK4X_IMG_MIN; r4x <= RANK4X_IMG_MAX; r4x += 4) {
-                Cards rc = Rank4xToCards(r4x) & cards;
-                uint32_t rq = countCards(rc);
-                uint32_t rsc = CardsRank4xToSuits(sc, r4x);
+            for (int r = RANK_IMG_MIN; r <= RANK_IMG_MAX; r++) {
+                Cards rc = RankToCards(r) & cards;
+                uint32_t rq = rc.count();
+                uint32_t rsc = sc[r];
                 if ((1U << rq) - 1U != rsc) {
                     cerr << "Hand : exam_sc()" << endl;
                     return false;
@@ -742,29 +732,29 @@ namespace UECda {
         
         std::string toDebugString() const {
             std::ostringstream oss;
-            oss << "cards = " << OutCards(getCards()) << endl;
-            oss << "qty = " << getQty() << endl;
-            oss << "jk = " << getJKQty() << endl;
-            oss << "seq = " << OutCards(getSeq()) << endl;
-            oss << "qr = " << CardArray(getQR()) << endl;
-            oss << "pqr = " << CardArray(getPQR()) << endl;
-            oss << "sc = " << CardArray(getSC()) << endl;
-            oss << "nd[0] = " << CardArray(getND(0)) << endl;
-            oss << "nd[1] = " << CardArray(getND(1)) << endl;
-            oss << std::hex << getHash() << std::dec << endl;
+            oss << "cards = " << cards << endl;
+            oss << "qty = " << qty << endl;
+            oss << "jk = " << jk << endl;
+            oss << "seq = " << seq << endl;
+            oss << "qr = " << CardArray(qr) << endl;
+            oss << "pqr = " << CardArray(pqr) << endl;
+            oss << "sc = " << CardArray(sc) << endl;
+            oss << "nd[0] = " << CardArray(nd[0]) << endl;
+            oss << "nd[1] = " << CardArray(nd[1]) << endl;
+            oss << std::hex << hash << std::dec << endl;
             
             oss << "correct data : " << endl;
-            Hand tmpHand;
-            tmpHand.setAll(getCards());
-            oss << "qty = " << tmpHand.getQty() << endl;
-            oss << "jk = " << tmpHand.getJKQty() << endl;
-            oss << "seq = " << OutCards(tmpHand.getSeq()) << endl;
-            oss << "qr = " << CardArray(tmpHand.getQR()) << endl;
-            oss << "pqr = " << CardArray(tmpHand.getPQR()) << endl;
-            oss << "sc = " << CardArray(tmpHand.getSC()) << endl;
-            oss << "nd[0] = " << CardArray(tmpHand.getND(0)) << endl;
-            oss << "nd[1] = " << CardArray(tmpHand.getND(1)) << endl;
-            oss << std::hex << tmpHand.getHash() << std::dec << endl;
+            Hand tmp;
+            tmp.setAll(cards);
+            oss << "qty = " << tmp.qty << endl;
+            oss << "jk = " << tmp.jk << endl;
+            oss << "seq = " << tmp.seq << endl;
+            oss << "qr = " << CardArray(tmp.qr) << endl;
+            oss << "pqr = " << CardArray(tmp.pqr) << endl;
+            oss << "sc = " << CardArray(tmp.sc) << endl;
+            oss << "nd[0] = " << CardArray(tmp.nd[0]) << endl;
+            oss << "nd[1] = " << CardArray(tmp.nd[1]) << endl;
+            oss << std::hex << tmp.hash << std::dec << endl;
             
             return oss.str();
         }
@@ -775,7 +765,7 @@ namespace UECda {
     };
     
     ostream& operator <<(ostream& out, const Hand& hand) { // 出力
-        out << OutCards(hand.getCards()) << "(" << hand.getQty() << ")";
+        out << hand.cards << "(" << hand.qty << ")";
         return out;
     }
                             
@@ -787,7 +777,7 @@ namespace UECda {
         // 更新するものは最初にチェック
         assert(arg.exam1stHalf());
         assert(!mv.isPASS());
-        ASSERT(arg.holds(dc), cerr << arg << OutCards(dc) << endl; );
+        ASSERT(arg.holds(dc), cerr << arg << dc << endl; );
         
         uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
         uint32_t r4x = mv.rank4x();
@@ -962,11 +952,8 @@ namespace UECda {
                     while (1) {
                         dmask0 >>= 4;
                         dst->nd[0] ^= dmask0;
-                        
-                        //CERR<<"tmp : "<<OutCards(dmask0)<<" nd0 : "<<OutCards(nd[0])<<endl;
-                        
                         dmask0 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
-                        if (!(dmask0 & CARDS_ALL)) { break; }
+                        if (!(dmask0 & CARDS_ALL)) break;
                     }
                 }
                 // 逆転オーダー
@@ -975,11 +962,8 @@ namespace UECda {
                     while (1) {
                         dmask1 <<= 4;
                         dst->nd[1] ^= dmask1;
-                        
-                        //CERR << "tmp : " << OutCards(dmask1) << " nd1 : " << OutCards(nd[1]) << endl;
-                        
                         dmask1 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
-                        if (!(dmask1 & CARDS_ALL)) {break;}
+                        if (!(dmask1 & CARDS_ALL)) break;
                     }
                 }
                 

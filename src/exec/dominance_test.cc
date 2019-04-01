@@ -66,7 +66,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs) {
              cerr << move << " on " << bd << endl;
              cerr << OutCardTable(opsCards);
              cerr << endl;
-             //getchar();
+             getchar();
          }*/
          
          judgeMatrix[0][ans][dom] += 1;
@@ -90,7 +90,7 @@ int testRecordMoveDominance(const std::vector<std::string>& logs) {
          judgeCount[1] += 1;
          
          cl.start();
-         bool ans = dominateCardsSlow(move, opsHand.getCards(), bd);
+         bool ans = dominateCardsSlow(move, opsHand.cards, bd);
          judgeTime[2] += cl.stop();
          
          judgeMatrix[1][ans][dom] += 1;
@@ -101,14 +101,14 @@ int testRecordMoveDominance(const std::vector<std::string>& logs) {
      );
     
     cerr << "judge result (cards) = " << endl;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
             cerr << judgeMatrix[0][i][j] << " ";
         }cerr << endl;
     }
     cerr << "judge result (hand) = " << endl;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
             cerr << judgeMatrix[1][i][j] << " ";
         }cerr << endl;
     }

@@ -21,14 +21,13 @@ int outputMateJudgeResult() {
 
 std::set<uint32_t> mateMoves;
 std::unordered_map<uint64_t, bool> visitedCards;
-//TwoValueBook<257> visitedCards;
 
-template<int M = 0>
+template <int M = 0>
 int searchCardsPWSlow(MoveInfo *const, const int, const int,
                       const Cards, const Cards,
                       Board, PlayersState, bool);
 
-template<int M = 0>
+template <int M = 0>
 bool judgeCardsPWSlow(MoveInfo *const buf,
                       const int p,
                       const Cards myCards, const Cards opsCards,
@@ -42,7 +41,7 @@ bool judgeCardsPWSlow(MoveInfo *const buf,
         //if (ans >= 0) { return bool(ans); }
     }
     const int myMoves = mgCards.genMove(buf, myCards, bd);
-    bool pw = (searchCardsPWSlow<M>(buf, myMoves, p, myCards, opsCards, bd, ps, flushLead) >= 0);
+    bool pw = searchCardsPWSlow<M>(buf, myMoves, p, myCards, opsCards, bd, ps, flushLead) >= 0;
     if (bd.isNF()) {
         visitedCards[key] = pw;
         //visitedCards.regist(int(pw), myCards ^ -uint32_t(bd));
@@ -50,7 +49,7 @@ bool judgeCardsPWSlow(MoveInfo *const buf,
     return pw;
 }
 
-template<int M = 0>
+template <int M = 0>
 bool checkCardsPWSlow(MoveInfo *const buf,
                       const int p, const Move move,
                       Cards myCards, const Cards opsCards,
@@ -63,7 +62,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
                 if (!ps.isAllAsleepExcept(p)) {
                     // 他のプレーヤーが出せるか確認
                     const int opsMoves = mgCards.genFollowExceptPASS(buf, opsCards, bd);
-                    if (opsMoves > 0) { return false; }
+                    if (opsMoves > 0) return false;
                 }
                 bd.flush();
                 ps.flush();
@@ -104,38 +103,30 @@ bool checkCardsPWSlow(MoveInfo *const buf,
     return true;
 }
 
-template<int M>
+template <int M>
 int searchCardsPWSlow(MoveInfo *const buf, const int moves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
     int mateIndex = -1;
-    for (int i = 0; i < moves; ++i) {
+    for (int i = 0; i < moves; i++) {
         if (buf[i].qty() >= countCards(myCards)) { // final move
             mateIndex = i;
-            if (M) {
-                mateMoves.insert(uint32_t(buf[mateIndex].mv()));
-            } else {
-                return i;
-            }
+            if (M) mateMoves.insert(uint32_t(buf[mateIndex].mv()));
+            else return i;
         }
     }
-    if (mateIndex >= 0) {
-        return mateIndex;
-    }
-    for (int i = 0; i < moves; ++i) {
+    if (mateIndex >= 0) return mateIndex;
+    for (int i = 0; i < moves; i++) {
         if (checkCardsPWSlow<M>(buf + moves, p, buf[i].mv(), myCards, opsCards, bd, ps, flushLead)) {
-            if (M) {
-                mateIndex = i;
-            } else {
-                return i;
-            }
+            if (M) mateIndex = i;
+            else return i;
         }
     }
     return mateIndex;
 }
 
-template<class logs_t>
+template <class logs_t>
 int testRecordMoveMate(const logs_t& mLogs) {
     // 棋譜中の局面において必勝判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
@@ -164,30 +155,26 @@ int testRecordMoveMate(const logs_t& mLogs) {
          cl.start();
          visitedCards.clear();
          bool pw = judgeCardsPWSlow(buffer, turnPlayer,
-                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
-         judgeTime[1] += cl.stop();
-         
+                                    myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+         judgeTime[1] += cl.stop();         
          judgeMatrix[pw][mate] += 1;
-         
-         /*if (mate != pw) {
-             cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
-             cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fieldInfo << endl;
-             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
-             cerr << field.toString();
+ 
+         if (mate && !pw) {
+             cerr << field.toDebugString() << endl;
              getchar();
-         }*/
-         
+         }
+         //cerr << "next" << endl;
          return 0;
      },
      [&](const auto& field) {} // last callback
      );
     
     cerr << "judge result (hand) = " << endl;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
             cerr << judgeMatrix[i][j] << " ";
-        }cerr << endl;
+        }
+        cerr << endl;
     }
     cerr << "judge time (hand)    = " << judgeTime[0] / (double)judgeCount << endl;
     cerr << "judge time (pw-slow) = " << judgeTime[1] / (double)judgeCount << endl;
@@ -208,9 +195,7 @@ int testRecordMoveMate(const logs_t& mLogs) {
          Board bd = field.getBoard();
          MoveInfo mi = MoveInfo(move);
          
-         if (dominatesHand(bd, myHand)) {
-             return 0;
-         }
+         if (dominatesHand(bd, myHand)) return 0;
          
          cl.start();
          bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
@@ -220,19 +205,10 @@ int testRecordMoveMate(const logs_t& mLogs) {
          cl.start();
          visitedCards.clear();
          bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                    myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
+                                    myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
          checkTime[1] += cl.stop();
          
          checkMatrix[pw][mate] += 1;
-         
-         /*if (mate != pw) {
-             cerr << "check " << mate << " <-> " << " answer " << pw << endl;
-             cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fieldInfo << endl;
-             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
-             cerr << field.toString();
-             getchar();
-         }*/
          
          return 0;
      },
@@ -240,8 +216,8 @@ int testRecordMoveMate(const logs_t& mLogs) {
      );
 
     cerr << "check result (hand) = " << endl;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
             cerr << checkMatrix[i][j] << " ";
         }cerr << endl;
     }
@@ -279,7 +255,7 @@ int testRecordMoveMate(const logs_t& mLogs) {
          cl.start();
          visitedCards.clear();
          int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
-                                         myHand.getCards(), opsHand.getCards(),
+                                         myHand.cards, opsHand.cards,
                                          bd, field.ps, bool(field.fieldInfo.isFlushLead()));
          searchTime[1] += cl.stop();
          
@@ -318,8 +294,8 @@ int testRecordMoveMate(const logs_t& mLogs) {
      );
     
     cerr << "search result (hand) = " << endl;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
             cerr << searchMatrix[i][j] << " ";
         }cerr << endl;
     }
@@ -347,10 +323,8 @@ int analyzeMateDistribution(const logs_t& mLogs) {
          mateMoves.clear();
          visitedCards.clear();
          bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
-                                       myHand.getCards(), opsHand.getCards(), bd, field.ps, field.fieldInfo.isFlushLead());
-         if (pw) {
-             mateMovesDistribution[bsf32(mateMoves.size())] += 1;
-         }
+                                       myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+         if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
          return 0;
      },
      [&](const auto& field) {} // last callback

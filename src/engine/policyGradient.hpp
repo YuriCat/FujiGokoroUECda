@@ -40,11 +40,10 @@ namespace UECda {
                     Cards change[N_MAX_CHANGES];
                     const int NChanges = genChange(change, myCards, changeQty);
                     
-                    if (NChanges <= 1) { return 0; }
+                    if (NChanges <= 1) return 0;
                     
-                    int idx = searchCards(change, NChanges, [chosenChange](const auto& ch)->bool{
-                        return (ch == chosenChange);
-                    });
+                    int idx = -1;
+                    for (int i = 0; i < NChanges; i++) if (change[i] == chosenChange) idx = i;
                     
                     // mate check なし
                     

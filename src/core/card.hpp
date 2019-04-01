@@ -97,7 +97,7 @@ namespace UECda {
 
     struct OutIntCardM {
         IntCard ic;
-        constexpr OutIntCardM(const IntCard& arg) :ic(arg) {}
+        constexpr OutIntCardM(const IntCard& arg): ic(arg) {}
     };
     std::ostream& operator <<(std::ostream& out, const OutIntCardM& arg) {
         if (arg.ic == INTCARD_JOKER) {
@@ -250,13 +250,6 @@ namespace UECda {
         return RankRangeToCards(r0, r1) & SuitsToCards(suits);
     }
     
-    BitCards RR4SToCards(uint32_t r4x_0, uint32_t r4x_1, uint32_t suits) {
-        return RankRange4xToCards(r4x_0, r4x_1) & SuitsToCards(suits);
-    }
-    
-    constexpr uint32_t CardsRankToSuits(BitCards c, int r) {
-        return uint32_t(c >> (r << 2)) & 15U;
-    }
     constexpr uint32_t CardsRank4xToSuits(BitCards c, int r4x) {
         return uint32_t(c >> r4x) & 15U;
     }
@@ -633,16 +626,26 @@ namespace UECda {
         const_iterator end() const { return const_iterator(this, 0); }
 
         constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
+
+        std::string toString(bool lower = false) const {
+            std::ostringstream oss;
+            oss << "{";
+            int cnt = 0;
+            for (IntCard ic : *this) {
+                if (cnt++ > 0) oss << " "; 
+                if (lower) oss << OutIntCardM(ic);
+                else oss << OutIntCard(ic);
+            }
+            oss << " }";
+            return oss.str();
+        }
+        std::string toLowerString() const {
+            return toString(true);
+        }
     };
 
     std::ostream& operator <<(std::ostream& out, const Cards& c) {
-        out << "{";
-        int cnt = 0;
-        for (IntCard ic : c) {
-            if (cnt++ > 0) out << " "; 
-            out << OutIntCard(ic);
-        }
-        out << " }";
+        out << c.toString();
         return out;
     }
 
@@ -700,18 +703,6 @@ namespace UECda {
         IntCard ic = pickIntCardHigh(*c);
         *c -= IntCardToCards(ic);
         return ic;
-    }
-
-    // 適当に（ランダムではない）１つ取り出し
-    // 順序がどうでも良い取り出し操作の中で最速な操作で実装したい
-    inline BitCards pop(Cards *const c) {
-        BitCards r = (*c) & (-(*c));
-        (*c) -= r;
-        return r;
-    }
-
-    inline IntCard popIntCard(Cards *const c) {
-        return popIntCardLow(c);
     }
 
     // 完全ランダム取り出し
@@ -833,231 +824,70 @@ namespace UECda {
     // 先にスート圧縮版、ランク重合版を計算していた場合はそっちを使った方が速いはず
     // ジョーカーがあるか(JK)は重要な情報なので、テンプレートで分岐可能とする(通常は_BOTH)
     // 特に階段においてn枚階段判定は出されている状態でm枚判定を出すような状況にも対応が必要
-    
-    template <int JK = _BOTH> Cards canMakeNJ2Seq(Cards c) { return JK; }
-    template <int JK = _BOTH> Cards canMakeJ2Seq(Cards c);
-    template <int JK = _BOTH> Cards canMake2Seq(Cards c);
-    
-    template <int JK = _BOTH> Cards canMakeNJ3Seq(Cards c);
-    template <int JK = _BOTH> Cards canMakeJ3Seq(Cards c);
-    template <int JK = _BOTH> Cards canMake3Seq(Cards c);
-    
-    template <int JK = _BOTH> Cards canMakeNJ4Seq(Cards c);
-    template <int JK = _BOTH> Cards canMakeJ4Seq(Cards c);
-    template <int JK = _BOTH> Cards canMake4Seq(Cards c);
-    
-    template <int JK = _BOTH> Cards canMakeNJ5Seq(Cards c);
-    template <int JK = _BOTH> Cards canMakeJ5Seq(Cards c);
-    template <int JK = _BOTH> Cards canMake5Seq(Cards c);
-    
-    template <int JK = _BOTH> Cards canMakeNJ6Seq(Cards c);
-    template <int JK = _BOTH> Cards canMakeJ6Seq(Cards c);
-    template <int JK = _BOTH> Cards canMake6Seq(Cards c);
-    
-    template <int JK = _BOTH>
-    Cards canMakePlainSeq(Cards c, int qty) {
-        Cards res;
-        switch (qty) {
-            case 0: res = CARDS_NULL; break;
-            case 1: res = maskJOKER(c); break;
-            case 2: res = canMakeNJ2Seq<JK>(c); break;
-            case 3: res = canMakeNJ3Seq<JK>(c); break;
-            case 4: res = canMakeNJ4Seq<JK>(c); break;
-            case 5: res = canMakeNJ5Seq<JK>(c); break;
-            default: res = CARDS_NULL; break;
-        }
-        return res;
+
+    inline BitCards canMakePlainSeq2(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4); }
+    inline BitCards canMakePlainSeq3(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8); }
+    inline BitCards canMakePlainSeq4(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12); }
+    inline BitCards canMakePlainSeq5(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16); }
+    inline BitCards canMakePlainSeq6(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16) & (c >> 20); }
+
+    inline BitCards canMakeJokerSeq2(BitCards c) { assert(!containsJOKER(c)); return anyCards(c); }
+    inline BitCards canMakeJokerSeq3(BitCards c) { assert(!containsJOKER(c)); return (c & (c >> 4)) | (c & (c >> 8)); }
+    inline BitCards canMakeJokerSeq4(BitCards c) {
+        assert(!containsJOKER(c));
+        Cards c12 = c & (c >> 4), c3 = c >> 8, c4 = c >> 12;
+        return (c12 & c3) | (c12 & c4) | (c & c3 & c4);
     }
-    template <int JK = _BOTH>
-    Cards canMakeJokerSeq(Cards c, int qty) {
-        Cards res;
-        switch (qty) {
-            case 0: res = CARDS_NULL; break;
-            case 1: UNREACHABLE; res = c & CARDS_JOKER; break;
-            case 2: res = canMakeJ2Seq<JK>(c); break;
-            case 3: res = canMakeJ3Seq<JK>(c); break;
-            case 4: res = canMakeJ4Seq<JK>(c); break;
-            case 5: res = canMakeJ5Seq<JK>(c); break;
-            default: res = CARDS_NULL; break;
-        }
-        return res;
+    inline BitCards canMakeJokerSeq5(BitCards c) {
+        assert(!containsJOKER(c));
+        Cards c12 = c & (c >> 4), c3 = c >> 8, c4 = c >> 12, c5 = c >> 16, c45 = c4 & c5;
+        return (c12 & c3 & c4) | (c12 & c3 & c5) | (c12 & c45) | (c & c3 & c45);
     }
-    template <int JK = _BOTH>
-    Cards canMakeSeq(Cards c, int qty) {
-        Cards res;
+    
+    inline BitCards canMakePlainSeq(BitCards c, int qty) {
+        assert(!containsJOKER(c));
+        BitCards res;
         switch (qty) {
             case 0: res = CARDS_NULL; break;
             case 1: res = c; break;
-            case 2: res = canMake2Seq<JK>(c); break;
-            case 3: res = canMake3Seq<JK>(c); break;
-            case 4: res = canMake4Seq<JK>(c); break;
-            case 5: res = canMake5Seq<JK>(c); break;
+            case 2: res = canMakePlainSeq2(c); break;
+            case 3: res = canMakePlainSeq3(c); break;
+            case 4: res = canMakePlainSeq4(c); break;
+            case 5: res = canMakePlainSeq5(c); break;
             default: res = CARDS_NULL; break;
         }
         return res;
     }
-    
-    template <int QTY = 3, int JK = _BOTH>
-    Cards canMakeNJSeq(Cards c) { return canMakeNJSeq<JK>(c, QTY); }
-    template <int QTY = 3, int JK = _BOTH>
-    Cards canMakeJSeq(Cards c) { return canMakeJSeq<JK>(c, QTY); }
-    template <int QTY = 3, int JK = _BOTH>
-    Cards canMakeSeq(Cards c) { return canMakeSeq<JK>(c, QTY); }
-    
-    // 2seq
-    template <> Cards canMakeNJ2Seq<0>(Cards c) { return c & (c >> 4); }
-    template <> Cards canMakeNJ2Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return canMakeNJ2Seq<0>(nj);
-    }
-    template <> Cards canMakeNJ2Seq<2>(Cards c) { return canMakeNJ2Seq<1>(c); }
-    
-    template <> Cards canMakeJ2Seq<0>(Cards c) { return CARDS_NULL; }
-    template <> Cards canMakeJ2Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return anyCards(nj);
-    }
-    template <> Cards canMakeJ2Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMakeJ2Seq<1>(c);
-        } else {
-            return canMakeJ2Seq<0>(c);
-        }
-    }
-    
-    template <> Cards canMake2Seq<0>(Cards c) { return canMakeNJ2Seq<0>(c); }
-    template <> Cards canMake2Seq<1>(Cards c) { return canMakeJ2Seq<1>(c); }
-    template <> Cards canMake2Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMake2Seq<1>(c);
-        } else {
-            return canMakeNJ2Seq<0>(c);
-        }
-    }
-    
-    // 3seq
-    template <> Cards canMakeNJ3Seq<0>(Cards c) { return c&(c >> 4)&(c >> 8); }
-    template <> Cards canMakeNJ3Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return canMakeNJ3Seq<0>(nj);
-    }
-    template <> Cards canMakeNJ3Seq<2>(Cards c) { return canMakeNJ3Seq<1>(c); }
-    
-    template <> Cards canMakeJ3Seq<0>(Cards c) { return CARDS_NULL; }
-    template <> Cards canMakeJ3Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return (nj & (nj >> 4)) | (nj & (nj >> 8));
-    }
-    template <> Cards canMakeJ3Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMakeJ3Seq<1>(c);
-        } else {
-            return canMakeJ3Seq<0>(c);
-        }
-    }
-    
-    template <> Cards canMake3Seq<0>(Cards c) { return canMakeNJ3Seq<0>(c); }
-    template <> Cards canMake3Seq<1>(Cards c) { return canMakeJ3Seq<1>(c); }
-    template <> Cards canMake3Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMake3Seq<1>(c);
-        } else {
-            return canMakeNJ3Seq<0>(c);
-        }
-    }
-    
-    // 4seq
-    template <> Cards canMakeNJ4Seq<0>(Cards c) { return c&(c >> 4)&(c >> 8)&(c >> 12); }
-    template <> Cards canMakeNJ4Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return canMakeNJ4Seq<0>(nj);
-    }
-    template <> Cards canMakeNJ4Seq<2>(Cards c) { return canMakeNJ4Seq<1>(c); }
-    
-    template <> Cards canMakeJ4Seq<0>(Cards c) { return CARDS_NULL; }
-    template <> Cards canMakeJ4Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        Cards c12 = nj & (nj >> 4), c3 = nj >> 8, c4 = nj >> 12;
-        return (c12 & c3) | (c12 & c4) | (nj & c3 & c4);
-    }
-    template <> Cards canMakeJ4Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMakeJ4Seq<1>(c);
-        }
-        else{
-            return canMakeJ4Seq<0>(c);
-        }
-    }
-    
-    template <> Cards canMake4Seq<0>(Cards c) { return canMakeNJ4Seq<0>(c); }
-    template <> Cards canMake4Seq<1>(Cards c) { return canMakeJ4Seq<1>(c); }
-    template <> Cards canMake4Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMake4Seq<1>(c);
-        }
-        else{
-            return canMakeNJ4Seq<0>(c);
-        }
-    }
-    
-    // 5seq
-    template <> Cards canMakeNJ5Seq<0>(Cards c) { return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16); }
-    template <> Cards canMakeNJ5Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return canMakeNJ5Seq<0>(nj);
-    }
-    template <> Cards canMakeNJ5Seq<2>(Cards c) { return canMakeNJ5Seq<1>(c); }
-    
-    template <> Cards canMakeJ5Seq<0>(Cards c) { return CARDS_NULL; }
-    template <> Cards canMakeJ5Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        Cards c12 = nj & (nj >> 4), c3 = nj >> 8, c4 = nj >> 12, c5 = nj >> 16, c45 = c4 & c5;
-        return (c12 & c3 & c4) | (c12 & c3 & c5) | (c12 & c45) | (nj & c3 & c45);
-    }
-    template <> Cards canMakeJ5Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMakeJ5Seq<1>(c);
-        } else {
-            return canMakeJ5Seq<0>(c);
-        }
-    }
-    
-    template <> Cards canMake5Seq<0>(Cards c) { return canMakeNJ5Seq<0>(c); }
-    template <> Cards canMake5Seq<1>(Cards c) { return canMakeJ5Seq<1>(c); }
-    template <> Cards canMake5Seq<2>(Cards c) {
-        if (containsJOKER(c)) {
-            return canMake5Seq<1>(c);
-        } else {
-            return canMakeNJ5Seq<0>(c);
-        }
-    }
-    
-    // 6seq
-    template <> Cards canMakeNJ6Seq<0>(Cards c) { return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16) & (c >> 20); }
-    template <> Cards canMakeNJ6Seq<1>(Cards c) {
-        Cards nj = maskJOKER(c);
-        return canMakeNJ6Seq<0>(nj);
-    }
-    template <> Cards canMakeNJ6Seq<2>(Cards c) { return canMakeNJ6Seq<1>(c); }
-    
-    //uint32_t removeAllGroups(Cards c)
-   
-    // 主に支配性判定用の許容ゾーン計算
-    // 支配性の判定のため、合法着手がカード集合表現のどこに存在しうるかを計算
-    
-    // グループ版（ジョーカーを除けばシングルも一緒）
-    inline Cards ORSToGValidZone(int ord, uint32_t rank, uint32_t suits) {
-        Cards res;
-        switch (ord) {
-            case 0: res = RRSToCards(rank + 1, RANK_MAX, suits); break;
-            case 1: res = RRSToCards(RANK_MIN, rank - 1, suits); break;
-            case 2: res = subtrCards(RRSToCards(RANK_MIN, RANK_MAX, suits), RankSuitsToCards(rank, suits)); break;
-            default: UNREACHABLE; res = CARDS_NULL; break;
+    inline BitCards canMakeJokerSeq(BitCards c, int joker, int qty) {
+        assert(!containsJOKER(c));
+        if (joker == 0) return 0;
+        BitCards res;
+        switch (qty) {
+            case 0: res = CARDS_NULL; break;
+            case 1: res = CARDS_NULL; break;
+            case 2: res = canMakeJokerSeq2(c); break;
+            case 3: res = canMakeJokerSeq3(c); break;
+            case 4: res = canMakeJokerSeq4(c); break;
+            case 5: res = canMakeJokerSeq5(c); break;
+            default: res = CARDS_NULL; break;
         }
         return res;
     }
+    inline BitCards canMakeSeq(BitCards c, int joker, int qty) {
+        assert(!containsJOKER(c));
+        if (joker == 0) return canMakePlainSeq(c, qty);
+        else return canMakeJokerSeq(c, joker, qty);
+    }
+    inline BitCards canMakeSeq(Cards c, int qty) {
+        int joker = c.joker();
+        if (joker == 0) return canMakePlainSeq(c, qty);
+        else return canMakeJokerSeq(c.plain(), joker, qty);
+    }
+
+    // 主に支配性判定用の許容ゾーン計算
+    // 支配性の判定のため、合法着手がカード集合表現のどこに存在しうるかを計算
     
-    inline Cards ORToGValidZone(int ord, uint32_t rank) { // ランク限定のみ
+    inline Cards ORToGValidZone(int ord, int rank) { // ランク限定のみ
         Cards res;
         switch (ord) {
             case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
@@ -1068,20 +898,7 @@ namespace UECda {
         return res;
     }
     
-    // 階段版
-    inline Cards ORSQToSCValidZone(int ord, uint32_t rank, uint32_t suits, int qty) {
-        Cards res;
-        switch (ord) {
-            case 0: res = RRSToCards(rank + qty, RANK_MAX, suits); break;
-            case 1: res = RRSToCards(RANK_MIN, rank - 1, suits); break;
-            case 2: res = addCards(RRSToCards(RANK_MIN, rank - 1, suits),
-                                   RRSToCards(rank + qty, RANK_MAX, suits)); break;
-            default: UNREACHABLE; res = CARDS_NULL; break;
-        }
-        return res;
-    }
-    
-    inline Cards ORQToSCValidZone(int ord, uint32_t rank, int qty) { // ランク限定のみ
+    inline Cards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限定のみ
         Cards res;
         switch (ord) {
             case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
@@ -1097,19 +914,13 @@ namespace UECda {
     // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
     // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
     bool isValidGroupRank(int mvRank, int order, int bdRank) {
-        if (order == ORDER_NORMAL) {
-            return mvRank > bdRank;
-        } else {
-            return mvRank < bdRank;
-        }
+        if (order == 0) return mvRank > bdRank;
+        else return mvRank < bdRank;
     }
     
     bool isValidSeqRank(int mvRank, int order, int bdRank, int qty) {
-        if (order == ORDER_NORMAL) {
-            return mvRank >= (bdRank + qty);
-        } else {
-            return mvRank <= (bdRank - qty);
-        }
+        if (order == 0) return mvRank >= bdRank + qty;
+        else return mvRank <= bdRank - qty;
     }
     
     // 枚数オンリーによる許容包括
@@ -1117,56 +928,23 @@ namespace UECda {
         return RankRangeToCards(RANK_IMG_MIN, RANK_IMG_MAX + 1 - qty);
     }
     
-    // 出力用クラス
-    struct OutCards {
-        BitCards c;
-        constexpr OutCards(const BitCards& arg) :c(arg) {}
-    };
-    
-    std::ostream& operator <<(std::ostream& out, const OutCards& arg) {
-        assert(holdsCards(CARDS_IMG_ALL, arg.c));
-        out << "{";
-        Cards tmp = arg.c;
-        while (anyCards(tmp)) {
-            out << " " << OutIntCard(popIntCardLow(&tmp));
-        }
-        out << " }";
-        return out;
-    }
-    
-    struct OutCardsM {
-        Cards c;
-        constexpr OutCardsM(const Cards& arg) :c(arg) {}
-    };
-    
-    std::ostream& operator <<(std::ostream& out, const OutCardsM& arg) {
-        assert(holdsCards(CARDS_IMG_ALL, arg.c));
-        out << "{";
-        Cards tmp = arg.c;
-        while (anyCards(tmp)) {
-            out << " " << OutIntCardM(popIntCardLow(&tmp));
-        }
-        out << " }";
-        return out;
-    }
-    
     // テーブル形式で出力
     struct OutCardTable {
-        BitCards c;
-        OutCardTable(const BitCards& ac) : c(ac) {}
+        Cards c;
+        OutCardTable(const Cards& ac) : c(ac) {}
     };
     
     std::ostream& operator <<(std::ostream& out, const OutCardTable& arg) {
         // テーブル形式で見やすく
         BitCards c = arg.c;
         out << " ";
-        for (int r = RANK_3; r <= RANK_2; ++r) {
+        for (int r = RANK_3; r <= RANK_2; r++) {
             out << " " << OutRank(r);
         }
         out << " " << "X" << endl;
-        for (int sn = 0; sn < 4; ++sn) {
+        for (int sn = 0; sn < 4; sn++) {
             out << OutSuitNum(sn) << " ";
-            for (int r = RANK_3; r <= RANK_2; ++r) {
+            for (int r = RANK_3; r <= RANK_2; r++) {
                 if (containsCard(c, RankSuitsToCards(r, SuitNumToSuits(sn)))) {
                     out << "O ";
                 } else {
@@ -1186,27 +964,27 @@ namespace UECda {
     }
     
     struct Out2CardTables {
-        BitCards c0, c1;
-        Out2CardTables(const BitCards& ac0, const BitCards& ac1) : c0(ac0), c1(ac1) {}
+        Cards c0, c1;
+        Out2CardTables(const Cards& ac0, const Cards& ac1) : c0(ac0), c1(ac1) {}
     };
     
     std::ostream& operator <<(std::ostream& out, const Out2CardTables& arg) {
         // テーブル形式で見やすく
         // ２つを横並びで表示
-        BitCards c[2] = { arg.c0, arg.c1 };
-        for (int i = 0; i < 2; ++i) {
+        Cards c[2] = { arg.c0, arg.c1 };
+        for (int i = 0; i < 2; i++) {
             out << " ";
-            for (int r = RANK_3; r <= RANK_2; ++r) {
+            for (int r = RANK_3; r <= RANK_2; r++) {
                 out << " " << OutRank(r);
             }
             out << " " << "X";
             out << "    ";
         }
         out << endl;
-        for (int sn = 0; sn < N_SUITS; ++sn) {
-            for (int i = 0; i < 2; ++i) {
+        for (int sn = 0; sn < N_SUITS; sn++) {
+            for (int i = 0; i < 2; i++) {
                 out << OutSuitNum(sn) << " ";
-                for (int r = RANK_3; r <= RANK_2; ++r) {
+                for (int r = RANK_3; r <= RANK_2; r++) {
                     if (containsCard(c[i], RankSuitsToCards(r, SuitNumToSuits(sn)))) {
                         out << "O ";
                     } else {
@@ -1227,30 +1005,6 @@ namespace UECda {
             out << endl;
         }
         return out;
-    }
-
-    // イテレーション
-    template <typename callback_t>
-    void iterateIntCard(Cards c, const callback_t& callback) {
-        while (anyCards(c)) {
-            IntCard ic = popIntCard(&c);
-            callback(ic);
-        }
-    }
-    template <typename callback_t>
-    void iterateCard(Cards c, const callback_t& callback) {
-        while (anyCards(c)) {
-            Cards tc = pop(&c);
-            callback(tc);
-        }
-    }
-    
-    template <class cards_buf_t, typename callback_t>
-    int searchCards(const cards_buf_t *const buf, const int n, const callback_t& callback) {
-        for (int m = 0; m < n; ++m) {
-            if (callback(buf[m])) { return m; }
-        }
-        return -1;
     }
     
     /**************************カード集合表現の変形型**************************/
@@ -1291,20 +1045,18 @@ namespace UECda {
     constexpr BitCards PQR_1234 = CARDS_IMG_ALL_PLAIN & 0xffffffffffffffff;
     
     // 定義通りの関数
-    inline Cards QtyToPQR(uint32_t q) {
-        return PQR_1 << (q - 1);
-    }
+    constexpr inline Cards QtyToPQR(uint32_t q) { return PQR_1 << (q - 1); }
     
     CardArray CardsToQR_slow(BitCards c) {
         CardArray ret = 0;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             ret.set(r, countCards(RankToCards(r) & c));
         }
         return ret.data();
     }
     CardArray CardsToENR_slow(BitCards c, int n) {
         CardArray ret = 0;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             if (countCards(c & RankToCards(r)) >= n) {
                 ret.set(r, 1);
             }
@@ -1313,7 +1065,7 @@ namespace UECda {
     }
     CardArray CardsToNR_slow(BitCards c, int n) {
         CardArray ret = 0;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             if (countCards(c & RankToCards(r)) == n) {
                 ret.set(r, 1);
             }
@@ -1323,7 +1075,7 @@ namespace UECda {
     BitCards QRToPQR_slow(CardArray qr) {
         CardArray arr = qr;
         CardArray ret = CARDS_NULL;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             if (arr[r]) {
                 ret.set(r, 1 << (arr[r] - 1));
             }
@@ -1333,7 +1085,7 @@ namespace UECda {
     BitCards QRToSC_slow(CardArray qr) {
         CardArray arr = qr;
         CardArray ret = CARDS_NULL;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             ret.set(r, (1 << arr[r]) - 1);
         }
         return ret.data();
@@ -1341,7 +1093,7 @@ namespace UECda {
     BitCards PQRToSC_slow(CardArray qr) {
         CardArray arr = qr;
         CardArray ret = CARDS_NULL;
-        for (int r = RANK_U; r <= RANK_O; ++r) {
+        for (int r = RANK_U; r <= RANK_O; r++) {
             if (arr[r]) {
                 uint32_t q = bsf(arr[r]) + 1;
                 ret.set(r, (1 << q) - 1);
@@ -1498,15 +1250,12 @@ namespace UECda {
             if (n <= 1) return true;
             c = CardsToQR(c);
             if (c & PQR_234) { // 2枚以上
-                if (n == 2) {
-                    return true;
+                if (n == 2) return true;
+                if (c & PQR_34) { // 4枚
+                    if (n <= 4) return true;
                 } else {
-                    if (c & PQR_34) { // 4枚
-                        if (n <= 4) return true;
-                    } else {
-                        if (((c & PQR_2) >> 1) & c) { // 3枚
-                            if (n == 3) return true;
-                        }
+                    if (((c & PQR_2) >> 1) & c) { // 3枚
+                        if (n == 3) return true;
                     }
                 }
             }
@@ -1518,13 +1267,13 @@ namespace UECda {
         // カード集合関係の初期化
         
         // nd計算に使うテーブル
-        for (int r = 0; r < 16; ++r) {
+        for (int r = 0; r < 16; r++) {
             // オーダー通常
             ORQ_NDTable[0][r][0] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1;
             ORQ_NDTable[0][r][1] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_12;
             ORQ_NDTable[0][r][2] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_123;
             ORQ_NDTable[0][r][3] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-            for (int q = 4; q < 8; ++q) {
+            for (int q = 4; q < 8; q++) {
                 ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
             }
             // オーダー逆転
@@ -1532,7 +1281,7 @@ namespace UECda {
             ORQ_NDTable[1][r][1] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_12;
             ORQ_NDTable[1][r][2] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_123;
             ORQ_NDTable[1][r][3] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-            for (int q = 4; q < 8; ++q) {
+            for (int q = 4; q < 8; q++) {
                 ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
             }
             //複数ジョーカーには未対応
@@ -1546,23 +1295,4 @@ namespace UECda {
     };
     
     CardsInitializer cardsInitializer;
-    
-    
-    /**************************役集合表現**************************/
-    
-    // 着手の逐次生成用の軽い役集合表現
-    // タイプによってサイズが違う
-    
-    //階段用
-    /*
-     template <int CON_JOKER>struct SeqMelds{
-     
-     Cards melds;
-     
-     Move popLow() {
-     
-     }
-     
-     };
-     */
 }

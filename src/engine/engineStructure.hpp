@@ -434,10 +434,10 @@ namespace UECda {
                 double sem = sqrt(child[m].mean_var());
                 const int rewZone[2] = {rew - (int)(sem * rewardGap), rew + (int)(sem * rewardGap)};
                 
-                if (m == 0)oss << "\033[1m";
+                if (m == 0) oss << "\033[1m";
                 oss << m << " ";
                 
-                if (isChange)oss << OutCards(child[m].changeCards);
+                if (isChange) oss << child[m].changeCards;
                 else oss << child[m].move.mv();
                 
                 oss << " : ";

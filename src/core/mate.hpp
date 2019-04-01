@@ -65,46 +65,45 @@ namespace UECda {
     bool judgeMate_1M_NF(const Hand& myHand) {
         // 空場、1手詰み（つまり出して上がり,確実にPW）
         // 8切り関係の3手詰み等も含めた高速化は別関数にて
-        if (myHand.qty <= 1) { return true; }
+        if (myHand.qty <= 1) return true;
         Cards pqr = myHand.pqr;
-        if (myHand.containsJOKER()) {//ジョーカーあり
-            if (!any2Cards(pqr))return true;
+        if (myHand.containsJOKER()) { // ジョーカーあり
+            if (!any2Cards(pqr)) return true;
             if (myHand.seq) {
-                if (myHand.qty == 3) { return true; }
-                if (canMakeJokerSeq<_YES>(myHand.cards, myHand.qty)) { return 1; }
+                if (myHand.qty == 3) return true;
+                if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
             }
         } else {
-            if (!any2Cards(pqr))return true;
+            if (!any2Cards(pqr)) return true;
             if (myHand.seq) {
-                if (myHand.qty == 3) { return true; }
-                if (canMakePlainSeq<_NO>(myHand.cards, myHand.qty)) { return 1; }
+                if (myHand.qty == 3) return true;
+                if (canMakePlainSeq(myHand.cards, myHand.qty)) return true;
             }
         }
-        return 0;
+        return false;
     }
     
     bool judgeMate_Easy_NF(const Hand& myHand) {
         // とりあえず高速でNF_Mateかどうか判断したい場合
-        if (myHand.qty <= 1) {return true;}
+        if (myHand.qty <= 1) return true;
         Cards pqr = myHand.pqr;
-        if (!any2Cards(maskCards(pqr, CARDS_8 | CARDS_JOKER)))return true;
+        if (!any2Cards(maskCards(pqr, CARDS_8 | CARDS_JOKER))) return true;
         if (myHand.containsJOKER()) { // ジョーカーあり
             if (myHand.seq) {
-                if (myHand.qty == 3) {return true;}
-                if (canMakeJokerSeq<1>(myHand.cards, myHand.qty)) {return 1;}
+                if (myHand.qty == 3) return true;
+                if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
             }
-            //if (myHand.containsS3()) { // S3あり
         } else {
             if (myHand.seq) {
-                if (myHand.qty == 3) {return true;}
-                if (canMakePlainSeq<0>(myHand.cards, myHand.qty)) {return 1;}
+                if (myHand.qty == 3) return true;
+                if (canMakePlainSeq(myHand.cards, myHand.qty)) return true;
             }
         }
-        return 0;
+        return false;
     }
     
-    bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const uint32_t jk,
-                         const Cards *const nd, const Board& argBd) {
+    bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
+                         const Cards *const nd, const Board& b) {
         // すでに支配的でない着手があることがわかっており、
         // それ以外が全て支配的かを確認するメソッド
         // 階段未対応
@@ -119,7 +118,7 @@ namespace UECda {
         
         assert(pqr == CardsToPQR(cards));
         
-        const int ord = argBd.tmpOrder();
+        const int ord = b.tmpOrder();
         
         const Cards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
         if (!ndpqr) {
@@ -139,7 +138,7 @@ namespace UECda {
                     }
                 }
             }
-            DERR << "PPW " << OutCards(cards) << endl;
+            DERR << "PPW " << cards << endl;
             return true;
         } else {
             Cards ndpqr_m = ndpqr & (ndpqr - 1ULL);
@@ -149,17 +148,17 @@ namespace UECda {
                 if (jk) {
                     if (ndpqr & PQR_4) {
                         // 5枚出しで勝てる
-                        DERR << "PPW (QUIN) " << OutCards(cards) << endl;
+                        DERR << "PPW (QUIN) " << cards << endl;
                         return true;
                     } else {
                         // ndと交差しなければ勝ち
                         if (!((ndpqr << 1) & nd[ord])) {
-                            DERR << "PPW (+JK) " << OutCards(cards) << endl;
+                            DERR << "PPW (+JK) " << cards << endl;
                             return true;
                         }
                         // スペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
                         if (ndpqr == CARDS_MIN && containsS3(cards)) {
-                            DERR << "PPW (JK-S3) " << OutCards(cards) << endl;
+                            DERR << "PPW (JK-S3) " << cards << endl;
                             return true;
                         }
                     }
@@ -174,7 +173,7 @@ namespace UECda {
                 if (jk) {
                     if (!ndpqr_new) {
                         // 革命がだめでも5枚出しがある。勝ち
-                        DERR << "PPW (QUIN) " << OutCards(cards) << endl;
+                        DERR << "PPW (QUIN) " << cards << endl;
                         return true;
                     } else {
                         if (!(ndpqr_new & (ndpqr_new - 1ULL))) {
@@ -189,7 +188,7 @@ namespace UECda {
                                 // いずれかのオーダーのndと交差しなければ勝ち
                                 if ((!((ndpqr_new << 1) & nd[ord]))
                                    || (!((ndpqr_new << 1) & nd[flipOrder(ord)]))) {
-                                    DERR << "NJ_QUAD PPW (+JK) " << OutCards(cards) << endl;
+                                    DERR << "NJ_QUAD PPW (+JK) " << cards << endl;
                                     return true;
                                 }
                                 // このときスペ3は通常か逆のいずれかで必ず支配的なはずなので、スペ3判定必要なし。
@@ -199,11 +198,11 @@ namespace UECda {
                 } else {
                     //ジョーカーが無いので、革命が支配的かつ他のも全て支配的が必須
                     if (!ndpqr_new && !(quad & nd[ flipOrder(ord)] & ~CARDS_8)) {
-                        DERR << "NJ_QUAD PPW " << OutCards(cards) << endl;
+                        DERR << "NJ_QUAD PPW " << cards << endl;
                         return true;
                     }
                 }
-            }else if (jk && (pqr & PQR_3)) {
+            } else if (jk && (pqr & PQR_3)) {
                 //ジョーカーを使えば革命あり。
                 //ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
                 //まず、この革命がターンを取れるか
@@ -216,7 +215,7 @@ namespace UECda {
                     Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & nd[flipOrder(ord)];//革命の分も消しとく
                     if (!ndpqr_new) {
                         //全部支配できた場合のみOK
-                        DERR << "J_QUAD PPW " << OutCards(cards) << endl;
+                        DERR << "J_QUAD PPW " << cards << endl;
                         return true;
                     }
                 }
@@ -225,7 +224,7 @@ namespace UECda {
         return false;
     }
     
-    bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& argBd) {
+    bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& b) {
         // 合法着手生成を用いずに判定出来る場合
         
         // ただし、
@@ -241,30 +240,18 @@ namespace UECda {
         assert(opsHand.exam_seq());
         assert(opsHand.exam_nd());
         
-        const int ord = argBd.tmpOrder();
+        const int ord = b.tmpOrder();
         
         const Cards ndpqr = myHand.pqr & opsHand.nd[ord] & ~CARDS_8; // 支配出来ていないpqr
         if (!ndpqr) {
             // このときほぼ必勝なのだが、一応4枚グループが2つある場合にはそうでないことがある
-            // 面倒なので勝ちとしておく
-            DERR << "PW0 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
-            return true;
-            /*Cards pqr4=myHand.pqr & PQR_4;
-             if ( (!pqr4) || (!any2Cards(pqr4)) ) {
-             //４枚グループが1つ以下
-             return true;
-             }
-             //以下4枚グループ2つ。ほぼないので適当で良い。
-             if ( myHand.jk ) {
-             //革命のうち1つにジョーカーを加えれば勝ち
-             return true;
-             } else {
-             if ( !any2Cards( pqr4 & opsHand.nd[ord] ) ) {
-             return true;
-             }
-             }
-             return false;
-             */
+            DERR << "PW0 " << myHand.cards << " , " << opsHand.cards << endl;
+            Cards pqr4 = myHand.pqr & PQR_4;
+            if (!any2Cards(pqr4)) return true; // ４枚グループが1つ以下
+            //以下4枚グループ2つ。ほぼないので適当で良い。
+            if (myHand.jk) return true; //革命のうち1つにジョーカーを加えれば勝ち
+            if (!any2Cards(pqr4 & opsHand.nd[ord])) return true;
+            return false;
         } else {
             Cards ndpqr_m = ndpqr & (ndpqr - 1ULL);
             
@@ -288,13 +275,13 @@ namespace UECda {
                     }
                 }
                 // 一応OKとする
-                DERR << "PW1 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                DERR << "PW1 " << myHand.cards << " , " << opsHand.cards << endl;
                 return true;
             } else {
                 // 支配出来ない部分が2つ以上
                 if (myHand.seq) { // 階段である場合がある。
                     if (myHand.qty == 3) { // 3階段1つ
-                        DERR << "SEQ PW0 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                        DERR << "SEQ PW0 " << myHand.cards << " , " << opsHand.cards << endl;
                         return true;
                     }
                     
@@ -320,9 +307,7 @@ namespace UECda {
                 } else {
                     // ここから長いので、ジョーカーも革命も階段も無い場合(大部分)はさっさと帰る
                     if (!myHand.jk) {
-                        if (!(myHand.pqr & PQR_4)) {
-                            return false;
-                        }
+                        if (!(myHand.pqr & PQR_4)) return false;
                     }
                 }
                 
@@ -332,22 +317,24 @@ namespace UECda {
                     if (myHand.jk) {
                         if (ndpqr & PQR_4) {
                             // 5枚出しで勝てる
-                            DERR << "PW1 (QUAD+JK) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                            DERR << "PW1 (QUAD+JK) " << myHand.cards << " , " << opsHand.cards << endl;
                             return true;
                         } else {
                             Cards h = ndpqr;
                             Cards l = popLow(&h);
                             
-                            // どちらかとndが交差しなければ勝ち
-                            if (!((h << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[ord])) {
-                                DERR << "PW1 (+JK) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                            // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
+                            bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? (1 - ord) : ord];
+                            bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? (1 - ord) : ord];
+                            if (!jh || !jl) {
+                                DERR << "PW1 (+JK) " << myHand.cards << " , " << opsHand.cards << endl;
                                 return true;
                             }
                             
                             // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
                             if (l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)) {
                                 // 3はランク最低なのでlだろう
-                                DERR << "PW1 (JK-S3) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                                DERR << "PW1 (JK-S3) " << myHand.cards << " , " << opsHand.cards << endl;
                                 return true;
                             }
                         }
@@ -358,18 +345,19 @@ namespace UECda {
                 if (myHand.pqr & PQR_4) {
                     // ジョーカーを使わない革命あり。
                     Cards quad = myHand.pqr & PQR_4;
+                    Cards nd_quad = ndpqr & quad & opsHand.nd[flipOrder(ord)];
                     Cards ndpqr_new = ndpqr & ~quad & opsHand.nd[flipOrder(ord)];
                     
-                    if (!ndpqr_new) {
+                    if (nd_quad) {
                         // 全部支配できた。勝ち
-                        DERR << "NJ_QUAD PW0~1 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                        DERR << "NJ_QUAD PW0~1 " << myHand.cards << " , " << opsHand.cards << endl;
                         return true;
                     }
                     Cards ndpqr_new_m = ndpqr_new & (ndpqr_new - 1ULL);
                     if (myHand.jk) {
                         if (!ndpqr_new_m) {
                             // 1つ残し。5枚出しすればよい。勝ち
-                            DERR << "NJ_QUIN PW1 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                            DERR << "NJ_QUIN PW1 " << myHand.cards << " , " << opsHand.cards << endl;
                             return true;
                         } else {
                             // 2つ以上残っている。
@@ -388,7 +376,7 @@ namespace UECda {
                                     // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
                                     if (!((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
                                        || !((l << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[flipOrder(ord)])) {
-                                        DERR << "NJ_QUAD PW1 (+JK) " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                                        DERR << "NJ_QUAD PW1 (+JK) " << myHand.cards << " , " << opsHand.cards << endl;
                                         return true;
                                     }
                                     
@@ -406,12 +394,12 @@ namespace UECda {
                         if (!ndpqr_new_m) {
                             // 1つ残し。革命でターンが取れるなら勝ち。
                             if (!(quad & opsHand.nd[flipOrder(ord)] & ~CARDS_8)) {
-                                DERR << "NJ_QUAD PW1 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                                DERR << "NJ_QUAD PW1 " << myHand.cards << " , " << opsHand.cards << endl;
                                 return true;
                             }
                         }
                     }
-                }else if (myHand.jk && (myHand.pqr & PQR_3)) {
+                } else if (myHand.jk && (myHand.pqr & PQR_3)) {
                     // ジョーカーを使えば革命あり。
                     // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
                     // まず、この革命がターンを取れるか
@@ -425,13 +413,13 @@ namespace UECda {
                         
                         if (!ndpqr_new) {
                             //全部支配できた。勝ち
-                            DERR << "J_QUAD PW0 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                            DERR << "J_QUAD PW0 " << myHand.cards << " , " << opsHand.cards << endl;
                             return true;
                         } else {
                             Cards ndpqr_new_m = ndpqr_new & (ndpqr_new - 1ULL);
                             if (!ndpqr_new_m) {
                                 // 1つ残し。勝ち
-                                DERR << "J_QUAD PW1 " << OutCards(myHand.cards) << " , " << OutCards(opsHand.cards) << endl;
+                                DERR << "J_QUAD PW1 " << myHand.cards << " , " << opsHand.cards << endl;
                                 return true;
                             }
                             // 2つ以上残っている。ジョーカーを既に使ってしまったので勝てない。
@@ -445,19 +433,17 @@ namespace UECda {
     
     bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo mv,
                              const Hand& myHand, const Hand& opsHand,
-                             const Board& argBd, const FieldAddInfo& fieldInfo) {
+                             const Board& b, const FieldAddInfo& fieldInfo) {
         // 間に他プレーヤーの着手を含んだ必勝を検討
         // 支配的でないことは前提とする
-        if (!argBd.isNF())return false; // 未実装
-        if (mv.isPASS())return false; // パスからのBNPWはない
-        int curOrder = argBd.prmOrder();
+        if (!b.isNF()) return false; // 未実装
+        if (mv.isPASS()) return false; // パスからのBNPWはない
+        int curOrder = b.prmOrder();
         Cards ops8 = opsHand.cards & CARDS_8;
         uint32_t aw = fieldInfo.getMinNCardsAwake();
         
-        if (aw <= mv.qty()) {
-            // 相手に間で上がられる可能性がある
-            return false;
-        }
+        // 相手に間で上がられる可能性がある
+        if (aw <= mv.qty()) return false;
         
         FieldAddInfo nextFieldInfo;
         
@@ -487,7 +473,7 @@ namespace UECda {
                 }
                 // ジョーカー -> S3 からの空場必勝を確認
                 if (nextHand.containsS3()) {
-                    if (nextHand.qty == 1) { return true; }
+                    if (nextHand.qty == 1) return true;
                     nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1);
                     if (judgeHandMate<_YES, _NO>(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                         return true;
@@ -509,8 +495,8 @@ namespace UECda {
          }
          
          //上に出せる着手を全て列挙
-         int NMoves=genMove(buf,myHand.cards,argBd);
-         for (int m=NMoves-1;m>=0;--m) {
+         int NMoves=genMove(buf,myHand.cards,b);
+         for (int m=NMoves-1;m>=0;m--) {
          const MoveInfo& tmp=buf[m];
          
          */
@@ -524,20 +510,20 @@ namespace UECda {
     template <int IS_NF, int IS_UNRIVALED>
     bool judgeHandMate(const int depth, MoveInfo *const buf,
                        const Hand& myHand, const Hand& opsHand,
-                       const Board& argBd, const FieldAddInfo& fieldInfo) {
+                       const Board& b, const FieldAddInfo& fieldInfo) {
         // 簡単詰み
-        if (TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeMate_Easy_NF(myHand)) {
+        if (TRI_BOOL_YES(IS_NF, b.isNF()) && judgeMate_Easy_NF(myHand)) {
             return true;
         }
         // 中程度詰み
-        if (TRI_BOOL_YES(IS_NF, argBd.isNF()) && judgeHandPW_NF(myHand, opsHand, argBd)) {
+        if (TRI_BOOL_YES(IS_NF, b.isNF()) && judgeHandPW_NF(myHand, opsHand, b)) {
             return true;
         }
-        if (TRI_BOOL_NO(IS_NF, !argBd.isNF()) || depth > 0) {
+        if (TRI_BOOL_NO(IS_NF, !b.isNF()) || depth > 0) {
             // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
-            const int NMoves = genMove(buf, myHand, argBd);
+            const int NMoves = genMove(buf, myHand, b);
             if (searchHandMate<IS_NF, IS_UNRIVALED>(depth, buf, NMoves,
-                                                   myHand, opsHand, argBd, fieldInfo) != -1) {
+                                                   myHand, opsHand, b, fieldInfo) != -1) {
                 return true;
             }
         } else {
@@ -547,28 +533,28 @@ namespace UECda {
                 const int NMoves = genAllSeq(buf, myHand.cards);
                 for (int m = 0; m < NMoves; ++m) {
                     const MoveInfo& mv = buf[m];
-                    if (mv.qty() >= myHand.qty)return true; // 即上がり
+                    if (mv.qty() >= myHand.qty) return true; // 即上がり
                     
-                    Board nbd = argBd;
+                    Board nb = b;
                     Hand nextHand;
                     
                     makeMove1stHalf(myHand, &nextHand, mv.mv());
                     
-                    nbd.procOrder(mv.mv());
+                    nb.procOrder(mv.mv());
                     if (!depth && mv.qty() > 4) {
                         // 5枚以上の階段は支配としとく
-                        if (judgeHandPW_NF(nextHand, opsHand, argBd)
-                           || judgeHandPW_NF(nextHand, opsHand, (uint32_t)argBd ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))
+                        if (judgeHandPW_NF(nextHand, opsHand, b)
+                           || judgeHandPW_NF(nextHand, opsHand, (uint32_t)b ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))
                            ) {
                             // いずれかのオーダーで必勝ならOK
                             return true;
                         }
                     } else {
-                        if (dominatesHand(mv.mv(), opsHand, argBd)) {
-                            if (judgeHandPW_NF(nextHand, opsHand, argBd))return true;
+                        if (dominatesHand(mv.mv(), opsHand, b)) {
+                            if (judgeHandPW_NF(nextHand, opsHand, b)) return true;
                         } else {
                             // 支配的でない場合、この役を最後に出すことを検討
-                            if (judgeHandPPW_NF(nextHand.cards, nextHand.pqr, nextHand.jk, opsHand.nd, argBd))return true;
+                            if (judgeHandPPW_NF(nextHand.cards, nextHand.pqr, nextHand.jk, opsHand.nd, b))return true;
                         }
                     }
                 }
@@ -580,23 +566,23 @@ namespace UECda {
     template <int IS_NF, int IS_UNRIVALED>
     bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                        const Hand& myHand, const Hand& opsHand,
-                       const Board& argBd, const FieldAddInfo& fieldInfo) {
+                       const Board& b, const FieldAddInfo& fieldInfo) {
         
         if (TRI_BOOL_YES(IS_UNRIVALED, fieldInfo.isUnrivaled())) { // 独断場のとき
             mv.setDO(); // 支配フラグ付加
             if (mv.isPASS()) {
-                Board bd = argBd;
-                bd.flush();
+                Board nb = b;
+                nb.flush();
                 FieldAddInfo nextFieldInfo;
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-                return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand, bd, nextFieldInfo);
+                return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand, nb, nextFieldInfo);
             } else {
-                if (mv.qty() >= myHand.qty) { return true; } // あがり
+                if (mv.qty() >= myHand.qty) return true; // あがり
                 Hand nextHand;
-                Board bd = argBd;
+                Board bd = b;
                 FieldAddInfo nextFieldInfo;
                 makeMove1stHalf(myHand, &nextHand, mv.mv());
-                if (dominatesCards(mv.mv(), nextHand.cards, argBd)) { // 自己支配
+                if (dominatesCards(mv.mv(), nextHand.cards, b)) { // 自己支配
                     mv.setDM(); // 支配フラグ付加
                     bd.procAndFlush(mv.mv());
                     flushFieldAddInfo(fieldInfo, &nextFieldInfo);
@@ -622,21 +608,19 @@ namespace UECda {
                 nextFieldInfo.init();
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                 return judgeHandMate<_YES, _NO>(depth, buf, myHand, opsHand,
-                                                OrderToNullBoard(argBd.prmOrder()), nextFieldInfo);
+                                                OrderToNullBoard(b.prmOrder()), nextFieldInfo);
             }
         }
         // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
         // DERR << depth << endl;
         // 通常
-        if (mv.qty() >= myHand.qty) { // 即上がり
-            return true;
-        }
-        if (dominatesHand(mv.mv(), opsHand, argBd)
+        if (mv.qty() >= myHand.qty) return true; // 即上がり
+        if (dominatesHand(mv.mv(), opsHand, b)
            || mv.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
             
             mv.setDO(); // 支配フラグ付加
             
-            Board bd = argBd;
+            Board bd = b;
             bd.proc(mv.mv());
             Hand nextHand;
 
@@ -668,16 +652,16 @@ namespace UECda {
                    && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
                    && containsS3(myHand.cards) // 残り手札にS3がある
                    && !mv.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
-                    Cards zone = ORToGValidZone(argBd.tmpOrder(), mv.rank());
-                    if (argBd.locksSuits(mv.mv())) {
+                    Cards zone = ORToGValidZone(b.tmpOrder(), mv.rank());
+                    if (b.locksSuits(mv.mv())) {
                         zone &= SuitsToCards(mv.suits());
                     }
                     if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
                         Hand nextHand;
                         makeMove1stHalf(myHand, &nextHand, mv.mv());
-                        if (judgeHandPW_NF(nextHand, opsHand, argBd)) { // 流れた場合
+                        if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
                             nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1); // S3 で進める
-                            if (judgeHandPW_NF(nextHand, opsHand, argBd)) { // S3で返した場合
+                            if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
                                 // 両方で勝ったので必勝
                                 DERR << "BRPW(S3)!!!" << endl;
                                 return true;
@@ -686,7 +670,7 @@ namespace UECda {
                     }
                 }
                 // BNPWを検討
-                if (checkHandBNPW(depth - 1, buf, mv, myHand, opsHand, argBd, fieldInfo)) {
+                if (checkHandBNPW(depth - 1, buf, mv, myHand, opsHand, b, fieldInfo)) {
                     DERR << "BNPW - " << mv << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
                     return true;
                 }
@@ -696,95 +680,18 @@ namespace UECda {
     }
     
     
-    template<int IS_NF, int IS_UNRIVALED>
+    template <int IS_NF, int IS_UNRIVALED>
     int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
                        const Hand& myHand, const Hand& opsHand,
-                       const Board& argBd, const FieldAddInfo& fieldInfo) {
+                       const Board& b, const FieldAddInfo& fieldInfo) {
         // 必勝手探し
-        for (int m = NMoves - 1; m >= 0; --m) {
-            if (buf[m].qty() == myHand.qty) { return m; }
+        for (int m = NMoves - 1; m >= 0; m--) {
+            if (buf[m].qty() == myHand.qty) return m;
         }
-        for (int m = NMoves - 1; m >= 0; --m) {
+        for (int m = NMoves - 1; m >= 0; m--) {
             if (checkHandMate<IS_NF, IS_UNRIVALED>(depth, buf + NMoves, buf[m],
-                                                  myHand, opsHand, argBd, fieldInfo)) { return m; }
+                                                   myHand, opsHand, b, fieldInfo)) return m;
         }
         return -1;
     }
-    
-    
-    // ルートノード用の必勝判定関数
-    // 速度度外視で丁寧に読む
-    // 作成中...
-    /*
-     bool judgeRootMate( MoveInfo *const buf,
-     const Hand& myHand, 
-     const Hand& posHand[N_PLAYERS],
-     const Board bd,
-     const FieldAddInfo& fieldInfo) {
-     
-     //着手生成
-     int NMoves=genMove( buf, myHand.cards, bd );
-     
-     for ( int m=NMoves-1; m>=0; --m ) {
-     MoveInfo& tmp=buf[m];
-     
-     if ( checkHandMate( buf, tmp, myHand, posHand, bd, fieldInfo )) {
-     return true;
-     }
-     }
-     return false;
-     }
-     
-     bool checkRootMate( MoveInfo *const buf, 
-     MoveInfo& mv,
-     const Hand& myHand, 
-     const Hand& posHand[N_PLAYERS],
-     const Board bd,
-     const FieldAddInfo& fieldInfo) {
-     PW:
-     {
-     //完全勝利の判定
-     int doth,dm;
-     if ( fieldInfo.is)
-     
-     for ( int p=0, p<N_PLAYERS; ++p ) {
-     if ( p != player_num ) {
-     if ( dominatesHand( mv.mv() ), posHand )) {
-     }
-     
-     
-     if ( mv.isDO() ) {
-     if ( mv.isDM() ) {
-     //確実に流れる
-     
-     
-     } else {
-     //フォロー
-     
-     }
-     }
-     }
-     BN:
-     if ( !mv.isDO() && !mv.isDM() && !mv.isPASS() && !mv.isSeq() && !mv.flipsTmpOrder() ) {
-     //BN必勝確認
-     //革命や階段はあまり無いので無視
-     Board nbd=bd;
-     bd.proc(mv);
-     
-     int NMoves=genMove( buf, myHand.cards, bd );
-     
-     for ( int m=NMoves-1; m>=0; --m) {
-     MoveInfo& mv1=buf[m];
-     for ( int p=0; p<N_PLAYERS; ++p ) {
-     if ( dominatesHand() ) {//今の手か、次の手のどちらかで支配を確認
-     }
-     BR:
-     
-     }
-     }
-     }
-     }
-     
-     
-     */
 }

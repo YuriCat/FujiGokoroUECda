@@ -74,22 +74,12 @@ namespace UECda {
         std::array<Cards, N_PLAYERS> dealtCards;
         
         bool isL2Situation() const { return getNAlivePlayers() == 2; }
-        bool isLnCISituation() const {
-            return hand[getTurnPlayer()].qty > 1U // 1枚なら探索しても意味無し
-            && isNF() // この条件邪魔かも
-            && remQty < 12U // 計算量制限
-            && (!containsJOKER(remCards)); // 計算量制限
-        }
         bool isEndGame() const { // 末端探索に入るべき局面かどうか。学習にも影響する
 #ifdef SEARCH_LEAF_L2
             if (isL2Situation()) return true;
 #endif
-#ifdef SEARCH_LEAF_LNCI
-            if (isLnCISituation()) return true;
-#endif
             return false;
         }
-        
         uint32_t getRivalPlayersFlag(int myPlayerNum) const {
             // ライバルプレーヤー集合を得る
             uint32_t ret = 0U;
@@ -186,9 +176,9 @@ namespace UECda {
         void setL1Player(int p) { infoSpecialPlayer.assign(2, p); }
         void setFirstTurnPlayer(int p) { infoSpecialPlayer.assign(3, p); }
         
-        Cards getCards(int p) const { return hand[p].getCards(); }
-        Cards getOpsCards(int p) const { return opsHand[p].getCards(); }
-        uint32_t getNCards(int p) const { return hand[p].getQty(); }
+        Cards getCards(int p) const { return hand[p].cards; }
+        Cards getOpsCards(int p) const { return opsHand[p].cards; }
+        uint32_t getNCards(int p) const { return hand[p].qty; }
         Cards getRemCards() const { return remCards; }
         Cards getNRemCards() const { return remQty; }
         const Hand& getHand(int p) const { return hand[p]; }
@@ -205,10 +195,9 @@ namespace UECda {
             return hand[p].hash ^ boardKey ^ stateKey ^ recordKey;
         }
         
-        template<int IS_NF = _BOTH>
         uint32_t getFlushLeadPlayer() const {
             // 全員パスの際に誰から始まるか
-            if (TRI_BOOL_YES(IS_NF, isNF())) return getTurnPlayer();
+            if (isNF()) return getTurnPlayer();
             uint32_t own = getPMOwner();
             if (!isAlive(own)) { // すでにあがっている
                 // own~tp間のaliveなプレーヤーを探す
@@ -219,7 +208,7 @@ namespace UECda {
             }
             return own;
         }
-        uint32_t getNextSeatPlayer(const int p) const  {
+        uint32_t getNextSeatPlayer(const int p) const {
             return getSeatPlayer(getNextSeat<N_PLAYERS>(getPlayerSeat(p)));
         }
         void rotateTurnPlayer(uint32_t tp) {
@@ -342,7 +331,7 @@ namespace UECda {
         void procHand(int tp, Move mv, Cards dc, uint32_t dq) {
             
             ASSERT(anyCards(dc) && mv.cards() == dc && countCards(dc) == dq,
-                   cerr << mv << " " << OutCards(dc) << " " << dq << endl;
+                   cerr << mv << " " << dc << " " << dq << endl;
                    cerr << toDebugString(););
             
             uint64_t dhash = CardsToHashKey(dc);
@@ -388,26 +377,24 @@ namespace UECda {
 
         // 局面更新
         // Move型以外も対応必須?
-        int proc(const int tp, const MoveInfo mv) ;
-        int proc(const int tp, const Move mv) ;
-        int procSlowest(const MoveInfo mv) ;
-        int procSlowest(const Move mv) ;
+        int proc(const int tp, const MoveInfo mv);
+        int proc(const int tp, const Move mv);
+        int procSlowest(const MoveInfo mv);
+        int procSlowest(const Move mv);
         
         void makeChange(int from, int to, Cards dc, int dq) {
             ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
             ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
-            ASSERT(examCards(dc), cerr << OutCards(dc) << endl;);
-            ASSERT(holdsCards(hand[from].getCards(), dc),
-                   cerr << hand[from] << " -> " << OutCards(dc) << endl;);
-            ASSERT(!anyCards(andCards(dc, hand[to].getCards())),
-                   cerr << OutCards(dc) << " -> " << hand[to] << endl;)
+            ASSERT(examCards(dc), cerr << dc << endl;);
+            ASSERT(holdsCards(hand[from].cards, dc),
+                   cerr << hand[from] << " -> " << dc << endl;);
+            ASSERT(!anyCards(andCards(dc, hand[to].cards)),
+                   cerr << dc << " -> " << hand[to] << endl;)
             uint64_t dhash = CardsToHashKey(dc);
             hand[from].subtrAll(dc, dq, dhash);
             hand[to].addAll(dc, dq, dhash);
             opsHand[from].addAll(dc, dq, dhash);
             opsHand[to].subtrAll(dc, dq, dhash);
-            //cerr << "from = " << from << " to = " << to << " dc = " << OutCards(dc) << endl;
-            //cerr << toDebugString(); getchar();
         }
         void makeChange(int from, int to, Cards dc) {
             makeChange(from, to, dc, countCards(dc));
@@ -499,24 +486,24 @@ namespace UECda {
                         }
                     }
 
-                    Cards c = hand[p].getCards();
+                    Cards c = hand[p].cards;
                     // 排他性
                     if (!isExclusiveCards(sum, c)) {
-                        cerr << OutCards(sum) << endl;
+                        cerr << sum << endl;
                         cerr << hand[p] << endl;
                         cerr << "hand[" << p << "]excl" << endl;
                         return false;
                     }
                     // 包括性
                     if (!holdsCards(r, c)) {
-                        cerr << OutCards(remCards) << endl;
+                        cerr << remCards << endl;
                         cerr << hand[p] << endl;
                         cerr << "hand[" << p << "]hol" << endl;
                         return false;
                     }
                     
                     addCards(&sum, c);
-                    NSum += hand[p].getQty();
+                    NSum += hand[p].qty;
                 } else {
                     // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
                     if (hand[p].qty > 0) {
@@ -527,7 +514,7 @@ namespace UECda {
             if (!isSubjective()) {
                 if (sum != r) {
                     for (int p = 0; p < N_PLAYERS; p++) {
-                        cerr << OutCards(hand[p].cards) << endl;
+                        cerr << hand[p].cards << endl;
                     }
                     cerr << "sum cards - rem cards" << endl;
                     return false;
@@ -565,7 +552,7 @@ namespace UECda {
                     if (isSoloAwake()) { // SF ではないが LA
                         fieldInfo.setLastAwake();
                     }
-                    uint32_t fLPlayer = getFlushLeadPlayer<_NO>();
+                    uint32_t fLPlayer = getFlushLeadPlayer();
                     if (fLPlayer == tp) { // 全員パスしたら自分から
                         fieldInfo.setFlushLead();
                         if (fieldInfo.isLastAwake()) {
@@ -632,7 +619,7 @@ namespace UECda {
         void prepareAfterChange() {
             // 初手のプレーヤーを探す
             for (int p = 0; p < N_PLAYERS; p++) {
-                if (containsD3(hand[p].getCards())) {
+                if (containsD3(hand[p].cards)) {
                     setTurnPlayer(p);
                     setFirstTurnPlayer(p);
                     setPMOwner(p);
@@ -649,12 +636,10 @@ namespace UECda {
             std::ostringstream oss;
             for (int p = 0; p < N_PLAYERS; p++) {
                 oss << p << (isAwake(p) ? " " : "*") << ": ";
-                if (hand[p].qty) {
-                    oss << hand[p];
-                } else { // qty だけ 0 にしているため、そのまま表示するとあがっていることがわからない
-                    Hand thand;
-                    thand.setAll(CARDS_NULL);
-                    oss << thand;
+                if (hand[p].qty > 0) {
+                    oss << hand[p].cards << "(" << hand[p].qty << ")";
+                } else {
+                    oss << "{}(0)";
                 }
                 oss << endl;
             }
@@ -809,48 +794,6 @@ namespace UECda {
     int Field::procSlowest(const MoveInfo mv) {
         return procSlowest(mv.mv());
     }
-    // 局面情報コンバート
-    // WorldFieldとその他の情報(ClientFieldやDoppelgangerField)からFieldを設定
-    /*template<class wField_t, class addField_t>
-     void convField(const wField_t& wField, const addField_t& addField, Field *const dst) {
-     
-     dst->depth = wField.depth;
-     
-     // game info
-     dst->turnNum = addField.getTurnNum();
-     dst->bd = addField.getBoard();
-     dst->ps = addField.ps;
-     
-     dst->infoSeat = addField.infoSeat;
-     dst->infoSeatPlayer = addField.infoSeatPlayer;
-     dst->infoNewClass = addField.infoNewClass;
-     dst->infoNewClassPlayer = addField.infoNewClassPlayer;
-     dst->infoClass = addField.infoClass;
-     dst->infoClassPlayer = addField.infoClassPlayer;
-     
-     dst->infoPosition = addField.infoPosition;
-     
-     dst->infoSpecialPlayer = addField.infoSpecialPlayer;
-     dst->phase = addField.phase;
-     
-     // hash_value
-     dst->hash_org = addField.hash_org;
-     dst->hash_prc = addField.hash_prc;
-     dst->hash_ri = addField.hash_ri;
-     dst->hash_bd = addField.hash_bd;
-     
-     for (int p = 0; p < N_PLAYERS; p++) {
-     if (wField.isAlive(p)) {
-     dst->hand[p] = wField.hand[p];
-     dst->opsHand[p] = wField.opsHand[p];
-     }
-     }
-     //dst->rHand=wField.rHand;
-     dst->remCards = wField.rHand.cards;
-     dst->remQty = wField.rHand.qty;
-     dst->remHash = wField.rHand.hash;
-     
-     }*/
     
     // copy Field arg to dst before playout
     void copyField(const Field& arg, Field *const dst) {
@@ -909,78 +852,8 @@ namespace UECda {
         dst->remHash = arg.remHash;
     }
     
-    // initialize and set Field by subjevtive information
-    /*template<class sbjField_t>
-    void setSubjectiveField(const sbjField_t& arg, Field *const dst) {
-        
-        dst->depth = arg.depth + 1;
-        
-        // playout info
-        dst->attractedPlayers.reset();
-        dst->mv = nullptr;
-        
-        // game info
-        dst->turnNum = arg.turnNum;
-        dst->bd = arg.bd;
-        dst->ps = arg.ps;
-        
-        dst->infoSeat = arg.infoSeat;
-        dst->infoSeatPlayer = arg.infoSeatPlayer;
-        dst->infoNewClass = arg.infoNewClass;
-        dst->infoNewClassPlayer = arg.infoNewClassPlayer;
-        dst->infoClass = arg.infoClass;
-        dst->infoClassPlayer = arg.infoClassPlayer;
-        
-        dst->infoPosition = arg.infoPosition;
-        
-        dst->infoSpecialPlayer = arg.infoSpecialPlayer;
-        
-        dst->phase = arg.phase;
-        
-        // copy hash_value
-        dst->originalKey = CardsToHashKey(arg.myOrgCards);
-        dst->recordKey = CardsArrayToHashKey<N_PLAYERS>(arg.usedCards.data());
-        dst->numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return arg.getNCards(p); });
-        dst->boardKey = BoardToHashKey(arg.bd);
-        dst->aliveKey = StateToAliveHashKey(arg.ps);
-        dst->fullAwakeKey = StateToFullAwakeHashKey(arg.ps);
-        dst->stateKey = StateToHashKey(dst->aliveKey, arg.ps, arg.getTurnPlayer());
-        
-        for (int p = 0; p < N_PLAYERS; p++) {
-            dst->usedCards[p] = arg.getUsedCards(p);
-        }
-        for (int p = 0; p < N_PLAYERS; p++) {
-            dst->sentCards[p] = CARDS_NULL;
-            dst->recvCards[p] = CARDS_NULL;
-            dst->dealtCards[p] = CARDS_NULL;
-        }
-        dst->sentCards[arg.getMyPlayerNum()] = arg.getMySentCards();
-        dst->recvCards[arg.getMyPlayerNum()] = arg.getMyRecvCards();
-        dst->dealtCards[arg.getMyPlayerNum()] = arg.getMyDealtCards();
-        
-        dst->remCards = arg.getRemCards();
-        dst->remQty = arg.getNRemCards();
-        dst->remHash = CardsToHashKey(arg.getRemCards());
-        
-        // we don't have to copy each player's hand,
-        // because card-position will be set in the opening of each playout.
-        for (int p = 0; p < N_PLAYERS; p++) {
-            dst->hand[p].qty = arg.getNCards(p);
-            dst->opsHand[p].qty = arg.getNRemCards() - arg.getNCards(p);
-        }
-        dst->hand[arg.getMyPlayerNum()].setAll(arg.getMyCards());
-        dst->opsHand[arg.getMyPlayerNum()].setAll(arg.getOpsCards());
-    }
-    
-    template<class sbjField_t, class policy_t>
-    void setSubjectiveField(const sbjField_t& arg, const policy_t& pol, Field *const dst) {
-        setSubjectiveField(arg, pol);
-        // 方策計算用パラメータをセット
-        calcPolicySubValue(pol);
-    }*/
-    
     // set estimated information
-    template<class sbjField_t, class world_t>
+    template <class sbjField_t, class world_t>
     void setWorld(const sbjField_t& field, const world_t& world, Field *const dst) {
         
         Cards remCards = field.getRemCards();
@@ -1002,7 +875,7 @@ namespace UECda {
         }
     }
     
-    template<class sbjField_t, class world_t, class policy_t>
+    template <class sbjField_t, class world_t, class policy_t>
     void setWorld(const sbjField_t& field, const world_t& world, const policy_t& pol, Field *const dst) {
         setWorld(field, world, dst);
         calcPolicySubValue(pol);
@@ -1086,7 +959,7 @@ namespace UECda {
     
     /**************************仮想世界**************************/
     
-    struct ImaginaryWorld{
+    struct ImaginaryWorld {
         //仮想世界
         constexpr static int ACTIVE = 0;
         constexpr static int USED = 1;
@@ -1116,7 +989,7 @@ namespace UECda {
         
         int isActive() const { return flags.test(ACTIVE); }
         
-        template<class field_t>
+        template <class field_t>
         void set(const field_t& field, const Cards argCards[]) {
             depth = field.getDepth() + 1; // 1深くなる
             clear();
@@ -1138,12 +1011,6 @@ namespace UECda {
              wField.hand[p].hash^=dhash;
              wField.opsHand[p].makeMove(mv,dc);
              wField.opsHand[p].hash^=dhash;*/
-        }
-        
-        int checkRationality() {
-            // 生き残っている世界の合理性を判断する
-            // ドッペルゲンガーを通じた過去の完全勝利判断
-            return 0;
         }
         ImaginaryWorld() { clear(); }
         ~ImaginaryWorld() { clear(); }

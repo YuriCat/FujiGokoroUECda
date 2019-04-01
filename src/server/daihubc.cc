@@ -583,7 +583,6 @@ int main(int argc, char *argv[]) {
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 1]]);
                 c=pickHigh<2>(c);
-                //cerr<<mibun[4]<<OutCards(pickHigh<2>(c))<<endl;
                 game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 1],mibun[0],c));
             }
             {

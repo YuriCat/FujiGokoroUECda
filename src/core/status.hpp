@@ -70,7 +70,7 @@ namespace UECda{
                 cerr << ") ";
             }
             cerr << "last " << getNCards(pNum) << " cards ,";
-            cerr << " used " << OutCards(usedCards[pNum]);
+            cerr << " used " << usedCards[pNum];
             cerr << endl;
         }
         cerr << "Players alive : " << getNAlivePlayers();
@@ -118,7 +118,7 @@ namespace UECda{
     }
     
     void broadcastMyChange(Cards cards)const{ // 自分のプレー決定実況
-        cerr << "My decided change : " << OutCards(cards) << endl;
+        cerr << "My decided change : " << cards << endl;
     }
     
     void broadcastMyPlay(Move move)const{ // 自分のプレー決定実況

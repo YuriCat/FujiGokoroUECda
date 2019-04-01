@@ -397,14 +397,14 @@ int main(int argc, char* argv[]) { // for UECda
             
             Move serverMove = TableToMove(recv_table);
             Cards serverUsedCards = TableToCards(recv_table, false);
-            DERR << "org server move = " << serverMove << " " << OutCards(serverUsedCards) << endl;
+            DERR << "org server move = " << serverMove << " " << serverUsedCards << endl;
             
             // すでに場に出ていた役が調べることで、パスを判定
             if (serverMove.cards() == BoardToMove(playLog.bd).cards()) {
                 serverMove = MOVE_PASS;
                 serverUsedCards = CARDS_NULL;
             }
-            DERR << "server move = " << serverMove << " " << OutCards(serverUsedCards) << endl;
+            DERR << "server move = " << serverMove << " " << serverUsedCards << endl;
             
             //if (serverMove.isSeq() && serverMove.jokerRank() == 15) {
             //    cerr << toString(recv_table) << endl;

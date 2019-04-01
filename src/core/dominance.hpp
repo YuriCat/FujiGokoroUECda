@@ -28,8 +28,6 @@ namespace UECda {
     // さらに、ロジック発動のため、
     // 当着手時点での支配だけでなく永続的な支配についても考える必要がある
     
-    // プリミティブな型のみによる関数はグローバルにしておく
-    
     /**************************カード集合に対する支配**************************/
     
     // カード集合の付加情報が計算されていない場合の支配性判定
@@ -45,12 +43,13 @@ namespace UECda {
 
         Cards zone = -1;
         if (b.afterSuitsLocked(m)) zone &= SuitsToCards(m.suits());
+
         if (!m.isSeq()) {
             zone &= ORToGValidZone(b.afterTmpOrder(m), m.rank());
             return !canMakeGroup(oc & zone, m.qty() - oc.joker());
         } else {
             zone &= ORQToSCValidZone(b.afterTmpOrder(m), m.rank(), m.qty());
-            return !canMakeSeq((oc & zone) | (oc & CARDS_JOKER), m.qty());
+            return !canMakeSeq(oc & zone, oc.joker(), m.qty());
         }
     }
     
@@ -107,15 +106,14 @@ namespace UECda {
                 return !containsS3(opsHand.cards);
             }
             int aftTmpOrd = b.afterTmpOrder(mv);
-            if (mv.qty() > 4) { return true; }
+            if (mv.qty() > 4) return true;
             if (mv.charaPQR() & opsHand.nd[aftTmpOrd]) { // 無支配型と交差あり
                 if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
                     uint32_t qty = mv.qty();
                     qty -= opsHand.jk;
-                    Cards zone = ORSToGValidZone(aftTmpOrd, mv.rank(), mv.suits());
-                    if (qty) {
-                        return !canMakeGroup(andCards(opsHand.cards, zone), qty);
-                    }
+                    Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
+                    zone &= SuitsToCards(mv.suits());
+                    if (qty) return !canMakeGroup(opsHand.cards & zone, qty);
                 }
                 return false;
             } else {
@@ -125,14 +123,10 @@ namespace UECda {
             assert(mv.isSeq());
             if (anyCards(opsHand.seq)) {
                 uint32_t qty = mv.qty();
-                Cards zone;
                 int aftTmpOrd = b.afterTmpOrder(mv);
-                if (b.locksSuits(mv)) { // スートロック
-                    zone = ORSQToSCValidZone(aftTmpOrd, mv.rank(), mv.suits(), qty);
-                } else {
-                    zone = ORQToSCValidZone(aftTmpOrd, mv.rank(), qty);
-                }
-                return !canMakeSeq(andCards(opsHand.cards, zone) | andCards(opsHand.cards, CARDS_JOKER), qty);
+                Cards zone = ORQToSCValidZone(aftTmpOrd, mv.rank(), qty);
+                if (b.locksSuits(mv)) zone &= SuitsToCards(mv.suits());
+                return !canMakeSeq(opsHand.cards & zone, opsHand.jk, qty);
             } else {
                 return true;
             }
@@ -147,8 +141,8 @@ namespace UECda {
         assert(opsHand.exam_seq());
         assert(opsHand.exam_nd());
         
-        if (b.isNF()) { return false; }
-        if (b.domInevitably()) { return true; }
+        if (b.isNF()) return false;
+        if (b.domInevitably()) return true;
         
         if (!b.isSeq()) { // グループ
             if (b.isSingleJOKER()) {
@@ -161,10 +155,9 @@ namespace UECda {
                 if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
                     uint32_t qty = b.qty();
                     qty -= opsHand.jk;
-                    Cards zone = ORSToGValidZone(b.tmpOrder(), b.rank(), b.suits());
-                    if (qty) {
-                        return !canMakeGroup(andCards(opsHand.cards, zone) ,qty);
-                    }
+                    Cards zone = ORToGValidZone(b.tmpOrder(), b.rank());
+                    zone &= SuitsToCards(b.suits());
+                    if (qty) return !canMakeGroup(opsHand.cards & zone, qty);
                 }
                 return false;
             } else {
@@ -172,14 +165,10 @@ namespace UECda {
             }
         } else { // 階段
             if (anyCards(opsHand.seq)) {
-                Cards zone;
                 int qty = b.qty();
-                if (b.suitsLocked()) { // スートロック
-                    zone = ORSQToSCValidZone(b.tmpOrder(), b.rank(), b.suits(), qty);
-                } else {
-                    zone = ORQToSCValidZone(b.tmpOrder(), b.rank(), qty);
-                }
-                return !canMakeSeq(andCards(opsHand.cards, zone) | andCards(opsHand.cards, CARDS_JOKER), qty);
+                Cards zone = ORQToSCValidZone(b.order(), b.rank(), qty);
+                if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
+                return !canMakeSeq(opsHand.cards & zone, opsHand.jk, qty);
             } else {
                 return true;
             }

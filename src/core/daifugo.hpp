@@ -62,8 +62,8 @@ namespace UECda {
     }
     
     // 出力
-    const std::string rankChar  = "-3456789TJQKA2+";
-    const std::string rankCharM = "-3456789tjqka2+";
+    const std::string rankChar  = "-3456789TJQKA2+:";
+    const std::string rankCharM = "-3456789tjqka2+:";
     
     struct OutRank {
         int r;
@@ -115,34 +115,6 @@ namespace UECda {
         if (r == std::string::npos) return RANK_NONE;
         return r;
     }
-    
-    /**************************ランク4倍型**************************/
-    
-    // ランクの4倍
-    using Rank4x = int;
-    
-    enum {
-        RANK4X_U = RANK_U * 4,
-        RANK4X_3 = RANK_3 * 4, RANK4X_4 = RANK_4 * 4,
-        RANK4X_5 = RANK_5 * 4, RANK4X_6 = RANK_6 * 4,
-        RANK4X_7 = RANK_7 * 4, RANK4X_8 = RANK_8 * 4,
-        RANK4X_9 = RANK_9 * 4, RANK4X_T = RANK_T * 4,
-        RANK4X_J = RANK_J * 4, RANK4X_Q = RANK_Q * 4,
-        RANK4X_K = RANK_K * 4, RANK4X_A = RANK_A * 4,
-        RANK4X_2 = RANK_2 * 4,
-        RANK4X_O = RANK_O * 4,
-        // 実際に使用される通常カードのランク限度
-        RANK4X_MIN = RANK_MIN * 4,
-        RANK4X_MAX = RANK_MAX * 4,
-        // 階段作成の際の仮想上のランク限度
-        RANK4X_IMG_MIN = RANK_IMG_MIN * 4,
-        RANK4X_IMG_MAX = RANK_IMG_MAX * 4,
-        
-        RANK4X_NONE = -1
-    };
-    
-    constexpr int RankToRank4x(int r) { return r << 2; }
-    constexpr int Rank4xToRank(int r4x) { return r4x >> 2; }
     
     /**************************スート番号**************************/
     

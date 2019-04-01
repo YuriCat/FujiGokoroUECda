@@ -58,9 +58,9 @@ namespace UECda {
         if (c) {
             int br4x = b.rank4x();
             if (b.order() == 0) { // normal order
-                c &= RankRange4xToCards(br4x + 4, RANK4X_MAX);
+                c &= RankRange4xToCards(br4x + 4, RANK_MAX * 4);
             } else { // reversed
-                c &= RankRange4xToCards(RANK4X_MIN, br4x - 4);
+                c &= RankRange4xToCards(RANK_MIN * 4, br4x - 4);
             }
             for (IntCard ic : c) {
                 mv->setNULL();
@@ -83,9 +83,9 @@ namespace UECda {
         const int br4x = b.rank4x();
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
+            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
+            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
         }
         move_t *mv = mv0;
         if (!b.suitsLocked()) { // スートしばりなし
@@ -202,9 +202,9 @@ namespace UECda {
         const Cards x = Cards(hand);
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
+            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
+            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
         }
         move_t *mv = mv0;
         
@@ -287,9 +287,9 @@ namespace UECda {
         const int br4x = b.rank4x();
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK4X_MAX);
+            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK4X_MIN, br4x - 4);
+            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
         }
         Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
         for (IntCard ic : c4) {
@@ -488,7 +488,8 @@ namespace UECda {
                     GEN(3, 7);
                     GEN(3, 11);
                     GEN(3, 13);
-                    GEN(3, 14)
+                    GEN(3, 14);
+                    GEN(4, 15);
                     if (!jk) break; // ジョーカーがなければ飛ばす
                     GEN_J(5, 15, 15);
                 } break;
@@ -807,7 +808,7 @@ op;\
     }
     
 #define GEN_BASE(q, s, op) {mv->setNULL();\
-mv->setGroupByRank4x(q, r4x, s);op;\mv++;}
+mv->setGroup(q, r, s);op;mv++;}
 
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
     
@@ -819,33 +820,32 @@ mv->setGroupByRank4x(q, r4x, s);op;\mv++;}
         assert(b.isGroup());
         
         move_t *mv = mv0;
-        int br4x = b.rank4x();
+        int br = b.rank();
         if (b.order() == 0) { // 通常
-            c &= RankRange4xToCards(br4x + 4, RANK4X_MAX);
+            c &= RankRangeToCards(br + 1, RANK_MAX);
         } else { // オーダー逆転中
-            c &= RankRange4xToCards(RANK4X_MIN, br4x - 4);
+            c &= RankRangeToCards(RANK_MIN , br - 1);
         }
         uint32_t s = b.suits();
         int tmpOrd = b.tmpOrder();
         
-        for (uint32_t r4x = RANK4X_3; r4x <= RANK4X_2; r4x += 4) {
-            uint32_t q = countCards(c & Rank4xToCards(r4x));
+        for (int r = RANK_3; r <= RANK_2; r++) {
+            int q = countCards(c & RankToCards(r));
             if (q == b.qty()) {
-                uint32_t x = CardsRank4xToSuits(c, r4x);
-                
-                if (r4x != RANK4X_8) {
+                unsigned x = c[r];
+                if (r != RANK_8) {
                     // 相手が返せるかどうかチェック
                     if (tmpOrd) {
                         if (x == 15) {
-                            if (!holdsCards(RankRange4xToCards(RANK4X_3, r4x), ops)) continue;
+                            if (!holdsCards(RankRangeToCards(RANK_3 , r), ops)) continue;
                         } else {
-                            if (!holdsCards(RankRange4xToCards(r4x, RANK4X_2), ops)) continue;
+                            if (!holdsCards(RankRangeToCards(r, RANK_2), ops)) continue;
                         }
                     } else {
                         if (x == 15) {
-                            if (!holdsCards(RankRange4xToCards(r4x, RANK4X_2), ops)) continue;
+                            if (!holdsCards(RankRangeToCards(r, RANK_2), ops)) continue;
                         } else {
-                            if (!holdsCards(RankRange4xToCards(RANK4X_3, r4x), ops)) continue;
+                            if (!holdsCards(RankRangeToCards(RANK_3, r), ops)) continue;
                         }
                     }
                 }

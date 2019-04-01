@@ -256,7 +256,7 @@ namespace UECda {
     Move TableToMove(const int table[8][15]) {
         Cards chara = TableToCards(table, true);
         Cards used = TableToCards(table, false);
-        DERR << "chara " << OutCards(chara) << " used " << OutCards(used) << endl;
+        DERR << "chara " << chara << " used " << used << endl;
         return CardsToMove(chara, used);
     }
     

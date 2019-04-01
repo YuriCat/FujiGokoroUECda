@@ -117,7 +117,7 @@ namespace UECda {
             const Cards myCards = gameLog.getDealtCards(myPlayerNum);
             
 #ifdef MONITOR
-            cerr << "My Cards : " << OutCards(myCards) << endl;
+            cerr << "My Cards : " << myCards << endl;
 #endif
             
 #ifdef RARE_PLAY
@@ -262,7 +262,7 @@ namespace UECda {
             cerr << root.toString();
             cerr << "\033[1m";
             cerr << "\033[" << 34 << "m";
-            cerr << "Best Change : " << OutCards(changeCards) << endl;
+            cerr << "Best Change : " << changeCards << endl;
             cerr << "\033[" << 39 << "m";
             cerr << "\033[0m";
 #endif
@@ -299,8 +299,8 @@ namespace UECda {
             
             const Hand& myHand = field.getHand(myPlayerNum);
             const Hand& opsHand = field.getOpsHand(myPlayerNum);
-            const Cards myCards = myHand.getCards();
-            const Cards opsCards = opsHand.getCards();
+            const Cards myCards = myHand.cards;
+            const Cards opsCards = opsHand.cards;
             const Board bd = field.getBoard();
             CERR << bd << endl;
             FieldAddInfo& fieldInfo = field.fieldInfo;
@@ -414,7 +414,7 @@ namespace UECda {
             
 #ifdef MONITOR
             // 着手候補一覧表示
-            cerr << "My Cards : " << OutCards(myCards) << endl;
+            cerr << "My Cards : " << myCards << endl;
             cerr << bd << " " << fieldInfo << endl;
             for (int m = 0; m < NMoves; ++m) {
                 Move move = mv[m].mv();

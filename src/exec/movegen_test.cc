@@ -23,7 +23,7 @@ std::mt19937 mt;
 #define GENERATION_CASE(c, label) {\
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
 int moves = mgCards.genLead(buffer, c);\
-cerr << moves << " moves were generated for " << OutCards(c) << endl;\
+cerr << moves << " moves were generated for " << c << endl;\
 for (int m = 0; m < moves; ++m) { cerr << buffer[m].mv() << " "; }\
 cerr << endl;}
 
@@ -61,7 +61,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
         if (!isSubjectivelyValid(field.getBoard(), tmp->mv(), c,
                                  field.getNCards(field.turn()))) {
             // 主観的合法性違反
-            cerr << "invalid move" << OutCards(c) << "(" << field.getNCards(field.getTurnPlayer()) << ")";
+            cerr << "invalid move" << c << "(" << field.getNCards(field.getTurnPlayer()) << ")";
             cerr << " -> " << *tmp << " on " << field.getBoard() << endl;
             return -1;
         }
@@ -72,7 +72,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
         for (const move_t *tmp2 = mv0; tmp2 != tmp; tmp2++) {
             if (tmp->meldPart() == tmp2->meldPart()) {
                 // 同じ役であった
-                cerr << "same meld " << OutCards(c) << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.getBoard() << endl;
+                cerr << "same meld " << c << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.getBoard() << endl;
                 return -1;
             }
         }
@@ -115,7 +115,7 @@ int testRecordMoves(const std::vector<std::string>& logs) {
             if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
                 cerr << "ungenerated record move " << move;
                 cerr << " " << std::hex << move.meldPart() << std::dec;
-                cerr << " by " << OutCards(cards) << " on " << bd << endl;
+                cerr << " by " << cards << " on " << bd << endl;
             } else {
                 genHolded[0] += 1;
             }

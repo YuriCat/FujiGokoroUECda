@@ -77,8 +77,6 @@ int testChangePolicyWithRecord(const logs_t& mLog) {
              
              Cards p = change[index];
 
-             //cerr << OutCards(ch) << " " << OutCards(p) << endl;
-             
              if (ch == p) sameCount[from][cl] += 1;
              trials[from][cl] += 1;
          }
@@ -267,42 +265,6 @@ int testSelector(const logs_t& mLog) {
     }
     return 0;
 }
-
-/*int testPlayPolicyDiff() {
-    // policy の計算において差分計算部分が計算出来ているか確認
-    for (int m = 0; m < mLogs.matches(); ++m) {
-        const auto& mLog = mLogs.match(m);
-        for (int g = 0; g < mLog.games(); ++g) {
-            const auto& gLog = mLog.game(g);
-            iterateGameLogAfterChange<PlayouterField>
-            (gLog,
-             [](const auto& field)->void{}, // first callback
-             [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
-                     Move move[N_MAX_MOVES];
-                     Cards myCards = field.getCards(from);
-                     
-                     int NChanges = genChange(change, myCards, changeQty[cl]);
-                     int index = changeWithBestPolicy(change, NChanges, myCards, changeQty[cl], field, policy, &dice);
-                     
-                     Cards p = change[index];
-                     
-                     if (ch == p) {
-                         result[cl][0] += 1;
-                     } else {
-                         result[cl][1] += 1;
-                         
-                         cerr << OutCards(myCards) << " -> ";
-                         cerr << "l : " << OutCards(ch) << " p : " << OutCards(p) << endl;
-                         getchar();
-                     }
-                 }
-                 return 0;
-             },
-             [](const auto& field)->void{}); // last callback
-        }
-    }
-    
-}*/
 
 int main(int argc, char* argv[]) {
     

@@ -38,9 +38,7 @@ namespace UECda {
         void setExceptOrder(const uint32_t info) { b |= info; }
         void fixExceptOrder(const uint32_t info) { b = (b & MOVE_FLAG_ORD) | info; }
         
-        void resetDom() {
-            b &= ~MOVE_FLAG_INVALID;
-        }
+        void resetDom() { b &= ~MOVE_FLAG_INVALID; }
         
         // 2体情報をメンバ関数で返す関数
         // 半マスク化みたいな感じ
@@ -49,8 +47,12 @@ namespace UECda {
         constexpr bool locksSuits(Move m) const { return suitsPart() == m.suitsPart(); }
         constexpr bool locksRank(Move m) const { return false; } // ルールにない
         
-        constexpr uint32_t afterPrmOrder(Move m) const { return ((b ^ m) >> MOVE_LCT_PRMORD) & 1U; }
-        constexpr uint32_t afterTmpOrder(Move m) const { return ((b ^ m) >> MOVE_LCT_TMPORD) & 1U; }
+        constexpr uint32_t afterPrmOrder(Move m) const {
+            return prmOrder() ^ bool(m.isRev());
+        }
+        constexpr uint32_t afterTmpOrder(Move m) const {
+            return order() ^ bool(m.isRev()) ^ bool(m.isBack());
+        }
         
         constexpr uint32_t isAfterTmpOrderReversed(Move m) const { return (b ^ m) & (1U << MOVE_LCT_TMPORD); }
         constexpr uint32_t isAfterPrmOrderReversed(Move m) const { return (b ^ m) & (1U << MOVE_LCT_PRMORD); }
@@ -153,25 +155,19 @@ namespace UECda {
         void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
             if (m.isPASS()) procPASS();
             else {
-                procOrder(m);
-                if (m.domInevitably()) { // 無条件完全支配
+                if (m.domInevitably() || domConditionally(m)) { // 無条件完全支配
+                    if (m.isRev()) flipPrmOrder();
                     flush();
                 } else {
+                    procOrder(m);
                     if (isNF()) {
                         setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
                     } else {
-                        if (domConditionally(m)) { // 条件付完全支配(Joker->S3のみ)
-                            flush();
-                        } else {
-                            // スートロック
-                            if (!suitsLocked()) {
-                                // スートが一緒だったらロック処理
-                                if (locksSuits(m)) lockSuits();
-                            }
-                            // 一時情報入れ替え
-                            b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
+                        // スートロック
+                        if (!suitsLocked()) if (locksSuits(m)) lockSuits();
+                        // 一時情報入れ替え
+                        b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                             | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
-                        }
                     }
                 }
             }
@@ -191,14 +187,14 @@ namespace UECda {
                 // スートが一緒だったらロック処理
                 if (locksSuits(m)) lockSuits();
             }
-            if (m.domInevitably() && domConditionally(m)) { // Joker->S3のみ
+            if (m.domInevitably() || domConditionally(m)) { // Joker->S3のみ
                 b = ((b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
                       | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD)));
                 // ８切りと同じように無条件支配フラグをたてておく
                 b |= MOVE_FLAG_INVALID;
             } else{
                 b = (b & (MOVE_FLAG_LOCK | MOVE_FLAG_ORD))
-                      | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
+                     | (m & ~(MOVE_FLAG_LOCK | MOVE_FLAG_ORD));
             }
         }
     };
@@ -249,8 +245,7 @@ namespace UECda {
         if (mv.qty() > q) return false;
         // 持っていないはずの札を使った場合
         if (!holdsCards(c, mv.cards())) return false;
-        if (b.isNF()) {
-        } else {
+        if (!b.isNF()) {
             if (b.typePart() != mv.typePart()) return false; // 型違い
             if (b.isSeq()) {
                 if (!isValidSeqRank(mv.rank(), b.tmpOrder(), b.rank(), mv.qty())) {
