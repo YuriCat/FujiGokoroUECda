@@ -36,7 +36,7 @@ using namespace UECda::Fuji;
 Clock cl;
 ThreadTools threadTools;
 
-template<class logs_t>
+template <class logs_t>
 int makeCardPriorTable(const logs_t& mLogs, const uint64_t N) {
     // Card 単体での事前分布テーブルを作る
     double table[INTCARD_MAX + 1][N_PLAYERS] = {0};
@@ -89,7 +89,7 @@ int makeCardPriorTable(const logs_t& mLogs, const uint64_t N) {
     return 0;
 }
 
-template<class logs_t>
+template <class logs_t>
 int makeRankSuitsPriorTable(const logs_t& mLogs, const uint64_t N) {
     // Rank x Suits の事前分布テーブルを作る
     double table[N_PLAYERS][16][16] = {0};

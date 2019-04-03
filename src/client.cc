@@ -20,7 +20,7 @@ std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS(""
 #include "engine/engineMain.hpp"
 #endif
 
-SmartEngine client;
+WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda
     
@@ -42,17 +42,15 @@ int main(int argc, char* argv[]) { // for UECda
     // ファイルパスの取得
     {
         std::ifstream ifs("./blauweregen_config.txt");
-        if (!ifs) {
-            cerr << "main() : failed to open config file." << endl;
-        }
+        if (!ifs) cerr << "main() : failed to open config file." << endl;
         if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
         if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
         if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     
     // 全試合前の初期化
-    auto& record = client.matchLog;
-    auto& shared = client.shared;
+    auto& record = engine.record;
+    auto& shared = engine.shared;
     
     bool seedSet = false;
     int seed = -1;
@@ -60,9 +58,9 @@ int main(int argc, char* argv[]) { // for UECda
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-o")) { // output directory
+        } else if (!strcmp(argv[c], "-o")) { // output directory
             DIRECTORY_PARAMS_OUT = std::string(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-s")) { // random seed
+        } else if (!strcmp(argv[c], "-s")) { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
         }
@@ -73,56 +71,56 @@ int main(int argc, char* argv[]) { // for UECda
             int NThreads = atoi(argv[c + 1]);
             Settings::NPlayThreads = NThreads;
             Settings::NChangeThreads = max(1, NThreads / 2);
-        }else if (!strcmp(argv[c], "-pm")) { // play modeling
+        } else if (!strcmp(argv[c], "-pm")) { // play modeling
             Settings::simulationPlayModel = true;
-        }else if (!strcmp(argv[c], "-npm")) { // no play modeling
+        } else if (!strcmp(argv[c], "-npm")) { // no play modeling
             Settings::simulationPlayModel = false;
-        }else if (!strcmp(argv[c], "-l2r")) { // L2 search on the root state
+        } else if (!strcmp(argv[c], "-l2r")) { // L2 search on the root state
             Settings::L2SearchOnRoot = true;
-        }else if (!strcmp(argv[c], "-nol2r")) { // no L2 search on the root state
+        } else if (!strcmp(argv[c], "-nol2r")) { // no L2 search on the root state
             Settings::L2SearchOnRoot = false;
-        }else if (!strcmp(argv[c], "-mater")) { // Mate search on the root state
+        } else if (!strcmp(argv[c], "-mater")) { // Mate search on the root state
             Settings::MateSearchOnRoot = true;
-        }else if (!strcmp(argv[c], "-nomater")) { // no Mate search on the root state
+        } else if (!strcmp(argv[c], "-nomater")) { // no Mate search on the root state
             Settings::MateSearchOnRoot = false;
-        }else if (!strcmp(argv[c], "-t")) { // temperarure
+        } else if (!strcmp(argv[c], "-t")) { // temperarure
             Settings::simulationTemperaturePlay = atof(argv[c + 1]);
             Settings::temperaturePlay = atof(argv[c + 1]);
             Settings::temperatureChange = atof(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-ac")) { // softmax amplify coefficient
+        } else if (!strcmp(argv[c], "-ac")) { // softmax amplify coefficient
             Settings::simulationAmplifyCoef = atof(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-ae")) { // softmax amplify exponent
+        } else if (!strcmp(argv[c], "-ae")) { // softmax amplify exponent
             Settings::simulationAmplifyExponent = atof(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-l2s")) { // L2 search in simulations
+        } else if (!strcmp(argv[c], "-l2s")) { // L2 search in simulations
             Settings::L2SearchInSimulation = true;
-        }else if (!strcmp(argv[c], "-nol2s")) { // no L2 search in simulations
+        } else if (!strcmp(argv[c], "-nol2s")) { // no L2 search in simulations
             Settings::L2SearchInSimulation = false;
-        }else if (!strcmp(argv[c], "-mates")) { // Mate search in simulations
+        } else if (!strcmp(argv[c], "-mates")) { // Mate search in simulations
             Settings::MateSearchInSimulation = true;
-        }else if (!strcmp(argv[c], "-nomates")) { // no Mate search in simulations
+        } else if (!strcmp(argv[c], "-nomates")) { // no Mate search in simulations
             Settings::MateSearchInSimulation = false;
-        }else if (!strcmp(argv[c], "-ss")) { // selector in simulation
+        } else if (!strcmp(argv[c], "-ss")) { // selector in simulation
             std::string selectorName = std::string(argv[c + 1]);
             if (!strcmp(argv[c + 1], "e")) { // exp
                 Settings::simulationSelector = Selector::EXP_BIASED;
-            }else if (!strcmp(argv[c + 1], "p")) { // poly
+            } else if (!strcmp(argv[c + 1], "p")) { // poly
                 Settings::simulationSelector = Selector::POLY_BIASED;
-            }else if (!strcmp(argv[c + 1], "t")) { // thres
+            } else if (!strcmp(argv[c + 1], "t")) { // thres
                 Settings::simulationSelector = Selector::THRESHOLD;
-            }else if (!strcmp(argv[c + 1], "n")) { // naive
+            } else if (!strcmp(argv[c + 1], "n")) { // naive
                 Settings::simulationSelector = Selector::NAIVE;
             } else {
                 cerr << " : unknown selector [" << std::string(std::string()) << "] : default selector will be used." << endl;
             }
-        }else if (!strcmp(argv[c], "-dt")) { // deal type in estimation
+        } else if (!strcmp(argv[c], "-dt")) { // deal type in estimation
             std::string dealTypeName = std::string(argv[c + 1]);
             if (!strcmp(argv[c + 1], "re")) { // rejection
                 Settings::monteCarloDealType = DealType::REJECTION;
-            }else if (!strcmp(argv[c + 1], "b")) { // bias
+            } else if (!strcmp(argv[c + 1], "b")) { // bias
                 Settings::monteCarloDealType = DealType::BIAS;
-            }else if (!strcmp(argv[c + 1], "s")) { // subjective info
+            } else if (!strcmp(argv[c + 1], "s")) { // subjective info
                 Settings::monteCarloDealType = DealType::SBJINFO;
-            }else if (!strcmp(argv[c + 1], "rn")) { // random
+            } else if (!strcmp(argv[c + 1], "rn")) { // random
                 Settings::monteCarloDealType = DealType::RANDOM;
             } else {
                 cerr << " : unknown deal type [" << std::string(std::string()) << "] : default deal type will be used." << endl;
@@ -135,12 +133,10 @@ int main(int argc, char* argv[]) { // for UECda
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更
     int myPlayerNum = entryToGame(); // ゲームに参加
     
-    record.setMyPlayerNum(myPlayerNum);
-    client.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない
+    record.myPlayerNum = myPlayerNum;
+    engine.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない
     
-    if (seedSet) { // シード指定の場合
-        client.setRandomSeed(seed);
-    }
+    if (seedSet) engine.setRandomSeed(seed); // シード指定
     
 #ifdef BROADCAST
     //broadcastBMatch();
@@ -159,13 +155,13 @@ int main(int argc, char* argv[]) { // for UECda
     // 試合フェーズ
     while (1) {
         // 各試合前の初期化
-        client.initGame();
+        engine.initGame();
         
         // 棋譜準備
         record.initGame();
         auto& gameRecord = record.latestGame();
-        ClientPlayLog& playLog = gameRecord.current; // 盤面の更新等のため
-        playLog.initGame();
+        auto& playRecord = gameRecord.current; // 盤面の更新等のため
+        playRecord.initGame();
         
         startGame(recv_table); // 自分のカード、初期情報受け取り
 
@@ -234,7 +230,7 @@ int main(int argc, char* argv[]) { // for UECda
                 CERR << "main() : my imp for change" << endl;
                 if (myClass < HEIMIN) { // 自分があげるカードを選択する必要あり
                     CERR << "main() : my req for change" << endl;
-                    Cards changeCards = client.change(changeQty); // 自分のカード交換選択
+                    Cards changeCards = engine.change(changeQty); // 自分のカード交換選択
                     gameRecord.setSentCards(changeCards); // 実際にその交換が行われるかわからないがとりあえず設定
                     CardsToTable(changeCards, send_table);
                     
@@ -246,16 +242,16 @@ int main(int argc, char* argv[]) { // for UECda
                     // 自分はもらう側なのでここでは何もしない
                 }
             } else { // 自分はカード交換に関与しない
-                client.prepareForGame(); // 試合前準備
+                engine.prepareForGame(); // 試合前準備
             }
         } else { // カード交換なし
             CERR << "main() : no change game" << endl;
-            client.prepareForGame();
+            engine.prepareForGame();
         }
         
 #ifdef YAOCHO_MODE
         //対戦相手のカードをこっそり教えてもらう（実験用）
-        client.tellOpponentsCards();
+        engine.tellOpponentsCards();
 #endif
         
         // プレーフェーズ
@@ -273,28 +269,28 @@ int main(int argc, char* argv[]) { // for UECda
             receiveCards(recv_table);
             
             // 自分の情報をサーバーの情報に合わせておく
-            int turnPlayer = getTurnPlayer(recv_table);
+            int turnPlayer = turn(recv_table);
             
-            if (isNF(recv_table) && (!playLog.bd.isNF() || playLog.ps.getNAwake() == 0)) {
+            if (isNF(recv_table) && (!playRecord.bd.isNF() || playRecord.ps.getNAwake() == 0)) {
                 // 空場パスに対応するため、既に空場と認識していない状況、
                 // またはawakeなプレーヤーが誰もいない状況でのみ流す
-                playLog.flush(gameRecord.infoSeat); // 席順が必要
+                playRecord.flush(gameRecord.infoSeat); // 席順が必要
             }
             
             if (suitsLocked(recv_table))
-                playLog.bd.lockSuits();
+                playRecord.bd.lockSuits();
             
-            playLog.bd.fixPrmOrder(getPrmOrder(recv_table));
-            playLog.bd.fixTmpOrder(getTmpOrder(recv_table));
-            playLog.setTurnPlayer(turnPlayer);
+            playRecord.bd.fixPrmOrder(getPrmOrder(recv_table));
+            playRecord.bd.fixTmpOrder(getTmpOrder(recv_table));
+            playRecord.setTurn(turnPlayer);
             
             if (firstTurn) { // 初手の特別な処理
                 // 局面をサーバーからの情報通りに設定する
                 for (int p = 0; p < N_PLAYERS; ++p)
                     gameRecord.setNOrgCards(p, getNCards(recv_table, p));
                     
-                playLog.setFirstTurnPlayer(turnPlayer);
-                playLog.setPMOwner(turnPlayer); // 初期オーナーは初手プレーヤーとしておく
+                playRecord.setFirstTurn(turnPlayer);
+                playRecord.setOwner(turnPlayer); // 初期オーナーは初手プレーヤーとしておく
                 firstTurn = false;
                 
                 if (myClass != HEIMIN) { // 自分がカード交換に関与した場合、ここで初めて結果が分かる
@@ -335,8 +331,8 @@ int main(int argc, char* argv[]) { // for UECda
                     gameRecord.setRecvCards(recvCards);
                     gameRecord.setSentCards(sentCards);
                     
-                    client.afterChange();
-                    client.prepareForGame();
+                    engine.afterChange();
+                    engine.prepareForGame();
                     
                     gameRecord.setOrgCards(myPlayerNum, newCards);
                     
@@ -346,7 +342,7 @@ int main(int argc, char* argv[]) { // for UECda
             }
             
             for (int p = 0; p < N_PLAYERS; ++p)
-                playLog.setNCards(p, getNCards(recv_table, p));
+                playRecord.setNCards(p, getNCards(recv_table, p));
             
 #ifdef BROADCAST
             //field.broadcastBP();
@@ -364,8 +360,8 @@ int main(int argc, char* argv[]) { // for UECda
                 clms_mine.start();
                 
                 // 新
-                Move myMove = client.play(); // 自分のプレー
-                MoveToTable(myMove, playLog.bd, send_table);
+                Move myMove = engine.play(); // 自分のプレー
+                MoveToTable(myMove, playRecord.bd, send_table);
                 
                 myPlayTime = clms_mine.stop();
                 
@@ -400,7 +396,7 @@ int main(int argc, char* argv[]) { // for UECda
             DERR << "org server move = " << serverMove << " " << serverUsedCards << endl;
             
             // すでに場に出ていた役が調べることで、パスを判定
-            if (serverMove.cards() == BoardToMove(playLog.bd).cards()) {
+            if (serverMove.cards() == BoardToMove(playRecord.bd).cards()) {
                 serverMove = MOVE_PASS;
                 serverUsedCards = CARDS_NULL;
             }
@@ -409,11 +405,11 @@ int main(int argc, char* argv[]) { // for UECda
             //if (serverMove.isSeq() && serverMove.jokerRank() == 15) {
             //    cerr << toString(recv_table) << endl;
             //}
-            playLog.set(serverMove, serverUsedCards, tmpTime, myPlayTime);
-            gameRecord.push_play(playLog);
-            if (playLog.procByServer(serverMove, serverUsedCards)) {
+            playRecord.set(serverMove, serverUsedCards, tmpTime, myPlayTime);
+            gameRecord.push_play(playRecord);
+            if (playRecord.procByServer(serverMove, serverUsedCards)) {
                 // あがり処理
-                gameRecord.setPlayerNewClass(turnPlayer, playLog.ps.getBestClass() - 1);
+                gameRecord.setPlayerNewClass(turnPlayer, playRecord.ps.getBestClass() - 1);
             }
             
 #ifdef BROADCAST
@@ -436,7 +432,7 @@ int main(int argc, char* argv[]) { // for UECda
         }
         
         // 試合終了後処理
-        int lastPlayer = playLog.ps.searchL1Player();
+        int lastPlayer = playRecord.ps.searchL1Player();
         gameRecord.setPlayerNewClass(lastPlayer, DAIHINMIN);
         Field field;
         setFieldFromClientLog(gameRecord, myPlayerNum, &field);
@@ -448,7 +444,7 @@ int main(int argc, char* argv[]) { // for UECda
             gameRecord.setTerminated();
         }
         record.closeGame();
-        client.closeGame(); // 相手の分析等はここで
+        engine.closeGame(); // 相手の分析等はここで
         
         if (whole_gameend_flag) { break; }
     }

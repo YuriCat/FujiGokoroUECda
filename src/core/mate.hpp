@@ -48,15 +48,15 @@ namespace UECda {
                        const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
     // checkmate
-    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    template <int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
     bool judgeHandMate(const int, MoveInfo *const buf,
                        const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
-    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    template <int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
     bool checkHandMate(const int, MoveInfo *const, MoveInfo&,
                        const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     
-    template<int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
+    template <int IS_NF = _BOTH, int IS_UNRIVALED = _BOTH>
     int searchHandMate(const int, MoveInfo *const, const int,
                        const Hand&, const Hand&, const Board&, const FieldAddInfo&);
     

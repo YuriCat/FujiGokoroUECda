@@ -52,7 +52,7 @@ struct RatingSurvey {
     RatingSurvey():games(0) {}
 };
 
-template<class gameLog_t, class matchLog_t>
+template <class gameLog_t, class matchLog_t>
 int calcNextRate(const gameLog_t& gLog, const matchLog_t& mLog, const int simulations, const double coef, bool absolute, RatingSurvey *const pdst) {
     // シミュレーションを行ってレーティング更新
     std::array<double, N_PLAYERS> orgRate;
@@ -78,7 +78,7 @@ int calcNextRate(const gameLog_t& gLog, const matchLog_t& mLog, const int simula
     cerr << pdst->toString();
     return 0;
 }
-template<class result_t, class gameLog_t, class matchLog_t>
+template <class result_t, class gameLog_t, class matchLog_t>
 int calcNextRateWithRelativeResult(const gameLog_t& gLog, const matchLog_t& mLog, const result_t& simulationResult, const double coef, RatingSurvey *const pdst) {
     // 先に計算されたシミュレーション結果を用いてレーティング更新
     std::array<double, N_PLAYERS> orgRate;
@@ -99,7 +99,7 @@ int calcNextRateWithRelativeResult(const gameLog_t& gLog, const matchLog_t& mLog
     cerr << pdst->toString();
     return 0;
 }
-template<class result_t, class gameLog_t, class matchLog_t>
+template <class result_t, class gameLog_t, class matchLog_t>
 int calcNextRateWithAbsoluteResult(const gameLog_t& gLog, const matchLog_t& mLog, const result_t& simulationResult, const double coef, RatingSurvey *const pdst) {
     // 先に計算されたシミュレーション結果を用いてレーティング更新
     std::array<double, N_PLAYERS> orgRate;
@@ -121,7 +121,7 @@ int calcNextRateWithAbsoluteResult(const gameLog_t& gLog, const matchLog_t& mLog
     return 0;
 }
 
-template<class array_t>
+template <class array_t>
 int invertRates(const array_t& rates) {
     // TODO: 実際の棋譜から分布を計算
     
@@ -178,7 +178,7 @@ int invertRates(const array_t& rates) {
     return 0;
 }
 
-template<class logs_t>
+template <class logs_t>
 int calcRating(logs_t& mLogs, const int games, const int simulations, const double coef, const bool absolute) {
     
     std::mt19937 mt(threadTools[0].dice.rand());

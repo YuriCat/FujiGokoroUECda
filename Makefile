@@ -43,7 +43,7 @@ directories  ?= $(output_dir)
 # 4. Public Targets
 #
 default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation l2_test policy_test value_generator dominance_test cards_test movegen_test policy_client mate_test client server policy_learner record_analyzer rating_calculator
+	$(MAKE) TARGET=$@ preparation l2_test policy_test dominance_test cards_test movegen_test policy_client mate_test client server policy_learner
 
 match:
 	$(MAKE) TARGET=$@ preparation client policy_client

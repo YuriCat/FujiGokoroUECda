@@ -97,7 +97,7 @@ int analyzeRecords(const std::vector<std::string>& logs) {
              },
              [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
                  
-                 const int turnPlayer = field.getTurnPlayer();
+                 const int turnPlayer = field.turn();
                  const int NAlive = field.getNAlivePlayers();
                  int NAsleep = field.getNAlivePlayers() - field.getNAwakePlayers();
                  

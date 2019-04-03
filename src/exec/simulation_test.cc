@@ -54,7 +54,7 @@ int testSimulations(const logs_t& mLog) {
      [&](const auto& field) {}, // first callback
      [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
          // このプレーヤーの視点で推定
-         SubjectivePlayouterField sbjField(field, field.getTurnPlayer());
+         SubjectivePlayouterField sbjField(field, field.turn());
          
          Dealer<N_PLAYERS> dealer;
          dealer.set(field);
@@ -115,7 +115,7 @@ int testSimulations(const logs_t& mLog) {
     return 0;
 }
 
-template<class logs_t>
+template <class logs_t>
 int testEstimationWithModeling(const logs_t& mLog) {
     // 相手モデリングによる着手の変化について実験
     // 棋譜ファイルは1つのみ受ける(相手が変わる場合には最初からなのでまたこの関数を呼ぶ)
@@ -164,7 +164,7 @@ int testEstimationWithModeling(const logs_t& mLog) {
                      MoveInfo play[N_MAX_MOVES];
                      double score[N_MAX_MOVES + 1];
                      
-                     const int p = field.getTurnPlayer();
+                     const int p = field.turn();
                      const int moves = genMove(play, field.hand, field.getBoard());
                      
                      // ベース方策計算

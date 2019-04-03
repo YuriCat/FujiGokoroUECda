@@ -61,8 +61,8 @@ const char* one_to_yes(int n) {
 std::string DIR_IN(""), DIR_OUT(""), DIR_LOG("");
 std::string record_file = "";
 
-MinMatchLog<MinGameLog<MinPlayLog>> match_log;
-MinGameLog<MinPlayLog> game_log;
+MatchRecord match_log;
+GameRecord<PlayRecord> game_log;
 EngineSharedData shared;
 EngineThreadTools threadTools[N_THREADS];
 
@@ -583,12 +583,12 @@ int main(int argc, char *argv[]) {
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 1]]);
                 c=pickHigh<2>(c);
-                game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 1],mibun[0],c));
+                game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 1],mibun[0],c));
             }
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 2]]);
                 c=pickHigh<1>(c);
-                game_log.push_change(MinChangeLog(mibun[N_PLAYERS - 2],mibun[1],c));
+                game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 2],mibun[1],c));
             }
             
             for (int cl = 0; cl <= FUGO; ++cl) { //search strong card
@@ -637,7 +637,7 @@ int main(int argc, char *argv[]) {
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(MinChangeLog(mibun[0],mibun[N_PLAYERS - 1],c));
+            game_log.push_change(ChangeRecord(mibun[0],mibun[N_PLAYERS - 1],c));
             
         }// fi
         if (debug) {printf("change daihugou - OK\n");} //DEBUG
@@ -658,7 +658,7 @@ int main(int argc, char *argv[]) {
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(MinChangeLog(mibun[1], mibun[N_PLAYERS - 2], c));
+            game_log.push_change(ChangeRecord(mibun[1], mibun[N_PLAYERS - 2], c));
             
         }// fi
         if (debug) {printf("change hugou - OK\n");} //DEBUG
@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[]) {
             }
             
             //CERR<<mv<<endl;
-            game_log.push_play(MinPlayLog(mv, tmpTime));
+            game_log.push_play(PlayRecord(mv, tmpTime));
             
             //convert status to table
             work_card[5][0] = 0;
@@ -1403,7 +1403,7 @@ int main(int argc, char *argv[]) {
         game_count++;
         
         //fprintf(logfile,"\n");
-        if (!game_log.play(game_log.plays()-1).move().isPASS()) {
+        if (!game_log.play(game_log.plays()-1).move.isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);

@@ -10,11 +10,9 @@ namespace UECda {
             Cards tmp = argCards;
             // 絶対に渡さないカードを抜く
             // 8, 2, Joker, D3
-            maskCards(&tmp , CARDS_8 | CARDS_2 | CARDS_JOKER | CARDS_D3 );
+            tmp.mask(CARDS_8 | CARDS_2 | CARDS_JOKER | CARDS_D3);
             // ジョーカーを持っているならS3
-            if (containsJOKER(argCards)) {
-                maskCards(&tmp, CARDS_S3);
-            }
+            if (containsJOKER(argCards)) tmp.mask(CARDS_S3);
             if ((int)countCards(tmp) < changeQty) {
                 // 候補が足りなくなった
                 // 富豪の時、除外札のみで構成されていた場合のみ

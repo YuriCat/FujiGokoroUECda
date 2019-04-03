@@ -89,7 +89,7 @@ namespace UECda {
             [](const auto& field)->void{}); // last callback
     }
     
-    template<class gameLog_t, class sharedData_t, class threadTools_t>
+    template <class gameLog_t, class sharedData_t, class threadTools_t>
     std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const gameLog_t& gLog,
                                                                                                 const int simulations,
                                                                                                 sharedData_t *const pshared,
@@ -99,7 +99,7 @@ namespace UECda {
         return result.relativeWins;
     }
     
-    template<class gameLog_t, class sharedData_t, class threadTools_t>
+    template <class gameLog_t, class sharedData_t, class threadTools_t>
     std::array<BetaDistribution, N_PLAYERS> doSimulationsToGetAbsoluteWp(const gameLog_t& gLog,
                                                                             const int simulations,
                                                                             sharedData_t *const pshared,
@@ -113,7 +113,7 @@ namespace UECda {
         return 1 / (1 + pow(10, -(r0 - r1) / 400 - log(fieldWp / (1 - fieldWp))));
     }
     
-    template<class array_t, class distributionMatrix_t>
+    template <class array_t, class distributionMatrix_t>
     std::array<std::array<double, N_PLAYERS>, N_PLAYERS> calcExpectedRelativeWp(const array_t& orgRate,
                                                                                 const distributionMatrix_t& relativeWins) {
         // 現在のレートと初期盤面を考慮した相対勝率を計算
@@ -126,7 +126,7 @@ namespace UECda {
         }
         return expectedWp;
     }
-    template<class array_t, class distributionArray_t>
+    template <class array_t, class distributionArray_t>
     std::array<double, N_PLAYERS> calcExpectedAbsoluteWp(const array_t& orgRate,
                                                             const distributionArray_t& absoluteWins) {
         // 現在のレートと初期盤面を考慮した絶対勝率を計算
@@ -148,7 +148,7 @@ namespace UECda {
         return expectedWp;
     }
     
-    template<class gameLog_t, class matrix_t>
+    template <class gameLog_t, class matrix_t>
     std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const gameLog_t& gLog,
                                                             const matrix_t& expectedWp,
                                                             const double coef) {
@@ -168,7 +168,7 @@ namespace UECda {
         return diffRate;
     }
     
-    template<class gameLog_t, class array_t>
+    template <class gameLog_t, class array_t>
     std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const gameLog_t& gLog,
                                                             const array_t& expectedWp,
                                                             const double coef) {
@@ -184,7 +184,7 @@ namespace UECda {
         return diffRate;
     }
     
-    template<class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
+    template <class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
     std::array<double, N_PLAYERS> calcDiffRateByRelativeWpWithSimulation(const array_t& orgRate,
                                                                             const gameLog_t& gLog,
                                                                             const int simulations,
@@ -197,7 +197,7 @@ namespace UECda {
         return calcDiffRateByRelativeWp(gLog, expectedWp, coef);
     }
     
-    template<class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
+    template <class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
     std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWpWithSimulation(const array_t& orgRate,
                                                                             const gameLog_t& gLog,
                                                                             const int simulations,
@@ -210,7 +210,7 @@ namespace UECda {
         return calcDiffRateByAbsoluteWp(gLog, expectedWp, coef);
     }
     
-    template<class distribution_t>
+    template <class distribution_t>
     std::vector<double> calcExpectedTotalScore(const std::vector<double>& rates,
                                                 const distribution_t& distribution) {
         // 与えられたレートのプレーヤー集合にて総当たりリーグ戦を行ったときの推定得点を求める

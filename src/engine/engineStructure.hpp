@@ -110,9 +110,9 @@ namespace UECda {
         }
         
         void closeGame() {
-            const auto& gameLog = matchLog.latestGame();
+            const auto& gameLog = record.latestGame();
             SharedData::closeGame(gameLog);
-            int myNewClass = gameLog.getPlayerNewClass(matchLog.getMyPlayerNum());
+            int myNewClass = gameLog.getPlayerNewClass(record.myPlayerNum);
             
 #if defined(POLICY_ONLY) && defined(RL_POLICY)
             // reinforcement learning
@@ -242,7 +242,7 @@ namespace UECda {
             actions = candidates = num;
             for (int m = 0; m < actions; m++)
                 monteCarloAllScore += child[m].monteCarloScore;
-            myPlayerNum = shared.matchLog.getMyPlayerNum();
+            myPlayerNum = shared.record.myPlayerNum;
             rivalPlayerNum = -1;
             bestClass = field.getBestClass();
             worstClass = field.getWorstClass();
@@ -358,7 +358,7 @@ namespace UECda {
             allSimulations += 1;
             
             // 以下参考にする統計量
-            child[triedIndex].turnSum += field.getTurnNum();
+            child[triedIndex].turnSum += field.turnCount();
             
 #ifdef FIXED_N_PLAYOUTS
             if (allSimulations >= FIXED_N_PLAYOUTS) exitFlag = true;

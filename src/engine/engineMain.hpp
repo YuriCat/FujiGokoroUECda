@@ -29,7 +29,7 @@
 #endif // ！POLICY_ONLY
 
 namespace UECda {
-    class SmartEngine {
+    class WisteriaEngine {
     private:
         EngineThreadTools threadTools[N_THREADS];
         
@@ -40,7 +40,7 @@ namespace UECda {
         
     public:
         EngineSharedData shared;
-        decltype(shared.matchLog)& matchLog = shared.matchLog;
+        decltype(shared.record)& record = shared.record;
         
         void setRandomSeed(uint64_t s) {
             // 乱数系列を初期化
@@ -52,13 +52,11 @@ namespace UECda {
         }
         
         void initMatch() {
-            // matchLog にプレーヤー番号が入っている状態で呼ばれる
-            shared.setMyPlayerNum(matchLog.getMyPlayerNum());
-            
+            // record にプレーヤー番号が入っている状態で呼ばれる
+            shared.setMyPlayerNum(record.myPlayerNum);
             // サイコロ初期化
             // シード指定の場合はこの後に再設定される
             setRandomSeed((uint32_t)time(NULL));
-            
             // スレッドごとのデータ初期化
             for (int th = 0; th < N_THREADS; th++) {
                 threadTools[th].init(th);
@@ -88,8 +86,8 @@ namespace UECda {
             // 報酬設定
             // ランク初期化まで残り何試合か
             // 公式には未定だが、多くの場合100試合だろうから100試合としておく
-            const int gamesForCIG = getNGamesForClassInitGame(matchLog.getLatestGameNum());
-            const int gamesForSIG = getNGamesForSeatInitGame(matchLog.getLatestGameNum());
+            const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
+            const int gamesForSIG = getNGamesForSeatInitGame(record.getLatestGameNum());
             for (int cl = 0; cl < N_PLAYERS; ++cl)
                 shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
             for (int rs = 0; rs < N_PLAYERS; ++rs) for (int cl = 0; cl < N_PLAYERS; ++cl)
@@ -107,8 +105,8 @@ namespace UECda {
         }
         
         Cards change(uint32_t change_qty) { // 交換関数
-            const auto& gameLog = matchLog.latestGame();
-            const int myPlayerNum = matchLog.getMyPlayerNum();
+            const auto& gameLog = record.latestGame();
+            const int myPlayerNum = record.myPlayerNum;
             
             assert(change_qty == 1U || change_qty == 2U);
             
@@ -281,7 +279,7 @@ namespace UECda {
             return ret;
         }
         Move playSub() { // ここがプレー関数
-            const auto& gameLog = shared.matchLog.latestGame();
+            const auto& gameLog = shared.record.latestGame();
             
             Move playMove = MOVE_NONE;
             
@@ -290,12 +288,12 @@ namespace UECda {
             // ルート合法手生成バッファ
             MoveInfo mv[N_MAX_MOVES + 256];
             
-            const int myPlayerNum = matchLog.getMyPlayerNum();
+            const int myPlayerNum = record.myPlayerNum;
             
             Field field;
             setFieldFromClientLog(gameLog, myPlayerNum, &field);
-            DERR << "tp = " << gameLog.current.getTurnPlayer() << endl;
-            ASSERT_EQ(field.getTurnPlayer(), myPlayerNum);
+            DERR << "tp = " << gameLog.current.turn() << endl;
+            ASSERT_EQ(field.turn(), myPlayerNum);
             
             const Hand& myHand = field.getHand(myPlayerNum);
             const Hand& opsHand = field.getOpsHand(myPlayerNum);
@@ -540,11 +538,10 @@ namespace UECda {
             shared.closeGame();
         }
         void closeMatch() {
-            for (int th = 0; th < N_THREADS; ++th)
-                threadTools[th].close();
+            for (int th = 0; th < N_THREADS; th++) threadTools[th].close();
             shared.closeMatch();
         }
-        ~SmartEngine() {
+        ~WisteriaEngine() {
             closeMatch();
         }
     };

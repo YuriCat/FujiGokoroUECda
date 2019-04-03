@@ -55,7 +55,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
                       Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
     // 自分以外のカード集合に対して完全勝利(PW)状態であるか合法着手生成関数を用いてチェック
-    maskCards(&myCards, move.cards());
+    myCards = maskCards(myCards, move.cards());
     if (anyCards(myCards)) {
         if (move.isPASS()) {
             if (flushLead) {
@@ -126,8 +126,7 @@ int searchCardsPWSlow(MoveInfo *const buf, const int moves,
     return mateIndex;
 }
 
-template <class logs_t>
-int testRecordMoveMate(const logs_t& mLogs) {
+int testRecordMoveMate(const Record& record) {
     // 棋譜中の局面において必勝判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     
@@ -137,38 +136,39 @@ int testRecordMoveMate(const logs_t& mLogs) {
     uint64_t judgeMatrix[2][2] = {0};
     Field field;
     
-    iterateGameLogAfterChange
-    (field, mLogs,
-     [&](const auto& field) {}, // first callback
-     [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-         int turnPlayer = field.getTurnPlayer();
-         const Hand& myHand = field.getHand(turnPlayer);
-         const Hand& opsHand = field.getOpsHand(turnPlayer);
-         Board bd = field.getBoard();
-         if (!bd.isNF()) return 0;
+    for (int i = 0; i < record.games(); i++) {
+        iterateGameLogAfterChange
+        (field, record.game(i),
+        [&](const auto& field) {}, // first callback
+        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            int turnPlayer = field.turn();
+            const Hand& myHand = field.getHand(turnPlayer);
+            const Hand& opsHand = field.getOpsHand(turnPlayer);
+            Board bd = field.getBoard();
+            if (!bd.isNF()) return 0;
 
-         cl.start();
-         bool mate = judgeHandPW_NF(myHand, opsHand, bd);
-         judgeTime[0] += cl.stop();
-         judgeCount += 1;
-         
-         cl.start();
-         visitedCards.clear();
-         bool pw = judgeCardsPWSlow(buffer, turnPlayer,
-                                    myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
-         judgeTime[1] += cl.stop();         
-         judgeMatrix[pw][mate] += 1;
- 
-         if (mate && !pw) {
-             cerr << field.toDebugString() << endl;
-             getchar();
-         }
-         //cerr << "next" << endl;
-         return 0;
-     },
-     [&](const auto& field) {} // last callback
-     );
+            cl.start();
+            bool mate = judgeHandPW_NF(myHand, opsHand, bd);
+            judgeTime[0] += cl.stop();
+            judgeCount += 1;
+            
+            cl.start();
+            visitedCards.clear();
+            bool pw = judgeCardsPWSlow(buffer, turnPlayer,
+                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            judgeTime[1] += cl.stop();         
+            judgeMatrix[pw][mate] += 1;
     
+            if (mate && !pw) {
+                cerr << field.toDebugString() << endl;
+                getchar();
+            }
+            //cerr << "next" << endl;
+            return 0;
+        },
+        [&](const auto& field) {} // last callback
+        );
+    }
     cerr << "judge result (hand) = " << endl;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
@@ -185,41 +185,44 @@ int testRecordMoveMate(const logs_t& mLogs) {
     
     uint64_t checkMatrix[2][2] = {0};
     
-    iterateGameLogAfterChange
-    (field, mLogs,
-     [&](const auto& field) {}, // first callback
-     [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-         int turnPlayer = field.getTurnPlayer();
-         const Hand& myHand = field.getHand(turnPlayer);
-         const Hand& opsHand = field.getOpsHand(turnPlayer);
-         Board bd = field.getBoard();
-         MoveInfo mi = MoveInfo(move);
-         
-         if (dominatesHand(bd, myHand)) return 0;
-         
-         cl.start();
-         bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
-         checkTime[0] += cl.stop();
-         checkCount += 1;
+    for (int i = 0; i < record.games(); i++) {
+        iterateGameLogAfterChange
+        (field, record.game(i),
+        [&](const auto& field) {}, // first callback
+        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            int turnPlayer = field.turn();
+            const Hand& myHand = field.getHand(turnPlayer);
+            const Hand& opsHand = field.getOpsHand(turnPlayer);
+            Board bd = field.getBoard();
+            MoveInfo mi = MoveInfo(move);
+            
+            if (dominatesHand(bd, myHand)) return 0;
+            
+            cl.start();
+            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
+            checkTime[0] += cl.stop();
+            checkCount += 1;
 
-         cl.start();
-         visitedCards.clear();
-         bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                    myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
-         checkTime[1] += cl.stop();
-         
-         checkMatrix[pw][mate] += 1;
-         
-         return 0;
-     },
-     [&](const auto& field) {} // last callback
-     );
+            cl.start();
+            visitedCards.clear();
+            bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
+                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            checkTime[1] += cl.stop();
+            
+            checkMatrix[pw][mate] += 1;
+            
+            return 0;
+        },
+        [&](const auto& field) {} // last callback
+        );
+    }
 
     cerr << "check result (hand) = " << endl;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             cerr << checkMatrix[i][j] << " ";
-        }cerr << endl;
+        }
+        cerr << endl;
     }
     cerr << "check time (hand)    = " << checkTime[0] / (double)checkCount << endl;
     cerr << "check time (pw-slow) = " << checkTime[1] / (double)checkCount << endl;
@@ -230,74 +233,77 @@ int testRecordMoveMate(const logs_t& mLogs) {
     
     uint64_t searchMatrix[2][2] = {0};
     
-    iterateGameLogAfterChange
-    (field, mLogs,
-     [&](const auto& field) {}, // first callback
-     [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-         int turnPlayer = field.getTurnPlayer();
-         const Hand& myHand = field.getHand(turnPlayer);
-         const Hand& opsHand = field.getOpsHand(turnPlayer);
-         Board bd = field.getBoard();
-         
-         const int moves = mgCards.genMove(buffer, myHand, bd);
-         if (moves <= 1) { return 0; }
-         
-         cl.start();
-         int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
-         searchTime[0] += cl.stop();
-         searchCount += 1;
-         
-         /*for (int m = 0; m < moves; ++m) {
-             bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
-             cerr << buffer[m] << " : " << check << endl;
-         }*/
-         
-         cl.start();
-         visitedCards.clear();
-         int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
-                                         myHand.cards, opsHand.cards,
-                                         bd, field.ps, bool(field.fieldInfo.isFlushLead()));
-         searchTime[1] += cl.stop();
-         
-         searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
-         
-         /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
-             
-             for (int m = 0; m < moves; ++m) {
-                 bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
-                 cerr << buffer[m] << " : " << check << endl;
-             }
-             
-             cerr << "search ";
-             if (mateIndex >= 0) {
-                 cerr << buffer[mateIndex];
-             } else {
-                 cerr << "none";
-             }
-             cerr << " <-> " << " answer ";
-             if (pwIndex >= 0) {
-                 cerr << buffer[pwIndex];
-             } else {
-                 cerr << "none";
-             }
-             cerr << endl;
-             cerr << move << " on " << bd << endl;
-             cerr << field.ps << " " << field.fieldInfo << endl;
-             cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
-             cerr << field.toString();
-             getchar();
-         }*/
-         
-         return 0;
-     },
-     [&](const auto& field) {} // last callback
-     );
-    
+
+    for (int i = 0; i < record.games(); i++) {
+        iterateGameLogAfterChange
+        (field, record.game(i),
+        [&](const auto& field) {}, // first callback
+        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            int turnPlayer = field.turn();
+            const Hand& myHand = field.getHand(turnPlayer);
+            const Hand& opsHand = field.getOpsHand(turnPlayer);
+            Board bd = field.getBoard();
+            
+            const int moves = mgCards.genMove(buffer, myHand, bd);
+            if (moves <= 1) { return 0; }
+            
+            cl.start();
+            int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
+            searchTime[0] += cl.stop();
+            searchCount += 1;
+            
+            /*for (int m = 0; m < moves; ++m) {
+                bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+                cerr << buffer[m] << " : " << check << endl;
+            }*/
+            
+            cl.start();
+            visitedCards.clear();
+            int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
+                                            myHand.cards, opsHand.cards,
+                                            bd, field.ps, bool(field.fieldInfo.isFlushLead()));
+            searchTime[1] += cl.stop();
+            
+            searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
+            
+            /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
+                
+                for (int m = 0; m < moves; ++m) {
+                    bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+                    cerr << buffer[m] << " : " << check << endl;
+                }
+                
+                cerr << "search ";
+                if (mateIndex >= 0) {
+                    cerr << buffer[mateIndex];
+                } else {
+                    cerr << "none";
+                }
+                cerr << " <-> " << " answer ";
+                if (pwIndex >= 0) {
+                    cerr << buffer[pwIndex];
+                } else {
+                    cerr << "none";
+                }
+                cerr << endl;
+                cerr << move << " on " << bd << endl;
+                cerr << field.ps << " " << field.fieldInfo << endl;
+                cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
+                cerr << field.toString();
+                getchar();
+            }*/
+            
+            return 0;
+        },
+        [&](const auto& field) {} // last callback
+        );
+    }
     cerr << "search result (hand) = " << endl;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             cerr << searchMatrix[i][j] << " ";
-        }cerr << endl;
+        }
+        cerr << endl;
     }
     cerr << "search time (hand)    = " << searchTime[0] / (double)searchCount << endl;
     cerr << "search time (pw-slow) = " << searchTime[1] / (double)searchCount << endl;
@@ -305,31 +311,31 @@ int testRecordMoveMate(const logs_t& mLogs) {
     return 0;
 }
 
-template<class logs_t>
-int analyzeMateDistribution(const logs_t& mLogs) {
+int analyzeMateDistribution(const Record& record) {
     
     // search
     std::array<uint64_t, 12> mateMovesDistribution = {0};
     Field field;
     
-    iterateGameLogAfterChange
-    (field, mLogs,
-     [&](const auto& field) {}, // first callback
-     [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-         int turnPlayer = field.getTurnPlayer();
-         const Hand& myHand = field.getHand(turnPlayer);
-         const Hand& opsHand = field.getOpsHand(turnPlayer);
-         Board bd = field.getBoard();
-         mateMoves.clear();
-         visitedCards.clear();
-         bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
-                                       myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
-         if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
-         return 0;
-     },
-     [&](const auto& field) {} // last callback
-     );
-    
+    for (int i = 0; i < record.games(); i++) {
+        iterateGameLogAfterChange
+        (field, record.game(i),
+        [&](const auto& field) {}, // first callback
+        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            int turnPlayer = field.turn();
+            const Hand& myHand = field.getHand(turnPlayer);
+            const Hand& opsHand = field.getOpsHand(turnPlayer);
+            Board bd = field.getBoard();
+            mateMoves.clear();
+            visitedCards.clear();
+            bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
+                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
+            return 0;
+        },
+        [&](const auto& field) {} // last callback
+        );
+    }
     cerr << "number of mate moves = " << toString(mateMovesDistribution) << endl;
     
     return 0;
@@ -350,14 +356,14 @@ int main(int argc, char* argv[]) {
     }
     cerr << "passed case test." << endl;
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
+    Record record(logFileNames);
     
-    if (testRecordMoveMate(mLogs)) {
+    if (testRecordMoveMate(record)) {
         cerr << "failed record move mate judge test." << endl;
     }
     cerr << "passed record move mate judge test." << endl;
     
-    analyzeMateDistribution(mLogs);
+    analyzeMateDistribution(record);
     cerr << "finished analyzing mate moves distribution." << endl;
     
     return 0;

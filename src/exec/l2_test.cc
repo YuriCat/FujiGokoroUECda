@@ -81,8 +81,7 @@ int outputMateJudgeResult() {
     return 0;
 }
 
-template<class logs_t>
-int testRecordL2(const logs_t& mLogs) {
+int testRecordL2(const Record& record) {
     // 棋譜中の局面においてL2判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     // 正解を調べるのがきついこともあるのでとりあえず棋譜の結果を正解とする
@@ -96,52 +95,53 @@ int testRecordL2(const logs_t& mLogs) {
     int l2TurnPlayer = -1;
     Field field;
     
-    iterateGameLogAfterChange
-    (field, mLogs,
-     [&](const auto& field) {}, // first callback
-     [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-         
-         if (field.getNAlivePlayers() == 2) {
-             const int turnPlayer = field.getTurnPlayer();
-             const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
-             const Hand& myHand = field.getHand(turnPlayer);
-             const Hand& oppHand = field.getHand(oppPlayer);
-             Board bd = field.getBoard();
-             
-             cl.start();
-             L2Judge judge(65536, buffer);
-             judgeResult = judge.start_judge(myHand, oppHand, bd, field.fieldInfo);
-             judgeTime[0] += cl.stop();
-             judgeCount += 1;
-             
-             l2TurnPlayer = turnPlayer;
-             
-             /*if (mate != pw) {
-              cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
-              cerr << move << " on " << bd << endl;
-              cerr << field.ps << " " << field.fieldInfo << endl;
-              cerr << Out2CardTables(myHand.cards, opsHand.cards);
-              cerr << endl;
-              getchar();
-              }*/
-             
-             // L2に入った瞬間だけテストする
-             //cerr << field.toString() << endl;
-             return -1;
-         }
-         return 0;
-     },
-     [&](const auto& field) { // last callback
-         // ここで新しい順位を得ることができる
-         if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
-             int turnResult = field.getPlayerNewClass(l2TurnPlayer);
-             judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
-             /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
-                 cerr << "bad result" << endl;
-                 getchar();
-             }*/
-         }
-     });
+    for (int i = 0; i < record.games(); i++) {
+        iterateGameLogAfterChange(field, record.game(i),
+        [&](const auto& field) {}, // first callback
+        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            
+            if (field.getNAlivePlayers() == 2) {
+                const int turnPlayer = field.turn();
+                const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
+                const Hand& myHand = field.getHand(turnPlayer);
+                const Hand& oppHand = field.getHand(oppPlayer);
+                Board bd = field.getBoard();
+                
+                cl.start();
+                L2Judge judge(65536, buffer);
+                judgeResult = judge.start_judge(myHand, oppHand, bd, field.fieldInfo);
+                judgeTime[0] += cl.stop();
+                judgeCount += 1;
+                
+                l2TurnPlayer = turnPlayer;
+                
+                /*if (mate != pw) {
+                cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
+                cerr << move << " on " << bd << endl;
+                cerr << field.ps << " " << field.fieldInfo << endl;
+                cerr << Out2CardTables(myHand.cards, opsHand.cards);
+                cerr << endl;
+                getchar();
+                }*/
+                
+                // L2に入った瞬間だけテストする
+                //cerr << field.toString() << endl;
+                return -1;
+            }
+            return 0;
+        },
+        [&](const auto& field) { // last callback
+            // ここで新しい順位を得ることができる
+            if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
+                int turnResult = field.getPlayerNewClass(l2TurnPlayer);
+                judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
+                /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
+                    cerr << "bad result" << endl;
+                    getchar();
+                }*/
+            }
+        });
+    }
     
     cerr << "judge result (hand) = " << endl;
     for (int i = 0; i < 2; ++i) {
@@ -170,9 +170,9 @@ int main(int argc, char* argv[]) {
     }
     cerr << "passed case test." << endl;
     
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logFileNames);
+    Record record(logFileNames);
     
-    if (testRecordL2(mLogs)) {
+    if (testRecordL2(record)) {
         cerr << "failed record L2 judge test." << endl;
     }
     cerr << "passed record L2 judge test." << endl;

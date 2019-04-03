@@ -11,7 +11,7 @@ namespace UECda{
     
     constexpr int MAX_N_WORLDS = 128;
     
-    template<class wrd_t, int SIZE = (MAX_N_WORLDS / N_THREADS)>
+    template <class wrd_t, int SIZE = (MAX_N_WORLDS / N_THREADS)>
     struct Galaxy{
         
         using world_t = wrd_t;
@@ -73,7 +73,7 @@ namespace UECda{
             return nullptr;
         }
         
-        template<class dice_t>
+        template <class dice_t>
         world_t* pickRand(const int line, const int limit, dice_t *const dice) {
             // activeである世界のどれかにランダムアクセスする
             int w = line + (dice->rand() % limit);
@@ -101,7 +101,7 @@ namespace UECda{
         }
     };
     
-    template<class glxy_t, int N = N_THREADS>
+    template <class glxy_t, int N = N_THREADS>
     struct GalaxyAnalyzer{
         
        using galaxy_t = glxy_t;

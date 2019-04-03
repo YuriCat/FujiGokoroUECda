@@ -9,13 +9,43 @@
 
 namespace UECda {
 
+    template <class dice_t>
+    int selectBandit(const RootInfo& root, dice_t& dice) {
+        // バンディット手法により次に試す行動を選ぶ
+        int actions = root.candidates;
+        const auto& a = root.child;
+        if (actions == 2) {
+            // 2つの時は同数(分布サイズ単位)に割り振る
+            if (a[0].size() == a[1].size()) return dice.rand() % 2;
+            else return a[0].size() < a[1].size() ? 0 : 1;
+        } else {
+            // UCB-root アルゴリズム
+            int index = 0;
+            double bestScore = -DBL_MAX;
+            double sqAllSize = sqrt(root.monteCarloAllScore.size());
+            for (int i = 0; i < actions; i++) {
+                double score;
+                if (a[i].simulations < 4) {
+                    // 最低プレイアウト数をこなしていないものは、大きな値にする
+                    // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
+                    score = (double)((1U << 16) - (a[i].simulations << 8) + (dice.rand() % (1U << 6)));
+                } else {
+                    score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    index = i;
+                }
+            }
+            return index;
+        }
+    }
+
     void MonteCarloThread
     (const int threadId, RootInfo *const proot,
     const Field *const pfield,
     EngineSharedData *const pshared,
     EngineThreadTools *const ptools) {
-        
-        constexpr uint32_t MINNEC_N_TRIALS = 4; // 全体での最小限のトライ数。UCB-Rootにしたので実質不要になった
         
         // プレー用
         using galaxy_t = typename EngineThreadTools::galaxy_t;
@@ -37,11 +67,8 @@ namespace UECda {
         
         int threadNWorlds = 0; // 当スレッドが作成し使用している世界の数
         const int threadMaxNWorlds = gal.size(); // 当スレッドに与えられている世界作成スペースの数
-        
-        assert(threadMaxNWorlds > 0);
-        
-        // 世界創世者
-        // 連続作成のためここに置いておく
+
+        // 世界生成のためのクラスを初期化
         RandomDealer<N_PLAYERS> estimator;
         estimator.set(*pfield, myPlayerNum);
 
@@ -63,38 +90,7 @@ namespace UECda {
         while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
             
             world_t *pWorld = nullptr;
-            
-            //サンプル着手決定
-            int tryingIndex = -1;
-            if (candidates == 2) {
-                // 2つの時は同数(分布サイズ単位)に割り振る
-                if (child[0].size() == child[1].size()) tryingIndex = dice.rand() % 2;
-                else tryingIndex = child[0].size() < child[1].size() ? 0 : 1;
-            } else {
-                // UCB-root アルゴリズムに変更
-                double bestScore = -DBL_MAX;
-                const double allSize = proot->monteCarloAllScore.size();
-                for (int c = 0; c < candidates; ++c) {
-                    double tmpScore;
-                    double size = child[c].size();
-                    if (child[c].simulations < MINNEC_N_TRIALS) {
-                        // 最低プレイアウト数をこなしていないものは、大きな値にする
-                        // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                        tmpScore = (double)((1U << 16) - (child[c].simulations << 8) + (dice.rand() % (1U << 6)));
-                    } else {
-                        ASSERT(size, cerr << child[c].toString() << endl;);
-                        tmpScore = child[c].mean() + 0.7 * sqrt(sqrt(allSize) / size); // ucbr値
-                    }
-                    if (tmpScore > bestScore) {
-                        bestScore = tmpScore;
-                        tryingIndex = c;
-                    }
-                }
-            }
-            ASSERT(0 <= tryingIndex && tryingIndex < candidates,
-                    cerr << tryingIndex << " in " << candidates << endl;);
-            
-            //DERR << "SAMPLE MOVE..." << ps->getMoveById(tryingIndex) << endl;
+            int tryingIndex = selectBandit(*proot, dice);          
             
             const int pastNTrials = threadNTrials[tryingIndex]++; // 選ばれたもののこれまでのトライアル数
             threadNTrialsSum++;
@@ -116,7 +112,6 @@ namespace UECda {
                 // 世界作成が終わっていない
                 if (pastNTrials < threadNWorlds) {
                     // まだ全ての世界でこの着手を検討していないので順番通りの世界で検討
-                    //pWorld = gal->access(threadMaxNWorlds * threadId + pastNTrials);
                     pWorld = gal.access(pastNTrials);
                     
                     if (!pWorld -> isActive()) {
@@ -159,21 +154,18 @@ namespace UECda {
             // 世界確定
             DOUT << "SAMPLE WORLD..." << (pWorld - gal.world) << endl;
             
-            //PlayoutScore score;
-            
             // ここでプレイアウト実行
             // alphaカットはしない
             Field f;
             if (proot->isChange) {
                 copyField(pf, &f);
-                setWorld(pf, *pWorld, &f);
+                setWorld(*pWorld, &f);
                 startChangeSimulation(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
             } else {
                 copyField(pf, &f);
-                setWorld(pf, *pWorld, &f);
+                setWorld(*pWorld, &f);
                 startRootSimulation(&f, child[tryingIndex].move, pshared, ptools);
             }
-            //CERR << "TRIAL : " << i << " " << moves.getMoveById(tryingIndex) << " : " << r << endl;
             
             proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
             if (proot->exitFlag) goto THREAD_EXIT;
@@ -184,10 +176,10 @@ namespace UECda {
             // 終了判定
             if (threadId == 0
                 && threadNTrialsSum % max(4, 32 / N_THREADS) == 0
-                && proot->allSimulations > candidates * MINNEC_N_TRIALS) {
+                && proot->allSimulations > candidates * 4) {
                 
                 // Regretによる打ち切り判定
-                struct Dist { double mean,sem,reg; };
+                struct Dist { double mean, sem, reg; };
                 double tmpClock = simuTime;
                 double line = -1600.0 * double(2 * tmpClock * VALUE_PER_CLOCK) / proot->rewardGap;
                 
@@ -196,11 +188,7 @@ namespace UECda {
                 for (int m = 0; m < candidates; m++) {
                     d[m].reg = 0.0;
                     d[m].mean = child[m].mean();
-                    
-                    ASSERT(child[m].size(), cerr << child[m].toString() << endl;);
-                    
                     d[m].sem = sqrt(child[m].mean_var()); // 推定平均値の分散
-                    //cerr << d[m].sem << endl;
                 }
                 for (int t = 0; t < 1600; t++) {
                     double tmpBest = -1.0;

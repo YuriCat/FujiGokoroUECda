@@ -6,7 +6,7 @@
 
 namespace UECda{
 
-    template<class matchLog_t>
+    template <class matchLog_t>
     void broadcastBMatch(const matchLog_t& mLog) { // 全試合開始前実況
         // 自分のプロフィールや設定を確認する
         cerr << "Client's Name : " << MY_NAME << " " << MY_VERSION << endl;
@@ -15,7 +15,7 @@ namespace UECda{
         cerr << "My Common Number = " << mLog.getMyPlayerNum() << endl;
     }
     
-    template<class matchLog_t>
+    template <class matchLog_t>
     void broadcastBGame(const matchLog_t& mLog) { // 1ゲーム開始前実況
         const typename matchLog_t::gameLog_t& gLog = mLog.latestGame();
         cerr << "Game " << mLog.getLatestGameNum() << " is about to start." << endl;
@@ -49,7 +49,7 @@ namespace UECda{
         }
     }
     
-    template<class matchLog_t>
+    template <class matchLog_t>
     void broadcastPlayerState(const matchLog_t& mLog) { // プレーヤー状態実況
         const typename matchLog_t::gameLog_t& gLog = mLog.latestGame();
         for (int s = 0; s < N_PLAYERS; ++s) {
@@ -79,8 +79,8 @@ namespace UECda{
     
     void broadcastBP() const { // プレー前実況
         cerr << "********** Before Play **********";
-        cerr << "<Game> " << getGameNum() << " <Turn> " << getTurnNum();
-        cerr <<  "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
+        cerr << "<Game> " << getGameNum() << " <Turn> " << turnCount();
+        cerr <<  "  TurnPlayer : " << turn() << "  Owner : " << owner() << endl;
         cerr << "Board : " << bd << endl;
         cerr << Out2CardTables(getMyCards(), subtrCards(getRemCards(), getMyCards()));
         broadcastPlayerState();
@@ -88,8 +88,8 @@ namespace UECda{
     
     void broadcastAP() const { // プレー後実況
         cerr << "********** After Play **********";
-        cerr << "<Game> " << getGameNum() << " <Turn> " << getTurnNum();
-        cerr << "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
+        cerr << "<Game> " << getGameNum() << " <Turn> " << turnCount();
+        cerr << "  TurnPlayer : " << turn() << "  Owner : " << owner() << endl;
         cerr << "Board : " << bd << endl;
         cerr << Out2CardTables(getMyCards(), subtrCards(getRemCards(), getMyCards()));
         broadcastPlayerState();

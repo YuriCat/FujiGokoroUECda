@@ -17,8 +17,8 @@ namespace UECda {
         pfield->initForPlayout();
         while (1) {
             DERR << pfield->toString();
-            DERR << "turn : " << pfield->getTurnPlayer() << endl;
-            uint32_t tp = pfield->getTurnPlayer();
+            DERR << "turn : " << pfield->turn() << endl;
+            uint32_t tp = pfield->turn();
 
             pfield->prepareForPlay();
 
@@ -129,7 +129,7 @@ namespace UECda {
                             EngineSharedData *const pshared,
                             EngineThreadTools *const ptools) {
         DERR << pfield->toString();
-        DERR << "turn : " << pfield->getTurnPlayer() << endl;
+        DERR << "turn : " << pfield->turn() << endl;
         if (pfield->procSlowest(mv) == -1) return 0;
         return startRootSimulation(pfield, pshared, ptools);
     }
@@ -145,7 +145,7 @@ namespace UECda {
         pfield->prepareAfterChange();
         
         DERR << pfield->toString();
-        DERR << "turn : " << pfield->getTurnPlayer() << endl;
+        DERR << "turn : " << pfield->turn() << endl;
 
         return startRootSimulation(pfield, pshared, ptools);
     }

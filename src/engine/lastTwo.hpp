@@ -69,7 +69,7 @@ namespace UECda {
         
         void setDConst()noexcept{ fInfo.setDConst();}
         
-        int getTurnPlayer() const noexcept{
+        int turn() const noexcept{
 #ifdef DEBUG
             return p;
 #else
@@ -92,7 +92,7 @@ namespace UECda {
         
     };
     // L2局面表現へのチェンジ
-    template<class argField_t>
+    template <class argField_t>
     void convL2Field(const argField_t& argField, L2Field *const dstPtr) {
         dstPtr->bd = argField.getBoard();
         dstPtr->fInfo.init();
@@ -103,7 +103,7 @@ namespace UECda {
         dstPtr->bd = bd;
     }
     
-    template<int L2_FINFO, int L2_MINFO>
+    template <int L2_FINFO, int L2_MINFO>
     void procAndFlushL2Field(const L2Field& cur, L2Field *const pnext, const Move mv) {
         // 場を流して自分から始めることは確実とされている場合
         constexpr int IS_NF = (L2_FINFO >> 0) & 3;
@@ -116,7 +116,7 @@ namespace UECda {
         pnext->bd.procAndFlush(mv);
     }
     
-    template<int L2_FINFO, int L2_MINFO>
+    template <int L2_FINFO, int L2_MINFO>
     int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
         // テンプレート引数を使うバージョン
         // もしMAI部分に有益な情報が載らないなら、MAIの処理を消した方が速い
@@ -308,31 +308,31 @@ namespace UECda {
         // DOM_PROC 支配進行
         
         // 局面更新を終えないまま、情報を部分的に与えて高速判定する関数
-        template<int L2_FINFO>
+        template <int L2_FINFO>
         int judge_level1(const int qty);
         
-        template<int L2_FINFO>
+        template <int L2_FINFO>
         int judge_level2(const Hand& myHand);
         
         // 再帰版
-        template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
+        template <int S_LEVEL, int E_LEVEL, int L2_FINFO>
         int judge(const int depth, MoveInfo *const mv_buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
         
-        template<int S_LEVEL, int E_LEVEL, int L2_FINFO, int L2_MINFO>
+        template <int S_LEVEL, int E_LEVEL, int L2_FINFO, int L2_MINFO>
         int check(const int depth, MoveInfo *const mv_buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
         
-        template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
+        template <int S_LEVEL, int E_LEVEL, int L2_FINFO>
         int search(const int depth, MoveInfo *const mv_buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
         
-        template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
+        template <int S_LEVEL, int E_LEVEL, int L2_FINFO>
         int play(const int depth, MoveInfo *const mv_buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
         
         // 非再帰版
         
-        //template<class field_t>int start_judge(const field_t& argField);
-        //template<class field_t>int start_check(const Move move, const field_t& argField);
-        template<class field_t>int start_search(const Move *mv, const int NMoves, const field_t& argField);
-        template<class field_t>int start_play(const field_t& argField);
+        //template <class field_t>int start_judge(const field_t& argField);
+        //template <class field_t>int start_check(const Move move, const field_t& argField);
+        template <class field_t>int start_search(const Move *mv, const int NMoves, const field_t& argField);
+        template <class field_t>int start_play(const field_t& argField);
         
         int start_judge(const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo);
         //int start_check(const Move move, MoveAddInfo *const mvInfo, const Hand& myHand, const Hand& opsHand, const Board bd, const FieldAddInfo fInfo);
@@ -344,7 +344,7 @@ namespace UECda {
     AtomicAnalyzer<2, 8, Analysis::TYPE_SEARCH> L2Judge::ana("L2Judge");
     
     
-    template<int L2_FINFO>
+    template <int L2_FINFO>
     int L2Judge::judge_level1(const int qty) {
         const int IS_NF = (L2_FINFO >> 0) & 3;
         // レベル1 自分のカード枚数のみ
@@ -357,7 +357,7 @@ namespace UECda {
         return L2_DRAW;
     }
     
-    template<int L2_FINFO>
+    template <int L2_FINFO>
     int L2Judge::judge_level2(const Hand& myHand) {
         const int IS_NF = (L2_FINFO >> 0) & 3;
         
@@ -373,7 +373,7 @@ namespace UECda {
         return L2_DRAW;
     }
     
-    template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
+    template <int S_LEVEL, int E_LEVEL, int L2_FINFO>
     int L2Judge::judge(const int depth, MoveInfo *const mv_buf, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         
         constexpr int IS_NF = (L2_FINFO >> 0) & 3;
@@ -532,7 +532,7 @@ namespace UECda {
         return L2_DRAW;
     }
     
-    template<int S_LEVEL, int E_LEVEL, int L2_FINFO, int L2_MINFO>
+    template <int S_LEVEL, int E_LEVEL, int L2_FINFO, int L2_MINFO>
     int L2Judge::check(const int depth, MoveInfo *const mv_buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         
         constexpr int IS_NF = (L2_FINFO >> 0) & 3;
@@ -548,7 +548,7 @@ namespace UECda {
         ++childs;
         
         if (E_LEVEL > 100) {
-            DERR << Space(depth * 2) << "<" << field.getTurnPlayer() << ">" << tmp;
+            DERR << Space(depth * 2) << "<" << field.turn() << ">" << tmp;
         }
         
         switch(S_LEVEL) {
@@ -570,7 +570,7 @@ namespace UECda {
                     tmp.setDomOthers();
                     res = judge_level1<(_YES << 0)>(myHand.qty - (IS_PASS == _YES ? 0 : tmp.qty()));
                     if (res == L2_WIN) {
-                        DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
+                        DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                         return res;
                     }
                     ana.restart(mode, 1);
@@ -583,7 +583,7 @@ namespace UECda {
                         ana.restart(mode, 7);
                         res = judge_level2<(_YES << 0)>(nextHand);
                         if (res == L2_WIN) {
-                            DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
+                            DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                             return res;
                         }
                         L2Field nextField;
@@ -596,14 +596,14 @@ namespace UECda {
                         
                         res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, nextHand, opsHand, nextField);
                         if (res == L2_WIN) {
-                            DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
+                            DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                             return res;
                         }
                     } else {
                         ana.restart(mode, 7);
                         res=judge_level2<(_YES << 0)>(myHand);
                         if (res == L2_WIN) {
-                            DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
+                            DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                             return res;
                         }
                         L2Field nextField;
@@ -612,7 +612,7 @@ namespace UECda {
                         ana.restart(mode, 6);
                         res = judge<3, 4, (_YES << 0)>(depth + 1, mv_buf, myHand, opsHand, nextField);
                         if (res == L2_WIN) {
-                            DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -EMATEWIN" << endl;
+                            DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                             return res;
                         }
                     }
@@ -632,7 +632,7 @@ namespace UECda {
                         if (!tmp.dominatesOthers()) { // 他支配でない
                             if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.tmpOrder(), field.fInfo.isTmpOrderSettled())) { // 残り札に支配保証or空場期待がある
                                 //DERR << tmp << ": DWorNFH_REST FAIL " << myHand << " vs " << opsHand << endl; getchar();
-                                DERR << Space(2 * depth) << "<" << field.getTurnPlayer() << ">" << tmp << " -RESTLOSE" << endl;
+                                DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -RESTLOSE" << endl;
                                 return L2_LOSE; // 拘束条件違反で負けとみなす
                             }
                         } else {
@@ -751,7 +751,7 @@ namespace UECda {
         return L2_DRAW;
     }
     
-    template<int S_LEVEL, int E_LEVEL, int L2_FINFO>
+    template <int S_LEVEL, int E_LEVEL, int L2_FINFO>
     int L2Judge::search(const int depth, MoveInfo *const mv_buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         
         // 反復深化をするのでなければ終了レベルは常に最大で呼ばれると思われる

@@ -151,7 +151,7 @@ namespace UECda {
     int getPrmOrder(const int table[8][15]) { return table[5][6] ? 1 : 0; } // 革命が起こっている
     int suitsLocked(const int table[8][15]) { return table[5][7]; }
     int isMyTurn(const int table[8][15]) { return table[5][2]; }
-    int getTurnPlayer(const int table[8][15]) { return table[5][3]; }
+    int turn(const int table[8][15]) { return table[5][3]; }
     int isNF(const int table[8][15]) { return table[5][4]; } // 空場
     int getNCards(const int table[8][15], int p) { return table[6][0 + p]; }
     int getPlayerClass(const int table[8][15], int p) { return table[6][5 + p]; }
@@ -241,15 +241,11 @@ namespace UECda {
         // それ以外の役
         Cards charaCards = m.charaCards();
         Cards usedCards = m.cards();
-        while (anyCards(charaCards)) {
-            IntCard ic = popIntCardLow(&charaCards);
+        for (IntCard ic : charaCards) {
             int h = IntCardToH(ic);
             int w = IntCardToW(ic);
-            if (containsIntCard(usedCards, ic)) {
-                table[h][w] = 1;
-            } else { // JOKERが代役
-                table[h][w] = 2;
-            }
+            if (usedCards.contains(ic)) table[h][w] = 1;
+            else table[h][w] = 2; // JOKERが代役
         }
     }
     

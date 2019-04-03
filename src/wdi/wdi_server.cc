@@ -66,14 +66,14 @@ namespace UECda{
 				}
 				f.initPlayPhase();
 				
-				return f.getTurnPlayer();
+				return f.turn();
 			} else {
 				return f.getChangeTurnPlayer();
 			}
 		}
 		virtual int recvPlay(const Move& amv,uint64_t at) {
 			if ( !f.phase.isInPlay() ) {return -1;}//プレー中でない
-			uint32_t tp=f.getTurnPlayer();
+			uint32_t tp=f.turn();
 			
 #ifdef BROADCAST
 			f.broadcastBP();
@@ -215,7 +215,7 @@ namespace UECda{
 				return f.getChangeTurnPlayer();
 			} else {
 				f.initPlayPhase();
-				return f.getTurnPlayer();
+				return f.turn();
 			}
 		}
 		

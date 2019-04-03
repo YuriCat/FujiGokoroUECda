@@ -223,7 +223,7 @@ namespace UECda {
                     if (djk) {
                         jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                        maskJOKER(&dqr);
+                        dqr = maskJOKER(dqr);
                     }
                     
                     uint32_t s = mv.suits();
@@ -370,7 +370,7 @@ namespace UECda {
                     if (djk) {
                         jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                        maskJOKER(&dqr);
+                        dqr = maskJOKER(dqr);
                     }
                     
                     uint32_t s = mv.suits();
@@ -827,7 +827,7 @@ namespace UECda {
                 if (djk) {
                     jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                    maskJOKER(&dqr);
+                    dqr = maskJOKER(dqr);
                 }
                 
                 uint32_t s = mv.suits();
@@ -985,7 +985,7 @@ namespace UECda {
                 if (djk) {
                     jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                    maskJOKER(&dqr);
+                    dqr = maskJOKER(dqr);
                 }
                 
                 uint32_t s = mv.suits();

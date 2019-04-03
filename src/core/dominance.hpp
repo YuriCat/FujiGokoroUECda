@@ -176,11 +176,11 @@ namespace UECda {
         UNREACHABLE;
     }
     
-    template<class move_t, class sbjField_t>
+    template <class move_t, class sbjField_t>
     void setDomState(move_t *const buf, const int candidates, const sbjField_t& field) {
         // 支配関係のパラメータを一括計算しPlaySpaceに入れる
         // クライアント用に詳しく計算。
-        const int turnPlayer = field.getTurnPlayer();
+        const int turnPlayer = field.turn();
         const Cards myCards = field.getCards(turnPlayer);
         const int NMyCards = field.getNCards(turnPlayer);
         const Cards opsCards = field.getOpsCards(turnPlayer);

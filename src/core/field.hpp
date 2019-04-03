@@ -13,6 +13,28 @@ namespace UECda {
     
     /**************************完全情報空間**************************/
 
+    enum Phase {
+        PHASE_IN_CHANGE,
+        PHASE_IN_PLAY,
+        PHASE_INIT_GAME,
+        PHASE_SUBJECTIVE,
+    };
+
+    // common information
+    struct CommonStatus {
+        int turnCount;
+        int turn;
+        int firstTurn;
+        int owner;
+        std::bitset<16> phase;
+
+        void clear() {
+            turnCount = 0;
+            turn = firstTurn = owner = -1;
+            phase.reset();
+        }
+    };
+
     struct Field {
         
         int myPlayerNum; // 主観的局面表現として使用する宣言を兼ねる
@@ -27,19 +49,15 @@ namespace UECda {
         std::bitset<32> flags;
         
         // information for playout
-        int depth;
         BitSet32 attractedPlayers; // players we want playout-result
         int NMoves;
         int NActiveMoves;
         MoveInfo playMove; // move chosen by player int playout
         FieldAddInfo fieldInfo;
         
-        // common information
-        int turnNum;
+        CommonStatus common;
         Board bd;
         PlayersState ps;
-        
-        BitArray32<4> infoSpecialPlayer;
         
         BitArray32<4, N_PLAYERS> infoClass;
         BitArray32<4, N_PLAYERS> infoClassPlayer;
@@ -50,7 +68,6 @@ namespace UECda {
         
         BitArray32<4, N_PLAYERS> infoPosition;
         
-        GamePhase phase;
         
         uint32_t remQty;
         Cards remCards;
@@ -105,26 +122,21 @@ namespace UECda {
         
         void addAttractedPlayer(int p) { attractedPlayers.set(p); }
         
-        int getDepth() const { return depth; }
-        
         Board getBoard() const { return bd; }
         bool isNF() const { return bd.isNF(); }
         
-        int getTurnNum() const  { return turnNum; }
-        void addTurnNum() { ++turnNum; }
+        int turnCount() const  { return common.turnCount; }
         
-        void setInitGame() { phase.setInitGame(); }
-        void resetInitGame() { phase.resetInitGame(); }
-        void setInChange() { phase.setInChange(); }
-        void resetInChange() { phase.resetInChange(); }
-        void setSubjective() { phase.setSubjective(); }
+        void setInitGame() { common.phase.set(PHASE_INIT_GAME); }
+        void setInChange() { common.phase.set(PHASE_IN_CHANGE); }
+        void setSubjective() { common.phase.set(PHASE_SUBJECTIVE); }
+
+        void resetInitGame() { common.phase.reset(PHASE_INIT_GAME); }
+        void resetInChange() { common.phase.reset(PHASE_IN_CHANGE); }
         
-        bool isInitGame() const { return phase.isInitGame(); }
-        bool isInChange() const { return phase.isInChange(); }
-        bool isSubjective() const { return phase.isSubjective(); }
-        
-        bool isSoloAwake() const { return ps.isSoloAwake(); }
-        bool isSoloAlive() const { return ps.isSoloAlive(); }
+        bool isInitGame() const { return common.phase.test(PHASE_INIT_GAME); }
+        bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
+        bool isSubjective() const { return common.phase.test(PHASE_SUBJECTIVE); }
         
         uint32_t isAlive(const int p) const { return ps.isAlive(p); }
         uint32_t isAwake(const int p) const { return ps.isAwake(p); }
@@ -166,15 +178,13 @@ namespace UECda {
         
         uint32_t getPosition(int p) const { return infoPosition[p]; }
         
-        int turn() const { return infoSpecialPlayer[0]; }
-        uint32_t getTurnPlayer() const { return infoSpecialPlayer[0]; }
-        uint32_t getPMOwner() const { return infoSpecialPlayer[1]; }
-        uint32_t getFirstTurnPlayer() const { return infoSpecialPlayer[3]; }
+        int turn() const { return common.turn; }
+        int owner() const { return common.owner; }
+        int firstTurn() const { return common.firstTurn; }
         
-        void setTurnPlayer(int p) { infoSpecialPlayer.assign(0, p); }
-        void setPMOwner(int p) { infoSpecialPlayer.assign(1, p); }
-        void setL1Player(int p) { infoSpecialPlayer.assign(2, p); }
-        void setFirstTurnPlayer(int p) { infoSpecialPlayer.assign(3, p); }
+        void setTurn(int p) { common.turn = p; }
+        void setOwner(int p) { common.owner = p; }
+        void setFirstTurn(int p) { common.firstTurn = p; }
         
         Cards getCards(int p) const { return hand[p].cards; }
         Cards getOpsCards(int p) const { return opsHand[p].cards; }
@@ -197,8 +207,8 @@ namespace UECda {
         
         uint32_t getFlushLeadPlayer() const {
             // 全員パスの際に誰から始まるか
-            if (isNF()) return getTurnPlayer();
-            uint32_t own = getPMOwner();
+            if (isNF()) return turn();
+            uint32_t own = owner();
             if (!isAlive(own)) { // すでにあがっている
                 // own~tp間のaliveなプレーヤーを探す
                 while (1) {
@@ -215,12 +225,12 @@ namespace UECda {
             do {
                 tp = getNextSeatPlayer(tp);
             } while (!isAwake(tp));
-            setTurnPlayer(tp);
+            setTurn(tp);
         }
         
         void flushTurnPlayer() {
-            uint32_t tp = getPMOwner();
-            if (isAlive(tp)) setTurnPlayer(tp);
+            uint32_t tp = owner();
+            if (isAlive(tp)) setTurn(tp);
             else rotateTurnPlayer(tp);
         }
         
@@ -233,7 +243,7 @@ namespace UECda {
         void flushState() { // 場を流す ただし bd はすでに流れているとき
             ps.flush();
             flushTurnPlayer();
-            flushBoardStateHash(getTurnPlayer());
+            flushBoardStateHash(turn());
         }
         void flush() { // 場を流す
             bd.flush();
@@ -533,7 +543,7 @@ namespace UECda {
         
         void prepareForPlay(bool isRoot = false) {
             
-            int tp = getTurnPlayer();
+            int tp = turn();
             
             fieldInfo.init();
             fieldInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
@@ -546,10 +556,10 @@ namespace UECda {
                     fieldInfo.setFlushLead();
                 }
             } else {
-                if (getPMOwner() == tp) { // セルフフォロー
+                if (owner() == tp) { // セルフフォロー
                     fieldInfo.setSelfFollow();
                 } else {
-                    if (isSoloAwake()) { // SF ではないが LA
+                    if (ps.isSoloAwake()) { // SF ではないが LA
                         fieldInfo.setLastAwake();
                     }
                     uint32_t fLPlayer = getFlushLeadPlayer();
@@ -581,10 +591,7 @@ namespace UECda {
         void initGame() {
             bd.init();
             ps.init();
-            
-            turnNum = 0;
             attractedPlayers.reset();
-            
             infoSeat.clear();
             infoSeatPlayer.clear();
             infoClass.clear();
@@ -592,16 +599,12 @@ namespace UECda {
             infoNewClass.clear();
             infoNewClassPlayer.clear();
             
-            infoSpecialPlayer.clear();
+            common.clear();
             
-            phase.init();
-            
-            for (int p = 0; p < N_PLAYERS; p++) {
-                usedCards[p] = CARDS_NULL;
-                dealtCards[p] = CARDS_NULL;
-                sentCards[p] = CARDS_NULL;
-                recvCards[p] = CARDS_NULL;
-            }
+            usedCards.fill(CARDS_NULL);
+            dealtCards.fill(CARDS_NULL);
+            sentCards.fill(CARDS_NULL);
+            recvCards.fill(CARDS_NULL);
             
             remCards = CARDS_ALL;
             remQty = countCards(CARDS_ALL);
@@ -620,9 +623,9 @@ namespace UECda {
             // 初手のプレーヤーを探す
             for (int p = 0; p < N_PLAYERS; p++) {
                 if (containsD3(hand[p].cards)) {
-                    setTurnPlayer(p);
-                    setFirstTurnPlayer(p);
-                    setPMOwner(p);
+                    setTurn(p);
+                    setFirstTurn(p);
+                    setOwner(p);
                     stateKey = StateToHashKey(aliveKey, ps, p);
                     break;
                 }
@@ -648,8 +651,8 @@ namespace UECda {
         
         std::string toDebugString() const {
             std::ostringstream oss;
-            oss << "turn = " << getTurnNum() << endl;
-            oss << "player = " << getTurnPlayer() << endl;
+            oss << "turn = " << turnCount() << endl;
+            oss << "player = " << turn() << endl;
             oss << "class = " << infoClass << endl;
             oss << "seat = " << infoSeat << endl;
             oss << "board = " << bd << endl;
@@ -673,14 +676,14 @@ namespace UECda {
         // 丁寧に局面更新
         ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
         if (mv.isPASS()) {
-            if (isSoloAwake()) {
+            if (ps.isSoloAwake()) {
                 flush();
             } else {
                 setPlayerAsleep(tp);
                 rotateTurnPlayer(tp);
-                procBoardStateHashPass(tp, getTurnPlayer());
+                procBoardStateHashPass(tp, turn());
             }
-            addTurnNum();
+            common.turnCount++;
         } else {
             if (mv.isMate() || mv.qty() >= hand[tp].qty) { // 即上がりまたはMATE宣言のとき
                 if (attractedPlayers.is_only(tp)) {
@@ -709,8 +712,8 @@ namespace UECda {
             }
             
             bd.proc(mv.mv());
-            setPMOwner(tp);
-            addTurnNum();
+            setOwner(tp);
+            common.turnCount++;
             if (bd.isNF()) { // 流れた
                 flushState();
             } else {
@@ -733,7 +736,7 @@ namespace UECda {
                 } else { // 支配なし
                     if (ps.anyAwake()) {
                         rotateTurnPlayer(tp);
-                        procBoardStateHashNonPass(tp, getTurnPlayer());
+                        procBoardStateHashNonPass(tp, turn());
                     } else {
                         flush();
                     }
@@ -741,25 +744,25 @@ namespace UECda {
             }
         }
         ASSERT(exam(), cerr << toDebugString() << endl;);
-        return getTurnPlayer();
+        return turn();
     }
     int Field::proc(const int tp, const Move mv) {
         return proc(tp, (MoveInfo)mv);
     }
     
     int Field::procSlowest(const Move mv) {
-        const int tp = getTurnPlayer();
+        const int tp = turn();
         // 丁寧に局面更新
         ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
         if (mv.isPASS()) {
-            if (isSoloAwake()) {
+            if (ps.isSoloAwake()) {
                 flush();
             } else {
                 setPlayerAsleep(tp);
                 rotateTurnPlayer(tp);
-                procBoardStateHashPass(tp, getTurnPlayer());
+                procBoardStateHashPass(tp, turn());
             }
-            addTurnNum();
+            common.turnCount++;
         } else {
             if (mv.qty() >= hand[tp].qty) { // agari
                 setPlayerNewClass(tp, getBestClass());
@@ -775,21 +778,21 @@ namespace UECda {
             }
             
             bd.proc(mv);
-            setPMOwner(tp);
-            addTurnNum();
+            setOwner(tp);
+            common.turnCount++;
             if (bd.isNF()) { // 流れた
                 flushState();
             } else {
                 if (ps.anyAwake()) {
                     rotateTurnPlayer(tp);
-                    procBoardStateHashNonPass(tp, getTurnPlayer());
+                    procBoardStateHashNonPass(tp, turn());
                 } else {
                     flush();
                 }
             }
         }
         ASSERT(exam(), cerr << toDebugString() << endl;);
-        return getTurnPlayer();
+        return turn();
     }
     int Field::procSlowest(const MoveInfo mv) {
         return procSlowest(mv.mv());
@@ -797,9 +800,6 @@ namespace UECda {
     
     // copy Field arg to dst before playout
     void copyField(const Field& arg, Field *const dst) {
-        
-        dst->depth = arg.depth;
-        
         // playout result
         dst->infoReward = 0ULL;
         dst->domFlags = 0;
@@ -809,10 +809,8 @@ namespace UECda {
         dst->attractedPlayers = arg.attractedPlayers;
         dst->mv = arg.mv;
         dst->dice = arg.dice;
-        dst->depth = arg.depth;
         
         // game info
-        dst->turnNum = arg.turnNum;
         dst->bd = arg.bd;
         dst->ps = arg.ps;
         
@@ -825,9 +823,7 @@ namespace UECda {
         
         dst->infoPosition = arg.infoPosition;
         
-        dst->infoSpecialPlayer = arg.infoSpecialPlayer;
-        
-        dst->phase = arg.phase;
+        dst->common = arg.common;
         
         // copy hash_value
         dst->originalKey = arg.originalKey;
@@ -840,39 +836,14 @@ namespace UECda {
         
         // we don't have to copy each player's hand,
         // because card-position will be set in the opening of playout.
-        
-        for (int p = 0; p < N_PLAYERS; p++) {
-            dst->usedCards[p] = arg.usedCards[p];
-            dst->sentCards[p] = arg.sentCards[p];
-            dst->recvCards[p] = arg.recvCards[p];
-            dst->dealtCards[p] = arg.dealtCards[p];
-        }
+        dst->usedCards = arg.usedCards;
+        dst->sentCards = arg.sentCards;
+        dst->recvCards = arg.recvCards;
+        dst->dealtCards = arg.dealtCards;
+
         dst->remCards = arg.remCards;
         dst->remQty = arg.remQty;
         dst->remHash = arg.remHash;
-    }
-    
-    // set estimated information
-    template <class sbjField_t, class world_t>
-    void setWorld(const sbjField_t& field, const world_t& world, Field *const dst) {
-        
-        Cards remCards = field.getRemCards();
-        uint64_t remHash = field.getRemCardsHash();
-        
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (field.isAlive(p)) {
-                // only alive players
-                uint64_t myHash = world.getCardsHash(p);
-                
-                dst->hand[p].set(world.getCards(p));
-                dst->hand[p].setHash(myHash);
-                dst->opsHand[p].set(subtrCards(remCards, world.getCards(p)));
-                dst->opsHand[p].setHash(remHash ^ myHash);
-            } else {
-                // alive でないプレーヤーも手札枚数だけセットしておく
-                dst->hand[p].qty = 0;
-            }
-        }
     }
     
     template <class sbjField_t, class world_t, class policy_t>
@@ -890,8 +861,8 @@ namespace UECda {
         MoveToTable(Move(bd), bd, table);
         
         // game state
-        table[5][2] = (field.getTurnPlayer() == player) ? 1 : 0;
-        table[5][3] = field.getTurnPlayer();
+        table[5][2] = (field.turn() == player) ? 1 : 0;
+        table[5][3] = field.turn();
         table[5][4] = bd.isNF() ? 1 : 0;
         table[5][5] = bd.prmOrder() ^ bd.tmpOrder();
         table[5][6] = bd.prmOrder();
@@ -914,8 +885,8 @@ namespace UECda {
         MoveToTable(mv, bd, table);
         
         // game state
-        table[5][2] = (field.getTurnPlayer() == player) ? 1 : 0;
-        table[5][3] = field.getTurnPlayer();
+        table[5][2] = (field.turn() == player) ? 1 : 0;
+        table[5][3] = field.turn();
         table[5][4] = bd.isNF() ? 1 : 0;
         table[5][5] = bd.afterPrmOrder(mv) ^ bd.afterTmpOrder(mv);
         table[5][6] = bd.afterPrmOrder(mv);
@@ -929,7 +900,7 @@ namespace UECda {
             table[6][10 + s] = field.getSeatPlayer(s); // seat player
         }
         
-        table[6][field.getTurnPlayer()] -= mv.qty();
+        table[6][field.turn()] -= mv.qty();
     }
     
     void convField(const int table[8][15], const uint32_t player, Field *const pfield) {
@@ -938,7 +909,7 @@ namespace UECda {
         pfield->bd = TableToBoard(table);
         
         // game state
-        pfield->setTurnPlayer(getTurnPlayer(table));
+        pfield->setTurn(turn(table));
         pfield->setHand(player, TableToCards(table));
         
         pfield->clearSeats();
@@ -970,13 +941,11 @@ namespace UECda {
         int builtTurn; // この世界がセットされたターン
         uint64_t hash; // 世界識別ハッシュ。着手検討中ターンにおいて世界を識別出来れば形式は問わない
         
-        int depth;
         Cards cards[N_PLAYERS];
         uint64_t hash_cards[N_PLAYERS];
         
         Cards getCards(int p) const { return cards[p]; }
         uint64_t getCardsHash(int p) const { return hash_cards[p]; }
-        int getDepth() const { return depth; }
         
         void clear() {
             flags.reset();
@@ -991,13 +960,12 @@ namespace UECda {
         
         template <class field_t>
         void set(const field_t& field, const Cards argCards[]) {
-            depth = field.getDepth() + 1; // 1深くなる
             clear();
             for (int p = 0; p < N_PLAYERS; p++) {
                 cards[p] = argCards[p];
                 hash_cards[p] = CardsToHashKey(argCards[p]);
             }
-            builtTurn = field.getTurnNum();
+            builtTurn = field.turnCount();
         }
         
         void proc(const int p, const Move mv, const Cards dc) {
@@ -1015,4 +983,26 @@ namespace UECda {
         ImaginaryWorld() { clear(); }
         ~ImaginaryWorld() { clear(); }
     };
+
+    // set estimated information
+    template <class world_t>
+    void setWorld(const world_t& world, Field *const dst) {
+        Cards remCards = dst->getRemCards();
+        uint64_t remHash = dst->getRemCardsHash();
+        
+        for (int p = 0; p < N_PLAYERS; p++) {
+            if (dst->isAlive(p)) {
+                // only alive players
+                uint64_t myHash = world.getCardsHash(p);
+                
+                dst->hand[p].set(world.getCards(p));
+                dst->hand[p].setHash(myHash);
+                dst->opsHand[p].set(remCards - world.getCards(p));
+                dst->opsHand[p].setHash(remHash ^ myHash);
+            } else {
+                // alive でないプレーヤーも手札枚数だけセットしておく
+                dst->hand[p].qty = 0;
+            }
+        }
+    }
 }

@@ -187,7 +187,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         }
     }
     namespace ChangePolicySpace {
-        template<typename T>
+        template <typename T>
         int commentToPolicyParam(std::ostream& out, const T param[FEA_NUM_ALL]) {
             auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
             
@@ -231,7 +231,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         std::ofstream ofs(fName, std::ios::out);
         return PlayPolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
-    template<class T>
+    template <class T>
     int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
         std::ofstream ofs(fName, std::ios::out);
         return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
@@ -278,9 +278,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         
         // 恒常パラメータ
         const Board bd = field.bd;
-        const int tp = field.getTurnPlayer();
+        const int tp = field.turn();
         const int turnSeat = field.getPlayerSeat(tp);
-        const int owner = field.getPMOwner();
+        const int owner = field.owner();
         const int ownerSeat = field.getPlayerSeat(owner);
         const Hand& myHand = field.getHand(tp);
         const Hand& opsHand = field.getOpsHand(tp);
@@ -355,18 +355,18 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             Cards seq5 = polymRanks<2>(seq4);
                             if (seq5) {
                                 // 6枚以上の階段も5枚階段と同じパラメータで扱う(ダブルカウントしないように注意)
-                                maskCards(&seq4, extractRanks<2>(seq5));
-                                maskCards(&seq3, extractRanks<3>(seq5));
-                                maskCards(&tmp, extractRanks<5>(seq5));
+                                seq4.mask(extractRanks<2>(seq5));
+                                seq3.mask(extractRanks<3>(seq5));
+                                tmp.mask(extractRanks<5>(seq5));
                                 for (IntCard ic : seq5) {
                                     Foo(base + IntCardToRank(ic) - RANK_3);
-                                    maskCards(&seq5, extractRanks<5>(IntCardToCards(ic)));
+                                    seq5.mask(extractRanks<5>(IntCardToCards(ic)));
                                     if (!seq5) break;
                                 }
                             }
                             if (seq4) {
-                                maskCards(&tmp, extractRanks<4>(seq4));
-                                maskCards(&seq3, extractRanks<2>(seq4));
+                                tmp.mask(extractRanks<4>(seq4));
+                                seq3.mask(extractRanks<2>(seq4));
                                 for (IntCard ic : seq4) {
                                     Foo(base + 9 + IntCardToRank(ic) - RANK_3);
                                     if (!seq4) break;
@@ -374,7 +374,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             }
                         }
                         if (seq3) {
-                            maskCards(&tmp, extractRanks<3>(seq3));
+                            tmp.mask(extractRanks<3>(seq3));
                             for (IntCard ic : seq3) {
                                 Foo(base + 19 + IntCardToRank(ic) - RANK_3);
                                 if (!seq3) break;
@@ -830,18 +830,18 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         Cards seq5 = polymRanks<2>(seq4);
                         if (seq5) {
                             // 6枚以上の階段も5枚階段と同じパラメータで扱う(ダブルカウントしないように注意)
-                            maskCards(&seq4, extractRanks<2>(seq5));
-                            maskCards(&seq3, extractRanks<3>(seq5));
-                            maskCards(&tmp, extractRanks<5>(seq5));
+                            seq4.mask(extractRanks<2>(seq5));
+                            seq3.mask(extractRanks<3>(seq5));
+                            tmp.mask(extractRanks<5>(seq5));
                             for (IntCard ic : seq5) {
                                 i = base + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
-                                maskCards(&seq5, extractRanks<5>(IntCardToCards(ic)));
+                                seq5.mask(extractRanks<5>(IntCardToCards(ic)));
                             }
                         }
                         if (seq4) {
-                            maskCards(&tmp, extractRanks<4>(seq4));
-                            maskCards(&seq3, extractRanks<2>(seq4));
+                            tmp.mask(extractRanks<4>(seq4));
+                            seq3.mask(extractRanks<2>(seq4));
                             for (IntCard ic : seq4) {
                                 i = base + 9 + IntCardToRank(ic) - RANK_3;
                                 Foo(i);
@@ -849,7 +849,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         }
                     }
                     if (seq3) {
-                        maskCards(&tmp, extractRanks<3>(seq3));
+                        tmp.mask(extractRanks<3>(seq3));
                         for (IntCard ic : seq3) {
                             i = base + 19 + IntCardToRank(ic) - RANK_3;
                             Foo(i);
@@ -899,7 +899,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 if (containsJOKER(afterCards)) {
                     hr1 = RANK_MAX + 1;
                 } else {
-                    IntCard ic = popIntCardHigh(&tmpPqr);
+                    IntCard ic = tmpPqr.popHighest();
                     hr1 = IntCardToRank(ic);
                 }
                 const int hr2 = IntCardToRank(tmpPqr.highest());
@@ -1018,7 +1018,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return m;
     }
 
-    template<class cards_t, class field_t, class policy_t, class dice_t>
+    template <class cards_t, class field_t, class policy_t, class dice_t>
     int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
                              const field_t& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
@@ -1026,7 +1026,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         double r = pdice->drand() * score[NChanges];
         return sortedDAsearch(score, 0, NChanges, r);
     }
-    template<class cards_t, class field_t, class policy_t, class dice_t>
+    template <class cards_t, class field_t, class policy_t, class dice_t>
     int changeWithBestPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
                              const field_t& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
@@ -1052,7 +1052,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             return bestIndex[pdice->rand() % NBestMoves];
         }
     }
-    template<int STOCK = 0, class move_t, class field_t, class policy_t, class dice_t>
+    template <int STOCK = 0, class move_t, class field_t, class policy_t, class dice_t>
     int playWithBestPolicy(move_t *const buf, const int NMoves, const field_t& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_MOVES + 1];
         calcPlayPolicyScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);

@@ -650,9 +650,6 @@ namespace UECda {
         constexpr CardArray(const Cards& c): BitArray64<4, 16>(c.c_) {}
         operator BitCards() const { return BitCards(data()); }
     };
-    
-    void maskCards(Cards *const c0, BitCards c1) { (*c0) &= ~c1; }
-    void maskJOKER(Cards *const cptr) { maskCards(cptr, CARDS_JOKER); }
 
     // 特定順序の要素の取り出し(元のデータから引く)
     inline Cards popLow(Cards *const c) {
@@ -666,27 +663,6 @@ namespace UECda {
         IntCard ic = pickIntCardLow(*c);
         (*c) &= ((*c) - 1ULL);
         return ic;
-    }
-    
-    inline IntCard popIntCardHigh(Cards *const c) {
-        IntCard ic = pickIntCardHigh(*c);
-        *c -= IntCardToCards(ic);
-        return ic;
-    }
-
-    // 完全ランダム取り出し
-    // ビット分割関数(bitPartition.hpp)を使う
-    template <int N = 1, class dice64_t>
-    inline BitCards popRand(Cards *const c, dice64_t *const dice) {
-        static_assert(N >= 0, "");
-        BitCards res;
-        switch (N) {
-            case 0: res = CARDS_NULL; break;
-            case 1: res = pop1Bit64(c->c_, dice); break;
-                //case 2:res=pickNBits64(c,2,countCards(c)-2,dice);break;
-            default: UNREACHABLE; break;
-        }
-        return res;
     }
 
     // ランク重合

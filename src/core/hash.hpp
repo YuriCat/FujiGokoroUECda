@@ -44,32 +44,13 @@ namespace UECda {
     
     constexpr uint64_t HASH_CARDS_NULL = 0ULL;
     constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
-    
-    
-    uint64_t CardToHashKey(Cards c) {
-        // Cards型で、1枚の場合
-        assert(countCards(c) == 1);
-        return IntCardToHashKey(CardsToLowestIntCard(c));
-    }
-    
+
     uint64_t CardsToHashKey(Cards c) {
-        // Cards型一般
         uint64_t key = HASH_CARDS_NULL;
-        while (anyCards(c)) {
-            key ^= IntCardToHashKey(popIntCardLow(&c));
-        }
+        for (IntCard ic : c) key ^= IntCardToHashKey(ic);
         return key;
     }
-    
-    uint64_t OtherCardsToHashKey(Cards c) {
-        // Cards型、全体から引いたもの
-        uint64_t key = HASH_CARDS_ALL;
-        while (anyCards(c)) {
-            key ^= IntCardToHashKey(popIntCardLow(&c));
-        }
-        return key;
-    }
-    
+
     /**************************複数のカード集合**************************/
     
     // 交換不可能なもの
@@ -83,7 +64,7 @@ namespace UECda {
         return crossBits64(key0, key1);
     }
     
-    template<int N>
+    template <int N>
     uint64_t CardsArrayToHashKey(const Cards c[]) {
         uint64_t hash_c[N];
         for (int n = 0; n < N; ++n) {
@@ -92,12 +73,12 @@ namespace UECda {
         return crossBits64<N>(hash_c);
     }
     
-    template<int N>
+    template <int N>
     uint64_t knitCardsArrayHashKey(const Cards hash_c[]) {
         return crossBits64<N>(hash_c);
     }
     
-    template<int N>
+    template <int N>
     uint64_t procCardsArrayHashKey(const uint64_t okey, const int n, const uint64_t dkey) {
         return procCrossedHash<N>(okey, n, dkey);
     }
@@ -174,7 +155,7 @@ namespace UECda {
     };
     
     // N を対象人数とする
-    template<int N, class callback_t>
+    template <int N, class callback_t>
     uint64_t NumCardsToHashKey(const callback_t& callback) {
         // callbackはプレーヤー番号を引数にとって手札枚数を返す関数
         uint64_t key = 0ULL;
@@ -186,7 +167,7 @@ namespace UECda {
         return key;
     }
     
-    template<int N>
+    template <int N>
     uint64_t procNumCardsHashKey(uint64_t hash, int p, uint32_t new_nc) {
         ASSERT(0 <= new_nc && new_nc < 16, cerr << new_nc << endl;);
         ASSERT(0 <= p && p < N, cerr << p << "(" << N << ")" << endl;);
@@ -240,7 +221,7 @@ namespace UECda {
     }
     
     
-    template<int N>
+    template <int N>
     uint64_t knitHash_LnCI(const uint64_t hash_c[], uint64_t hash_bd) {
         return crossHash<N>(hash_c) ^ hash_bd;
     }
@@ -319,7 +300,7 @@ namespace UECda {
     // 自分以外の各プレーヤーが使用したカード集合
     // 場
     
-    /*template<int N>
+    /*template <int N>
      uint64_t genHash_LnSbjProField_NF(Cards myOrg,Cards used[],Board bd) {
      //最も単純なもの
      return genHash_Cards(myOrg) ^ crossHash(genHash_nCards<N>(used)) ^ genHash_Board_NF(bd);
@@ -333,7 +314,7 @@ namespace UECda {
         return hash_org ^ hash_used ^ hash_bd;
     }
     /*
-     template<int N>
+     template <int N>
      uint64_t procHash_LnSbjProField(uint64_t hash,int p,Cards c,Board lastB,Board newB) {
      // 進行
      assert(0 <= p && p < N);

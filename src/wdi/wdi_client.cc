@@ -124,7 +124,7 @@ namespace UECda{
                 
 				CERR << "end init play" << endl;
 				
-				CERR << "next command... " << f.getTurnPlayer() << "'s play " << endl;
+				CERR << "next command... " << f.turn() << "'s play " << endl;
 			}
 			save();
 			return 0;
@@ -139,7 +139,7 @@ namespace UECda{
             client.prepareForGame();
             f = client.field;
             
-			CERR << "next command... " << f.getTurnPlayer() << "'s play " << endl;
+			CERR << "next command... " << f.turn() << "'s play " << endl;
 			
 			save();
 			return 0;
@@ -152,7 +152,7 @@ namespace UECda{
 				// プレー中でない
 				return -1;
 			}
-			uint32_t tp = f.getTurnPlayer();
+			uint32_t tp = f.turn();
 			
 			if (!isSbjValid(f.bd, amv, f.getRemCards(), f.getNCards(tp))) {
 				// 非合法手。入力モードでミスがあった場合など
@@ -220,7 +220,7 @@ namespace UECda{
 				return -1;
 			}
 			if (f.bd.isNF()) { return -1; } // 空場からの全員パスは考慮しない
-			uint32_t tp = f.getTurnPlayer();
+			uint32_t tp = f.turn();
 			while (tp != f.getMyPlayerNum()) {
 				
 #ifdef LOGGING
@@ -236,7 +236,7 @@ namespace UECda{
 #ifdef BROADCAS
 			f.broadcastAP();
 #endif
-			CERR << "next command... " << f.getTurnPlayer() << "'s play ";
+			CERR << "next command... " << f.turn() << "'s play ";
 			if (!f.ps.isAlive(f.getMyPlayerNum())) {
 				CERR << "res ";
 			}
@@ -274,7 +274,7 @@ namespace UECda{
 #endif
 				}
 				return 1;
-			}else if (f.isInPlay() && f.getTurnPlayer() == f.getMyPlayerNum()) {
+			}else if (f.isInPlay() && f.turn() == f.getMyPlayerNum()) {
 				CERR << "my play turn." << endl;
 #ifdef BROADCAST
                 f.broadcastB1G(); // 実況

@@ -192,7 +192,7 @@ namespace UECda {
         template <class dice64_t>
         void dealWithBias(Cards *const dst, dice64_t *const pdice) const {
             //　逆関数法でバイアスを掛けて分配
-            if (flag.test(0)) return dealWithAbsSbjInfo(dst, pdice);
+            if (initGame) return dealWithAbsSbjInfo(dst, pdice);
 
             ana.start();
             DERR << "START DEAL-BIAS" << endl << distCards << endl;
@@ -200,9 +200,9 @@ namespace UECda {
             std::array<Cards, N> tmp = detCards;
             int tmpNDeal[N];
             for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
-            
-            for (Cards fromCards = distCards; anyCards(fromCards);) {
-                IntCard ic = popIntCardHigh(&fromCards);
+            Cards fromCards = distCards;
+            while (fromCards) {
+                IntCard ic = fromCards.popHighest();
                 
                 uint64_t weightSum[N];
                 weightSum[0] = tmpNDeal[0] * Deal::CPTable_afterChange[ic][0];
@@ -212,9 +212,7 @@ namespace UECda {
                 assert(weightSum[N - 1] > 0);
                 uint32_t ran = pdice->rand() % weightSum[N - 1];
                 int r;
-                for (r = 0; r < N; r++) {
-                    if (weightSum[r] > ran) break;
-                }
+                for (r = 0; r < N; r++) if (weightSum[r] > ran) break;
                 tmp[r].insert(ic);
                 tmpNDeal[r]--;
             }
@@ -227,9 +225,8 @@ namespace UECda {
             ana.end(2);
         }
         
-        template <class sharedData_t, class threadTools_t>
-        void dealWithRejection(Cards *const dst, const sharedData_t& shared,
-                                threadTools_t *const ptools) {
+        void dealWithRejection(Cards *const dst, const EngineSharedData& shared,
+                               EngineThreadTools *const ptools) {
             // 採択棄却法メイン
             // 設定されたレートの分、カード配置を作成し、手札親和度最大のものを選ぶ
             assert(HARate >= 1 && HARate < 64);
@@ -241,7 +238,7 @@ namespace UECda {
                     // 失敗報告。ただし、カードの分配自体は出来ているので問題ない。
                     ana.addFailure(3);
                     // 失敗の回数が一定値を超えた場合には逆関数法に移行
-                    if (++failures > 1) flag.set(1);
+                    if (++failures > 1) failed = true;
                 }
             } else {
                 // 進行得点を調べる
@@ -260,7 +257,7 @@ namespace UECda {
                         ++failures;
                         if (failures > 1) {
                             // 失敗の回数が一定値を超えたので、以降は逆関数法に移行
-                            flag.set(1);
+                            failed = true;
                         }
                     }
                     // 配ってみた手札の尤度を計算する
@@ -299,8 +296,7 @@ namespace UECda {
             NDeal.clear();
             infoClassPlayer.clear();
             infoClass.clear();
-            
-            flag.reset();
+            failed = false;
         }
         
         template <class field_t>
@@ -314,18 +310,17 @@ namespace UECda {
             myDealtCards = field.getDealtCards(myNum);
             remCards = field.getRemCards();
             
-            phase = field.phase;
+            inChange = field.isInChange();
+            initGame = field.isInitGame();
             
-            if (phase.isInitGame()) {
+            if (initGame) {
                 myClass = myNum; // このときだけ、ランクの情報がプレーヤー番号そのまま
-                flag.set(0);
-                
                 for (int p = 0; p < N; p++) {
                     infoClassPlayer.assign(p, p);
                     infoClass.assign(p, p);
                     
-                    uint32_t org = field.getNCards(p) + countCards(field.getUsedCards(p));
-                    uint32_t own = field.getNCards(p);
+                    int org = field.getNCards(p) + countCards(field.getUsedCards(p));
+                    int own = field.getNCards(p);
                     
                     // 交換が無いので枚数調整無し
                     NOwn.assign(p, own);
@@ -333,7 +328,7 @@ namespace UECda {
                     NDet.assign(p, org - own);
                     detCards[p] |= field.getUsedCards(p); // 既に使用されたカードは確定
                 }
-                firstTurnPlayerClass = field.getFirstTurnPlayer();
+                firstTurnClass = field.firstTurn();
             } else {
                 myClass = field.getPlayerClass(myNum);
                 
@@ -347,12 +342,10 @@ namespace UECda {
                     uint32_t own = field.getNCards(p);
                     
                     // 交換中は枚数調整
-                    if (phase.isInChange()) {
+                    if (inChange) {
                         if (p == myNum) {
                             // 自分の枚数を増やす
                             uint32_t nch = N_CHANGE_CARDS(r);
-                            //org += nch;
-                            //own += nch;
                         } else if (r == getChangePartnerClass(myClass)) { // 自分の交換相手のカードの枚数は引いておく
                             uint32_t nch = N_CHANGE_CARDS(r);
                             org -= nch;
@@ -366,20 +359,20 @@ namespace UECda {
                     detCards[r] |= field.getUsedCards(p); // 既に使用されたカードは確定
                 }
                 // 交換中でなく、カード交換に関与した場合
-                if (!phase.isInChange() && myClass != MIDDLE) {
+                if (!inChange && myClass != MIDDLE) {
                     sentCards = field.getSentCards(myNum);
                     recvCards = field.getRecvCards(myNum);
                     
                     assert((int)countCards(sentCards) == N_CHANGE_CARDS(myClass));
                     if (myClass > MIDDLE) assert((int)countCards(recvCards) == N_CHANGE_CARDS(myClass));
                 }
-                firstTurnPlayerClass = field.getPlayerClass(field.getFirstTurnPlayer());
+                firstTurnClass = field.getPlayerClass(field.firstTurn());
             }
             
             NDeal = NOwn;
             
             // サブ情報
-            turnNum = field.getTurnNum();
+            turnCount = field.turnCount();
             
             // すでに分かっている情報から確実な部分を分配
             dealPart_AbsSbjInfo();
@@ -387,9 +380,7 @@ namespace UECda {
             // 各メソッドの使用可、不可を設定
             if (checkCompWithRejection()) { // 採択棄却法使用OK
                 if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-            } else {
-                flag.set(1);
-            }
+            } else failed = true;
         }
         
     private:
@@ -407,15 +398,15 @@ namespace UECda {
         Cards distCards; // まだ特定されていないカード
         
         int myNum, myClass;
-        int myChangePartner, firstTurnPlayerClass;
+        int myChangePartner, firstTurnClass;
         
         Cards myCards;
         Cards myDealtCards; // 配布時
         Cards recvCards, sentCards;
         
-        GamePhase phase;
-        
-        BitSet32 flag;
+        bool inChange;
+        bool initGame;
+        bool failed;
         uint32_t failures;
         
         // 採択棄却法時の棄却回数限度
@@ -428,7 +419,7 @@ namespace UECda {
         Cards distCardsOverInWA[16];
         
         // 進行得点関連
-        int turnNum;
+        int turnCount;
         static constexpr uint32_t HARATE_MAX = 32;
         uint32_t HARate;
         
@@ -451,7 +442,7 @@ namespace UECda {
             // 採択棄却法使用可能性
             // 数値は経験的に決定している
             int comp = 1;
-            if (!flag.test(0)) {
+            if (!initGame) {
                 switch (myClass) {
                     case DAIFUGO:
                         if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) comp = 0;
@@ -482,14 +473,14 @@ namespace UECda {
             assert(NDistCards == NDeal.sum());
             auto *const pdice = &ptools->dice;
             
-            if (flag.test(0)) {
+            if (initGame) {
                 // 初期化ゲームではとりあえずランダム
                 BitCards tmp[N] = {0};
                 dist64<N>(tmp, distCards, NDeal, pdice);
                 for (auto p = 0; p < N; p++) dst[p] = remCards & (detCards[p] | tmp[p]);
                 return 0;
             }
-            if (flag.test(1)) {
+            if (failed) {
                 // 計算量が多くなるので逆関数法にする
                 dealWithBias(dst, pdice);
                 return 0;
@@ -770,7 +761,7 @@ namespace UECda {
             return 0;
         }
         
-        /*template<class sharedData_t, class threadTools_t>
+        /*template <class sharedData_t, class threadTools_t>
             int dealWithLikelifood(Cards *const dst, const sharedData_t& shared,
             threadTools_t *const ptools) {
             // 尤度計算
@@ -828,7 +819,7 @@ namespace UECda {
                 Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
                 int index = 0;
                 while (tmp) {
-                    const IntCard ic = popIntCardLow(&tmp);
+                    const IntCard ic = tmp.popLowest();
                     // ic が献上によって得られたカードの下界だった場合のパターン数を計算
                     const Cards c = IntCardToCards(ic);
                     const Cards lowerDist = pickLower(c) & distCards;
@@ -894,18 +885,18 @@ namespace UECda {
             NDet.assign_part(myClass, NOrg);
             
             // 初手がすでに済んでいる場合、初手プレーヤーにD3
-            if (!phase.isInChange()
-                && turnNum > 0
+            if (!inChange
+                && turnCount > 0
                 && distCards.contains(INTCARD_D3)) {
-                detCards[firstTurnPlayerClass] |= CARDS_D3;
+                detCards[firstTurnClass] |= CARDS_D3;
                 distCards -= CARDS_D3;
-                NDeal.minus(firstTurnPlayerClass, 1);
-                NDet.plus(firstTurnPlayerClass, 1);
+                NDeal.minus(firstTurnClass, 1);
+                NDet.plus(firstTurnClass, 1);
             }
-            if (!flag.test(0) && !phase.isInChange()) {
+            if (!initGame && !inChange) {
                 if (myClass < MIDDLE) { // 自分が上位のとき
                     // 交換であげたカードのうちまだ確定扱いでないもの
-                    if (!phase.isInChange()) { // 交換時はまだ不明
+                    if (!inChange) { // 交換時はまだ不明
                         Cards sCards = distCards & sentCards;
                         if (sCards) {
                             int nc = countCards(sCards);
@@ -926,7 +917,7 @@ namespace UECda {
             ASSERT(NDistCards == NDeal.sum(), cerr << NDistCards << " " << NDeal << " " << NDeal.sum() << endl;);
             
             // 初手がすでに済んでいる段階では、自分と、自分以外で全てのカードが明らかになっていないプレーヤーは着手を検討する必要がある
-            if (!phase.isInChange() && turnNum > 0) {
+            if (!inChange && turnCount > 0) {
                 // HA設定
                 uint32_t NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
                 // 1 -> ... -> max -> ... -> 1 と台形に変化
@@ -965,7 +956,7 @@ namespace UECda {
             for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
             
             Field field;
-            const auto& gLog = shared.matchLog.latestGame();
+            const auto& gLog = shared.record.latestGame();
             iterateGameLogInGame
             (field, gLog, gLog.plays(), orgCards,
                 // after change callback
@@ -973,7 +964,7 @@ namespace UECda {
                 // play callback
                 [&pwFlag, &playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
                 (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
-                    const uint32_t tp = field.getTurnPlayer();
+                    const uint32_t tp = field.turn();
                     
                     const Cards usedCards = chosenMove.cards();
                     const Board bd = field.getBoard();

@@ -495,7 +495,7 @@ namespace UECda {
                 } break;
                 default: UNREACHABLE; break;
             }
-            maskCards(&x, Rank4xToCards(r4x));
+            x = maskCards(x, Rank4xToCards(r4x));
         }
         mv += genAllSeq(mv, c); // 階段を生成
         return mv - mv0;
@@ -1086,7 +1086,7 @@ mv->setGroup(q, r, s);op;mv++;}
 
     std::vector<MoveInfo> genMove(const Field& field) {
         std::vector<MoveInfo> moves(N_MAX_MOVES);
-        int numMoves = genMove(moves.data(), field.hand[field.getTurnPlayer()], field.getBoard());
+        int numMoves = genMove(moves.data(), field.hand[field.turn()], field.getBoard());
         moves.resize(numMoves);
         return moves;
     }

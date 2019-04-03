@@ -105,7 +105,7 @@ namespace UECda {
             return 0;
         }
         
-        template<int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
+        template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnPlayParamsGame(const gameLog_t& gLog,
                                 const BitSet32 flags,
                                 learningSpace_t *const plearningSpace,
@@ -122,7 +122,7 @@ namespace UECda {
                     
                     if (field.isEndGame()) { return -1; }
                     
-                    const uint32_t tp = field.getTurnPlayer();
+                    const uint32_t tp = field.turn();
                     const Hand& myHand = field.getHand(tp);
                     const Hand& opsHand = field.getOpsHand(tp);
                     const Board bd = field.getBoard();
@@ -201,7 +201,7 @@ namespace UECda {
             return 0;
         }
         
-        template<class matchLog_t, class learningSpace_t, class threadTools_t>
+        template <class matchLog_t, class learningSpace_t, class threadTools_t>
         int learnPlayParamsMatch(const matchLog_t& mLog,
                                     const BitSet32 flags,
                                     learningSpace_t *const plearningSpace,
@@ -222,7 +222,7 @@ namespace UECda {
             return 0;
         }
         
-        template<int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
+        template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnParamsGame(const gameLog_t& gLog,
                             const BitSet32 flags,
                             learningSpace_t *const plearningSpace,

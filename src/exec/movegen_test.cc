@@ -61,7 +61,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
         if (!isSubjectivelyValid(field.getBoard(), tmp->mv(), c,
                                  field.getNCards(field.turn()))) {
             // 主観的合法性違反
-            cerr << "invalid move" << c << "(" << field.getNCards(field.getTurnPlayer()) << ")";
+            cerr << "invalid move" << c << "(" << field.getNCards(field.turn()) << ")";
             cerr << " -> " << *tmp << " on " << field.getBoard() << endl;
             return -1;
         }
@@ -82,51 +82,51 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     
 }
 
-int testRecordMoves(const std::vector<std::string>& logs) {
+int testRecordMoves(const Record& record) {
     // 棋譜中の局面においてテスト
-    MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 256> mLogs(logs);
-    
     uint64_t genTime[2] = {0};
     uint64_t genCount[2] = {0};
     uint64_t genHolded[2] = {0};
     Field field;
     
     // プリミティブ型での着手生成
-    if (iterateGameLogAfterChange
-       (field, mLogs,
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
-            int turnPlayer = field.getTurnPlayer();
-            Cards cards = field.getCards(turnPlayer);
-            Board bd = field.getBoard();
-            
-            // Cards 型で生成
-            cl.start();
-            int moves = mgCards.genMove(buffer, cards, bd);
-            genTime[0] += cl.stop();
-            genCount[0] += 1;
-            
-            // 重大な問題がないかチェック
-            if (testMoveValidity(buffer, moves, field)) {
-                return -4;
-            }
-            
-            // 棋譜の着手が生成されているかチェック
-            if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
-                cerr << "ungenerated record move " << move;
-                cerr << " " << std::hex << move.meldPart() << std::dec;
-                cerr << " by " << cards << " on " << bd << endl;
-            } else {
-                genHolded[0] += 1;
-            }
-            
-            return 0;
-        },
-        [&](const auto& field) {} // last callback
-        )) {
-           cerr << "failed move generation by Cards." << endl;
-           return -1;
-       }
+    for (int i = 0; i < record.games(); i++) {
+        if (iterateGameLogAfterChange
+        (field, record.game(i),
+            [&](const auto& field) {}, // first callback
+            [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+                int turnPlayer = field.turn();
+                Cards cards = field.getCards(turnPlayer);
+                Board bd = field.getBoard();
+                
+                // Cards 型で生成
+                cl.start();
+                int moves = mgCards.genMove(buffer, cards, bd);
+                genTime[0] += cl.stop();
+                genCount[0] += 1;
+                
+                // 重大な問題がないかチェック
+                if (testMoveValidity(buffer, moves, field)) {
+                    return -4;
+                }
+                
+                // 棋譜の着手が生成されているかチェック
+                if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
+                    cerr << "ungenerated record move " << move;
+                    cerr << " " << std::hex << move.meldPart() << std::dec;
+                    cerr << " by " << cards << " on " << bd << endl;
+                } else {
+                    genHolded[0] += 1;
+                }
+                
+                return 0;
+            },
+            [&](const auto& field) {} // last callback
+            )) {
+            cerr << "failed move generation by Cards." << endl;
+            return -1;
+        }
+    }
     cerr << "generation rate (cards) = " << genHolded[0] / (double)genCount[0] << endl;
     cerr << "generation time (cards) = " << genTime[0] / (double)genCount[0] << endl;
     return 0;
@@ -148,6 +148,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     cerr << "passed case test." << endl;
+    Record record(logFileNames);
     if (testRecordMoves(logFileNames)) {
         cerr << "failed record moves generation test." << endl;
         return -1;

@@ -57,7 +57,7 @@ namespace UECda{
     class WDIDSpace : public WDI::DSpace{
         // UECdaルールに合ったWDI通信用セット
     private:
-        template<class t0, class t1>
+        template <class t0, class t1>
         struct BiMap{
             std::map<t0, t1> left;
             std::map<t1, t0> right;

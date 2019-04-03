@@ -114,7 +114,7 @@ void calcDaifugoSeatValue(const double transProbMatrix[N_PLAYERS][N_PLAYERS][N_P
     }
 }
 
-template<int M = N_PLAYERS, int N = N_PLAYERS>
+template <int M = N_PLAYERS, int N = N_PLAYERS>
 std::string toMatString(const double mat[M][N], const std::string& name) {
     std::ostringstream oss;
     oss << " " << name << " = {" << endl;
