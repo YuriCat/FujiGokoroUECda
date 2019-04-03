@@ -8,11 +8,12 @@
 // シングルの時は関数として呼ぶ
 
 namespace UECda {
+
     void MonteCarloThread
     (const int threadId, RootInfo *const proot,
-        const Field *const pfield,
-        EngineSharedData *const pshared,
-        EngineThreadTools *const ptools) {
+    const Field *const pfield,
+    EngineSharedData *const pshared,
+    EngineThreadTools *const ptools) {
         
         constexpr uint32_t MINNEC_N_TRIALS = 4; // 全体での最小限のトライ数。UCB-Rootにしたので実質不要になった
         
@@ -29,15 +30,13 @@ namespace UECda {
         const int candidates = proot->candidates; // 候補数
         auto& child = proot->child;
         
-        int threadNTrials[256]; // 当スレッドでのトライ数(候補ごと)
+        int threadNTrials[256] = {0};
         int threadNTrialsSum = 0; // 当スレッドでのトライ数(合計)
-        
-        for (int c = 0; c < candidates; ++c)threadNTrials[c] = 0;
         
         int threadMaxNTrials = 0; // 当スレッドで現時点で最大のトライ数
         
         int threadNWorlds = 0; // 当スレッドが作成し使用している世界の数
-        const int threadMaxNWorlds = gal.size();//( gal->size() / N_THREADS ); // 当スレッドに与えられている世界作成スペースの数
+        const int threadMaxNWorlds = gal.size(); // 当スレッドに与えられている世界作成スペースの数
         
         assert(threadMaxNWorlds > 0);
         
@@ -61,7 +60,7 @@ namespace UECda {
         // 諸々の準備が終わったので時間計測開始
         clock.start();
         
-        while(!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
+        while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
             
             world_t *pWorld = nullptr;
             
@@ -69,11 +68,8 @@ namespace UECda {
             int tryingIndex = -1;
             if (candidates == 2) {
                 // 2つの時は同数(分布サイズ単位)に割り振る
-                if (child[0].size() == child[1].size())
-                    tryingIndex = dice.rand() % 2;
-                else
-                    tryingIndex = child[0].size() < child[1].size()
-                    ? 0 : 1;
+                if (child[0].size() == child[1].size()) tryingIndex = dice.rand() % 2;
+                else tryingIndex = child[0].size() < child[1].size() ? 0 : 1;
             } else {
                 // UCB-root アルゴリズムに変更
                 double bestScore = -DBL_MAX;

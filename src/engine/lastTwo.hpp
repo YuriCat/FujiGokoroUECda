@@ -51,17 +51,17 @@ namespace UECda {
 #ifdef DEBUG
         int p; // プレーヤー確認用
 #endif
-        bool isNF()const noexcept{ return bd.isNF();}
-        Board getBoard()const noexcept{ return bd;}
+        bool isNF() const noexcept{ return bd.isNF();}
+        Board getBoard() const noexcept{ return bd;}
         
-        uint32_t tmpOrder()const noexcept{ return bd.tmpOrder(); }
+        uint32_t tmpOrder() const noexcept{ return bd.tmpOrder(); }
         
-        uint64_t isLastAwake()const noexcept{ return fInfo.isLastAwake(); }
-        uint64_t isFlushLead()const noexcept{ return fInfo.isFlushLead(); }
-        uint64_t isUnrivaled()const noexcept{ return fInfo.isUnrivaled(); }
+        uint64_t isLastAwake() const noexcept{ return fInfo.isLastAwake(); }
+        uint64_t isFlushLead() const noexcept{ return fInfo.isFlushLead(); }
+        uint64_t isUnrivaled() const noexcept{ return fInfo.isUnrivaled(); }
         
-        uint64_t isTmpOrderSettled()const noexcept{ return fInfo.isTmpOrderSettled(); }
-        uint64_t isDConst()const noexcept{ return fInfo.isDConst(); }
+        uint64_t isTmpOrderSettled() const noexcept{ return fInfo.isTmpOrderSettled(); }
+        uint64_t isDConst() const noexcept{ return fInfo.isDConst(); }
         
         void setSelfFollow()noexcept{ fInfo.setSelfFollow(); }
         void setLastAwake()noexcept{ fInfo.setLastAwake(); }
@@ -69,7 +69,7 @@ namespace UECda {
         
         void setDConst()noexcept{ fInfo.setDConst();}
         
-        int getTurnPlayer()const noexcept{
+        int getTurnPlayer() const noexcept{
 #ifdef DEBUG
             return p;
 #else

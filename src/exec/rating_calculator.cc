@@ -23,7 +23,7 @@ struct RatingSurvey {
     std::map<std::string, double> playerRateExpMean;
     static constexpr double rateEpsilon = 0.99;
     
-    std::vector<double> toMeanVector()const{
+    std::vector<double> toMeanVector() const {
         std::vector<double> v;
         for (auto& p : playerRateMean) {
             v.push_back(p.second);
@@ -31,7 +31,7 @@ struct RatingSurvey {
         return v;
     }
     
-    std::string toString()const{
+    std::string toString() const {
         std::ostringstream oss;
         std::vector<std::pair<std::string, double>> v;
         for (auto& p : playerRateMean) {
@@ -216,7 +216,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
             absoluteResults[index] = result.absoluteWins;
         });
         int gameCount = 0;
-        while(gameCount < games) {
+        while (gameCount < games) {
             iterateGameRandomlyWithIndex(mLogs, 0, mLogs.games(),
                                          [&survey, &relativeResults, &absoluteResults, &gameCount, games, coef, absolute](int index, const auto& gLog, const auto& mLog)->void{
                                              if (gameCount < games) {
@@ -231,7 +231,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
         }
     } else { // 使用する試合数が全試合数に満たない場合
         int gameCount = 0;
-        while(gameCount < games) {
+        while (gameCount < games) {
             iterateGameRandomly(mLogs, 0, mLogs.games(),
                                 [&survey, &gameCount, games, simulations, coef, absolute](const auto& gLog, const auto& mLog)->void{
                                     if (gameCount < games) {

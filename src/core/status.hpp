@@ -77,7 +77,7 @@ namespace UECda{
         cerr << "  Players awake : " << getNAwakePlayers() << endl;
     }
     
-    void broadcastBP()const{ // プレー前実況
+    void broadcastBP() const { // プレー前実況
         cerr << "********** Before Play **********";
         cerr << "<Game> " << getGameNum() << " <Turn> " << getTurnNum();
         cerr <<  "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
@@ -86,7 +86,7 @@ namespace UECda{
         broadcastPlayerState();
     }
     
-    void broadcastAP()const{ // プレー後実況
+    void broadcastAP() const { // プレー後実況
         cerr << "********** After Play **********";
         cerr << "<Game> " << getGameNum() << " <Turn> " << getTurnNum();
         cerr << "  TurnPlayer : " << getTurnPlayer() << "  Owner : " << getPMOwner() << endl;
@@ -95,7 +95,7 @@ namespace UECda{
         broadcastPlayerState();
     }
     
-    void broadcastPlay(uint32_t p, Move move)const{ // プレー実況
+    void broadcastPlay(uint32_t p, Move move) const { // プレー実況
         cerr << "[PLAY] ";
         if (p == getMyPlayerNum()) {
             cerr << "MY PLAY  ";
@@ -117,11 +117,11 @@ namespace UECda{
         cerr << endl;
     }
     
-    void broadcastMyChange(Cards cards)const{ // 自分のプレー決定実況
+    void broadcastMyChange(Cards cards) const { // 自分のプレー決定実況
         cerr << "My decided change : " << cards << endl;
     }
     
-    void broadcastMyPlay(Move move)const{ // 自分のプレー決定実況
+    void broadcastMyPlay(Move move) const { // 自分のプレー決定実況
         cerr << "My decided move : ";
         cerr << move;
         //決定手が決まっている場合はそれも表示

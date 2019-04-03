@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) { // for UECda
     clearAll(send_table);
     
     // 試合フェーズ
-    while(1) {
+    while (1) {
         // 各試合前の初期化
         client.initGame();
         
@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) { // for UECda
         // ただし全員パスによる流れは更新しておいた方が良いようだ
         
         bool firstTurn = true;
-        while(1) { // ターンループ
+        while (1) { // ターンループ
             clms.start(); // ここで時間計測開始
             // javaサーバーでは、ここで時間計測を初めても自分以外ほぼ0になってしまう。解決策は不明...
             

@@ -16,13 +16,13 @@ struct ThreadTools{
     // シミュレーション用局面情報の主観化
     int myPlayerNum;
     
-    int getMyPlayerNum()const noexcept{ return myPlayerNum; }
-    Cards getMyCards()const{ return getCards(getMyPlayerNum()); }
-    const Hand& myHand()const{ return getHand(getMyPlayerNum()); }
-    Cards getOpsCards()const{ return getOpsCards(getMyPlayerNum()); }
-    const Hand& getOpsHand()const{ return getOpsHand(getMyPlayerNum()); }
-    Cards getSentCards()const{ return getSentCards(getMyPlayerNum()); }
-    Cards getRecvCards()const{ return getRecvCards(getRecvCards()); }
+    int getMyPlayerNum() const noexcept{ return myPlayerNum; }
+    Cards getMyCards() const { return getCards(getMyPlayerNum()); }
+    const Hand& myHand() const { return getHand(getMyPlayerNum()); }
+    Cards getOpsCards() const { return getOpsCards(getMyPlayerNum()); }
+    const Hand& getOpsHand() const { return getOpsHand(getMyPlayerNum()); }
+    Cards getSentCards() const { return getSentCards(getMyPlayerNum()); }
+    Cards getRecvCards() const { return getRecvCards(getRecvCards()); }
     
     SubjectivePlayouterField(const PlayouterField& objField, consy int ap):
     PlayouterField(objField), myPlayerNum(ap) {}

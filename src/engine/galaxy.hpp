@@ -33,7 +33,7 @@ namespace UECda{
             close();
         }
         
-        int size()const{return SIZE;}
+        int size() const {return SIZE;}
         
         void clear() {
             for (int w = 0; w < SIZE; ++w) {

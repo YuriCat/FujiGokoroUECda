@@ -135,12 +135,12 @@ namespace UECda {
             cerr << "play rejection by server : " << SharedData::playRejection << endl;
             cerr << "L2 result : " << endl;
             for (auto& a : myL2Result) {
-                for (auto i : a)cerr << i << " ";
+                for (auto i : a) cerr << i << " ";
                 cerr << endl;
             }
             cerr << "mate result : " << endl;
             for (auto& a : myMateResult) {
-                for (auto i : a)cerr << i << " ";
+                for (auto i : a) cerr << i << " ";
                 cerr << endl;
             }cerr << endl;
 
@@ -171,11 +171,11 @@ namespace UECda {
         std::array<std::array<int64_t, N_CLASSES>, N_PLAYERS> classDistribution;
         uint64_t turnSum;
         
-        double mean()const{ return monteCarloScore.mean(); }
-        double size()const{ return monteCarloScore.size(); }
-        double mean_var()const{ return monteCarloScore.var(); }
-        double var()const{ return monteCarloScore.var() * size(); }
-        double naive_mean()const{ return naiveScore.mean(); }
+        double mean() const { return monteCarloScore.mean(); }
+        double size() const { return monteCarloScore.size(); }
+        double mean_var() const { return monteCarloScore.var(); }
+        double var() const { return monteCarloScore.var() * size(); }
+        double naive_mean() const { return naiveScore.mean(); }
         
         void setChange(Cards cc) {
             clear();
@@ -203,7 +203,7 @@ namespace UECda {
             pruned = false;
         }
         
-        std::string toString()const{
+        std::string toString() const {
             std::ostringstream oss;
             oss << "size = " << size();
             oss << " mean = " << mean();
@@ -237,8 +237,8 @@ namespace UECda {
         void lock() { lock_.lock(); }
         void unlock() { lock_.unlock(); }
 #else
-        void lock()const {}
-        void unlock()const {}
+        void lock() const {}
+        void unlock() const {}
 #endif
         template <class field_t, class shared_t>
         void setCommonInfo(int num, const field_t& field, const shared_t& shared, int limSim) {

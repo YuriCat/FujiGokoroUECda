@@ -55,7 +55,7 @@ namespace UECda {
     uint64_t CardsToHashKey(Cards c) {
         // Cards型一般
         uint64_t key = HASH_CARDS_NULL;
-        while(anyCards(c)) {
+        while (anyCards(c)) {
             key ^= IntCardToHashKey(popIntCardLow(&c));
         }
         return key;
@@ -64,7 +64,7 @@ namespace UECda {
     uint64_t OtherCardsToHashKey(Cards c) {
         // Cards型、全体から引いたもの
         uint64_t key = HASH_CARDS_ALL;
-        while(anyCards(c)) {
+        while (anyCards(c)) {
             key ^= IntCardToHashKey(popIntCardLow(&c));
         }
         return key;

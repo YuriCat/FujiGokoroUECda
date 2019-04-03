@@ -256,7 +256,7 @@ void checkArg(int argc,char* argv[]) {
     const char Option[]="[-h server_adress] [-p port] [-n user_name]";
     int        arg_count=1;
     
-    while(arg_count<argc) {
+    while (arg_count<argc) {
         if ( strcmp(argv[arg_count],"--help")==0) {
             printf("usage : %s %s\n",argv[0],Option);
             exit(0);

@@ -221,7 +221,7 @@ namespace UECda{
 			}
 			if (f.bd.isNF()) { return -1; } // 空場からの全員パスは考慮しない
 			uint32_t tp = f.getTurnPlayer();
-			while(tp != f.getMyPlayerNum()) {
+			while (tp != f.getMyPlayerNum()) {
 				
 #ifdef LOGGING
 				//game_log.thisGameLog->setBeforePlay(f);

@@ -241,7 +241,7 @@ namespace UECda {
         // それ以外の役
         Cards charaCards = m.charaCards();
         Cards usedCards = m.cards();
-        while(anyCards(charaCards)) {
+        while (anyCards(charaCards)) {
             IntCard ic = popIntCardLow(&charaCards);
             int h = IntCardToH(ic);
             int w = IntCardToW(ic);

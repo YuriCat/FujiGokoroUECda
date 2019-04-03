@@ -454,9 +454,9 @@ namespace UECda {
         constexpr MinChangeLog(const uint32_t afrom, const uint32_t ato, const Cards ac):
         from_(afrom), to_(ato), c_(ac) {}
         
-        uint32_t from()const { return from_; }
-        uint32_t to()const { return to_; }
-        Cards cards()const { return c_; }
+        uint32_t from() const { return from_; }
+        uint32_t to() const { return to_; }
+        Cards cards() const { return c_; }
         
     protected:
         uint32_t from_, to_; Cards c_;
@@ -478,8 +478,8 @@ namespace UECda {
             infoNewClass.clear();
             infoPosition.clear();
         }
-        int plays()const { return plays_; }
-        int changes()const { return changes_; }
+        int plays() const { return plays_; }
+        int changes() const { return changes_; }
         
         const playLog_t& play(int t) const { return play_[t]; }
         const changeLog_t& change(int c) const { return change_[c]; }
@@ -662,7 +662,7 @@ namespace UECda {
     public:
         using gameLog_t = _gameLog_t;
         
-        int games()const { return game_.size(); }
+        int games() const { return game_.size(); }
         
         const std::string& player(int p) const { return player_[p]; }
         const std::string& fileName() const { return fileName_; }
@@ -799,8 +799,8 @@ namespace UECda {
             if (list != nullptr) { free(list); list = nullptr; }
         }
         
-        int matches()const { return matches_; }
-        int games()const { return games_sum_[matches_]; }
+        int matches() const { return matches_; }
+        int games() const { return games_sum_[matches_]; }
         
         void initRandomList() {
             if (list != nullptr) free(list);

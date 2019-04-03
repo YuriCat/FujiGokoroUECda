@@ -192,10 +192,10 @@ int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int re
     
     
     j=-1; // search minimum value of cards
-    while((j==-1)||(player_card[i][j]==0 && j<=14)) {
+    while ((j==-1)||(player_card[i][j]==0 && j<=14)) {
         i=0;
         j=j+1;
-        while(player_card[i][j]==0 && i<=3) {
+        while (player_card[i][j]==0 && i<=3) {
             //printf("%i %i %i \n", i,j,player_card[i][j]);
             i++;
         }
@@ -218,7 +218,7 @@ int analyze_card(int player_card[8][15], int status_of_submitted_card[4], int re
     if (j!=14 && player_card[i][j+1]!=0) { // kaidan haitei
         status_of_submitted_card[2]=0x0001<<i;
         status_of_submitted_card[1]=1;
-        while(j<=14 && player_card[i][j++]!=0) {
+        while (j<=14 && player_card[i][j++]!=0) {
             status_of_submitted_card[1]++;
         }
         status_of_submitted_card[1]--;
@@ -446,7 +446,7 @@ int search_strong_card(int player_card[8][15], int strong_card[8][15], int numbe
     
     i=0; //suit
     j=14;
-    while(k<number_of_card) {
+    while (k<number_of_card) {
         if (player_card[i][j]) {
             k++;
             strong_card[i][j]=1;
@@ -489,7 +489,7 @@ int trans_strong_card(int source_card[8][15], int target_card[8][15], int number
     
     i=0; //suit
     j=14;
-    while(k<number_of_card) {
+    while (k<number_of_card) {
         if (source_card[i][j]) {
             k++;
             source_card[i][j]=0;
@@ -584,7 +584,7 @@ void tn_sekigae(int now_number_of_games, int sekijun[N_PLAYERS], int RULE_SEKIGA
                 for (i=0;i<N_PLAYERS;i++) {
                     tmp_seki[i][0]=i;
                     flag=0;
-                    while(flag==0) {
+                    while (flag==0) {
                         flag=1;
                         tmp_seki[i][1]=tn_rand_gen(RAND_TYPE);
                         for (j=0;j<i;j++) {
@@ -610,7 +610,7 @@ int get_seat(int sekijun[N_PLAYERS], int now_player) {
     int i;
     
     i=0;
-    while(sekijun[i]!=now_player) {
+    while (sekijun[i]!=now_player) {
         i++;
     }
     return i;

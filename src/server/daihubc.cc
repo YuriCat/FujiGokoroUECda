@@ -726,7 +726,7 @@ int main(int argc, char *argv[]) {
         // player statistics
         count_turn = 0;
         
-        while(now_number_of_goal<=N_PLAYERS - 2) {
+        while (now_number_of_goal<=N_PLAYERS - 2) {
             
             //convert status to table
             work_card[5][0] = 0;
@@ -939,7 +939,7 @@ int main(int argc, char *argv[]) {
                 if (i==8) {//illegal move
                     mv=MOVE_PASS;
                 }
-                j=0; while(j<=0) {
+                j=0; while (j<=0) {
                     j=tn_int_write(client_sockfd[now_player],i,protocol_version);
                     if (debug) {printf("ack roop %i\n",j);}
                 };
@@ -950,7 +950,7 @@ int main(int argc, char *argv[]) {
                 if (debug) {printf("OK 03\n");}
                 memcpy(status_of_stages_card,status_of_submitted_card,sizeof(status_of_submitted_card));
                 i=9;
-                j=0;while(j<=0) {j=tn_int_write(client_sockfd[now_player],i,protocol_version);if (debug) {printf("ack roop %i",j);}};
+                j=0;while (j<=0) {j=tn_int_write(client_sockfd[now_player],i,protocol_version);if (debug) {printf("ack roop %i",j);}};
                 if (debug) {printf("ack to player %i -- number %i\n",now_player,i);} //DEBUG
                 memcpy(old_stage_card,stage_card,sizeof(work_card));
                 memcpy(stage_card,work_card,sizeof(work_card));
@@ -1256,11 +1256,11 @@ int main(int argc, char *argv[]) {
                 
                 if (debug) {printf("renzoku pass \n");}
                 // srand((unsigned)time(NULL));	
-                while(now_number_of_goal<=N_PLAYERS - 2) {
+                while (now_number_of_goal<=N_PLAYERS - 2) {
                     j=(int)(tn_rand_gen(RAND_TYPE)*(N_PLAYERS-now_number_of_goal)+1);
                     i=0;
                     k=0;
-                    while(i<j) {
+                    while (i<j) {
                         k++;
                         if (goal_flag[k-1]==0) {
                             i++;
@@ -1300,7 +1300,7 @@ int main(int argc, char *argv[]) {
                 memset(stage_card,0,sizeof(stage_card));
                 
                 count_card_num(players_card[now_player], &number_of_card);
-                while(number_of_card==0) {
+                while (number_of_card==0) {
                     if (debug) {printf("now_player search %i \n",now_player);} //DEBUG
                     i=get_seat(sekijun,now_player);
                     now_player=sekijun[(i+now_muki)%N_PLAYERS];
@@ -1314,7 +1314,7 @@ int main(int argc, char *argv[]) {
                 now_player=sekijun[(i+now_muki)%N_PLAYERS];
                 
                 count_card_num(players_card[now_player], &number_of_card);
-                while(((number_of_card==0)||(now_pass[now_player]==1))) {
+                while (((number_of_card==0)||(now_pass[now_player]==1))) {
                     if (debug) {printf("now_player search %i \n",now_player);} //DEBUG
                     i=get_seat(sekijun,now_player);
                     now_player=sekijun[(i+now_muki)%N_PLAYERS];

@@ -41,7 +41,7 @@ namespace UECda{
         Cards c = ac;
         std::string str = "";
         if (anyCards(c)) {
-            while(1) {
+            while (1) {
                 IntCard ic = popIntCardLow(&c);
                 std::string tstr;
                 if (convIntCard_WDIString(ic, &tstr) != 0) { return -1; }
@@ -115,7 +115,7 @@ namespace UECda{
             Cards c = ac;
             std::string str = "";
             if (anyCards(c)) {
-                while(1) {
+                while (1) {
                     IntCard ic = popIntCardLow(&c);
                     std::string tstr;
                     if (convIntCard_WDIString(ic, &tstr) != 0) { return -1; }

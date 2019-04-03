@@ -75,7 +75,7 @@ namespace UECda {
                 cerr << i << " : " << cand[i] << endl;
             }
             int chosen = -1;
-            while(1) {
+            while (1) {
                 std::cin >> chosen;
                 if (0 <= chosen && chosen < NCands) { break; }
             }
@@ -96,7 +96,7 @@ namespace UECda {
             }
             
             int chosen = -1;
-            while(1) {
+            while (1) {
                 std::cin >> chosen;
                 if (0 <= chosen && chosen < NMoves) { break; }
             }

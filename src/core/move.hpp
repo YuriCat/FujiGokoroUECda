@@ -310,7 +310,20 @@ namespace UECda {
             }
             return true;
         }
-    };*/
+    };
+
+    template <typename T>
+    union MoveBase {
+        struct {
+            unsigned s       : 4;
+            signed   r       : 4;
+            unsigned jks     : 4;
+            signed   jkr     : 4;
+            signed   q       : 4;
+            unsigned group   : 1;
+            unsigned sequence: 1;
+            unsigned padding :10;
+        };*/
 
     template <typename T>
     struct MoveBase {
@@ -465,26 +478,6 @@ namespace UECda {
                 }
                 addCards(&res, Rank4xSuitsToCards(r4x, s));
             } else { // 階段
-                /*
-                 uint32_t qty=qty();
-                 res=convRx4S_Cards(r4x,suits);
-                 switch (qty) {
-                 case 0:break;
-                 case 1:break;
-                 case 2:break;
-                 case 3:res=extractRanks<3>(res);break;
-                 case 4:res=extractRanks<4>(res);break;
-                 case 5:res=extractRanks<5>(res);break;
-                 default:res=extractRanks(res,qty);break;
-                 }*/
-                /*uint32_t qty=qty();
-                 res=convRx4S_Cards(r4x,suits);
-                 res=extractRanks<3>(res);
-                 qty-=3;
-                 while (qty) {
-                 res=extractRanks<2>(res);
-                 --qty;
-                 }*/
                 uint32_t q = qty();
                 assert(q >= 3);
                 res = extractRanks<3>(Rank4xSuitsToCards(r4x, s));
@@ -499,20 +492,6 @@ namespace UECda {
                         }
                     }
                 }
-                /*
-                 uint32_t qty=qtyPart();
-                 res=extractRanks<3>(convRx4S_Cards(r4x,suits));
-                 if (qty!=(3<<8)) {
-                 res=extractRanks<2>(res);
-                 if (qty!=(4<<8)) {
-                 res=extractRanks<2>(res);
-                 qty-=(5<<8);
-                 while (qty) {
-                 res=extractRanks<2>(res);
-                 qty-=(1<<8);
-                 }
-                 }
-                 }*/
                 if (containsJOKER()) {
                     res -= Rank4xSuitsToCards(jokerRank4x(), s);
                     res |= CARDS_JOKER;
@@ -520,12 +499,11 @@ namespace UECda {
             }
             return res;
         }
-        
-        template <int IS_PASS = _BOTH>
+
         Cards charaCards() const {
             // 性質カードを返す
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
-            if ((IS_PASS == _YES) || ((IS_PASS != _NO) && isPASS())) return CARDS_NULL;
+            if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
             Cards res = Rank4xSuitsToCards(rank4x(), suits());
             if (isSeq()) {
@@ -572,9 +550,7 @@ namespace UECda {
             int q = qty();
             int r = rank();
             uint32_t s = suits();
-            if (isPASS()) {
-                // TODO: パスの時のチェックがあれば
-            } else {
+            if (!isPASS()) {
                 if (q < 0) return false;
                 if (isSeq()) {
                     if (q < 3) return false;
@@ -587,18 +563,9 @@ namespace UECda {
                 } else if (isSingle()) {
                     if (q != 1) return false;
                     if (countSuits(s) != 1) return false;
-                    if (r == RANK_8) {
-                        if (!domInevitably()) return false;
-                    }
                 } else {
-                    if (isQuintuple()) {
-                    } else {
+                    if (!isQuintuple()) {
                         if (q != countSuits(s)) return false;
-                    }
-                    if (r == RANK_8) {
-                        if (!domInevitably()) return false;
-                    } else {
-                        if (domInevitably()) return false;
                     }
                 }
             }
