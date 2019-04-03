@@ -151,14 +151,12 @@ namespace UECda {
     /**************************ルートの手の情報**************************/
     
     struct RootAction {
-        
         MoveInfo move;
         Cards changeCards;
         bool pruned;
         
         // 方策関数出力
-        double policyScore;
-        double policyProb;
+        double policyScore, policyProb;
         
         // モンテカルロ結果
         BetaDistribution monteCarloScore;
@@ -240,10 +238,9 @@ namespace UECda {
         void lock() const {}
         void unlock() const {}
 #endif
-        template <class field_t, class shared_t>
-        void setCommonInfo(int num, const field_t& field, const shared_t& shared, int limSim) {
+        void setCommonInfo(int num, const Field& field, const EngineSharedData& shared, int limSim) {
             actions = candidates = num;
-            for (int m = 0; m < actions; ++m)
+            for (int m = 0; m < actions; m++)
                 monteCarloAllScore += child[m].monteCarloScore;
             myPlayerNum = shared.matchLog.getMyPlayerNum();
             rivalPlayerNum = -1;
@@ -261,21 +258,16 @@ namespace UECda {
             }
             limitSimulations = (limSim < 0) ? 100000 : limSim;
         }
-        
-        template <class field_t, class shared_t>
         void setChange(const Cards *const a, int num,
-                        const field_t& field, const shared_t& shared, int limSim = -1) {
+                       const Field& field, const EngineSharedData& shared, int limSim = -1) {
             isChange = true;
-            for (int m = 0; m < num; ++m)
-                child[m].setChange(a[m]);
+            for (int m = 0; m < num; m++) child[m].setChange(a[m]);
             setCommonInfo(num, field, shared, limSim);
         }
-        template <class field_t, class shared_t>
         void setPlay(const MoveInfo *const a, int num,
-                        const field_t& field, const shared_t& shared, int limSim = -1) {
+                     const Field& field, const EngineSharedData& shared, int limSim = -1) {
             isChange = false;
-            for (int m = 0; m < num; ++m)
-                child[m].setPlay(a[m]);
+            for (int m = 0; m < num; m++) child[m].setPlay(a[m]);
             setCommonInfo(num, field, shared, limSim);
         }
         
@@ -288,7 +280,7 @@ namespace UECda {
             // 方策関数の出力をモンテカルロ結果の事前分布として加算
             // 0 ~ 1 の値にする
             double maxScore = -DBL_MAX, minScore = DBL_MAX;
-            for (int m = 0; m < candidates; ++m) {
+            for (int m = 0; m < candidates; m++) {
                 maxScore = max(maxScore, child[m].policyScore + 0.000001);
                 minScore = min(minScore, child[m].policyScore);
             }
@@ -298,11 +290,11 @@ namespace UECda {
                 n = Settings::rootChangePriorCoef * pow(double(candidates - 1), Settings::rootChangePriorExponent);
             else
                 n = Settings::rootPlayPriorCoef * pow(double(candidates - 1), Settings::rootPlayPriorExponent);
-            for (int m = 0; m < candidates; ++m) {
+            for (int m = 0; m < candidates; m++) {
                 double r = (child[m].policyScore - minScore) / (maxScore - minScore);
                 child[m].monteCarloScore += BetaDistribution(r, 1 - r) * n;
             }
-            for (int m = 0; m < candidates; ++m)
+            for (int m = 0; m < candidates; m++)
                 monteCarloAllScore += child[m].monteCarloScore;
         }
         
@@ -310,16 +302,15 @@ namespace UECda {
             // 方策関数の出力得点と選択確率を記録
             assert(num <= actions && actions > 0 && num > 0);
             double tscore[N_MAX_MOVES + 64];
-            for (int m = 0; m < num; ++m)
+            for (int m = 0; m < num; m++)
                 child[m].policyScore = tscore[m] = score[m];
             SoftmaxSelector selector(tscore, num, 1);
             selector.to_prob();
-            for (int m = 0; m < num; ++m)
+            for (int m = 0; m < num; m++)
                 child[m].policyProb = selector.prob(m);
         }
-        
-        template <class field_t, class shared_t>
-        void feedSimulationResult(int triedIndex, const field_t& field, shared_t *const pshared) {
+
+        void feedSimulationResult(int triedIndex, const Field& field, EngineSharedData *const pshared) {
             // シミュレーション結果を記録
             // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
             
@@ -383,15 +374,15 @@ namespace UECda {
                                     // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
                                     // ただしルートで方策の点を使わないときにはそうではない
                                     // いちおう除外されたものに方策の点がついた場合にはその中で並べ替える
-                                    if (a.pruned && !b.pruned)return false;
-                                    if (!a.pruned && b.pruned)return true;
-                                    if (a.mean() > b.mean())return true;
-                                    if (a.mean() < b.mean())return false;
+                                    if (a.pruned && !b.pruned) return false;
+                                    if (!a.pruned && b.pruned) return true;
+                                    if (a.mean() > b.mean()) return true;
+                                    if (a.mean() < b.mean()) return false;
 #ifndef USE_POLICY_TO_ROOT
-                                    if (allSimulations > 0)return true;
+                                    if (allSimulations > 0) return true;
 #endif
-                                    if (a.policyProb > b.policyProb)return true;
-                                    if (a.policyProb < b.policyProb)return false;
+                                    if (a.policyProb > b.policyProb) return true;
+                                    if (a.policyProb < b.policyProb) return false;
                                     return a.policyScore > b.policyScore;
                                 });
         }
@@ -403,8 +394,8 @@ namespace UECda {
                                     return callback(a) > callback(b);
                                 });
             // 最高評価なものの個数を返す
-            for (int m = 0; m < num; ++m)
-                if (callback(child[m]) < callback(child[0]))return m;
+            for (int m = 0; m < num; m++)
+                if (callback(child[m]) < callback(child[0])) return m;
             return num;
         }
         template <class callback_t>
@@ -415,8 +406,8 @@ namespace UECda {
                                     return (callback(a) ? 1 : 0) > (callback(b) ? 1 : 0);
                                 });
             // 最高評価なものの個数を返す
-            for (int m = 0; m < num; ++m)
-                if ((callback(child[m]) ? 1 : 0) < (callback(child[0]) ? 1 : 0))return m;
+            for (int m = 0; m < num; m++)
+                if ((callback(child[m]) ? 1 : 0) < (callback(child[0]) ? 1 : 0)) return m;
             return num;
         }
         
@@ -426,7 +417,7 @@ namespace UECda {
             // 先にソートしておく必要あり
             oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
             oss << allSimulations << " trials." << endl;
-            for (int m = 0; m < min(actions, num); ++m) {
+            for (int m = 0; m < min(actions, num); m++) {
                 const int rg = (int)(child[m].mean() * rewardGap);
                 const int rew = rg + worstReward;
                 const int nrg = (int)(child[m].naive_mean() * rewardGap);

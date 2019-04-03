@@ -459,12 +459,6 @@ namespace UECda {
     inline constexpr BitCards lowerMask(Rank r) {
         return (1ULL << (r * 4)) - 1ULL;
     }
-    inline constexpr BitCards strongerMask(Rank r, Order ord) {
-        return ord == ORDER_NORMAL ? higherMask(r) : lowerMask(r);
-    }
-    inline constexpr BitCards weakerMask(Rank r, Order ord) {
-        return ord == ORDER_NORMAL ? lowerMask(r) : higherMask(r);
-    }
 
     /**************************カード集合表現(クラス版)**************************/
 
@@ -657,35 +651,10 @@ namespace UECda {
         operator BitCards() const { return BitCards(data()); }
     };
     
-    void addCards(Cards *const c0, BitCards c1) { (*c0) |= c1; }
-    void addJOKER(Cards *const cptr) { (*cptr) |= CARDS_JOKER; }
-    
-    void addIntCard(Cards *const pc, IntCard ic) { addCards(pc, IntCardToCards(ic)); }
-    
-    void andCards(Cards *const cptr, BitCards c) { (*cptr) &= c; }
-    
     void maskCards(Cards *const c0, BitCards c1) { (*c0) &= ~c1; }
     void maskJOKER(Cards *const cptr) { maskCards(cptr, CARDS_JOKER); }
-    void invCards(Cards *const c0, BitCards c1) { (*c0) ^= c1; }
-    void invJOKER(Cards *const cptr) { invCards(cptr, CARDS_JOKER); }
 
     // 特定順序の要素の取り出し(元のデータから引く)
-    inline Cards popHigh(Cards *const c) {
-        assert(*c);
-        BitCards r = 1ULL << bsr64(*c);
-        (*c) -= r;
-        return r;
-    }
-    
-    inline Cards popHigh2(Cards *const c) {
-        assert(countCards(*c) >= 2U);
-        BitCards r1 = 1ULL << bsr64(*c);
-        (*c) -= r1;
-        BitCards r2 = 1ULL << bsr64(*c);
-        (*c) -= r2;
-        return r1 | r2;
-    }
-    
     inline Cards popLow(Cards *const c) {
         assert(anyCards(*c));
         BitCards r = (*c) & (-(*c));
@@ -709,7 +678,7 @@ namespace UECda {
     // ビット分割関数(bitPartition.hpp)を使う
     template <int N = 1, class dice64_t>
     inline BitCards popRand(Cards *const c, dice64_t *const dice) {
-        static_assert(N >= 0, " popRand N < 0 ");
+        static_assert(N >= 0, "");
         BitCards res;
         switch (N) {
             case 0: res = CARDS_NULL; break;
@@ -723,91 +692,76 @@ namespace UECda {
     // ランク重合
     // ランクを１つずつ下げてandを取るのみ(ジョーカーとかその辺のことは何も考えない)
     // 階段判定に役立つ
-    template <int N = 3>
-    inline Cards polymRanks(const Cards c) {
-        static_assert(N >= 0, "polymRanks<>()");
+    template <int N>
+    inline BitCards polymRanks(BitCards c) {
+        static_assert(N >= 0, "");
         return ((c >> ((N - 1) << 2)) & polymRanks<N - 1>(c));
     }
         
-    template <> inline constexpr Cards polymRanks<1>(const Cards c) { return c; }
-    template <> inline constexpr Cards polymRanks<0>(const Cards c) { return CARDS_NULL; }
+    template <> inline constexpr BitCards polymRanks<1>(BitCards c) { return c; }
+    template <> inline constexpr BitCards polymRanks<0>(BitCards c) { return CARDS_NULL; }
         
-    inline Cards polymRanks(Cards c, uint32_t num) { // 重合数が変数の場合
-        assert(num > 0);
-        --num;
-        while (num) {
-            c = polymRanks<2>(c);
-            --num;
-        }
+    inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
+        while (--n) c = polymRanks<2>(c);
         return c;
      }
         
-    inline Cards polymRanks_PR(Cards c, uint32_t arg, uint32_t dst) {
+    inline BitCards polymRanks_PR(BitCards c, int arg, int dst) {
         // 既にargランク重合が成された状態から、より高次のdstランク重合結果を得る
-        assert(arg > 0);
-        assert(dst > 0);
-        assert(dst - arg + 1U > 0);
-        return polymRanks(c, dst - arg + 1U);
+        assert(arg > 0); assert(dst > 0); assert(dst - arg + 1 > 0);
+        return polymRanks(c, dst - arg + 1);
     }
-        
-    inline constexpr Cards polymJump(const Cards c) { // 1ランクとばし
-        return c & (c >> 8);
-    }
+    inline constexpr BitCards polymJump(BitCards c) { return c & (c >> 8); }
         
     // ランク展開
     // ランクを１つずつ上げてorをとるのが基本だが、
     // 4以上の場合は倍々で増やしていった方が少ない命令で済む
-    template <int N = 3>
-    inline BitCards extractRanks(const BitCards c) {
-        return ((c << ((N - 1) << 2)) | extractRanks<N - 1>(c));
+    template <int N>
+    inline BitCards extractRanks(BitCards c) {
+        static_assert(N >= 0, "");
+        return (c << ((N - 1) << 2)) | extractRanks<N - 1>(c);
     }
         
-    template <> inline constexpr BitCards extractRanks<0>(const BitCards c) { return CARDS_NULL; }
-    template <> inline constexpr BitCards extractRanks<1>(const BitCards c) { return c; }
-    template <> inline constexpr BitCards extractRanks<2>(const BitCards c) { return c | (c << 4); }
-    template <> inline constexpr BitCards extractRanks<3>(const BitCards c) { return c | (c << 4) | (c << 8); }
-    template <> inline BitCards extractRanks<4>(const BitCards c) {
+    template <> inline constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
+    template <> inline constexpr BitCards extractRanks<1>(BitCards c) { return c; }
+    template <> inline BitCards extractRanks<4>(BitCards c) {
         Cards r = c | (c << 4);
         return r | (r << 8);
     }
-    template <> inline BitCards extractRanks<5>(const BitCards c) {
-        Cards r = c | (c << 4);
+    template <> inline BitCards extractRanks<5>(BitCards c) {
+        BitCards r = c | (c << 4);
         return r | (c << 8) | (r << 12);
     }
         
-    Cards extractRanks(BitCards c, uint32_t num) { // 展開数が変数の場合
-        assert(num > 0);
-        for (int n = num - 1U; n; --n) {
-            c = extractRanks<2>(c);
-        }
+    BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
+        while (--n) c = extractRanks<2>(c);
         return c;
     }
     
-    Cards polymRanksWithJOKER(const Cards c, int qty) {
-        Cards r;
+    BitCards polymRanksWithJOKER(BitCards c, int qty) {
+        BitCards r;
         switch (qty) {
             case 0: r = CARDS_NULL; break;
             case 1: r = CARDS_ALL; break;
             case 2: r = c; break;
             case 3: {
-                Cards d = c & (c >> 4);
+                BitCards d = c & (c >> 4);
                 r = (d | (d >> 4)) | (c & (c >> 8));
             } break;
             case 4: {
-                
-                Cards d = c & (c >> 4);
-                Cards f = (d & (c >> 12)) | (c & (d >> 8)); // 1 + 2パターン
-                Cards e = d & (c >> 8); // 3連パターン
+                BitCards d = c & (c >> 4);
+                BitCards f = (d & (c >> 12)) | (c & (d >> 8)); // 1 + 2パターン
+                BitCards e = d & (c >> 8); // 3連パターン
                 if (e) { f |= e | (e >> 4); }
                 r = f;
             } break;
             case 5: {
-                Cards d = c & (c >> 4);
-                Cards g = d | (d >> 12); // 2 + 2パターン
-                Cards e = d & (c >> 8); // 3連
+                BitCards d = c & (c >> 4);
+                BitCards g = d | (d >> 12); // 2 + 2パターン
+                BitCards e = d & (c >> 8); // 3連
                 if (e) {
                     g |= (e & (c >> 16)) | (c & (e >> 8)); // 1 + 3パターン
-                    Cards f = e & (c >> 12);
+                    BitCards f = e & (c >> 12);
                     if (f) {
                         g |= (f | (f >> 4)); // 4連パターン
                     }
@@ -887,8 +841,8 @@ namespace UECda {
     // 主に支配性判定用の許容ゾーン計算
     // 支配性の判定のため、合法着手がカード集合表現のどこに存在しうるかを計算
     
-    inline Cards ORToGValidZone(int ord, int rank) { // ランク限定のみ
-        Cards res;
+    inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
+        BitCards res;
         switch (ord) {
             case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
             case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
@@ -898,8 +852,8 @@ namespace UECda {
         return res;
     }
     
-    inline Cards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限定のみ
-        Cards res;
+    inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限定のみ
+        BitCards res;
         switch (ord) {
             case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
             case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
@@ -924,7 +878,7 @@ namespace UECda {
     }
     
     // 枚数オンリーによる許容包括
-    Cards seqExistableZone(uint32_t qty) {
+    BitCards seqExistableZone(int qty) {
         return RankRangeToCards(RANK_IMG_MIN, RANK_IMG_MAX + 1 - qty);
     }
     

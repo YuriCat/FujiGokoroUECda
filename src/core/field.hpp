@@ -502,7 +502,7 @@ namespace UECda {
                         return false;
                     }
                     
-                    addCards(&sum, c);
+                    sum |= c;
                     NSum += hand[p].qty;
                 } else {
                     // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)

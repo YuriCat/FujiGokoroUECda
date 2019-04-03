@@ -414,8 +414,7 @@ namespace UECda {
             uint32_t djk = mv.containsJOKER() ? 1 : 0;
             uint32_t r4x = mv.rank4x();
             
-            addCards(&cards, dc); // 通常型は足せば良い
-            
+            cards |= dc; // 通常型は足せば良い
             qty += dq; // 枚数進行
             
             assert(cards != CARDS_NULL);

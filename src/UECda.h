@@ -40,7 +40,7 @@ namespace UECda {
 #elif _PLAYERS == 4 // 4人時
     
     // 階級
-    enum Class{
+    enum Class {
         DAIFUGO = 0,
         FUGO,
         HINMIN,
@@ -101,15 +101,15 @@ namespace UECda {
     }
     
     
-    template<int N = N_PLAYERS>
+    template <int N = N_PLAYERS>
     constexpr unsigned int getNextSeat(unsigned int s) {
         return (s + 1) % (unsigned int)cmax(N, 1);
     }
-    template<int N>
+    template <int N>
     constexpr unsigned int getRemovedNextSeat(unsigned int s) {
         return s % (unsigned int)cmax(N - 1, 1);
     }
-    template<int N = N_PLAYERS>
+    template <int N = N_PLAYERS>
     constexpr unsigned int getPreviousSeat(unsigned int s) {
         return (s + N - 1) % (unsigned int)cmax(N, 1);
     }
@@ -175,29 +175,31 @@ namespace UECda {
     
     // カード集合変換(chara == true の場合は性質カードに変換)
     Cards TableToCards(const int table[8][15], bool chara = false) {
-        Cards r = CARDS_NULL;
+        Cards c = CARDS_NULL;
         bool jk = false;
         for (int h = 0; h < 4; h++) {
             for (int w = 0; w < 15; w++) {
                 if (table[h][w]) {
                     if (table[h][w] == 1) {
-                        addIntCard(&r, HWtoIC(h, w));
-                    }else if (chara) {
-                        jk = true;
-                        addIntCard(&r, HWtoIC(h, w));
+                        c.insert(HWtoIC(h, w));
                     } else {
-                        addJOKER(&r);
+                        if (chara) {
+                            jk = true;
+                            c.insert(HWtoIC(h, w));
+                        } else {
+                            c.insertJOKER();
+                        }
                     }
                 }
             }
         }
         // 通常のカード位置以外にあればジョーカー
-        for (int w = 0; w < 15; ++w) {
-            if (table[4][w])addJOKER(&r);
+        for (int w = 0; w < 15; w++) {
+            if (table[4][w]) c.insertJOKER();
         }
         // ジョーカー1枚使用の場合には chara もジョーカーに変更
-        if (jk && countCards(r) == 1)r = CARDS_JOKER;
-        return r;
+        if (jk && countCards(c) == 1) c = CARDS_JOKER;
+        return c;
     }
     
     void CardsToTable(Cards c, int table[8][15]) {
@@ -215,26 +217,24 @@ namespace UECda {
     // 着手変換
     void MoveToTable(const Move m, const Board bd, int table[8][15]) {
         clearAll(table);
-        if (m.isPASS()) { return; }
+        if (m.isPASS()) return;
         if (m.isSingleJOKER()) { // シングルジョーカー
             int ord = bd.tmpOrder();
             if (bd.isNF()) {
-                table[0][(ord == ORDER_NORMAL) ? 14 : 0] = 2;
+                table[0][(ord == 0) ? 14 : 0] = 2;
             } else {
                 // ジョーカーでスートロックを掛けないように、別スートになるようにする
                 // java版サーバーのリジェクトバグにひっかからないための処理
                 uint32_t bs = bd.suits();
                 int h = SuitToH(bs);
                 h = (h + 1) % 4; // スートを変更
-                table[h][(ord == ORDER_NORMAL) ? 14 : 0] = 2;
+                table[h][(ord == 0) ? 14 : 0] = 2;
             }
             return;
         }
-        if (m.isQuintuple()) { // クインタプル
+        if (m.isGroup() && m.qty() == 5) { // クインタプル
             int w = RankToW(m.rank());
-            for (int h = 0; h < 4; ++h) {
-                table[h][w] = 1;
-            }
+            for (int h = 0; h < 4; h++) table[h][w] = 1;
             table[4][w] = 2;
             return;
         }

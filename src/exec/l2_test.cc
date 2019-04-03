@@ -50,7 +50,7 @@ int outputMateJudgeResult() {
         Hand myHand, oppHand;
         myHand.setAll(myCards);
         oppHand.setAll(oppCards);
-        Board bd = OrderToNullBoard(ORDER_NORMAL);
+        Board bd = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
@@ -67,7 +67,7 @@ int outputMateJudgeResult() {
         Hand myHand, oppHand;
         myHand.setAll(oppCards);
         oppHand.setAll(myCards);
-        Board bd = OrderToNullBoard(ORDER_NORMAL);
+        Board bd = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();

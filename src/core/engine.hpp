@@ -77,7 +77,7 @@ namespace UECda {
             int chosen = -1;
             while (1) {
                 std::cin >> chosen;
-                if (0 <= chosen && chosen < NCands) { break; }
+                if (0 <= chosen && chosen < NCands) break;
             }
             return cand[chosen];
         }
@@ -98,7 +98,7 @@ namespace UECda {
             int chosen = -1;
             while (1) {
                 std::cin >> chosen;
-                if (0 <= chosen && chosen < NMoves) { break; }
+                if (0 <= chosen && chosen < NMoves) break;
             }
             return buf[chosen].mv();
         }

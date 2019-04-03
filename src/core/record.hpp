@@ -35,7 +35,7 @@ namespace UECda {
         for (const std::string& str : vec) {
             IntCard ic = StringToIntCardM(str);
             if (ic < 0) return -1;
-            addIntCard(dst, ic);
+            dst->insert(ic);
         }
         return 0;
     }
@@ -62,7 +62,7 @@ namespace UECda {
             if (!examIntCard(ic)) {
                 cerr << "bad intcard " << ic << " by " << str << endl; return -1;
             }
-            addIntCard(dst, ic);
+            dst->insert(ic);
             q.pop();
         }
         q.pop();
@@ -555,11 +555,11 @@ namespace UECda {
         
         Cards getDealtCards(int p) const { return dealtCards[p]; }
         void setDealtCards(int p, Cards c) { dealtCards[p] = c; }
-        void addDealtCards(int p, Cards c) { addCards(&dealtCards[p], c); }
+        void addDealtCards(int p, Cards c) { dealtCards[p] |= c; }
         
         Cards getOrgCards(int p) const { return orgCards[p]; }
         void setOrgCards(int p, Cards c) { orgCards[p] = c; }
-        void addOrgCards(int p, Cards c) { addCards(&orgCards[p], c); }
+        void addOrgCards(int p, Cards c) { orgCards[p] |= c; }
         
         std::string toString(int gn) const {
             std::ostringstream oss;
@@ -811,7 +811,7 @@ namespace UECda {
         }
         template <class dice_t>
         void shuffleRandomList(const int first, const int end, dice_t& dice) {
-            if (list == nullptr) {return;}
+            if (list == nullptr) return;
             // random shuffle
             for (int i = min(games(), end) - 1; i > max(0, first); --i) {
                 std::swap(list[i], list[dice() % ((i - first) + 1)]);
@@ -962,7 +962,7 @@ namespace UECda {
             const typename gameLog_t::changeLog_t& change = gLog.change(t);
             if (field.getPlayerClass(change.to()) < HEIMIN) {
                 Cards present = change.cards();
-                addCards(&field.hand[change.to()].cards, present);
+                field.hand[change.to()].cards |= present;
             }
         }
         // set card info

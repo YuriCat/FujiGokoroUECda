@@ -107,22 +107,9 @@ namespace UECda {
         bool isQuintuple() const {
             return typePart() == (MOVE_FLAG_GROUP | (5U << MOVE_LCT_QTY));
         }
-        
-        bool isOver5Seq() const { // 5枚以上階段
-            return isSeq() && qtyPart() > (4U << MOVE_LCT_QTY);
-        }
-
         bool isInvalid() const {
             return (b & MOVE_FLAG_INVALID) || domInevitably();
         }
-        
-        bool isSpecialRankSeq() const {
-            if (!isSeq()) return false;
-            uint32_t r = rank();
-            uint32_t q = qty();
-            return r < RANK_MIN || RANK_MAX < r + q - 1;
-        }
-        
         int typeNum() const {
             uint32_t q = qty();
             if (isSeq()) {
@@ -133,7 +120,6 @@ namespace UECda {
                 return q;
             }
         }
-        
         // 進行
         void procOrder(Move m) {
             if (m.isRev()) {

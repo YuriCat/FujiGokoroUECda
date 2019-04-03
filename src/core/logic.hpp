@@ -10,7 +10,7 @@ namespace UECda {
     /**************************最小分割数計算**************************/
     
     // paoon氏のbeersongのアイデアを利用
-    template<class move_t>
+    template <class move_t>
     int calcMinNMelds(move_t *const mv, const Cards c) {
         
         int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
@@ -65,11 +65,11 @@ namespace UECda {
                 if (order == ORDER_NORMAL) {
                     IntCard ic = pickIntCardHigh(ops);
                     int r4x = IntCardToRank4x(ic);
-                    addCards(&dw, mine & RankRange4xToCards(r4x, RANK_MAX * 4));
+                    dw |= mine & RankRange4xToCards(r4x, RANK_MAX * 4);
                 } else {
                     IntCard ic = pickIntCardLow(ops);
                     int r4x = IntCardToRank4x(ic);
-                    addCards(&dw, mine & RankRange4xToCards(RANK_MIN * 4, r4x));
+                    dw |= mine & RankRange4xToCards(RANK_MIN * 4, r4x);
                 }
             }
         }
