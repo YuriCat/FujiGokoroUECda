@@ -7,26 +7,16 @@
 namespace UECda {
     
     // 大富豪における最も基本的な型
-    // オーダー int Order
     // ランク int or uint32_t Rank
     // スート uint32_t Suits
     // 整数カード型 int IntCard
-    // カード集合型 uint64_t BitCards, Cards
+    // カード集合型 uint64_t BitCards
     // 単着手情報型 struct(uint32_t) Move
     // 着手型と対応した場型 struct(uint32_t) Board
     
-    /**************************オーダー定数**************************/
+    /**************************オーダー**************************/
     
-    // この定数を使わずに 0, 1, 2 表記する事も多いので注意
-    
-    using Order = int;
-    
-    enum {
-        ORDER_NORMAL = 0, ORDER_REVERSED = 1,
-        ORDER_BOTH = 2 // 永続的性質演算で使う
-    };
-    
-    constexpr int flipOrder(Order ord) { return ORDER_NORMAL + ORDER_REVERSED - ord; }
+    inline constexpr int flipOrder(int ord) { return 1 - ord; }
     
     /**************************ランク**************************/
     
@@ -53,23 +43,23 @@ namespace UECda {
         RANK_NONE = -1
     };
     
-    constexpr inline int flipRank(int r) {
+    inline constexpr int flipRank(int r) {
         // オーダー逆転時の仮ランクを使用する場合
         return RANK_3 + RANK_2 - r;
     }
-    bool isEightSeqRank(int rank, int qty) {
+    inline bool isEightSeqRank(int rank, int qty) {
         return rank <= RANK_8 && RANK_8 < rank + qty;
     }
     
     // 出力
-    const std::string rankChar  = "-3456789TJQKA2+:";
-    const std::string rankCharM = "-3456789tjqka2+:";
+    static const std::string rankChar  = "-3456789TJQKA2+:";
+    static const std::string rankCharM = "-3456789tjqka2+:";
     
     struct OutRank {
         int r;
-        constexpr OutRank(const int& arg) :r(arg) {}
+        constexpr OutRank(const int& arg): r(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
+    inline std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
         out << rankChar[arg.r];
         return out;
     }
@@ -78,7 +68,7 @@ namespace UECda {
         int r;
         constexpr OutRankM(const int& arg) :r(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutRankM& arg) {
+    inline std::ostream& operator <<(std::ostream& out, const OutRankM& arg) {
         out << rankCharM[arg.r];
         return out;
     }
@@ -87,8 +77,8 @@ namespace UECda {
         int r0, r1;
         constexpr RankRange(const int& arg0, const int& arg1) :r0(arg0), r1(arg1) {}
     };
-    std::ostream& operator <<(std::ostream& out, const RankRange& arg) {
-        for (int r = arg.r0; r <= arg.r1; ++r) {
+    inline std::ostream& operator <<(std::ostream& out, const RankRange& arg) {
+        for (int r = arg.r0; r <= arg.r1; r++) {
             out << rankChar[r];
         }
         return out;
@@ -98,19 +88,19 @@ namespace UECda {
         int r0, r1;
         constexpr RankRangeM(const int& arg0, const int& arg1) :r0(arg0), r1(arg1) {}
     };
-    std::ostream& operator<<(std::ostream& out, const RankRangeM& arg) {
-        for (int r = arg.r0; r <= arg.r1; ++r) {
+    inline std::ostream& operator <<(std::ostream& out, const RankRangeM& arg) {
+        for (int r = arg.r0; r <= arg.r1; r++) {
             out << rankCharM[r];
         }
         return out;
     }
     
-    int CharToRank(char c) {
+    inline int CharToRank(char c) {
         int r = rankChar.find(c);
         if (r == std::string::npos) return RANK_NONE;
         return r;
     }
-    int CharToRankM(char c) {
+    inline int CharToRankM(char c) {
         int r = rankCharM.find(c);
         if (r == std::string::npos) return RANK_NONE;
         return r;
@@ -139,7 +129,7 @@ namespace UECda {
         int sn;
         constexpr OutSuitNum(const int& arg) :sn(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitNum& arg) {
+    inline std::ostream& operator <<(std::ostream& out, const OutSuitNum& arg) {
         out << suitNumChar[arg.sn];
         return out;
     }
@@ -148,17 +138,17 @@ namespace UECda {
         int sn;
         constexpr OutSuitNumM(const int& arg) :sn(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitNumM& arg) {
+    inline std::ostream& operator <<(std::ostream& out, const OutSuitNumM& arg) {
         out << suitNumCharM[arg.sn];
         return out;
     }
     
-    int CharToSuitNum(char c) {
+    inline int CharToSuitNum(char c) {
         int sn = suitNumChar.find(c);
         if (sn == std::string::npos) { return SUITNUM_NONE; }
         return sn;
     }
-    int CharToSuitNumM(char c) {
+    inline int CharToSuitNumM(char c) {
         int sn = suitNumCharM.find(c);
         if (sn == std::string::npos) { return SUITNUM_NONE; }
         return sn;
@@ -187,9 +177,7 @@ namespace UECda {
         SUITS_ALL = SUITS_CDHS,
     };
     
-    int countSuits(uint32_t s) {
-        return countBits(s);
-    }
+    inline int countSuits(uint32_t s) { return countBits(s); }
     
     // スートインデックス
     // スートビットから、その種類の役の中で何番目のスートパターンとされているかを得る
@@ -197,25 +185,19 @@ namespace UECda {
         -1, 0, 1, 0, 2, 1, 3, 0, 3, 2, 4, 1, 5, 2, 3, 0, 0, 5
     };
     
-    int SuitToSuitNum(unsigned int suit) {
-        return bsf32(suit);
-    }
+    inline int SuitToSuitNum(unsigned int suit) { return bsf32(suit); }
     
     // 単スート番号からスート集合への変換
-    constexpr uint32_t SuitNumToSuits(int sn0) {
-        return (1U << sn0);
-    }
-    int SuitsToSuitNum(int suit) {
-        // 複スートの場合も
-        return suitsIdx[suit];
-    }
+    inline constexpr unsigned SuitNumToSuits(int sn0) { return (1U << sn0); }
+    // 複スートの場合も
+    inline int SuitsToSuitNum(int suit) { return suitsIdx[suit]; }
     
     // 出力
     struct OutSuits {
         uint32_t s;
         constexpr OutSuits(const uint32_t& arg) :s(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
+    static std::ostream& operator <<(std::ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
         for (int sn = 0; sn < N_SUITS + 1; sn++) {
             if (arg.s & SuitNumToSuits(sn)) {
                 out << suitNumChar[sn];
@@ -228,7 +210,7 @@ namespace UECda {
         uint32_t s;
         constexpr OutSuitsM(const uint32_t& arg) :s(arg) {}
     };
-    std::ostream& operator <<(std::ostream& out, const OutSuitsM& arg) { // 出力の時だけ第5のスートは16として対応している
+    inline std::ostream& operator <<(std::ostream& out, const OutSuitsM& arg) { // 出力の時だけ第5のスートは16として対応している
         for (int sn = 0; sn < N_SUITS + 1; sn++) {
             if (arg.s & SuitNumToSuits(sn)) {
                 out << suitNumCharM[sn];
@@ -252,23 +234,23 @@ namespace UECda {
     constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
     constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
     
-    int getSuitSuitsIndex(uint32_t s0, uint32_t s1) {
+    inline int getSuitSuitsIndex(uint32_t s0, uint32_t s1) {
         return suitSuitsIndexTable[s0][s1];
     }
-    int getSuitsSuitsIndex(uint32_t s0, uint32_t s1) {
+    inline int getSuitsSuitsIndex(uint32_t s0, uint32_t s1) {
         return suitsSuitsIndexTable[s0][s1];
     }
-    int get2SuitsIndex(uint32_t s0, uint32_t s1) {
+    inline int get2SuitsIndex(uint32_t s0, uint32_t s1) {
         return twoSuitsIndexTable[s0][s1];
     }
-    int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
+    inline int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
         return suitsSuitsSuitsIndexTable[s0][s1][s2];
     }
-    int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
+    inline int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
         return suitsSuitsSuitsIndexTable[s0][s1][s2];
     }
     
-    void initSuits() {
+    inline void initSuits() {
         
         // (suits suits) pattern index (exchangable) 0 ~ 21
         int twoSuitsCountIndex[5][5][5] = {0};

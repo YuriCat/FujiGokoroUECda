@@ -40,7 +40,7 @@ int outputMateJudgeResult() {
     field.setDice(&dice);
     
     // game state
-    field.bd = OrderToNullBoard(ORDER_NORMAL);
+    field.bd = OrderToNullBoard(0);
     field.clearSeats();
     field.clearClasses();
     field.setTurnPlayer(0);

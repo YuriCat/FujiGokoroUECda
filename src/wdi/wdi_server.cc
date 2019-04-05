@@ -55,13 +55,13 @@ namespace UECda{
 				for (int p = 0; p < f.np; ++p) {
 #ifdef BROADCAST
 					cerr << "change cards" << p << "->"
-					<<f.getClassPlayer( getAiteClass(f.np,f.getPlayerClass(p)) )
+					<<f.classPlayer( getAiteClass(f.np,f.classOf(p)) )
 					<<f.changeCards[p]<<endl;
 #endif
 				}
 				//全員に通達
 				for (int p=0;p<f.np;++p) {
-					int paite=f.getClassPlayer( getAiteClass( f.np, f.getPlayerClass(p) ) );
+					int paite=f.classPlayer( getAiteClass( f.np, f.classOf(p) ) );
 					sendChangeCards( p, f.changeCards[paite] );
 				}
 				f.initPlayPhase();
@@ -80,7 +80,7 @@ namespace UECda{
 #endif
 			f.addUsedTime(tp,at);
 			
-			if ( f.bd.isNF() && amv.isPASS() ) {
+			if ( f.bd.isNull() && amv.isPASS() ) {
 				assert(0);
 			}
 			
@@ -111,7 +111,7 @@ namespace UECda{
 				cerr<<"game "<<f.gameNum<<endl;
 				const std::string class_str[4]={"daifugo  ","fugo     ","hinmin   ","daihinmin",};
 				for (int c=0;c<f.np;++c) {
-					int p=f.getNewClassPlayer(c);
+					int p=f.newClassPlayer(c);
 					cerr<<class_str[c]<<"  "<<p<<"."<<f.name[p]<<Space(max_len - strlen(f.name[p]) + 1);
 					if ( f.ps.isDownfall(p) ) {
 						cerr<<"downfall";
@@ -146,7 +146,7 @@ namespace UECda{
 						f.shuffleSeats(&dice);
 						int s[ServerField::N];
 						for (int p=0;p<f.np;++p) {
-							s[p]=f.getPlayerSeat(p);
+							s[p]=f.seatOf(p);
 						}
 						for (int p=0;p<f.np;++p) {
 							if ( sendSeats(p,s)==-1 ) {return -1;}

@@ -10,7 +10,6 @@
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
@@ -59,8 +58,7 @@ int outputMateJudgeResult() {
         int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
         
-        mgCards.genMove(buffer, myCards, bd);
-        
+        genMove(buffer, myCards, bd);
     }
     
     {
@@ -105,11 +103,11 @@ int testRecordL2(const Record& record) {
                 const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
                 const Hand& myHand = field.getHand(turnPlayer);
                 const Hand& oppHand = field.getHand(oppPlayer);
-                Board bd = field.getBoard();
+                Board b = field.board;
                 
                 cl.start();
                 L2Judge judge(65536, buffer);
-                judgeResult = judge.start_judge(myHand, oppHand, bd, field.fieldInfo);
+                judgeResult = judge.start_judge(myHand, oppHand, b, field.fieldInfo);
                 judgeTime[0] += cl.stop();
                 judgeCount += 1;
                 
@@ -133,7 +131,7 @@ int testRecordL2(const Record& record) {
         [&](const auto& field) { // last callback
             // ここで新しい順位を得ることができる
             if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
-                int turnResult = field.getPlayerNewClass(l2TurnPlayer);
+                int turnResult = field.newClassOf(l2TurnPlayer);
                 judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
                 /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
                     cerr << "bad result" << endl;

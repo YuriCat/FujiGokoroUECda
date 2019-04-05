@@ -26,10 +26,10 @@ namespace UECda{
             cerr << "ADVANTAGE GAME  " << endl;
         }
         for (int s = 0; s < N_PLAYERS; ++s) {
-            int pNum = mLog.getSeatPlayer(s);
-            int pos = mLog.getPosition(pNum) + 1; // 最上位を1位に変更
+            int pNum = mLog.seatPlayer(s);
+            int pos = mLog.positionOf(pNum) + 1; // 最上位を1位に変更
             cerr << "[Seat " << s << "] : Player " << pNum;
-            cerr << "  Class " << gLog.getPlayerClass(pNum);
+            cerr << "  Class " << gLog.classOf(pNum);
             cerr << "  Score " << mLog.getScore(pNum) << " ( " << pos;
             switch(pos % 100) {
                 case 11: case 12:
@@ -53,9 +53,9 @@ namespace UECda{
     void broadcastPlayerState(const matchLog_t& mLog) { // プレーヤー状態実況
         const typename matchLog_t::gameLog_t& gLog = mLog.latestGame();
         for (int s = 0; s < N_PLAYERS; ++s) {
-            int pNum = mLog.getSeatPlayer(s);
+            int pNum = mLog.seatPlayer(s);
             cerr << "[Seat " << s << "] : Player " << pNum;
-            cerr << "  Class " << gLog.getPlayerClass(pNum);
+            cerr << "  Class " << gLog.classOf(pNum);
             if (ps.isAlive(pNum)) {
                 if (ps.isAwake(pNum)) {
                     cerr << "          ";
@@ -66,7 +66,7 @@ namespace UECda{
                 cerr << " EXCLUDED ";
             } else {
                 cerr << "  DEAD(";
-                cerr << getPlayerNewClass(pNum);
+                cerr << newClassOf(pNum);
                 cerr << ") ";
             }
             cerr << "last " << getNCards(pNum) << " cards ,";
@@ -105,7 +105,7 @@ namespace UECda{
         cerr << move;
         int qty = getNCards(p);
         if (qty <= 0) {
-            cerr << " passed away...  Class " << getPlayerNewClass(p);
+            cerr << " passed away...  Class " << newClassOf(p);
         } else {
             if (qty == 1) {
                 cerr << " 1 card";

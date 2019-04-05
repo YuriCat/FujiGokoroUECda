@@ -112,7 +112,7 @@ namespace UECda {
         void closeGame() {
             const auto& gameLog = record.latestGame();
             SharedData::closeGame(gameLog);
-            int myNewClass = gameLog.getPlayerNewClass(record.myPlayerNum);
+            int myNewClass = gameLog.newClassOf(record.myPlayerNum);
             
 #if defined(POLICY_ONLY) && defined(RL_POLICY)
             // reinforcement learning

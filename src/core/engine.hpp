@@ -42,7 +42,7 @@ namespace UECda {
         
         virtual Move play() {
             MoveInfo buf[1024];
-            const int NMoves = genMove(buf, field.getMyCards(), field.getBoard());
+            const int NMoves = genMove(buf, field.getMyCards(), field.board);
             
             for (int i = 0; i < NMoves; ++i) {
                 CERR << i << " : " << buf[i] << endl;
@@ -84,7 +84,7 @@ namespace UECda {
 
         virtual Move play() { // プレー関数
             MoveInfo buf[512];
-            const int NMoves = genMove(buf, field.getMyCards(), field.getBoard());
+            const int NMoves = genMove(buf, field.getMyCards(), field.board);
             
             for (int i = 0; i < NMoves; ++i) {
                 cerr << i << " : " << buf[i] << endl;

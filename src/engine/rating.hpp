@@ -47,7 +47,7 @@ namespace UECda {
             // 相対勝ち数を加算
             for (int p0 = 0; p0 < N_PLAYERS; p0++) {
                 for (int p1 = 0; p1 < N_PLAYERS; p1++) {
-                    if (tfield.getPlayerNewClass(p0) < tfield.getPlayerNewClass(p1)) {
+                    if (tfield.newClassOf(p0) < tfield.newClassOf(p1)) {
                         pdst->relativeWins[p0][p1] += BetaDistribution(1, 0);
                     } else {
                         pdst->relativeWins[p0][p1] += BetaDistribution(0, 1);
@@ -56,7 +56,7 @@ namespace UECda {
             }
             // 絶対勝ち数を加算
             for (int p0 = 0; p0 < N_PLAYERS; p0++) {
-                int wins = DAIHINMIN - tfield.getPlayerNewClass(p0);
+                int wins = DAIHINMIN - tfield.newClassOf(p0);
                 double score = wins / double(N_PLAYERS - 1);
                 pdst->absoluteWins[p0] += BetaDistribution(score, 1 - score);
             }
@@ -159,7 +159,7 @@ namespace UECda {
             for (int p1 = 0; p1 < N_PLAYERS; ++p1) {
                 cerr << expectedWp[p0][p1] << " ";
                 if (p0 != p1) {
-                    double realWin = (gLog.getPlayerNewClass(p0) < gLog.getPlayerNewClass(p1)) ? 1 : 0;
+                    double realWin = (gLog.newClassOf(p0) < gLog.newClassOf(p1)) ? 1 : 0;
                     sum += realWin - expectedWp[p0][p1];
                 }
             }cerr << endl;
@@ -176,7 +176,7 @@ namespace UECda {
         std::array<double, N_PLAYERS> diffRate;
         for (int p0 = 0; p0 < N_PLAYERS; ++p0) {
             //cerr << expectedWp[p0] << " ";
-            double realScore = (DAIHINMIN - gLog.getPlayerNewClass(p0)) / double(N_PLAYERS - 1);
+            double realScore = (DAIHINMIN - gLog.newClassOf(p0)) / double(N_PLAYERS - 1);
             //cerr << expectedWp[p0] << " -> " << realScore << endl;
             diffRate[p0] = coef * (realScore - expectedWp[p0]);
         }cerr << endl;

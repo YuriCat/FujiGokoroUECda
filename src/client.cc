@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) { // for UECda
 
         // 席順設定
         for (int s = 0; s < N_PLAYERS; ++s)
-            gameRecord.setPlayerSeat(getSeatPlayer(recv_table, s), s);
+            gameRecord.setPlayerSeat(seatPlayer(recv_table, s), s);
         
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) { // for UECda
             CERR << "main() : probed change game from table" << endl;
             gameRecord.resetInitGame();
             for (int p = 0; p < N_PLAYERS; ++p)
-                gameRecord.setPlayerClass(p, getPlayerClass(recv_table, p));
+                gameRecord.setPlayerClass(p, classOf(recv_table, p));
         }
         
         // カード枚数設定
@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) { // for UECda
         bool isJava;
         
         if (!gameRecord.isInitGame()
-           && getNCards(recv_table, gameRecord.getClassPlayer(DAIFUGO)) == 13U) {
+           && getNCards(recv_table, gameRecord.classPlayer(DAIFUGO)) == 13U) {
             isJava = true;
             CERR << "main() : This is java server." << endl;
         } else {
@@ -208,7 +208,7 @@ int main(int argc, char* argv[]) { // for UECda
             int NCards = getNCards(recv_table, p);
             if (isJava) {
                 // javaサーバーでは献上分が加算されているので高位者は引く必要あり
-                int cl = getPlayerClass(recv_table, p);
+                int cl = classOf(recv_table, p);
                 if (cl <= FUGO)NCards -= N_CHANGE_CARDS(cl);
             }
             gameRecord.setNDealtCards(p, NCards);
@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) { // for UECda
 #endif
         
         // カード交換フェーズ
-        int myClass = gameRecord.getPlayerClass(myPlayerNum);
+        int myClass = gameRecord.classOf(myPlayerNum);
         int changeQty = N_CHANGE_CARDS(myClass);
         
         if (!gameRecord.isInitGame()) { // カード交換あり
@@ -271,7 +271,7 @@ int main(int argc, char* argv[]) { // for UECda
             // 自分の情報をサーバーの情報に合わせておく
             int turnPlayer = turn(recv_table);
             
-            if (isNF(recv_table) && (!playRecord.bd.isNF() || playRecord.ps.getNAwake() == 0)) {
+            if (isNull(recv_table) && (!playRecord.bd.isNull() || playRecord.ps.getNAwake() == 0)) {
                 // 空場パスに対応するため、既に空場と認識していない状況、
                 // またはawakeなプレーヤーが誰もいない状況でのみ流す
                 playRecord.flush(gameRecord.infoSeat); // 席順が必要

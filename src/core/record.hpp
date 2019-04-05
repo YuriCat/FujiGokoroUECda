@@ -8,7 +8,7 @@
 // 複数対戦を手軽に扱うためのクラスも準備
 
 namespace UECda {
-    const std::vector<std::string> commandList = {
+    static const std::vector<std::string> commandList = {
         "//", "/*", "*/"
         "player", "game", "score", "seat", "class",
         "dealt", "changed", "original",
@@ -17,11 +17,11 @@ namespace UECda {
     
     std::map<std::string, int> commandMap;
     
-    bool isCommand(const std::string& str) {
+    inline bool isCommand(const std::string& str) {
         return commandMap.find(str) != commandMap.end();
     }
     
-    int StringsToCardsM(std::vector<std::string>& vec, Cards *const dst) {
+    static int StringsToCardsM(std::vector<std::string>& vec, Cards *const dst) {
         *dst = CARDS_NULL;
         for (const std::string& str : vec) {
             IntCard ic = StringToIntCardM(str);
@@ -31,7 +31,7 @@ namespace UECda {
         return 0;
     }
     
-    int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
+    static int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
         *dst = CARDS_NULL;
         const std::string& str = q.front();
         if (isCommand(str)) {
@@ -59,46 +59,38 @@ namespace UECda {
         q.pop();
         return 0;
     }
-    
-    int StringToMoveTimeM(const std::string& str, Move *const dstMv, uint64_t *const dstTime) {
-        
+    static int StringToMoveTimeM(const std::string& str, Move *const dstMv, uint64_t *const dstTime) {
         *dstMv = MOVE_PASS;
         *dstTime = 0;
         
         Move mv;
         std::vector<std::string> v = split(str, " []\n");
         
-        for (const std::string& tstr : v) {
-            DERR << tstr << ", ";
-        }
+        for (const std::string& tstr : v) DERR << tstr << ", ";
         DERR << endl;
         
         if (v.size() <= 0) {
             DERR << "failed to read move-time : length = 0" << endl;
             return -1;
         }
-        
         mv = StringToMoveM(v[0]);
 
         if (mv == MOVE_NONE) {
             DERR << "illegal move" << endl;
             return -1;
         }
-        
         *dstMv = mv;
-        
+
         if (v.size() <= 1) {
             DERR << "failed to read move-time : length = 1" << endl;
             return 0;
         }
-        
         char *end;
         *dstTime = strtol(v[1].c_str(), &end, 10);
-        
         return 0;
     }
     
-    void initCommandSet() {
+    static void initCommandSet() {
         commandMap.clear();
         int cnt = 0;
         for (std::string command : commandList) commandMap[command] = cnt++;
@@ -138,7 +130,7 @@ namespace UECda {
         std::map<int, change_t> cLogMap;
         Move lastMove;
         
-        BitSet32 flagGame, flagMatch;
+        std::bitset<32> flagGame, flagMatch;
         int startedGame = -1;
         int failedGames = 0;
         
@@ -182,7 +174,7 @@ namespace UECda {
                 infoNewClass.clear();
                 cLogMap.clear();
                 lastMove = MOVE_PASS;
-                flagGame.init();
+                flagGame.reset();
             }
             else if (cmd == "*/") { // game終了合図
                 // ログとして必要なデータが揃っているか確認
@@ -460,15 +452,15 @@ namespace UECda {
         bool isChangeOver() const { return flags_.test(2); }
         bool isPlayOver() const { return flags_.test(3); }
         
-        int getPlayerClass(int p) const { return infoClass[p]; }
-        int getPlayerSeat(int p) const { return infoSeat[p]; }
-        int getPlayerNewClass(int p) const { return infoNewClass[p]; }
-        int getPosition(int p) const { return infoPosition[p]; }
+        int classOf(int p) const { return infoClass[p]; }
+        int seatOf(int p) const { return infoSeat[p]; }
+        int newClassOf(int p) const { return infoNewClass[p]; }
+        int positionOf(int p) const { return infoPosition[p]; }
         
         // 逆置換
-        int getClassPlayer(int cl) const { return invert(infoClass)[cl]; }
-        int getSeatPlayer(int s) const { return invert(infoSeat)[s]; }
-        int getNewClassPlayer(int ncl) const { return invert(infoNewClass)[ncl]; }
+        int classPlayer(int cl) const { return invert(infoClass)[cl]; }
+        int seatPlayer(int s) const { return invert(infoSeat)[s]; }
+        int newClassPlayer(int ncl) const { return invert(infoNewClass)[ncl]; }
         
         void setPlayerClass(int p, int cl) { infoClass.assign(p, cl); }
         void setPlayerSeat(int p, int s) { infoSeat.assign(p, s); }
@@ -486,8 +478,7 @@ namespace UECda {
         // 128手を超えることは滅多にないので強制打ち切り
         // ここをvectorとかにすると連続対戦棋譜がvector<vector>みたいになって死ぬ
         std::array<playLog_t, 128> play_;
-        
-        BitSet32 flags_;
+        std::bitset<32> flags_;
     };
     
     template <class _playLog_t>
@@ -519,12 +510,12 @@ namespace UECda {
             oss << "score " << endl;
             oss << "class ";
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << base::getPlayerClass(p) << " ";
+                oss << base::classOf(p) << " ";
             }
             oss << endl;
             oss << "seat ";
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << base::getPlayerSeat(p) << " ";
+                oss << base::seatOf(p) << " ";
             }
             oss << endl;
             oss << "dealt ";
@@ -555,7 +546,7 @@ namespace UECda {
             oss << endl;
             oss << "result ";
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << base::getPlayerNewClass(p) << " ";
+                oss << base::newClassOf(p) << " ";
             }
             oss << endl;
             oss << "*/ " << endl;
@@ -621,7 +612,7 @@ namespace UECda {
         int getLatestGameNum() const { return games() - 1; }
         
         int getScore(int p) const { return score[p]; }
-        int getPosition(int p) const { // score から順位を調べる
+        int positionOf(int p) const { // score から順位を調べる
             int pos = 0;
             for (int pp = 0; pp < N_PLAYERS; pp++) {
                 if (score[pp] < score[p]) pos += 1;
@@ -641,13 +632,13 @@ namespace UECda {
             game_t& g = latestGame();
             g.init();
             for (int p = 0; p < N_PLAYERS; p++) {
-                g.setPosition(p, getPosition(p));
+                g.setPosition(p, positionOf(p));
             }
         }
         void closeGame() {
             const game_t& g = latestGame();
             for (int p = 0; p < N_PLAYERS; p++) {
-                score[p] += REWARD(g.getPlayerNewClass(p));
+                score[p] += REWARD(g.newClassOf(p));
             }
         }
         void pushGame(const game_t& gLog) {
@@ -824,7 +815,7 @@ namespace UECda {
         // present
         for (int t = 0, tend = gLog.changes(); t < tend; t++) {
             const typename game_t::change_t& change = gLog.change(t);
-            if (field.getPlayerClass(change.to) < HEIMIN) {
+            if (field.classOf(change.to) < HEIMIN) {
                 Cards present = change.cards;
                 field.hand[change.to].cards |= present;
             }
@@ -846,7 +837,7 @@ namespace UECda {
         // change
         for (int t = 0, tend = gLog.changes(); t < tend; t++) {
             const typename game_t::change_t& change = gLog.change(t);
-            if (field.getPlayerClass(change.from) >= HINMIN) {
+            if (field.classOf(change.from) >= HINMIN) {
                 // 献上以外
                 field.hand[change.from].subtrAll(change.cards);
                 field.opsHand[change.from].addAll(change.cards);
@@ -973,7 +964,7 @@ namespace UECda {
         // TODO: ルールを信頼しないようにする
         setFieldBeforeAll(*dst, gLog);
         
-        if (gLog.getPlayerClass(myPlayerNum) != HEIMIN && gLog.isInChange()) {
+        if (gLog.classOf(myPlayerNum) != HEIMIN && gLog.isInChange()) {
             // 自分の手札だけわかるので設定
             Cards dealt = gLog.getDealtCards(myPlayerNum);
             dst->dealtCards[myPlayerNum] = dealt;
@@ -1027,7 +1018,7 @@ namespace UECda {
             if (anyCards(opsCards)) {
                 dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty, dst->remHash ^ myKey);
             }
-            dst->bd = gLog.current.bd;
+            dst->board = gLog.current.bd;
             dst->ps = gLog.current.ps;
 
             dst->common.turnCount = gLog.plays();
@@ -1038,7 +1029,7 @@ namespace UECda {
             dst->originalKey = CardsToHashKey(gLog.getOrgCards(myPlayerNum));
             dst->recordKey = CardsArrayToHashKey<N_PLAYERS>(dst->usedCards.data());
             dst->numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return gLog.current.getNCards(p); });
-            dst->boardKey = BoardToHashKey(dst->bd);
+            dst->boardKey = BoardToHashKey(dst->board);
             dst->aliveKey = StateToAliveHashKey(dst->ps);
             dst->fullAwakeKey = StateToFullAwakeHashKey(dst->ps);
             dst->stateKey = StateToHashKey(dst->aliveKey, dst->ps, dst->turn());

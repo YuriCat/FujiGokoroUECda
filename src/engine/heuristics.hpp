@@ -36,7 +36,7 @@ namespace UECda {
             
             for (int p = 0; p < N_PLAYERS; ++p) {
                 if (field.isAlive(p) && myPlayerNum != p) {
-                    int cl = field.getPlayerClass(p);
+                    int cl = field.classOf(p);
                     allClassSum += cl;
                     if (rivals & (1U << p)) {
                         rivalClassSum += cl;
@@ -50,7 +50,7 @@ namespace UECda {
                                     < allClassSum * numRivals) ? 1 : 0;
                 
                 // オーダー通常 & RPが良い階級　またはその逆の時革命優先
-                return (rivalBetter ^ field.getBoard().tmpOrder()) ? 1 : -1;
+                return (rivalBetter ^ field.board.order()) ? 1 : -1;
             }
             return 0;
         }

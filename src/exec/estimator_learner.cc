@@ -49,7 +49,7 @@ int makeCardPriorTable(const logs_t& mLogs, const uint64_t N) {
          if (!field.isInitGame()) {
              // 各階級の初期手札を記録
              for (int cl = DAIFUGO; cl <= DAIHINMIN; ++cl) {
-                 iterateIntCard(field.getCards(field.getClassPlayer(cl)),
+                 iterateIntCard(field.getCards(field.classPlayer(cl)),
                  [&](IntCard ic)->void{
                      table[ic][cl] += 1;
                  });
@@ -103,7 +103,7 @@ int makeRankSuitsPriorTable(const logs_t& mLogs, const uint64_t N) {
              // 各階級の初期手札を記録
              for (int cl = DAIFUGO; cl <= DAIHINMIN; ++cl) {
                  for (int r = 0; r < 16; ++r) {
-                     table[cl][r][getSuits(field.getCards(field.getClassPlayer(cl)), r)] += 1;
+                     table[cl][r][getSuits(field.getCards(field.classPlayer(cl)), r)] += 1;
                  }
              }
          }

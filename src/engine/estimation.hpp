@@ -5,6 +5,8 @@
 #include "engineSettings.h"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
+#include "../core/action.hpp"
+#include "mate.hpp"
 
 // Walker's Alias Method はこちらを参考に
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
@@ -330,10 +332,10 @@ namespace UECda {
                 }
                 firstTurnClass = field.firstTurn();
             } else {
-                myClass = field.getPlayerClass(myNum);
+                myClass = field.classOf(myNum);
                 
                 for (int p = 0; p < N; p++) {
-                    int r = field.getPlayerClass(p);
+                    int r = field.classOf(p);
                     
                     infoClassPlayer.assign(r, p);
                     infoClass.assign(p, r);
@@ -366,7 +368,7 @@ namespace UECda {
                     assert((int)countCards(sentCards) == N_CHANGE_CARDS(myClass));
                     if (myClass > MIDDLE) assert((int)countCards(recvCards) == N_CHANGE_CARDS(myClass));
                 }
-                firstTurnClass = field.getPlayerClass(field.firstTurn());
+                firstTurnClass = field.classOf(field.firstTurn());
             }
             
             NDeal = NOwn;
@@ -967,7 +969,7 @@ namespace UECda {
                     const uint32_t tp = field.turn();
                     
                     const Cards usedCards = chosenMove.cards();
-                    const Board bd = field.getBoard();
+                    const Board board = field.board;
                     const Cards myCards = field.getCards(tp);
                     const Hand& myHand = field.getHand(tp);
                     const Hand& opsHand = field.getOpsHand(tp);
@@ -977,18 +979,18 @@ namespace UECda {
                         // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
                         
                         // 場の情報をまとめる
-                        const int NMoves = genMove(mv, myHand, bd);
+                        const int NMoves = genMove(mv, myHand, board);
                         assert(NMoves > 0);
                         
                         if (NMoves > 1) {
                             for (int m = 0; m < NMoves; m++) {
-                                bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, bd, field.fieldInfo);
+                                bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, board, field.fieldInfo);
                                 if (mate) mv[m].setMPMate();
                             }
                         }
                         
                         // フェーズ(空場0、通常場1、パス支配場2)
-                        const int ph = bd.isNF() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
+                        const int ph = board.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
                         // プレー尤度計算
                         if (NMoves > 1) {
                             // search move

@@ -27,7 +27,7 @@ namespace UECda {
     constexpr int N_CHANGE_FALL_CARDS(int cl) { return MIDDLE - cl; }
     constexpr int N_CHANGE_RISE_CARDS(int cl) { return cl - MIDDLE; }
     
-    int N_CHANGE_CARDS(int cl) { return abs(cl - MIDDLE); }
+    inline int N_CHANGE_CARDS(int cl) { return abs(cl - MIDDLE); }
     
     constexpr int REWARD(int cl) { return N_PLAYERS - cl; }
     
@@ -131,14 +131,14 @@ namespace UECda {
     // 0からN_PLAYERS - 1として問題ないので定義しない
     
     // 基本通信型。手札兼着手兼エントリー時情報送信
-    void clearAll(int table[8][15]) {
+    inline void clearAll(int table[8][15]) {
         for (int i = 0; i < 8; ++i) {
             for (int j = 0 ; j < 15; ++j) {
                 table[i][j] = 0;
             }
         }
     }
-    void clearCards(int table[8][15]) {
+    inline void clearCards(int table[8][15]) {
         for (int i = 0; i < 5; ++i) {
             for (int j = 0; j < 15; ++j) {
                 table[i][j] = 0;
@@ -146,18 +146,18 @@ namespace UECda {
         }
     }
     
-    bool isInitGame(const int table[8][15]) { return (table[6][5] == table[6][6]) ? true : false; } // プレーヤー0と1の階級が同じかどうかで判別
-    int getTmpOrder(const int table[8][15]) { return (table[5][5] != table[5][6]) ? 1 : 0; } // 革命とイレバの片方のみ起こっている
-    int getPrmOrder(const int table[8][15]) { return table[5][6] ? 1 : 0; } // 革命が起こっている
-    int suitsLocked(const int table[8][15]) { return table[5][7]; }
-    int isMyTurn(const int table[8][15]) { return table[5][2]; }
-    int turn(const int table[8][15]) { return table[5][3]; }
-    int isNF(const int table[8][15]) { return table[5][4]; } // 空場
-    int getNCards(const int table[8][15], int p) { return table[6][0 + p]; }
-    int getPlayerClass(const int table[8][15], int p) { return table[6][5 + p]; }
-    int getSeatPlayer(const int table[8][15], int s) { return table[6][10 + s]; } // seat:0-4
-    int isInChange(const int table[8][15]) { return table[5][0]; }
-    int getChangeQty(const int table[8][15]) { return table[5][1]; }
+    inline bool isInitGame(const int table[8][15]) { return (table[6][5] == table[6][6]) ? true : false; } // プレーヤー0と1の階級が同じかどうかで判別
+    inline int getTmpOrder(const int table[8][15]) { return (table[5][5] != table[5][6]) ? 1 : 0; } // 革命とイレバの片方のみ起こっている
+    inline int getPrmOrder(const int table[8][15]) { return table[5][6] ? 1 : 0; } // 革命が起こっている
+    inline int suitsLocked(const int table[8][15]) { return table[5][7]; }
+    inline int isMyTurn(const int table[8][15]) { return table[5][2]; }
+    inline int turn(const int table[8][15]) { return table[5][3]; }
+    inline int isNull(const int table[8][15]) { return table[5][4]; } // 空場
+    inline int getNCards(const int table[8][15], int p) { return table[6][0 + p]; }
+    inline int classOf(const int table[8][15], int p) { return table[6][5 + p]; }
+    inline int seatPlayer(const int table[8][15], int s) { return table[6][10 + s]; } // seat:0-4
+    inline int isInChange(const int table[8][15]) { return table[5][0]; }
+    inline int getChangeQty(const int table[8][15]) { return table[5][1]; }
     
     // コンバート
     // ジョーカー関連は対応していないので注意
@@ -174,7 +174,7 @@ namespace UECda {
     constexpr inline IntCard HWtoIC(int h, int w) { return RankSuitNumToIntCard(WToRank(w), HToSuitNum(h)); }
     
     // カード集合変換(chara == true の場合は性質カードに変換)
-    Cards TableToCards(const int table[8][15], bool chara = false) {
+    inline Cards TableToCards(const int table[8][15], bool chara = false) {
         Cards c = CARDS_NULL;
         bool jk = false;
         for (int h = 0; h < 4; h++) {
@@ -202,25 +202,25 @@ namespace UECda {
         return c;
     }
     
-    void CardsToTable(Cards c, int table[8][15]) {
+    inline void CardsToTable(Cards c, int table[8][15]) {
         clearAll(table);
         if (c.joker()) table[4][1] = 2;
         for (IntCard ic : c.plain()) table[IntCardToH(ic)][IntCardToW(ic)] = 1;
     }
     
-    void replaceCards(Cards c, int table[8][15]) {
+    inline void replaceCards(Cards c, int table[8][15]) {
         clearCards(table);
         if (c.joker()) table[4][1] = 2;
         for (IntCard ic : c.plain()) table[IntCardToH(ic)][IntCardToW(ic)] = 1;
     }
     
     // 着手変換
-    void MoveToTable(const Move m, const Board bd, int table[8][15]) {
+    static void MoveToTable(const Move m, const Board bd, int table[8][15]) {
         clearAll(table);
         if (m.isPASS()) return;
         if (m.isSingleJOKER()) { // シングルジョーカー
             int ord = bd.tmpOrder();
-            if (bd.isNF()) {
+            if (bd.isNull()) {
                 table[0][(ord == 0) ? 14 : 0] = 2;
             } else {
                 // ジョーカーでスートロックを掛けないように、別スートになるようにする
@@ -249,14 +249,14 @@ namespace UECda {
         }
     }
     
-    Move TableToMove(const int table[8][15]) {
+    static Move TableToMove(const int table[8][15]) {
         Cards chara = TableToCards(table, true);
         Cards used = TableToCards(table, false);
         DERR << "chara " << chara << " used " << used << endl;
         return CardsToMove(chara, used);
     }
     
-    Board TableToBoard(const int table[8][15]) {
+    static Board TableToBoard(const int table[8][15]) {
         Move mv = TableToMove(table);
         Board bd = MoveToBoard(mv);
         if (suitsLocked(table)) { bd.lockSuits(); }
@@ -265,7 +265,7 @@ namespace UECda {
         return bd;
     }
     
-    std::string toString(const int table[8][15]) { // 出力
+    static std::string toString(const int table[8][15]) { // 出力
         std::ostringstream oss;
         for (int i = 0; i < 8; ++i) {
             for (int j = 0; j < 15; ++j) {

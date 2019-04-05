@@ -105,7 +105,7 @@ int analyzeRecords(const std::vector<std::string>& logs) {
                  fieldsPerNAlive[NAlive - 1] += 1;
                  fieldsPerNAsleep[NAsleep] += 1;
                  
-                 if (field.isNF()) {
+                 if (field.isNull()) {
                      nullFields += 1;
                      nullFieldsPerNAlive[NAlive - 1] += 1;
                      nullFieldsPerNAsleep[NAsleep] += 1;
@@ -128,7 +128,7 @@ int analyzeRecords(const std::vector<std::string>& logs) {
                          normalPassPerNAsleep[NAsleep] += 1;
                      }
                      
-                     int moves = genFollowExceptPASS(buffer, field.getCards(turnPlayer), field.getBoard());
+                     int moves = genFollowExceptPASS(buffer, field.getCards(turnPlayer), field.board);
                      if (moves > 0) {
                          normalUnforcedFields += 1;
                          normalUnforcedFieldsPerNAlive[NAlive - 1] += 1;
@@ -149,7 +149,7 @@ int analyzeRecords(const std::vector<std::string>& logs) {
              },
              [&](const auto& field) { // last callback
                  for (int i = 0; i < nullPassTemp; ++i) {
-                     nullPassResult[nullPassBuffer[i].second - 1][field.getPlayerNewClass(nullPassBuffer[i].first)] += 1;
+                     nullPassResult[nullPassBuffer[i].second - 1][field.newClassOf(nullPassBuffer[i].first)] += 1;
                  }
              });
         }

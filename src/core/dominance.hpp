@@ -32,7 +32,7 @@ namespace UECda {
     
     // カード集合の付加情報が計算されていない場合の支配性判定
 
-    bool dominatesCards(const Move m, const Cards oc, const Board b) {
+    inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
         // カード集合に対する支配性の判定
         if (m.isPASS()) return false;
         if (m.domInevitably()) return true;
@@ -89,7 +89,7 @@ namespace UECda {
         }
     }*/
     
-    bool dominatesHand(const Move mv, const Hand& opsHand, const Board b) {
+    inline bool dominatesHand(const Move mv, const Hand& opsHand, const Board b) {
         // Hand型への支配(着手を引数に取る場合)
         // ops.jk, ops.nd, ops.seq が計算されている事が必要あり
         assert(opsHand.exam_jk());
@@ -109,7 +109,7 @@ namespace UECda {
             if (mv.qty() > 4) return true;
             if (mv.charaPQR() & opsHand.nd[aftTmpOrd]) { // 無支配型と交差あり
                 if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
-                    uint32_t qty = mv.qty();
+                    int qty = mv.qty();
                     qty -= opsHand.jk;
                     Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
                     zone &= SuitsToCards(mv.suits());
@@ -134,14 +134,14 @@ namespace UECda {
         UNREACHABLE;
     }
     
-    bool dominatesHand(const Board b, const Hand& opsHand) {
+    inline bool dominatesHand(const Board b, const Hand& opsHand) {
         // Hand型への支配(場を引数に取る場合)
         // ops.jk, ops.nd, ops.seq が計算されている事が必要あり
         assert(opsHand.exam_jk());
         assert(opsHand.exam_seq());
         assert(opsHand.exam_nd());
         
-        if (b.isNF()) return false;
+        if (b.isNull()) return false;
         if (b.domInevitably()) return true;
         
         if (!b.isSeq()) { // グループ
@@ -185,12 +185,12 @@ namespace UECda {
         const int NMyCards = field.getNCards(turnPlayer);
         const Cards opsCards = field.getOpsCards(turnPlayer);
         
-        const Board& b = field.getBoard();
+        const Board& b = field.board;
         const FieldAddInfo& fieldInfo = field.fieldInfo;
         
         const int ord = b.tmpOrder();
         
-        if (fieldInfo.isTmpOrderSettled()) {
+        if (fieldInfo.isOrderSettled()) {
             // オーダー固定
             
             // 現在オーダーについてのみ調べる

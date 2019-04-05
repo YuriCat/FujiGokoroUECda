@@ -17,7 +17,7 @@
 // 諸々の計算とか判定
 #include "../core/logic.hpp" // ロジック
 #include "../core/dominance.hpp" // 支配判定
-#include "../core/mate.hpp" // 必勝判定
+#include "mate.hpp" // 必勝判定
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
@@ -161,7 +161,7 @@ namespace UECda {
                 
                 // D3を持っている場合、自分からなので必勝チェック
                 if (containsD3(myCards)) {
-                    const Board bd = OrderToNullBoard(ORDER_NORMAL); // 通常オーダーの空場
+                    const Board bd = OrderToNullBoard(0); // 通常オーダーの空場
                     FieldAddInfo fieldInfo;
                     fieldInfo.init();
                     fieldInfo.setFlushLead();
@@ -299,7 +299,7 @@ namespace UECda {
             const Hand& opsHand = field.getOpsHand(myPlayerNum);
             const Cards myCards = myHand.cards;
             const Cards opsCards = opsHand.cards;
-            const Board bd = field.getBoard();
+            const Board bd = field.board;
             CERR << bd << endl;
             FieldAddInfo& fieldInfo = field.fieldInfo;
             
@@ -308,7 +308,7 @@ namespace UECda {
 
 #ifdef RARE_PLAY
             // レアプレーを行っていない場合は行う
-            if (bd.isNF() && !rare_play_flag.test(0)) { // 空場パス
+            if (bd.isNull() && !rare_play_flag.test(0)) { // 空場パス
                 rare_play_flag.set(0);
                 return MOVE_PASS;
             }
@@ -336,7 +336,7 @@ namespace UECda {
             
             // 合法着手生成(特別着手)
             int NSpecialMoves = 0;
-            if (bd.isNF())
+            if (bd.isNull())
                 NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
             if (containsJOKER(myCards) && containsS3(opsCards)) {
                 if (bd.isGroup())
@@ -364,8 +364,8 @@ namespace UECda {
                 
                 Cards nextCards = maskCards(myCards, move.cards());
                 // 後場情報
-                if (bd.afterPrmOrder(move) != ORDER_NORMAL) { mi->setPrmOrderRev(); }
-                if (bd.afterTmpOrder(move) != ORDER_NORMAL) { mi->setTmpOrderRev(); }
+                if (bd.afterPrmOrder(move) != 0) { mi->setPrmOrderRev(); }
+                if (bd.afterTmpOrder(move) != 0) { mi->setTmpOrderRev(); }
                 if (bd.afterSuitsLocked(move)) { mi->setSuitLock(); }
                 
                 if (Settings::MateSearchOnRoot) { // 多人数必勝判定
@@ -376,7 +376,7 @@ namespace UECda {
                 if (Settings::L2SearchOnRoot) {
                     if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                         L2Judge lj(400000, searchBuffer);
-                        int l2Result = (bd.isNF() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
+                        int l2Result = (bd.isNull() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
                         //cerr << l2Result << endl;
                         if (l2Result == L2_WIN) { // 勝ち
                             DERR << "l2win!" << endl;

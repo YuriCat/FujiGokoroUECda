@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engineSettings.h"
+#include "engineStructure.hpp"
 #include "estimation.hpp"
 #include "simulation.hpp"
 
@@ -10,7 +11,7 @@
 namespace UECda {
 
     template <class dice_t>
-    int selectBandit(const RootInfo& root, dice_t& dice) {
+    static int selectBandit(const RootInfo& root, dice_t& dice) {
         // バンディット手法により次に試す行動を選ぶ
         int actions = root.candidates;
         const auto& a = root.child;
@@ -41,7 +42,7 @@ namespace UECda {
         }
     }
 
-    void MonteCarloThread
+    static void MonteCarloThread
     (const int threadId, RootInfo *const proot,
     const Field *const pfield,
     EngineSharedData *const pshared,

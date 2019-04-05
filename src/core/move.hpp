@@ -225,29 +225,28 @@ namespace UECda {
             }
         }
         
-        Cards cards() const { // カード集合を得る
+        Cards cards() const { // 構成するカード集合を得る
             if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
             int r4x = rank4x();
             uint32_t s = suits();
-            Cards c;
-            if (!isSeq()) { // 階段でない
-                c = CARDS_NULL;
+            if (!isSeq()) {
+                Cards c = CARDS_NULL;
                 uint32_t jks = jokerSuits();
                 if (jks) {
                     c |= CARDS_JOKER;
-                    if (c != SUITS_CDHS) s -= jks; // クインタプル対策
+                    if (jks != SUITS_CDHS) s -= jks; // クインタプル対策
                 }
-                c |= Rank4xSuitsToCards(r4x, s);
-            } else { // 階段
-                c = Rank4xSuitsToCards(r4x, s);
+                return c | Rank4xSuitsToCards(r4x, s);
+            } else {
+                Cards c = Rank4xSuitsToCards(r4x, s);
                 c = extractRanks(c, qty());
                 if (containsJOKER()) {
                     c -= Rank4xSuitsToCards(jokerRank4x(), s);
                     c |= CARDS_JOKER;
                 }
+                return c;
             }
-            return c;
         }
 
         Cards charaCards() const {
@@ -345,7 +344,7 @@ namespace UECda {
         return out;
     }
     
-    std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
+    static std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
         out << MeldChar(m) << m.cards();
         return out;
     }
@@ -356,7 +355,7 @@ namespace UECda {
         LogMove(const Move& arg) : Move(arg.m_) {}
     };
     
-    std::ostream& operator <<(std::ostream& out, const LogMove& m) { // LogMove出力
+    static std::ostream& operator <<(std::ostream& out, const LogMove& m) { // LogMove出力
         if (m.isPASS()) {
             out << "p";
         } else if (m.isSingleJOKER()) {
@@ -370,7 +369,6 @@ namespace UECda {
                 out << RankRangeM(r, r + q - 1);
                 // ジョーカー
                 if (m.containsJOKER()) {
-                    //cerr << m.jokerRank() << " " << OutRankM(m.jokerRank()) << endl;
                     out << "(" << OutRankM(m.jokerRank()) << ")";
                 }
             } else {
@@ -389,7 +387,7 @@ namespace UECda {
         return out;
     }
         
-    Move CardsToMove(const Cards chara, const Cards used) {
+    inline Move CardsToMove(const Cards chara, const Cards used) {
         // 性質 chara 構成札 used のカードから着手への変換
         Move m = MOVE_NULL;
         DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
@@ -422,7 +420,7 @@ namespace UECda {
         return m;
     }
     
-    Move StringToMoveM(const std::string& str) {
+    inline Move StringToMoveM(const std::string& str) {
         // 入力文字列からMove型への変更
         Move mv = MOVE_NULL;
         bool jk = false; // joker used
@@ -430,17 +428,15 @@ namespace UECda {
         int rank = RANK_NONE;
         uint32_t ns = 0; // num of suits
         uint32_t nr = 0; // num of ranks
-        uint32_t i = 0;
+        size_t i = 0;
         
         // special
-        if (str == "p") { return MOVE_PASS; }
-        if (str == "jk") { return MOVE_SINGLEJOKER; }
+        if (str == "p") return MOVE_PASS;
+        if (str == "jk") return MOVE_SINGLEJOKER;
         // suits
-        for (; i < str.size(); ++i) {
+        for (; i < str.size(); i++) {
             char c = str[i];
-            if (c == '-') {
-                ++i; break;
-            }
+            if (c == '-') { i++; break; }
             int sn = CharToSuitNumM(c);
             if (sn == SUITNUM_NONE) {
                 CERR << "illegal suit number" << endl;
@@ -451,12 +447,12 @@ namespace UECda {
             } else { // クインタプル
                 jk = true;
             }
-            ++ns;
+            ns++;
         }
         // rank
-        for (; i < str.size(); ++i) {
+        for (; i < str.size(); i++) {
             char c = str[i];
-            if (c == '(') { jk = true; ++i; break; }
+            if (c == '(') { jk = true; i++; break; }
             int r = CharToRankM(c);
             if (r == RANK_NONE) {
                 CERR << "illegal rank" << endl;
@@ -484,9 +480,9 @@ namespace UECda {
         if (jk) {
             if (!mv.isSeq()) {
                 uint32_t jks = SUITS_NULL;
-                for (; i < str.size(); ++i) {
+                for (; i < str.size(); i++) {
                     char c = str[i];
-                    if (c == ')') { break; }
+                    if (c == ')') break;
                     int sn = CharToSuitNumM(c);
                     if (sn == SUITNUM_NONE) {
                         CERR << "illegal joker-suit" << c << " from " << str << endl;
@@ -494,13 +490,13 @@ namespace UECda {
                     }
                     jks |= SuitNumToSuits(sn);
                 }
-                if (jks == SUITS_NULL)jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
+                if (jks == SUITS_NULL) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
                 mv.setJokerSuits(jks);
             } else {
                 int jkr = RANK_NONE;
-                for (; i < str.size(); ++i) {
+                for (; i < str.size(); i++) {
                     char c = str[i];
-                    if (c == ')') { break; }
+                    if (c == ')') break;
                     int r = CharToRankM(c);
                     if (r == RANK_NONE) {
                         CERR << "illegal joker-rank " << c << " from " << str << endl;
@@ -528,8 +524,8 @@ namespace UECda {
     template <class move_buf_t>
     int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move) {
         // 同じ着手の探索
-        for (int m = 0; m < moves; ++m) {
-            if (buf[m].meldPart() == move.meldPart()) { return m; }
+        for (int m = 0; m < moves; m++) {
+            if (buf[m].meldPart() == move.meldPart()) return m;
         }
         return -1;
     }
@@ -537,8 +533,8 @@ namespace UECda {
     template <class move_buf_t, typename callback_t>
     int searchMove(const move_buf_t *const buf, const int moves, const callback_t& callback) {
         // callback を条件とする着手の探索
-        for (int m = 0; m < moves; ++m) {
-            if (callback(buf[m])) { return m; }
+        for (int m = 0; m < moves; m++) {
+            if (callback(buf[m])) return m;
         }
         return -1;
     }

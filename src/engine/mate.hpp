@@ -2,10 +2,10 @@
 
 // 詰み(Mate)判定
 
-#include "daifugo.hpp"
-#include "hand.hpp"
-#include "action.hpp"
-#include "dominance.hpp"
+#include "../core/daifugo.hpp"
+#include "../core/hand.hpp"
+#include "../core/action.hpp"
+#include "../core/dominance.hpp"
 
 namespace UECda {
     
@@ -62,7 +62,7 @@ namespace UECda {
     
     
     // 汎用関数
-    bool judgeMate_1M_NF(const Hand& myHand) {
+    inline bool judgeMate_1M_NF(const Hand& myHand) {
         // 空場、1手詰み（つまり出して上がり,確実にPW）
         // 8切り関係の3手詰み等も含めた高速化は別関数にて
         if (myHand.qty <= 1) return true;
@@ -83,7 +83,7 @@ namespace UECda {
         return false;
     }
     
-    bool judgeMate_Easy_NF(const Hand& myHand) {
+    inline bool judgeMate_Easy_NF(const Hand& myHand) {
         // とりあえず高速でNF_Mateかどうか判断したい場合
         if (myHand.qty <= 1) return true;
         Cards pqr = myHand.pqr;
@@ -102,7 +102,7 @@ namespace UECda {
         return false;
     }
     
-    bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
+    inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
                          const Cards *const nd, const Board& b) {
         // すでに支配的でない着手があることがわかっており、
         // それ以外が全て支配的かを確認するメソッド
@@ -224,7 +224,7 @@ namespace UECda {
         return false;
     }
     
-    bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& b) {
+    inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& b) {
         // 合法着手生成を用いずに判定出来る場合
         
         // ただし、
@@ -321,7 +321,7 @@ namespace UECda {
                             return true;
                         } else {
                             Cards h = ndpqr;
-                            Cards l = popLow(&h);
+                            Cards l = h.popLowest();
                             
                             // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
                             bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? (1 - ord) : ord];
@@ -371,7 +371,7 @@ namespace UECda {
                                     
                                     // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
                                     Cards h = ndpqr_new;
-                                    Cards l = popLow(&h);
+                                    Cards l = h.popLowest();
                                     
                                     // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
                                     if (!((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
@@ -431,12 +431,12 @@ namespace UECda {
         return false;
     }
     
-    bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo mv,
+    inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo mv,
                              const Hand& myHand, const Hand& opsHand,
                              const Board& b, const FieldAddInfo& fieldInfo) {
         // 間に他プレーヤーの着手を含んだ必勝を検討
         // 支配的でないことは前提とする
-        if (!b.isNF()) return false; // 未実装
+        if (!b.isNull()) return false; // 未実装
         if (mv.isPASS()) return false; // パスからのBNPWはない
         int curOrder = b.prmOrder();
         Cards ops8 = opsHand.cards & CARDS_8;
@@ -508,18 +508,18 @@ namespace UECda {
     // 必勝判定
     
     template <int IS_NF, int IS_UNRIVALED>
-    bool judgeHandMate(const int depth, MoveInfo *const buf,
+    inline bool judgeHandMate(const int depth, MoveInfo *const buf,
                        const Hand& myHand, const Hand& opsHand,
                        const Board& b, const FieldAddInfo& fieldInfo) {
         // 簡単詰み
-        if (TRI_BOOL_YES(IS_NF, b.isNF()) && judgeMate_Easy_NF(myHand)) {
+        if (TRI_BOOL_YES(IS_NF, b.isNull()) && judgeMate_Easy_NF(myHand)) {
             return true;
         }
         // 中程度詰み
-        if (TRI_BOOL_YES(IS_NF, b.isNF()) && judgeHandPW_NF(myHand, opsHand, b)) {
+        if (TRI_BOOL_YES(IS_NF, b.isNull()) && judgeHandPW_NF(myHand, opsHand, b)) {
             return true;
         }
-        if (TRI_BOOL_NO(IS_NF, !b.isNF()) || depth > 0) {
+        if (TRI_BOOL_NO(IS_NF, !b.isNull()) || depth > 0) {
             // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
             const int NMoves = genMove(buf, myHand, b);
             if (searchHandMate<IS_NF, IS_UNRIVALED>(depth, buf, NMoves,
@@ -564,7 +564,7 @@ namespace UECda {
     }
 
     template <int IS_NF, int IS_UNRIVALED>
-    bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
+    inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                        const Hand& myHand, const Hand& opsHand,
                        const Board& b, const FieldAddInfo& fieldInfo) {
         
@@ -681,7 +681,7 @@ namespace UECda {
     
     
     template <int IS_NF, int IS_UNRIVALED>
-    int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
+    inline int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
                        const Hand& myHand, const Hand& opsHand,
                        const Board& b, const FieldAddInfo& fieldInfo) {
         // 必勝手探し

@@ -77,7 +77,7 @@ namespace UECda{
 				f.infoClass.assign(N_PLAYERS + acl[p], p);
 			}
 			f.phase.setChangeGame();
-			f.setMyClass(f.getPlayerClass(f.getMyPlayerNum()));
+			f.setMyClass(f.classOf(f.getMyPlayerNum()));
 			return 0;
 		}*/
 		virtual int recvDealtCards(const Cards& ac) {
@@ -219,7 +219,7 @@ namespace UECda{
 				// プレー中でない
 				return -1;
 			}
-			if (f.bd.isNF()) { return -1; } // 空場からの全員パスは考慮しない
+			if (f.bd.isNull()) { return -1; } // 空場からの全員パスは考慮しない
 			uint32_t tp = f.turn();
 			while (tp != f.getMyPlayerNum()) {
 				
@@ -231,7 +231,7 @@ namespace UECda{
 				//game_log.thisGameLog->setPlay(MOVE_PASS, 0);
 				//game_log.thisGameLog->setAfterPlay(f);
 #endif			
-				if (f.bd.isNF()) {break;}
+				if (f.bd.isNull()) {break;}
 			}
 #ifdef BROADCAS
 			f.broadcastAP();
@@ -261,7 +261,7 @@ namespace UECda{
 				CERR << "my change turn." << endl;
                 
                 client.replaceField(f);
-				Cards c = client.change(N_CHANGE_CARDS(f.getPlayerClass(f.getMyPlayerNum())));
+				Cards c = client.change(N_CHANGE_CARDS(f.classOf(f.getMyPlayerNum())));
                 f = client.field;
                 
 				f.setMySentCards(c);

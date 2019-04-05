@@ -18,33 +18,29 @@ namespace UECda {
     class Hand {
     public:
         Cards cards; // 通常型
-        
         uint32_t qty; // 総枚数
         uint32_t jk; // ジョーカー枚数
-        
-        Cards p4; // ランク重合型(隣り合ったランク)
-        Cards p8; // ランク重合型(一つ飛んだランク)
         Cards seq; // 3枚階段型
         
         CardArray qr; // ランク枚数型
         Cards pqr; // ランク枚数位置型
         Cards sc; // 圧縮型
         Cards nd[2]; // 無支配型(通常、革命)
-        
+
         uint64_t hash; // ハッシュ値
         
         // 情報を使う早さにより、前後半(ハッシュ値だけは例外としてその他)に分ける。
         // allが付く進行はhash値も含めて更新する。
         
         // 前半
-        // cards, qty, jk, p4, p8, seq, qr, pqr
+        // cards, qty, jk, seq, qr, pqr
         // 後半
         // sc, nd[2]
         // その他
         // hash
         
         // (未実装)必勝判定のとき
-        // cards, qty, jk, p4, p8, seq, pqrを更新
+        // cards, qty, jk, seq, pqrを更新
         // qrは使わなさそう?
         
         constexpr operator Cards() const { return cards; }
@@ -65,83 +61,44 @@ namespace UECda {
         bool holds(const Hand& ah) const {
             return holdsCards(cards, ah.cards);
         }
-        
-        constexpr bool any() const {
-            return anyCards(cards) ? true : false;
-        }
-        
-        void setHash(const uint64_t arg) { // set hash value
-            hash = arg;
-        }
+        constexpr bool any() const { return cards.any(); }
+        void setHash(uint64_t h) { hash = h; }
         
         void set(const Cards ac, const uint32_t aq) {
             // 手札をセット
-            // 結構めんどいので通常は随時カードを引いていく
-            // カード0枚の時入らないように
             // ハッシュ値はsetHashにて別に設定
-            
-            assert(anyCards(ac));
-            assert(aq > 0);
-            
-            jk = UECda::containsJOKER(ac) ? 1 : 0;
-            
+            assert(aq > 0); assert(ac.count() == aq);
+
             cards = ac;
+            jk = ac.joker();
             qty = aq;
-            
-            Cards nj = maskJOKER(ac);
-            
-            qr = CardsToQR(nj);
-            
-            // 重合型
-            p4 = polymRanks<2>(nj);
-            p8 = polymJump(nj);
-            
-            // 3枚階段型
-            if (jk) {
-                seq = p4 | p8 | (p4 >> 4);
-            } else {
-                seq = p4 & p8;
-            }
-            
+
+            Cards plain = ac.plain();
+            seq = polymRanks(plain, jk, 3);
+            qr = CardsToQR(plain);
             pqr = QRToPQR(qr);
             sc = PQRToSC(pqr);
-            
-            // 無支配ゾーンの初期化はpqrからの変換にて
             PQRToND(pqr, jk, nd);
-            
-            // チェック
+
             assert(exam());
         }
-        void set(const Cards ac) {
-            set(ac, countCards(ac));
-        }
+        void set(const Cards ac) { set(ac, countCards(ac)); }
         
         void set1stHalf(const Cards ac, const uint32_t aq) {
-            // 手札をセット
-            // 前半のみ
-            assert(anyCards(ac));
-            ASSERT(countCards(ac) == aq, cerr << countCards(ac) << "," << aq << ac << endl;);
+            // 手札をセット 前半のみ
+            assert(countCards(ac) == aq);
             
-            jk = UECda::containsJOKER(ac) ? 1 : 0;
             cards = ac;
+            jk = ac.joker();
             qty = aq;
-            Cards nj = maskJOKER(ac);
-            qr = CardsToQR(nj);
-            
-            p4 = polymRanks<2>(nj);
-            p8 = polymJump(nj);
-            if (jk) {
-                seq = p4 | p8 | (p4 >> 4);
-            } else {
-                seq = p4 & p8;
-            }
+            Cards plain = maskJOKER(ac);
+            qr = CardsToQR(plain);
+            seq = polymRanks(plain, jk, 3);
             pqr = QRToPQR(qr);
             
             assert(exam1stHalf());
         }
-        void set1stHalf(const Cards ac) {
-            set1stHalf(ac, countCards(ac));
-        }
+        void set1stHalf(const Cards ac) { set1stHalf(ac, countCards(ac)); }
         void setAll(const Cards ac, const uint32_t aq, const uint64_t ahash) {
             set(ac, aq);
             setHash(ahash);
@@ -151,26 +108,17 @@ namespace UECda {
             set(ac, aq);
             setAll(ac, aq, CardsToHashKey(ac));
         }
-        void setAll(const Cards ac) {
-            setAll(ac, countCards(ac));
-        }
-        
+        void setAll(const Cards ac) { setAll(ac, countCards(ac)); }
         void init() {
             cards = seq = CARDS_NULL;
             qr = 0ULL;
             pqr = sc = CARDS_NULL;
-            p4 = p8 = CARDS_NULL;
-            qty = 0;
-            jk = 0;
+            qty = jk = 0;
             hash = 0ULL;
         }
         
-        void makeMove1stHalf(const Move mv) {
-            makeMove1stHalf(mv, mv.cards());
-        }
-        void makeMove1stHalf(const Move mv, const Cards dc) {
-            makeMove1stHalf(mv, dc, mv.qty());
-        }
+        void makeMove1stHalf(const Move mv) { makeMove1stHalf(mv, mv.cards()); }
+        void makeMove1stHalf(const Move mv, const Cards dc) { makeMove1stHalf(mv, dc, mv.qty()); }
         void makeMove1stHalf(const Move mv, const Cards dc, uint32_t dq) {
             
             // 更新するものは最初にチェック
@@ -185,20 +133,8 @@ namespace UECda {
             qty -= dq; // 枚数進行
             jk -= djk; // ジョーカー枚数進行
             
-            Cards nj = maskJOKER(cards);
-            
-            // 重合は計算し直す
-            if (p4 | p8) {
-                p4 = polymRanks<2>(nj);
-                p8 = polymJump(nj);
-                
-                // 階段型
-                if (jk) {
-                    seq = p4 | p8 | (p4 >> 4);
-                } else {
-                    seq = p4 & p8;
-                }
-            }
+            Cards plain = maskJOKER(cards);
+            seq = polymRanks(plain, jk, 3);
             
             if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
                 if (!mv.isSeq()) {
@@ -225,14 +161,11 @@ namespace UECda {
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr = maskJOKER(dqr);
                     }
-                    
-                    uint32_t s = mv.suits();
-                    dqr >>= SuitToSuitNum(s); // スートの分だけずらすと枚数を表すようになる
+                    dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
                     
                     // 枚数型はジョーカー以外の差分を引く
                     qr -= dqr;
-                    
-                    
+
                     // 枚数位置型、圧縮型は当該ランクを1枚分シフト
                     // ただしグループと違って元々1枚の場合に注意
                     pqr = ((pqr & mask & PQR_234) >> 1) | (pqr & ~mask);
@@ -241,42 +174,24 @@ namespace UECda {
             assert(exam1stHalf());
         }
         
-        void makeMove(const Move mv) {
-            makeMove(mv, mv.cards());
-        }
-        void makeMove(const Move mv, const Cards dc) {
-            makeMove(mv, dc, mv.qty());
-        }
+        void makeMove(const Move mv) { makeMove(mv, mv.cards()); }
+        void makeMove(const Move mv, const Cards dc) { makeMove(mv, dc, mv.qty()); }
         void makeMove(const Move mv, const Cards dc, uint32_t dq) {
-            // 普通、パスやカードが0枚になるときはこの関数には入らない。
-            
             // 更新するものは最初にチェック
             assert(exam());
             assert(!mv.isPASS());
             ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << dc << " from " << cards << endl; );
             
-            uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
-            uint32_t r4x = mv.rank4x();
+            int djk = UECda::containsJOKER(dc) ? 1 : 0;
+            int r4x = mv.rank4x();
             
             cards -= dc; // 通常型は引けば良い
             qty -= dq; // 枚数進行
             jk -= djk; // ジョーカー枚数進行
             
-            Cards nj = maskJOKER(cards);
-            
-            // 重合は計算し直す
-            if (p4 | p8) {
-                p4 = polymRanks<2>(nj);
-                p8 = polymJump(nj);
-                
-                // 階段型
-                if (jk) {
-                    seq = p4 | p8 | (p4 >> 4);
-                } else {
-                    seq = p4 & p8;
-                }
-            }
-            
+            Cards plain = cards.plain();
+            seq = polymRanks(plain, jk, 3);
+
             // 無支配型(共通処理)
             if (djk) {
                 // ジョーカーが無くなった事で、1枚分ずれる
@@ -286,16 +201,10 @@ namespace UECda {
                 
                 Cards quad = pqr & PQR_4;
                 if (quad) {
-                    {
-                        IntCard ic = pickIntCardHigh(quad);
-                        Cards qmask = ORQ_NDTable[0][IntCardToRank(ic) - 1][3];
-                        nd[0] |= qmask;
-                    }
-                    {
-                        IntCard ic = pickIntCardLow(quad);
-                        Cards qmask = ORQ_NDTable[1][IntCardToRank(ic) + 1][3];
-                        nd[1] |= qmask;
-                    }
+                    IntCard ic0 = quad.highest();
+                    nd[0] |= ORQ_NDTable[0][IntCardToRank(ic0) - 1][3];
+                    IntCard ic1 = quad.lowest();
+                    nd[1] |= ORQ_NDTable[1][IntCardToRank(ic1) + 1][3];
                 }
             }
             
@@ -303,10 +212,9 @@ namespace UECda {
             
             if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
                 if (!mv.isSeq()) {
-                    // グループ系統
                     
                     // ジョーカーの存在により少し処理が複雑に
-                    dq -= djk;//ジョーカーの分引く
+                    dq -= djk; // ジョーカーの分引く
                     
                     Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
                     Cards opqr = pqr & mask; // 当該ランクの元々のpqr
@@ -336,7 +244,7 @@ namespace UECda {
                         while (1) {
                             dmask0 >>= 4;
                             nd[0] ^= dmask0;
-                            dmask0 &= (~sc); // 現にあるカード集合の分はもう外れない
+                            dmask0 &= ~sc; // 現にあるカード集合の分はもう外れない
                             if (!(dmask0 & CARDS_ALL)) break;
                         }
                     }
@@ -345,8 +253,8 @@ namespace UECda {
                         Cards dmask1 = dmask & ~nd[1];
                         while (1) {
                             dmask1 <<= 4;
-                            nd[1] ^= (dmask1);
-                            dmask1 &= (~sc); // 現にあるカード集合の分はもう外れない
+                            nd[1] ^= dmask1;
+                            dmask1 &= ~sc; // 現にあるカード集合の分はもう外れない
                             if (!(dmask1 & CARDS_ALL)) break;
                         }
                     }
@@ -362,19 +270,14 @@ namespace UECda {
                 } else {
                     // 階段
                     Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
-                    
                     Cards dqr = dc;
-                    
-                    Cards jkmask;
-                    
+
                     if (djk) {
-                        jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                        Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr = maskJOKER(dqr);
                     }
-                    
-                    uint32_t s = mv.suits();
-                    dqr >>= SuitToSuitNum(s); // スートの分だけずらすと枚数を表すようになる
+                    dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
                     
                     //枚数型はジョーカー以外の差分を引く
                     qr -= dqr;
@@ -411,37 +314,19 @@ namespace UECda {
             ASSERT(isExclusiveCards(cards, dc),
                    cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
             
-            uint32_t djk = mv.containsJOKER() ? 1 : 0;
-            uint32_t r4x = mv.rank4x();
+            int djk = mv.containsJOKER() ? 1 : 0;
+            int r4x = mv.rank4x();
             
-            cards |= dc; // 通常型は足せば良い
+            cards += dc; // 通常型は足せば良い
             qty += dq; // 枚数進行
             
             assert(cards != CARDS_NULL);
             assert(qty > 0);
             
-            Cards nj;
-            if (UECda::containsJOKER(cards)) {
-                jk = 1;
-                nj = maskJOKER(cards);
-            } else {
-                jk = 0;
-                nj = cards;
-            }
-            
-            // 重合は計算し直す
-            p4 = polymRanks<2>(nj);
-            p8 = polymJump(maskJOKER(nj));
-            
-            // 階段型
-            if (p4 | p8) {
-                if (jk) {
-                    seq=p4 | p8 | (p4 >> 4);
-                } else {
-                    seq=p4 & p8;
-                }
-            }
-            
+            Cards plain = cards.plain();
+            jk = cards.joker();
+            seq = polymRanks(plain, jk, 3);
+
             // 無支配型(共通処理)
             if (djk) {
                 // ジョーカーが増えた事で、1枚分ずれる
@@ -449,14 +334,9 @@ namespace UECda {
                 nd[0] = ((nd[0] & PQR_123) << 1) | PQR_1;
                 nd[1] = ((nd[1] & PQR_123) << 1) | PQR_1;
             }
-            
-            //Cards orgsc=sc;
-            
+
             if (dc != CARDS_JOKER) { // ジョーカーだけ増えた場合はこれで終わり
-                
                 if (!mv.isSeq()) {
-                    // グループ系統
-                    
                     // ジョーカーの存在により少し処理が複雑に
                     dq -= djk; // ジョーカーの分引く
                     
@@ -497,14 +377,10 @@ namespace UECda {
                 } else {
                     // 階段
                     Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
-                    
-                    uint32_t s = mv.suits();
-                    Cards dqr = dc >> SuitToSuitNum(s); // スートの分だけずらすと枚数を表すようになる
-                    
-                    Cards jkmask;
-                    
+                    Cards dqr = dc >> SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
+    
                     if (djk) {
-                        jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                        Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                         mask ^= jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr &= ~jkmask;
                     }
@@ -529,7 +405,6 @@ namespace UECda {
         void unmakeMove(Move mv, Cards dc) {
             unmakeMove(mv, dc, mv.qty());
         }
-        
         void unmakeMoveAll(Move mv) {
             unmakeMoveAll(mv, mv.cards());
         }
@@ -662,23 +537,10 @@ namespace UECda {
             }
             return true;
         }
-        bool exam_pol() const {
-            Cards nj = maskJOKER(cards);
-            if (p4 != polymRanks<2>(nj)) return false;
-            if (p8 != polymJump(nj)) return false;
-            return true;
-        }
         bool exam_seq() const {
-            if (UECda::containsJOKER(cards)) {
-                if (seq != polymRanksWithJOKER(maskJOKER(cards), 3)) {
-                    cerr << "Hand : exam_seq()" << endl;
-                    return false;
-                }
-            } else {
-                if (seq != polymRanks<3>(cards)) {
-                    cerr << "Hand : exam_seq()" << endl;
-                    return false;
-                }
+            if (seq != polymRanks(cards.plain(), cards.joker(), 3)) {
+                cerr << "Hand : exam_seq()" << endl;
+                return false;
             }
             return true;
         }
@@ -708,7 +570,6 @@ namespace UECda {
             if (!exam_jk()) return false;
             if (!exam_qty()) return false;
             if (!exam_pqr()) return false;
-            if (!exam_pol()) return false;
             if (!exam_seq()) return false;
             if (!exam_qr()) return false;
             return true;
@@ -759,20 +620,20 @@ namespace UECda {
         }
                             
     private:
-        uint32_t count() const { return countCards(cards); }
+        int count() const { return countCards(cards); }
                             
     };
     
-    ostream& operator <<(ostream& out, const Hand& hand) { // 出力
+    inline ostream& operator <<(ostream& out, const Hand& hand) { // 出力
         out << hand.cards << "(" << hand.qty << ")";
         return out;
     }
                             
-    Cards containsJOKER(const Hand& hand) { return containsJOKER(hand.cards); }
-    Cards containsS3(const Hand& hand) { return containsS3(hand.cards); }
+    inline Cards containsJOKER(const Hand& hand) { return containsJOKER(hand.cards); }
+    inline Cards containsS3(const Hand& hand) { return containsS3(hand.cards); }
     
     // 別インスタンスに手札進行
-    void makeMove1stHalf(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq) {
+    inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq) {
         // 更新するものは最初にチェック
         assert(arg.exam1stHalf());
         assert(!mv.isPASS());
@@ -785,24 +646,8 @@ namespace UECda {
         dst->qty = arg.qty - dq; // 枚数進行
         dst->jk = arg.jk - djk; // ジョーカー枚数進行
         
-        Cards nj = maskJOKER(dst->cards);
-        
-        // 重合は計算し直す
-        if (arg.p4 | arg.p8) {
-            dst->p4 = polymRanks<2>(nj);
-            dst->p8 = polymJump(nj);
-            
-            // 階段型
-            if (dst->jk) {
-                dst->seq = dst->p4 | dst->p8 | (dst->p4 >> 4);
-            } else {
-                dst->seq = dst->p4 & dst->p8;
-            }
-        } else {
-            dst->p4 = CARDS_NULL;
-            dst->p8 = CARDS_NULL;
-            dst->seq = CARDS_NULL;
-        }
+        Cards plain = dst->cards.plain();
+        dst->seq = polymRanks(plain, dst->jk, 3);
         
         if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
             if (!mv.isSeq()) {
@@ -819,19 +664,14 @@ namespace UECda {
             } else {
                 // 階段
                 Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
-                
                 Cards dqr = dc;
                 
-                Cards jkmask;
-                
                 if (djk) {
-                    jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                    Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                     dqr = maskJOKER(dqr);
                 }
-                
-                uint32_t s = mv.suits();
-                dqr >>= SuitToSuitNum(s); // スートの分だけずらすと枚数を表すようにな
+                dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようにな
                 // 枚数型はジョーカー以外の差分を引く
                 dst->qr = arg.qr - dqr;
                 
@@ -847,14 +687,14 @@ namespace UECda {
         assert(dst->exam1stHalf());
     }
     
-    void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
+    inline void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
         makeMove1stHalf(arg, dst, mv, dc, mv.qty());
     }
-    void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv) {
+    inline void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv) {
         makeMove1stHalf(arg, dst, mv, mv.cards());
     }
     
-    void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc, uint32_t dq) {
+    inline void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc, uint32_t dq) {
         // 普通、パスやカードが0枚になるときはこの関数には入らない。
         
         // 更新するものは最初にチェック
@@ -862,31 +702,15 @@ namespace UECda {
         assert(!mv.isPASS());
         assert(arg.holds(dc));
         
-        uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
-        uint32_t r4x = mv.rank4x();
+        int djk = UECda::containsJOKER(dc) ? 1 : 0;
+        int r4x = mv.rank4x();
         
         dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
         dst->qty = arg.qty - dq; // 枚数進行
         dst->jk = arg.jk - djk; // ジョーカー枚数進行
         
-        Cards nj = maskJOKER(dst->cards);
-        
-        // 重合は計算し直す
-        if (arg.p4 | arg.p8) {
-            dst->p4 = polymRanks<2>(nj);
-            dst->p8 = polymJump(nj);
-            
-            // 階段型
-            if (dst->jk) {
-                dst->seq = dst->p4 | dst->p8 | (dst->p4 >> 4);
-            } else {
-                dst->seq = dst->p4 & dst->p8;
-            }
-        } else {
-            dst->p4 = CARDS_NULL;
-            dst->p8 = CARDS_NULL;
-            dst->seq = CARDS_NULL;
-        }
+        Cards plain = maskJOKER(dst->cards);
+        dst->seq = polymRanks(plain, dst->jk, 3);
         
         // 無支配型(共通処理)
         dst->nd[0] = arg.nd[0];
@@ -900,26 +724,17 @@ namespace UECda {
             
             Cards quad = arg.pqr & PQR_4;
             if (quad) {
-                {
-                    IntCard ic = pickIntCardHigh(quad);
-                    Cards qmask = ORQ_NDTable[0][IntCardToRank(ic) - 1][3];
-                    dst->nd[0] |= qmask;
-                }
-                {
-                    IntCard ic = pickIntCardLow(quad);
-                    Cards qmask = ORQ_NDTable[1][IntCardToRank(ic) + 1][3];
-                    dst->nd[1] |= qmask;
-                }
+                IntCard ic0 = quad.highest();
+                dst->nd[0] |= ORQ_NDTable[0][IntCardToRank(ic0) - 1][3];
+                IntCard ic1 = quad.lowest();
+                dst->nd[1] |= ORQ_NDTable[1][IntCardToRank(ic1) + 1][3];
             }
         }
         
         Cards orgsc = arg.sc;
         
         if (dc != CARDS_JOKER) {
-            
             if (!mv.isSeq()) {
-                // グループ系統
-                
                 // ジョーカーの存在により少し処理が複雑に
                 dq -= djk; // ジョーカーの分引く
                 
@@ -977,20 +792,16 @@ namespace UECda {
             } else {
                 // 階段
                 Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
-                
                 Cards dqr = dc;
-                
-                Cards jkmask;
-                
+
                 if (djk) {
-                    jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                    Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                     dqr = maskJOKER(dqr);
                 }
-                
-                uint32_t s = mv.suits();
-                dqr >>= SuitToSuitNum(s); // スートの分だけずらすと枚数を表すようになる
-                
+
+                dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
+
                 // 枚数型はジョーカー以外の差分を引く
                 dst->qr = arg.qr - dqr;
                 // 枚数位置型、圧縮型は当該ランクを1枚分シフト
@@ -1009,25 +820,25 @@ namespace UECda {
         assert(dst->exam());
     }
     
-    void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
+    inline void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
         makeMove(arg, dst, mv, dc, mv.qty());
     }
-    void makeMove(const Hand& arg, Hand *const dst, const Move mv) {
+    inline void makeMove(const Hand& arg, Hand *const dst, const Move mv) {
         makeMove(arg, dst, mv, mv.cards());
     }
     
-    void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq, uint64_t dhash) {
+    inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq, uint64_t dhash) {
         makeMove(arg, dst, mv, dc, dq);
         dst->hash = arg.hash ^ dhash;
         assert(dst->exam_hash());
     }
-    void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint64_t dhash) {
+    inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint64_t dhash) {
         makeMoveAll(arg, dst, mv, dc, mv.qty(), dhash);
     }
-    void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc) {
+    inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc) {
         makeMoveAll(arg, dst, mv, dc, CardsToHashKey(dc));
     }
-    void makeMoveAll(const Hand& arg, Hand *const dst, Move mv) {
+    inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv) {
         makeMoveAll(arg, dst, mv, mv.cards());
     }
 }

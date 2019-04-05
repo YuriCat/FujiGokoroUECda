@@ -26,6 +26,62 @@ constexpr BitCards suitCardsTable[16] = {
     CARDS_HS,   CARDS_CHS, CARDS_DHS, CARDS_CDHS,
 };
 
+CardArray CardsToQR_slow(BitCards c) {
+    CardArray ret = 0;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        ret.set(r, countCards(RankToCards(r) & c));
+    }
+    return ret.data();
+}
+CardArray CardsToENR_slow(BitCards c, int n) {
+    CardArray ret = 0;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        if (countCards(c & RankToCards(r)) >= n) {
+            ret.set(r, 1);
+        }
+    }
+    return ret.data();
+}
+CardArray CardsToNR_slow(BitCards c, int n) {
+    CardArray ret = 0;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        if (countCards(c & RankToCards(r)) == n) {
+            ret.set(r, 1);
+        }
+    }
+    return ret.data();
+}
+BitCards QRToPQR_slow(CardArray qr) {
+    CardArray arr = qr;
+    CardArray ret = CARDS_NULL;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        if (arr[r]) {
+            ret.set(r, 1 << (arr[r] - 1));
+        }
+    }
+    return ret.data();
+}
+BitCards QRToSC_slow(CardArray qr) {
+    CardArray arr = qr;
+    CardArray ret = CARDS_NULL;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        ret.set(r, (1 << arr[r]) - 1);
+    }
+    return ret.data();
+}
+BitCards PQRToSC_slow(CardArray qr) {
+    CardArray arr = qr;
+    CardArray ret = CARDS_NULL;
+    for (int r = RANK_U; r <= RANK_O; r++) {
+        if (arr[r]) {
+            uint32_t q = bsf(arr[r]) + 1;
+            ret.set(r, (1 << q) - 1);
+        }
+    }
+    return ret.data();
+}
+    
+
 int testSuitSuits() {
     // (Suit, Suits)関係テスト
     int cnt[16 * 16] = {0};

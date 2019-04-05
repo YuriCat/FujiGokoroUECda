@@ -5,12 +5,11 @@
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
-#include "../core/mate.hpp"
+#include "../engine/mate.hpp"
 
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
@@ -33,16 +32,16 @@ bool judgeCardsPWSlow(MoveInfo *const buf,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
     uint64_t key = uint64_t(myCards) ^ -uint32_t(bd);
-    if (bd.isNF()) {
+    if (bd.isNull()) {
         if (visitedCards.find(key) != visitedCards.end()) {
             return visitedCards[key];
         }
         //int ans = visitedCards.read(myCards | -uint32_t(bd));
         //if (ans >= 0) { return bool(ans); }
     }
-    const int myMoves = mgCards.genMove(buf, myCards, bd);
+    const int myMoves = genMove(buf, myCards, bd);
     bool pw = searchCardsPWSlow<M>(buf, myMoves, p, myCards, opsCards, bd, ps, flushLead) >= 0;
-    if (bd.isNF()) {
+    if (bd.isNull()) {
         visitedCards[key] = pw;
         //visitedCards.regist(int(pw), myCards ^ -uint32_t(bd));
     }
@@ -61,7 +60,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
             if (flushLead) {
                 if (!ps.isAllAsleepExcept(p)) {
                     // 他のプレーヤーが出せるか確認
-                    const int opsMoves = mgCards.genFollowExceptPASS(buf, opsCards, bd);
+                    const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
                     if (opsMoves > 0) return false;
                 }
                 bd.flush();
@@ -72,17 +71,17 @@ bool checkCardsPWSlow(MoveInfo *const buf,
             }
         } else {
             bd.proc(move);
-            if (!bd.isNF()) { // 流れていない
+            if (!bd.isNull()) { // 流れていない
                 if (!ps.isAllAsleepExcept(p)) {
                     // 他のプレーヤーが出せるか確認
-                    const int opsMoves = mgCards.genFollowExceptPASS(buf, opsCards, bd);
+                    const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
                     if (opsMoves > 0) {
                         // ここからBNPW判定
                         /*for (int m = 0; m < opsMoves; ++m) {
                             Move opsMove = buf[m].mv();
                             Board nextBd = bd;
                             nextBd.proc(opsMove);
-                            if (nextBd.isNF())continue; // 相手に流されたらそこで終了
+                            if (nextBd.isNull())continue; // 相手に流されたらそこで終了
                             // ここに対して自分の必勝手があるか調べる
                             judgeCardsPWSlow(buf + opsMoves, p,
                                              myCards, subtrCards(opsCards, opsMove.cards()),
@@ -144,8 +143,8 @@ int testRecordMoveMate(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.getBoard();
-            if (!bd.isNF()) return 0;
+            Board bd = field.board;
+            if (!bd.isNull()) return 0;
 
             cl.start();
             bool mate = judgeHandPW_NF(myHand, opsHand, bd);
@@ -193,7 +192,7 @@ int testRecordMoveMate(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.getBoard();
+            Board bd = field.board;
             MoveInfo mi = MoveInfo(move);
             
             if (dominatesHand(bd, myHand)) return 0;
@@ -242,10 +241,10 @@ int testRecordMoveMate(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.getBoard();
+            Board bd = field.board;
             
-            const int moves = mgCards.genMove(buffer, myHand, bd);
-            if (moves <= 1) { return 0; }
+            const int moves = genMove(buffer, myHand, bd);
+            if (moves <= 1) return 0;
             
             cl.start();
             int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
@@ -325,7 +324,7 @@ int analyzeMateDistribution(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.getBoard();
+            Board bd = field.board;
             mateMoves.clear();
             visitedCards.clear();
             bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,

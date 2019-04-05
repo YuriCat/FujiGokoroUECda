@@ -159,16 +159,16 @@ int main(int argc, char* argv[]) {
         for (int g = 0; g < mLog.games(); ++g) {
             const auto gLog = mLog.game(g);
             if (!gLog.isInitGame()) { // 階級初期化ゲームは除外
-                int daifugoSeat = gLog.getPlayerSeat(gLog.getClassPlayer(DAIFUGO)); // 大富豪の座席
-                int winnerSeat = gLog.getPlayerSeat(gLog.getNewClassPlayer(DAIFUGO)); // 1位あがりの座席
+                int daifugoSeat = gLog.seatOf(gLog.classPlayer(DAIFUGO)); // 大富豪の座席
+                int winnerSeat = gLog.seatOf(gLog.newClassPlayer(DAIFUGO)); // 1位あがりの座席
                 for (int p = 0; p < N_PLAYERS; ++p) {
-                    int cl = gLog.getPlayerClass(p); // 元々の階級
-                    int ncl = gLog.getPlayerNewClass(p); // この試合の順位
+                    int cl = gLog.classOf(p); // 元々の階級
+                    int ncl = gLog.newClassOf(p); // この試合の順位
                     
                     transProbMatrixAll[cl][ncl] += 1;
                     
                     // 大富豪基準で見た自分の座席位置
-                    int relativeSeat = (gLog.getPlayerSeat(p) + N_PLAYERS - daifugoSeat) % N_PLAYERS;
+                    int relativeSeat = (gLog.seatOf(p) + N_PLAYERS - daifugoSeat) % N_PLAYERS;
                     ASSERT(0 <= relativeSeat && relativeSeat < N_PLAYERS,
                            cerr << relativeSeat << endl;);
                     

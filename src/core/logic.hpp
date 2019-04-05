@@ -3,7 +3,7 @@
 // 大富豪ゲームの性質を用いた演算
 // 機械学習ベースとなったので複雑なロジックが有効な機会は最早少ないかもしれない
 
-#include "daifugo.hpp"
+#include "../core/daifugo.hpp"
 
 namespace UECda {
     
@@ -11,7 +11,7 @@ namespace UECda {
     
     // paoon氏のbeersongのアイデアを利用
     template <class move_t>
-    int calcMinNMelds(move_t *const mv, const Cards c) {
+    inline int calcMinNMelds(move_t *const mv, const Cards c) {
         
         int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
         const int cnt = genAllSeq(mv, c);
@@ -38,13 +38,13 @@ namespace UECda {
         return true; // イレブンバックはUECdaにはない
     }
     
-    bool isNoRev(const Cards mine, const Cards ops) {
+    inline bool isNoRev(const Cards mine, const Cards ops) {
         // 無革命性の証明
         return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
                 && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
     }
     
-    bool isNoRev(const Cards mine) {
+    inline bool isNoRev(const Cards mine) {
         // 無革命性の証明
         return !groupCards(mine, 4) && !canMakeSeq(mine, 5);
     }
@@ -54,7 +54,7 @@ namespace UECda {
     // 支配保証、空場期待、半支配保証半空場期待についての解析
     // 革命返しのときには間違っていることがある
     
-    static inline Cards getAllDWCards(const Cards mine, const Cards ops,
+    inline Cards getAllDWCards(const Cards mine, const Cards ops,
                                       const int order, const uint64_t set) {
         // 全ての単支配保証カードを返す
         // 自分のジョーカーは考えない(滅多に支配保証にならないので)
@@ -62,7 +62,7 @@ namespace UECda {
         
         if (set) {
             if (!containsJOKER(ops)) {
-                if (order == ORDER_NORMAL) {
+                if (order == 0) {
                     IntCard ic = pickIntCardHigh(ops);
                     int r4x = IntCardToRank4x(ic);
                     dw |= mine & RankRange4xToCards(r4x, RANK_MAX * 4);
@@ -77,19 +77,20 @@ namespace UECda {
     }
     
     // 支配保証ありorなし判定
-    static inline bool hasDW(const Cards myCards, const Cards opsCards,
+    inline bool hasDW(const Cards myCards, const Cards opsCards,
                              const int order, const uint64_t set) {
         // Cards型から
-        if (myCards & CARDS_8)return true; // 8切り
-        if (!set)return false; // オーダー未固定では8切りオンリー
+        if (myCards & CARDS_8) return true; // 8切り
+        if (!set) return false; // オーダー未固定では8切りオンリー
         
         uint32_t mine = 0;
         uint32_t ops;
         Cards tmp;
         
-        if (containsJOKER(opsCards)) { ops = 1; } else { ops = 0; }
+        if (containsJOKER(opsCards)) ops = 1;
+        else ops = 0;
         
-        if (order == ORDER_NORMAL) {
+        if (order == 0) {
             //int myR = getHighRankx4(myCards);
             // 上のランクからスキャン
             for (tmp = CARDS_2; tmp > CARDS_8; tmp >>= 4) {
@@ -99,7 +100,7 @@ namespace UECda {
                         return true;
                     } else {
                         mine += countCards(rc);
-                        if (mine > ops)return true;
+                        if (mine > ops) return true;
                     }
                 }
                 if (opsCards & tmp) {
@@ -114,7 +115,7 @@ namespace UECda {
                         return true;
                     } else {
                         mine += countCards(rc);
-                        if (mine > ops)return true;
+                        if (mine > ops) return true;
                     }
                 }
                 if (opsCards & tmp) {
@@ -125,12 +126,12 @@ namespace UECda {
         return false;
     }
     
-    static inline Cards getAllNFHCards(const Cards mine, const Cards ops,
-                                       const int order, const uint64_t set) {
+    inline Cards getAllNFHCards(const Cards mine, const Cards ops,
+                                const int order, const uint64_t set) {
         // 全ての単空場期待カードを返す
         if (!set) return CARDS_NULL;
         Cards ret;
-        if (order == ORDER_NORMAL) {
+        if (order == 0) {
             IntCard ic = pickIntCardLow(ops);
             int r4x = IntCardToRank4x(ic);
             ret = mine & RankRange4xToCards(RANK_MIN * 4, r4x);
@@ -146,7 +147,7 @@ namespace UECda {
     }
     
     // 完全空場期待
-    static inline bool hasNFH(const Cards myCards, const Cards opsCards,
+    inline bool hasNFH(const Cards myCards, const Cards opsCards,
                               const int order, const uint64_t set) {
         
         // Cards型から
@@ -156,13 +157,14 @@ namespace UECda {
         uint32_t ops;
         Cards tmp;
         
-        if (containsJOKER(opsCards)) { ops = 1; } else { ops = 0; }
+        if (containsJOKER(opsCards)) ops = 1;
+        else ops = 0;
         
-        if (order == ORDER_NORMAL) {
+        if (order == 0) {
             if (ops || containsJOKER(myCards)) {
-                if (commonCards(myCards, maskCards(CARDS_3, CARDS_S3)))return true;
+                if (commonCards(myCards, maskCards(CARDS_3, CARDS_S3))) return true;
             } else {
-                if (commonCards(myCards, CARDS_3))return true;
+                if (commonCards(myCards, CARDS_3)) return true;
             }
             if (opsCards & CARDS_3) { ops += countCards(opsCards & CARDS_3); }
             
@@ -173,7 +175,7 @@ namespace UECda {
                         return true;
                     } else {
                         mine += countCards(rc);
-                        if (mine > ops)return true;
+                        if (mine > ops) return true;
                     }
                 }
                 if (opsCards & tmp) {
@@ -182,7 +184,7 @@ namespace UECda {
             }
             
         } else {
-            if (commonCards(myCards, CARDS_2))return true;
+            if (commonCards(myCards, CARDS_2)) return true;
             for (tmp = CARDS_A; tmp > CARDS_8; tmp >>= 4) {
                 Cards rc = myCards & tmp;
                 if (rc) {
@@ -190,7 +192,7 @@ namespace UECda {
                         return true;
                     } else {
                         mine += countCards(rc);
-                        if (mine > ops)return true;
+                        if (mine > ops) return true;
                     }
                 }
                 if (opsCards & tmp) {
@@ -202,25 +204,22 @@ namespace UECda {
     }
     
     // 半支配保証 & 半空場期待
-    static inline bool hasDWorNFH(const Cards myCards, const Cards opsCards,
+    inline bool hasDWorNFH(const Cards myCards, const Cards opsCards,
                                   const int tmpOrder, const uint64_t set) {
         
         if (set) { // オーダー固定
-            if (hasDW(myCards, opsCards, tmpOrder, 1))return true;
-            if (hasNFH(myCards, opsCards, tmpOrder, 1))return true;
-            if (tmpOrder == ORDER_NORMAL || (!containsJOKER(opsCards))) {
-                if (containsS3(myCards))return true; // 通常オーダーか、相手がジョーカーを持たない場合はS3は空場または支配場にしか出せないので
+            if (hasDW(myCards, opsCards, tmpOrder, 1)) return true;
+            if (hasNFH(myCards, opsCards, tmpOrder, 1)) return true;
+            if (tmpOrder == 0 || (!containsJOKER(opsCards))) {
+                if (containsS3(myCards)) return true; // 通常オーダーか、相手がジョーカーを持たない場合はS3は空場または支配場にしか出せないので
             }
         } else { // オーダー反転可能性あり
-            if (myCards & CARDS_8)return true;
+            if (myCards & CARDS_8) return true;
             if (!containsJOKER(opsCards)) {
-                if (containsS3(myCards))return true; // 相手がジョーカーを持たない場合はS3は空場または支配場にしか出せないので
+                if (containsS3(myCards)) return true; // 相手がジョーカーを持たない場合はS3は空場または支配場にしか出せないので
             }
-            if (
-               (hasDW(myCards, opsCards, 0, 1) && hasNFH(myCards, opsCards, 1, 1))
-               ||
-               (hasDW(myCards, opsCards, 1, 1) && hasNFH(myCards, opsCards, 0, 1))
-               )return true;
+            if ((hasDW(myCards, opsCards, 0, 1) && hasNFH(myCards, opsCards, 1, 1))
+                || (hasDW(myCards, opsCards, 1, 1) && hasNFH(myCards, opsCards, 0, 1))) return true;
             
         }
         return false;

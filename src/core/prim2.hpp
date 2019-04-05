@@ -171,7 +171,7 @@ namespace UECda {
         uint64_t isNoChance() const { return isBDM(); }
         
         // 永続情報
-        uint64_t isTmpOrderSettled() const { return test(LCT64_TMPORDSETTLED); }
+        uint64_t isOrderSettled() const { return test(LCT64_TMPORDSETTLED); }
         uint64_t isPrmOrderSettled() const { return test(LCT64_PRMORDSETTLED); }
         
         uint64_t isDConst() const { return test(LCT64_DCONST); }
@@ -208,7 +208,7 @@ namespace UECda {
         BitSetInRegister<data_t> i_;
     };
     
-    ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
+    static ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
         out << "Field :";
         if (i.isFinal())out << " -FIN";
         else if (i.isPW())out << " -PW";
@@ -241,7 +241,7 @@ namespace UECda {
         return out;
     }
     
-    void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
+    inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
                            FieldAddInfo *const pnext) {
         pnext->initTmpInfo();
         pnext->setMinNCardsAwake(fieldInfo.getMinNCards());
@@ -250,7 +250,7 @@ namespace UECda {
         pnext->setMaxNCards(fieldInfo.getMaxNCards());
         pnext->setFlushLead();
     }
-    void procUnrivaled(const FieldAddInfo& fieldInfo,
+    inline void procUnrivaled(const FieldAddInfo& fieldInfo,
                        FieldAddInfo *const pnext) {
         *pnext = fieldInfo;
         pnext->procTmpInfo();
@@ -385,7 +385,7 @@ namespace UECda {
         uint64_t isDW_NFH() const { return m_ & (1ULL<<(32+29)); }
     };
     
-    std::ostream& operator <<(std::ostream& out, const MoveInfo& mi) {
+    static std::ostream& operator <<(std::ostream& out, const MoveInfo& mi) {
         out << mi.mv(); // Move型として出力
         return out;
     }
@@ -396,7 +396,7 @@ namespace UECda {
         constexpr MoveAddInfo(const MoveInfo& arg): MoveInfo::MoveInfo(arg) {}
     };
     
-    ostream& operator <<(ostream& out, const MoveAddInfo& i) { // 出力
+    static std::ostream& operator <<(std::ostream& out, const MoveAddInfo& i) { // 出力
         
         // 勝敗
         if (i.isFinal())out << " -FIN";
@@ -576,8 +576,8 @@ namespace UECda {
         //validator
         bool exam() const {
             //各要素
-            if (!exam_alive()) { return false; }
-            if (!exam_awake()) { return false; }
+            if (!exam_alive()) return false;
+            if (!exam_awake()) return false;
             
             //awakeとaliveの関係
             if (getNAlive() < getNAwake()) {
@@ -603,7 +603,7 @@ namespace UECda {
         constexpr PlayersState(const PlayersState& arg) : i(arg.i) {}
     };
     
-    std::ostream& operator<<(std::ostream& out, const PlayersState& arg) { // 出力
+    static std::ostream& operator <<(std::ostream& out, const PlayersState& arg) { // 出力
         // 勝敗
         out << "al{";
         for (int i = 0; i < PlayersState::N; ++i) {

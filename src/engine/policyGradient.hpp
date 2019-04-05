@@ -2,7 +2,7 @@
 
 #include "../include.h"
 #include "../core/action.hpp"
-#include "../core/mate.hpp"
+#include "mate.hpp"
 
 namespace UECda {
     namespace PolicyGradient {
@@ -10,9 +10,9 @@ namespace UECda {
         
         template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnChangeParamsGame(const gameLog_t& gLog,
-                                    const BitSet32 flags,
-                                    learningSpace_t *const plearningSpace,
-                                    threadTools_t *const ptools) {
+                                  const std::bitset<32> flags,
+                                  learningSpace_t *const plearningSpace,
+                                  threadTools_t *const ptools) {
             
             MoveInfo *const buf = ptools->buf;
             Field field;
@@ -23,7 +23,7 @@ namespace UECda {
                 // change callback
                 [buf, flags, plearningSpace](const auto& field, const int from, const int to, const Cards chosenChange)->int{
                     
-                    int myClass = field.getPlayerClass(from);
+                    int myClass = field.classOf(from);
                     if (myClass > Class::MIDDLE) { return 0; }
                     
                     const Hand& myHand = field.getHand(from);
@@ -107,7 +107,7 @@ namespace UECda {
         
         template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnPlayParamsGame(const gameLog_t& gLog,
-                                const BitSet32 flags,
+                                const std::bitset<32> flags,
                                 learningSpace_t *const plearningSpace,
                                 threadTools_t *const ptools) {
             
@@ -125,7 +125,7 @@ namespace UECda {
                     const uint32_t tp = field.turn();
                     const Hand& myHand = field.getHand(tp);
                     const Hand& opsHand = field.getOpsHand(tp);
-                    const Board bd = field.getBoard();
+                    const Board bd = field.board;
                     
                     if (!holdsCards(myHand.cards, chosenMove.cards())) {
                         return -1;
@@ -203,11 +203,11 @@ namespace UECda {
         
         template <class matchLog_t, class learningSpace_t, class threadTools_t>
         int learnPlayParamsMatch(const matchLog_t& mLog,
-                                    const BitSet32 flags,
-                                    learningSpace_t *const plearningSpace,
-                                    threadTools_t *const ptools,
-                                    int *const list = nullptr,
-                                    int nlist = 0) {
+                                 const std::bitset<32> flags,
+                                 learningSpace_t *const plearningSpace,
+                                 threadTools_t *const ptools,
+                                 int *const list = nullptr,
+                                 int nlist = 0) {
             if (list == nullptr) {
                 // 全試合で学習 or テスト
                 for (int g = 0; g < mLog.games(); ++g) {
@@ -224,7 +224,7 @@ namespace UECda {
         
         template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnParamsGame(const gameLog_t& gLog,
-                            const BitSet32 flags,
+                            const std::bitset<32> flags,
                             learningSpace_t *const plearningSpace,
                             threadTools_t *const ptools,
                             bool change) {

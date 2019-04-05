@@ -10,7 +10,6 @@
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
@@ -24,8 +23,8 @@ bool dominateCardsSlow(const Move move, const Cards cards, const Board abd) {
     if (move.isPASS()) { return false; }
     Board bd = abd;
     bd.proc(move);
-    if (bd.isNF()) { return true; }
-    int moves = mgCards.genFollowExceptPASS(buffer, cards, bd);
+    if (bd.isNull()) { return true; }
+    int moves = genFollowExceptPASS(buffer, cards, bd);
     if (moves <= 0) { // pass only
         return true;
     }
@@ -49,7 +48,7 @@ int testRecordMoveDominance(const Record& record) {
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             Cards opsCards = field.getOpsCards(turnPlayer);
-            Board bd = field.getBoard();
+            Board bd = field.board;
             cl.start();
             bool dom = dominatesCards(move, opsCards, bd);
             judgeTime[0] += cl.stop();
@@ -83,7 +82,7 @@ int testRecordMoveDominance(const Record& record) {
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.getBoard();
+            Board bd = field.board;
             cl.start();
             bool dom = dominatesHand(move, opsHand, bd);
             judgeTime[1] += cl.stop();

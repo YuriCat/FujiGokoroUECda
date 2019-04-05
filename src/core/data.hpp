@@ -48,7 +48,7 @@ namespace UECda {
         void closeGame(const gameRecord_t& g) {
             // 試合順位の記録
             for (int p = 0; p < N_PLAYERS; p++) {
-                feedResult(p, g.getPlayerClass(p), g.getPlayerNewClass(p));
+                feedResult(p, g.classOf(p), g.newClassOf(p));
             }
         }
         void closeMatch() {

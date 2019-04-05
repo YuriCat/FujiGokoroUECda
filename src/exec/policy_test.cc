@@ -19,7 +19,7 @@ PlayPolicy<policy_value_t> playPolicy;
 int outputParams() {
     // 方策関数中で気になるパラメータを出力
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_GR_CARDS)
-                             + ORDER_NORMAL * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
+                             + 0 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_6 * (2) * (16) * N_PATTERNS_SUITS_SUITS
                              + 1 * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_A * N_PATTERNS_SUITS_SUITS
@@ -27,7 +27,7 @@ int outputParams() {
                              ) << endl;
     
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
-                             + ORDER_NORMAL * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
+                             + 0 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(3) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
@@ -35,7 +35,7 @@ int outputParams() {
                              ) << endl;
     
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
-                             + ORDER_NORMAL * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
+                             + 0 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(4) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
@@ -64,7 +64,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
         [](const auto& field)->void{}, // dealt callback
         [&](const auto& field, int from, int to, Cards ch)->int{ // change callback
             Cards change[N_MAX_CHANGES + 1];
-            const int cl = field.getPlayerClass(from);
+            const int cl = field.classOf(from);
             if (cl < MIDDLE) {
                 const Cards myCards = field.getCards(from);
                 const int changeQty = N_CHANGE_CARDS(cl);
@@ -155,7 +155,7 @@ int testSelector(const MatchRecord& mrecord) {
             double score[N_MAX_MOVES];
             
             const int turnPlayer = field.turn();
-            const int moves = genMove(play, field.getCards(turnPlayer), field.getBoard());
+            const int moves = genMove(play, field.getCards(turnPlayer), field.board);
             
             calcPlayPolicyScoreSlow<0>(score, play, moves, field, playPolicy);
             

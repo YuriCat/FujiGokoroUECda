@@ -40,7 +40,6 @@ struct SubjectivePlayouterField : public PlayouterField{
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
-using namespace UECda::Fuji;
 
 Clock cl;
 ThreadTools threadTools;
@@ -180,7 +179,7 @@ int testEstimationWithModeling(const logs_t& mLog) {
                      double score[N_MAX_MOVES + 1];
                      
                      const int p = field.turn();
-                     const int moves = genMove(play, field.hand, field.getBoard());
+                     const int moves = genMove(play, field.hand, field.board);
                      
                      // ベース方策計算
                      calcPlayPolicyScoreSlow(score, play, moves, field, playerModelSpace.playPolicy());

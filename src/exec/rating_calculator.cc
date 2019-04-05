@@ -193,7 +193,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
         std::map<std::string, int> gameSum;
         iterateGameRandomlyWithIndex(mLogs, 0, mLogs.games(), [&scoreSum, &gameSum](int index, const auto& gLog, const auto& mLog)->void{
             for (int p = 0; p < N_PLAYERS; p++) {
-                scoreSum[mLog.player(p)] += REWARD(gLog.getPlayerNewClass(p));
+                scoreSum[mLog.player(p)] += REWARD(gLog.newClassOf(p));
                 gameSum[mLog.player(p)] += 1;
             }
         });

@@ -1,5 +1,6 @@
 // 方策関数の学習
 
+#include <bitset>
 #include "../include.h"
 #include "../core/record.hpp"
 
@@ -12,9 +13,11 @@ struct ThreadTools {
     XorShift64 dice;
 };
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-
+using namespace std;
 using namespace UECda;
+
+string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
+
 
 enum {
     MODE_FLAG_TEST = 1,
@@ -57,11 +60,11 @@ public:
 // 重いのでグローバルに置く
 ChangePolicy<double> changePolicy;
 PlayPolicy<double> playPolicy;
-std::vector<ThreadTools> threadTools;
-std::vector<LearningSpace> ls;
+vector<ThreadTools> threadTools;
+vector<LearningSpace> ls;
 
 // 解析, 学習用スレッド
-void learnThread(int threadIndex, int st, int ed, BitSet32 flag,
+void learnThread(int threadIndex, int st, int ed, bitset<32> flag,
                  const Record *const precord, bool change) {
     auto& thls = ls.at(threadIndex);
     ThreadTools *const ptools = &threadTools.at(threadIndex);
@@ -72,7 +75,7 @@ void learnThread(int threadIndex, int st, int ed, BitSet32 flag,
     }
 }
 
-void analyzeThread(int threadIndex, int st, int ed, BitSet32 flag,
+void analyzeThread(int threadIndex, int st, int ed, bitset<32> flag,
                    const Record *const precord, bool change) {
     auto& thls = ls.at(threadIndex);
     ThreadTools *const ptools = &threadTools.at(threadIndex);
@@ -85,15 +88,15 @@ void analyzeThread(int threadIndex, int st, int ed, BitSet32 flag,
     else thls.playLearner().closeFeatureValue();
 }
 
-std::vector<int64_t> divide(int64_t st, int64_t ed, int n) {
-    std::vector<int64_t> v = {st};
+vector<int64_t> divide(int64_t st, int64_t ed, int n) {
+    vector<int64_t> v = {st};
     for (int i = 0; i < n; i++) v.push_back(v.back() + (ed - v.back()) / (n - i));
     return v;
 }
-int learn(std::vector<std::string> logFileNames, std::string outDirName, int mode) {
+int learn(vector<string> logFileNames, string outDirName, int mode) {
     
     XorShift64 dice((uint32_t)time(NULL));
-    std::mt19937 mt((uint32_t)time(NULL));
+    mt19937 mt((uint32_t)time(NULL));
     
     if (outDirName == "") outDirName = DIRECTORY_PARAMS_OUT;
     
@@ -134,21 +137,21 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
     cerr << "started analyzing feature." << endl;
     
     // 解析スレッドごとの試合割り振り
-    std::vector<int64_t> eachLearnGames = divide(0, learnGames, threads);
-    std::vector<int64_t> eachTestGames = divide(learnGames, games, threads);
+    vector<int64_t> eachLearnGames = divide(0, learnGames, threads);
+    vector<int64_t> eachTestGames = divide(learnGames, games, threads);
     cerr << "learn games dist = " << eachLearnGames << endl;
     cerr << "test  games dist = " << eachTestGames << endl;
     
-    BitSet32 flag(0);
+    bitset<32> flag(0);
     flag.set(1);
     
-    std::vector<std::thread> threadPool;
+    vector<thread> threadPool;
     
     if (mode & MODE_FLAG_CHANGE) {
         // 交換学習データ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
-            threadPool.emplace_back(std::thread(analyzeThread, th,
+            threadPool.emplace_back(thread(analyzeThread, th,
                                                 eachLearnGames[th], eachLearnGames[th + 1],
                                                 flag, &record, true));
         }
@@ -162,7 +165,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         // 交換テストデータ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
-            threadPool.emplace_back(std::thread(analyzeThread, th,
+            threadPool.emplace_back(thread(analyzeThread, th,
                                                 eachTestGames[th], eachTestGames[th + 1],
                                                 flag, &record, true));
         }
@@ -177,7 +180,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         // 着手学習データ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
-            threadPool.emplace_back(std::thread(analyzeThread, th,
+            threadPool.emplace_back(thread(analyzeThread, th,
                                                 eachLearnGames[th], eachLearnGames[th + 1],
                                                 flag, &record, false));
         }
@@ -189,7 +192,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         // 着手テストデータ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
-            threadPool.emplace_back(std::thread(analyzeThread, th,
+            threadPool.emplace_back(thread(analyzeThread, th,
                                                 eachTestGames[th], eachTestGames[th + 1],
                                                 flag, &record, false));
         }
@@ -245,7 +248,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         
         if (mode & MODE_FLAG_SHUFFLE) record.shuffle(0, learnGames, mt);
         
-        BitSet32 flag(0);
+        bitset<32> flag(0);
         flag.set(0);
         flag.set(2);
         
@@ -253,7 +256,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
         if (mode & MODE_FLAG_CHANGE) {
             threadPool.clear();
             for (int th = 0; th < threads; th++) {
-                threadPool.emplace_back(std::thread(learnThread, th,
+                threadPool.emplace_back(thread(learnThread, th,
                                                     eachLearnGames[th], eachLearnGames[th + 1],
                                                     flag, &record, true));
             }
@@ -271,7 +274,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             // 交換も学習する場合は複数イテレーションに1回のみ
             threadPool.clear();
             for (int th = 0; th < threads; th++) {
-                threadPool.emplace_back(std::thread(learnThread, th,
+                threadPool.emplace_back(thread(learnThread, th,
                                                     eachLearnGames[th], eachLearnGames[th + 1],
                                                     flag, &record, false));
             }
@@ -290,7 +293,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
             if (mode & MODE_FLAG_CHANGE) {
                 threadPool.clear();
                 for (int th = 0; th < threads; th++) {
-                    threadPool.emplace_back(std::thread(learnThread, th,
+                    threadPool.emplace_back(thread(learnThread, th,
                                                         eachTestGames[th], eachTestGames[th + 1],
                                                         flag, &record, true));
                 }
@@ -304,7 +307,7 @@ int learn(std::vector<std::string> logFileNames, std::string outDirName, int mod
                 // 交換も学習する場合は複数イテレーションに1回のみ
                 threadPool.clear();
                 for (int th = 0; th < threads; th++) {
-                    threadPool.emplace_back(std::thread(learnThread, th,
+                    threadPool.emplace_back(thread(learnThread, th,
                                                         eachTestGames[th], eachTestGames[th + 1],
                                                         flag, &record, false));
                 }
@@ -328,14 +331,14 @@ int main(int argc, char* argv[]) { // For UECda
     
     // ファイルパスの取得
     {
-        std::ifstream ifs("blauweregen_config.txt");
+        ifstream ifs("blauweregen_config.txt");
         if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
         if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
         if (ifs) { ifs >> DIRECTORY_LOGS; }
     }
     
-    std::vector<std::string> logFileNames;
-    std::string outDirName = "";
+    vector<string> logFileNames;
+    string outDirName = "";
     
     int mode = MODE_FLAG_CHANGE | MODE_FLAG_PLAY | MODE_FLAG_SHUFFLE;
     for (int c = 1; c < argc; ++c) {
@@ -348,12 +351,12 @@ int main(int argc, char* argv[]) { // For UECda
         } else if (!strcmp(argv[c], "-i")) {
             LearningSettings::iterations = atoi(argv[c + 1]);
         } else if (!strcmp(argv[c], "-l")) {
-            logFileNames.push_back(std::string(argv[c + 1]));
+            logFileNames.push_back(string(argv[c + 1]));
         } else if (!strcmp(argv[c], "-ld")) {
-            std::vector<std::string> tmpLogFileNames = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
+            vector<string> tmpLogFileNames = getFilePathVectorRecursively(string(argv[c + 1]), ".dat");
             logFileNames.insert(logFileNames.end(), tmpLogFileNames.begin(), tmpLogFileNames.end());
         } else if (!strcmp(argv[c], "-o")) {
-            outDirName = std::string(argv[c + 1]);
+            outDirName = string(argv[c + 1]);
         } else if (!strcmp(argv[c], "-f")) {
             mode &= (~MODE_FLAG_SHUFFLE);
         } else if (!strcmp(argv[c], "-ar")) {

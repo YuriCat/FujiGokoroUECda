@@ -16,13 +16,12 @@
 using namespace UECda;
 
 MoveInfo buffer[8192];
-MoveGenerator<MoveInfo> mgCards;
 Clock cl;
 std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
-int moves = mgCards.genLead(buffer, c);\
+int moves = genLead(buffer, c);\
 cerr << moves << " moves were generated for " << c << endl;\
 for (int m = 0; m < moves; ++m) { cerr << buffer[m].mv() << " "; }\
 cerr << endl;}
@@ -58,11 +57,11 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     
     // 主観的合法性
     for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
-        if (!isSubjectivelyValid(field.getBoard(), tmp->mv(), c,
+        if (!isSubjectivelyValid(field.board, tmp->mv(), c,
                                  field.getNCards(field.turn()))) {
             // 主観的合法性違反
             cerr << "invalid move" << c << "(" << field.getNCards(field.turn()) << ")";
-            cerr << " -> " << *tmp << " on " << field.getBoard() << endl;
+            cerr << " -> " << *tmp << " on " << field.board << endl;
             return -1;
         }
     }
@@ -72,7 +71,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
         for (const move_t *tmp2 = mv0; tmp2 != tmp; tmp2++) {
             if (tmp->meldPart() == tmp2->meldPart()) {
                 // 同じ役であった
-                cerr << "same meld " << c << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.getBoard() << endl;
+                cerr << "same meld " << c << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.board << endl;
                 return -1;
             }
         }
@@ -97,11 +96,11 @@ int testRecordMoves(const Record& record) {
             [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
                 int turnPlayer = field.turn();
                 Cards cards = field.getCards(turnPlayer);
-                Board bd = field.getBoard();
+                Board bd = field.board;
                 
                 // Cards 型で生成
                 cl.start();
-                int moves = mgCards.genMove(buffer, cards, bd);
+                int moves = genMove(buffer, cards, bd);
                 genTime[0] += cl.stop();
                 genCount[0] += 1;
                 

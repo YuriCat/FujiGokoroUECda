@@ -85,7 +85,6 @@ namespace UECda {
         // true or false
         constexpr uint32_t isNotNull() const { return b & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP | MOVE_FLAG_SEQ); }
         constexpr bool isNull() const { return !isNotNull(); }
-        constexpr bool isNF() const { return !isNotNull(); }
         constexpr uint32_t suitsLocked() const { return b & MOVE_FLAG_SUITSLOCK; }
         constexpr uint32_t rankLocked() const { return b & MOVE_FLAG_RANKLOCK; }
         
@@ -146,7 +145,7 @@ namespace UECda {
                     flush();
                 } else {
                     procOrder(m);
-                    if (isNF()) {
+                    if (isNull()) {
                         setExceptOrder(m.exceptOrderPart()); // 一時情報入れ替え
                     } else {
                         // スートロック
@@ -199,7 +198,7 @@ namespace UECda {
         return Board(mv.m_);
     }
     
-    std::ostream& operator <<(std::ostream& out, const Board& b) { // Board出力
+    static std::ostream& operator <<(std::ostream& out, const Board& b) { // Board出力
         if (b.isNull()) {
             out << "NULL";
         } else {
@@ -208,7 +207,7 @@ namespace UECda {
         }
         // オーダー...一時オーダーのみ
         out << "  Order : ";
-        if (b.tmpOrder() == ORDER_NORMAL) {
+        if (b.tmpOrder() == 0) {
             out << "NORMAL";
         } else {
             out << "REVERSED";
@@ -222,7 +221,7 @@ namespace UECda {
         return out;
     }
     
-    bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const uint32_t q) {
+    inline bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const uint32_t q) {
         // 不完全情報の上での合法性判定
         // c はそのプレーヤーが所持可能なカード
         // q はそのプレーヤーの手札枚数（公開されている情報）
@@ -231,7 +230,7 @@ namespace UECda {
         if (mv.qty() > q) return false;
         // 持っていないはずの札を使った場合
         if (!holdsCards(c, mv.cards())) return false;
-        if (!b.isNF()) {
+        if (!b.isNull()) {
             if (b.typePart() != mv.typePart()) return false; // 型違い
             if (b.isSeq()) {
                 if (!isValidSeqRank(mv.rank(), b.tmpOrder(), b.rank(), mv.qty())) {
