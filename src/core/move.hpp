@@ -74,9 +74,6 @@ namespace UECda {
     
     constexpr uint32_t MOVE_FLAG_STATUS    = MOVE_FLAG_ORD | MOVE_FLAG_LOCK;
     constexpr uint32_t MOVE_FLAG_EFFECTS   = MOVE_FLAG_ORD | MOVE_FLAG_LOCK;
-    
-    constexpr uint32_t MOVE_SINGLEJOKER    = (1U << MOVE_LCT_QTY) | MOVE_FLAG_SINGLE | (SUITS_ALL << MOVE_LCT_JKSUITS);
-    constexpr uint32_t MOVE_S3FLUSH        = (1U << MOVE_LCT_QTY) | MOVE_FLAG_SINGLE | (SUIT_S << MOVE_LCT_SUITS) | (RANK_3 << MOVE_LCT_RANK);
 
     // 最小のMove構造
     union Move16 {
@@ -91,44 +88,42 @@ namespace UECda {
 
     union MoveBase2 {
         struct {
-            unsigned s       : 4;
-            signed   r       : 4;
-            unsigned jks     : 4;
-            signed   jkr     : 4;
-            signed   q       : 4;
-            unsigned group   : 1;
-            unsigned sequence: 1;
-            unsigned padding :10;
-            unsigned flags   :32;
+            
         };
     };
 
-    template <typename T>
-    struct MoveBase {
-        T m_;
+    struct Move {
+        unsigned s       : 4;
+        signed   r       : 4;
+        unsigned jks     : 4;
+        signed   jkr     : 4;
+        signed   q       : 4;
+        unsigned single  : 1
+        unsigned group   : 1;
+        unsigned sequence: 1;
+        unsigned padding : 9;
+        unsigned flags   :32;
 
         constexpr MoveBase() : m_() {}
-        constexpr MoveBase(T m) : m_(m) {}
+        constexpr MoveBase(uint64_t m) : m_(m) {}
         
-        constexpr operator T() const { return m_; }
+        constexpr operator uint64_t() const { return m_; }
         constexpr T data() const { return m_; }
         
-        void setNULL()                    { m_ = MOVE_NULL; }
-        void setPASS()                    { m_ = MOVE_PASS; }
-        void setSingleJOKER()             { m_ = MOVE_SINGLEJOKER; } // シングルジョーカーのランクは未定義
-        void setS3Flush()                 { m_ = MOVE_S3FLUSH; } // スペ3切りの場合のみ
+        void setNULL()                    { (*this) = {0}; }
+        void setPASS()                    { (*this) = {0}; }
+        void setSingleJOKER()             { setNULL(); q = 1; single = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
+        void setS3Flush()                 { setNULL(); setSingle(RANK_3, SUITS_S); } // スペ3切りの場合のみ
 
-        void setSingle()                  { m_ |= MOVE_FLAG_SINGLE; }
-        void setGroup()                   { m_ |= MOVE_FLAG_GROUP; }
-        void setSeq()                     { m_ |= MOVE_FLAG_SEQ; }
-        void setQty(uint32_t qty)         { m_ |= qty     << MOVE_LCT_QTY; }
-        void setRank(uint32_t r)          { m_ |= r       << MOVE_LCT_RANK; }
-        void setRank4x(uint32_t r4x)      { m_ |= r4x     << MOVE_LCT_RANK4X; } // 4倍型
-        void setSuits(uint32_t s)         { m_ |= s       << MOVE_LCT_SUITS; }
-        void setJokerRank(uint32_t r)     { m_ |= r       << MOVE_LCT_JKRANK; }
-        void setJokerRank4x(uint32_t r4x) { m_ |= r4x     << MOVE_LCT_JKRANK4X; } // 4倍型
-        void setJokerSuits(uint32_t s)    { m_ |= s       << MOVE_LCT_JKSUITS; }
-        void setSpecialJokerSuits()       { m_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
+        void setSingle()                  { single = 1; }
+        void setGroup()                   { group = 1; }
+        void setSeq()                     { sequence = 1; }
+        void setQty(uint32_t qty)         { q = qty; }
+        void setRank(uint32_t rank)       { r = rank; }
+        void setSuits(uint32_t suits)     { s = suits; }
+        void setJokerRank(uint32_t jr)    { jkr = jr; }
+        void setJokerSuits(uint32_t js)   { jks = js; }
+        void setSpecialJokerSuits()       { jks = SUITS_ALL }
 
         // タイプを指定してまとめて処理
         void setSingle(int rank, int suits) {
@@ -182,20 +177,6 @@ namespace UECda {
         constexpr int rank()            const { return (m_ >> MOVE_LCT_RANK)     & 15U; }
         constexpr int jokerRank()       const { return (m_ >> MOVE_LCT_JKRANK)   & 15U; }
         constexpr uint32_t jokerSuits() const { return (m_ >> MOVE_LCT_JKSUITS)  & 15U; }
-        constexpr int rank4x()          const { return (m_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
-        constexpr int jokerRank4x()     const { return (m_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
-        
-        // 部分に着目する
-        constexpr uint32_t orderPart()       const { return m_ & MOVE_FLAG_ORD;   }
-        constexpr uint32_t exceptOrderPart() const { return m_ & ~MOVE_FLAG_ORD;  }
-        constexpr uint32_t suitsPart()       const { return m_ & MOVE_FLAG_SUITS; }
-        constexpr uint32_t rankPart()        const { return m_ & MOVE_FLAG_RANK;  }
-        constexpr uint32_t qtyPart()         const { return m_ & MOVE_FLAG_QTY;   }
-        constexpr uint32_t typePart()        const { return m_ & MOVE_FLAG_TYPE;  } // サイズ + 形式
-        constexpr uint32_t jokerPart()       const { return m_ & MOVE_FLAG_JK;    } // ジョーカー関連
-        constexpr uint32_t exceptJokerPart() const { return m_ & ~MOVE_FLAG_JK;   } // ジョーカー関連以外
-        constexpr uint32_t charaPart()       const { return m_ & MOVE_FLAG_CHARA; } // 性質決定のための必要十分条件
-        constexpr uint32_t meldPart()        const { return m_ & MOVE_FLAG_MELD;  } // 性質決定のための必要十分条件
 
         int typeNum() const {
             uint32_t q = qty();
