@@ -697,16 +697,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                         if (mv.isSingleJOKER()) {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                                uint32_t qb = (opsHand.pqr >> (f * 4)) & SUITS_ALL;
+                                uint32_t qb = opsHand.pqr[f];
                                 if (qb) {
-                                    int key = base + Index::get(order, RANK_MAX + 2, 0, f, qb);
+                                    int key = base + Index::get(order, RANK_JOKER, 0, f, qb);
                                     // suits - suits のパターン数より少ないのでOK
                                     Foo(key)
                                 }
                             }
                         } else {
                             for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
-                                uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                                uint32_t os = opsCards[f];
                                 if (os) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), os));
@@ -725,7 +725,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         constexpr int base = FEA_IDX(FEA_SEQ_MO);
                         using Index = TensorIndexType<2, 16, 3, 16, N_PATTERNS_SUIT_SUITS>;
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                            uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                            uint32_t os = opsCards[f];
                             if (os) {
                                 int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
                                                             f, getSuitSuitsIndex(mv.suits(), os));
@@ -929,8 +929,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
                 if (containsJOKER(changeCards)) {
                     for (int r = RANK_MIN; r <= RANK_MAX; ++r) {
-                        FooX(base + Index::get(RANK_MAX + 2, r, (pqr >> (r * 4)) & SUITS_ALL), -1);
-                        Foo(base + Index::get(RANK_MAX + 2, r, (afterPqr >> (r * 4)) & SUITS_ALL));
+                        FooX(base + Index::get(RANK_MAX + 2, r, pqr[r]), -1);
+                        Foo(base + Index::get(RANK_MAX + 2, r, afterPqr[r]));
                         // suits - suits のパターン数より少ないのでOK
                     }
                 }
@@ -938,16 +938,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // 交換するランクのカードと他のカードとの関係
                 const Cards diffRanks = CardsToER(changeCards);
                 for (IntCard ic : diffRanks) {
-                    unsigned int r4x = IntCardToRank4x(ic);
-                    unsigned int rank = r4x / 4;
+                    unsigned int rank = IntCardToRank(ic);
                     // プレーンカード同士の関係
                     for (int r = RANK_MIN; r <= RANK_MAX; r++) {
-                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL, (myCards >> (r * 4)) & SUITS_ALL)), -1);
-                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL, (afterCards >> (r * 4)) & SUITS_ALL)));
+                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex(myCards[rank], myCards[r])), -1);
+                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex(afterCards[rank], afterCards[r])));
                     }
                     // ジョーカーとの関係
-                    FooX(base + Index::get(rank, RANK_MAX + 2, (pqr >> r4x) & SUITS_ALL), -1);
-                    Foo(base + Index::get(rank, RANK_MAX + 2, (afterPqr >> r4x) & SUITS_ALL));
+                    FooX(base + Index::get(rank, RANK_JOKER, pqr[rank]), -1);
+                    Foo(base + Index::get(rank, RANK_JOKER, afterPqr[rank]));
                 }
             }
             

@@ -64,12 +64,12 @@ namespace UECda {
             if (!containsJOKER(ops)) {
                 if (order == 0) {
                     IntCard ic = pickIntCardHigh(ops);
-                    int r4x = IntCardToRank4x(ic);
-                    dw |= mine & RankRange4xToCards(r4x, RANK_MAX * 4);
+                    int r = IntCardToRank(ic);
+                    dw |= mine & RankRangeToCards(r, RANK_MAX);
                 } else {
                     IntCard ic = pickIntCardLow(ops);
-                    int r4x = IntCardToRank4x(ic);
-                    dw |= mine & RankRange4xToCards(RANK_MIN * 4, r4x);
+                    int r = IntCardToRank(ic);
+                    dw |= mine & RankRangeToCards(RANK_MIN, r);
                 }
             }
         }
@@ -133,12 +133,12 @@ namespace UECda {
         Cards ret;
         if (order == 0) {
             IntCard ic = pickIntCardLow(ops);
-            int r4x = IntCardToRank4x(ic);
-            ret = mine & RankRange4xToCards(RANK_MIN * 4, r4x);
+            int r = IntCardToRank(ic);
+            ret = mine & RankRangeToCards(RANK_MIN * 4, r);
         } else {
             IntCard ic = pickIntCardHigh(ops);
-            int r4x = IntCardToRank4x(ic);
-            ret = mine & RankRange4xToCards(r4x, RANK_MAX  *4);
+            int r = IntCardToRank(ic);
+            ret = mine & RankRangeToCards(r, RANK_MAX  *4);
         }
         if (containsS3(ret)) {
             if (containsJOKER(addCards(mine, ops))) ret -= CARDS_S3;

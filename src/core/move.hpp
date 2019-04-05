@@ -35,8 +35,6 @@ namespace UECda {
         MOVE_LCT_TMPORD = 20, MOVE_LCT_PRMORD, MOVE_LCT_SUITSLOCK, MOVE_LCT_RANKLOCK,
         MOVE_LCT_SINGLE = 24, MOVE_LCT_GROUP, MOVE_LCT_SEQ,
         MOVE_LCT_INVALID = 29,
-        MOVE_LCT_RANK4X   = MOVE_LCT_RANK - 2,
-        MOVE_LCT_JKRANK4X = MOVE_LCT_JKRANK - 2
     };
     
     constexpr uint32_t MOVE_NONE           = 0xFFFFFFFF; // 存在しない着手
@@ -92,10 +90,10 @@ namespace UECda {
     union MoveBase2 {
         struct {
             unsigned s       : 4;
-            signed   r       : 4;
+            unsigned r       : 4;
             unsigned jks     : 4;
-            signed   jkr     : 4;
-            signed   q       : 4;
+            unsigned jkr     : 4;
+            unsigned q       : 4;
             unsigned group   : 1;
             unsigned sequence: 1;
             unsigned padding :10;
@@ -123,10 +121,8 @@ namespace UECda {
         void setSeq()                     { m_ |= MOVE_FLAG_SEQ; }
         void setQty(uint32_t qty)         { m_ |= qty     << MOVE_LCT_QTY; }
         void setRank(uint32_t r)          { m_ |= r       << MOVE_LCT_RANK; }
-        void setRank4x(uint32_t r4x)      { m_ |= r4x     << MOVE_LCT_RANK4X; } // 4倍型
         void setSuits(uint32_t s)         { m_ |= s       << MOVE_LCT_SUITS; }
         void setJokerRank(uint32_t r)     { m_ |= r       << MOVE_LCT_JKRANK; }
-        void setJokerRank4x(uint32_t r4x) { m_ |= r4x     << MOVE_LCT_JKRANK4X; } // 4倍型
         void setJokerSuits(uint32_t s)    { m_ |= s       << MOVE_LCT_JKSUITS; }
         void setSpecialJokerSuits()       { m_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
 
@@ -134,20 +130,11 @@ namespace UECda {
         void setSingle(int rank, int suits) {
             setSingle(); setQty(1); setRank(rank); setSuits(suits);
         }
-        void setSingleByRank4x(int r4x, int suits) {
-            setSingle(); setQty(1); setRank4x(r4x); setSuits(suits);
-        }
         void setGroup(int qty, int rank, int suits) {
             setGroup(); setQty(qty); setRank(rank); setSuits(suits);
         }
-        void setGroupByRank4x(int qty, int r4x, int suits) {
-            setGroup(); setQty(qty); setRank4x(r4x); setSuits(suits);
-        }
         void setSeq(int qty, int rank, int suits) {
             setSeq(); setQty(qty); setRank(rank); setSuits(suits);
-        }
-        void setSeqByRank4x(int qty, int r4x, int suits) {
-            setSeq(); setQty(qty); setRank4x(r4x); setSuits(suits);
         }
 
         // IntCard型からシングル着手をセットする
@@ -182,8 +169,6 @@ namespace UECda {
         constexpr int rank()            const { return (m_ >> MOVE_LCT_RANK)     & 15U; }
         constexpr int jokerRank()       const { return (m_ >> MOVE_LCT_JKRANK)   & 15U; }
         constexpr uint32_t jokerSuits() const { return (m_ >> MOVE_LCT_JKSUITS)  & 15U; }
-        constexpr int rank4x()          const { return (m_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
-        constexpr int jokerRank4x()     const { return (m_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
         
         // 部分に着目する
         constexpr uint32_t orderPart()       const { return m_ & MOVE_FLAG_ORD;   }
@@ -211,7 +196,7 @@ namespace UECda {
         Cards cards() const { // 構成するカード集合を得る
             if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
-            int r4x = rank4x();
+            int r = rank();
             uint32_t s = suits();
             if (!isSeq()) {
                 Cards c = CARDS_NULL;
@@ -220,12 +205,12 @@ namespace UECda {
                     c |= CARDS_JOKER;
                     if (jks != SUITS_CDHS) s -= jks; // クインタプル対策
                 }
-                return c | Rank4xSuitsToCards(r4x, s);
+                return c | RankSuitsToCards(r, s);
             } else {
-                Cards c = Rank4xSuitsToCards(r4x, s);
+                Cards c = RankSuitsToCards(r, s);
                 c = extractRanks(c, qty());
                 if (containsJOKER()) {
-                    c -= Rank4xSuitsToCards(jokerRank4x(), s);
+                    c -= RankSuitsToCards(jokerRank(), s);
                     c |= CARDS_JOKER;
                 }
                 return c;
@@ -236,7 +221,7 @@ namespace UECda {
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
             if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
-            Cards c = Rank4xSuitsToCards(rank4x(), suits());
+            Cards c = RankSuitsToCards(rank(), suits());
             if (isSeq()) c = extractRanks(c, qty());
             return c;
         }
@@ -251,16 +236,16 @@ namespace UECda {
             if (QTY == 0) {
                 return CARDS_NULL;
             } else if (QTY == 1) {
-                return CARDS_HORIZON << rank4x();
+                return CARDS_HORIZON << (rank() << 2);
             } else if (QTY != 256) {
                 constexpr int sft = (QTY - 1) >= 0 ? ((QTY - 1) < 32 ? (QTY - 1) : 31) : 0; // warningに引っかからないように...
                 if (1 <= QTY && QTY <= 4) {
-                    return Cards(1U << sft) << rank4x();
+                    return Cards(1U << sft) << (rank() << 2);
                 } else {
                     return CARDS_NULL;
                 }
             } else {
-                return Cards(1U << (qty() - 1)) << rank4x();
+                return Cards(1U << (qty() - 1)) << (rank() << 2);
             }
         }
 
@@ -390,24 +375,24 @@ namespace UECda {
         if (chara == CARDS_NULL) return MOVE_PASS;
         if (chara == CARDS_JOKER) return MOVE_SINGLEJOKER;
         IntCard ic = chara.lowest();
-        int r4x = IntCardToRank4x(ic);
-        uint32_t s = CardsRank4xToSuits(chara, r4x);
-        uint32_t ps = CardsRank4xToSuits(used, r4x); // ジョーカーなしのスート
+        int r = IntCardToRank(ic);
+        uint32_t s = chara[r];
+        uint32_t ps = used[r]; // ジョーカーなしのスート
         int q = countCards(chara);
         if (!polymRanks<2>(chara)) { // グループ系
             if (q == 1) {
-                m.setSingleByRank4x(r4x, s);
+                m.setSingle(r, s);
             } else {
-                m.setGroupByRank4x(q, r4x, s);
+                m.setGroup(q, r, s);
                 uint32_t js = s - ps;
                 if (js) m.setJokerSuits(js);
             }
         } else { // 階段系
-            m.setSeqByRank4x(q, r4x, s);
+            m.setSeq(q, r, s);
             if (containsJOKER(used)) {
                 IntCard jic = Cards(subtrCards(chara, used.plain())).lowest();
-                uint32_t jr4x = IntCardToRank4x(jic);
-                m.setJokerRank4x(jr4x);
+                uint32_t jr = IntCardToRank(jic);
+                m.setJokerRank(jr);
                 m.setJokerSuits(s);
             }
         }

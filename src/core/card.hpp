@@ -57,15 +57,10 @@ namespace UECda {
     inline IntCard RankSuitsToIntCard(int r, unsigned int s) {
         return IntCard((r << 2) + SuitToSuitNum(s));
     }
-    inline IntCard Rank4xSuitsToIntCard(int r4x, unsigned int s) {
-        return IntCard(r4x + SuitToSuitNum(s));
-    }
     inline constexpr IntCard RankSuitNumToIntCard(int r, int sn) {
         return IntCard((r << 2) + sn);
     }
-    
     constexpr int IntCardToRank(IntCard ic) { return int(ic) >> 2; }
-    constexpr int IntCardToRank4x(IntCard ic) { return int(ic) & ~3; }
     constexpr int IntCardToSuitNum(IntCard ic) { return int(ic) & 3; }
     constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
     
@@ -183,16 +178,6 @@ namespace UECda {
         return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
                & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
     }
-    // あるランク4xのカード全て
-    inline constexpr BitCards Rank4xToCards(int r4x) {
-        return CARDS_HORIZONRANK << r4x;
-    }
-    // ランク4x間（両端含む）のカード全て
-    inline constexpr BitCards RankRange4xToCards(int r4x0, int r4x1) {
-        return ~((CARDS_HORIZON << r4x0) - 1ULL)
-               & ((CARDS_HORIZON << (r4x1 + 4)) - 1ULL);
-    }
-    
     // スート
     // 各スートのカードにはジョーカーは含めない
     // UやOは含めるので注意
@@ -223,12 +208,6 @@ namespace UECda {
     // スートは集合として用いる事が出来る
     inline constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
         return (BitCards)s << (r << 2);
-    }
-    inline constexpr BitCards Rank4xSuitsToCards(int r4x, uint32_t s) {
-        return (BitCards)s << r4x;
-    }
-    inline constexpr uint32_t CardsRank4xToSuits(BitCards c, int r4x) {
-        return uint32_t(c >> r4x) & 15U;
     }
     
     // Cards型基本演算

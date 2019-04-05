@@ -68,9 +68,7 @@ namespace UECda {
         constexpr uint32_t suits() const { return (b >> MOVE_LCT_SUITS) & 15U; }
         constexpr int qty()        const { return (b >> MOVE_LCT_QTY) & 15U; }
         constexpr int rank()       const { return (b >> MOVE_LCT_RANK) & 15U; }
-        constexpr int rank4x()     const { return (b >> MOVE_LCT_RANK4X) & (15U << 2); } // 4倍型
         constexpr int jokerRank()  const { return (b >> MOVE_LCT_JKRANK) & 15U; }
-        constexpr int jokerRank4x() const { return (b >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
         constexpr uint32_t jokerSuits() const { return (b >> MOVE_LCT_JKSUITS) & 15U; }
         
         // 部分に着目する

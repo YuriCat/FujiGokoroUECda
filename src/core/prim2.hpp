@@ -277,7 +277,14 @@ namespace UECda {
 
         // MoveAddInfo
         // 上位32ビットの演算
-        `
+        void setFinal() {    m_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW() {       m_.set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW() {     m_.set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW() {     m_.set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate() {   m_.set(LCT64_MPMATE); }
+        void setL2Mate() {   m_.set(LCT64_L2MATE); }
+        void setMPGiveUp() { m_.set(LCT64_MPGIVEUP); }
+        void setL2GiveUp() { m_.set(LCT64_L2GIVEUP); }
 
         // 当座支配
         void setDO() { m_ |= 1ULL<<(32+12); }

@@ -297,16 +297,16 @@ namespace UECda {
                 // 必敗判定
                 if (field.isNull()) {
                     if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.containsJOKER() && !myHand.containsS3() && field.b.order() == 0) {
-                        int myHR = IntCardToRank4x(pickIntCardHigh(myHand.cards));
-                        int opsLR = IntCardToRank4x(pickIntCardLow(opsHand.cards));
+                        int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
+                        int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
                         if (myHR < opsLR) {
                             //DERR << myHand <<" vs " << opsHand << endl; getchar();
                             DERR << Space(2 * depth) << "-EMATELOSE" << endl;
                             return L2_LOSE;
                         } else {
-                            Cards tmp = maskCards(opsHand.cards, Rank4xToCards(opsLR));
+                            Cards tmp = maskCards(opsHand.cards, RankToCards(opsLR));
                             if (tmp) {
-                                opsLR = IntCardToRank4x(pickIntCardLow(tmp));
+                                opsLR = IntCardToRank(pickIntCardLow(tmp));
                                 if (myHR < opsLR) {
                                     //DERR << myHand << " vs " << opsHand << endl; getchar();
                                     DERR << Space(2 * depth) << "-EMATELOSE" << endl;
