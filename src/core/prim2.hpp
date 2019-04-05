@@ -11,16 +11,6 @@ namespace UECda {
     /**************************着手決定のための基本追加場情報**************************/
     
     // 試合結果の宣言情報
-
-    // 結果宣言
-    constexpr int LCT_FINAL = 0;
-    constexpr int LCT_PW = 1;
-    constexpr int LCT_BNPW = 2;
-    constexpr int LCT_BRPW = 3;
-    constexpr int LCT_MPMATE = 4;
-    constexpr int LCT_L2MATE = 5;
-    constexpr int LCT_MPGIVEUP = 6;
-    constexpr int LCT_L2GIVEUP = 7;
     
     // 場の一時状況に対するする宣言情報
     constexpr int LCT_SELFFOLLOW = 16;
@@ -67,7 +57,7 @@ namespace UECda {
     
     constexpr uint64_t MASK64_TMPINFO = (1ULL << LCT64_TMPORDSETTLED) | (1ULL << LCT64_PRMORDSETTLED);
     
-    class FieldAddInfo{
+    class FieldAddInfo {
         
         // 着手決定のためにこの程度は調べておきたい場情報
         // 着手ごとの情報と被る場合もあるけれども、検索が面倒な場合はこちらに記録しておく
@@ -85,7 +75,7 @@ namespace UECda {
         // 22 BDOMOTHERS
         // 23 BDOMME
         
-        // 24 tmpOrderConsolidated
+        // 24 orderConsolidated
         // 25 prmOrderConsolidated
         // 28 支配保証/空場期待拘束中(ここに書くべきなのだろうか?)
         
@@ -287,14 +277,7 @@ namespace UECda {
 
         // MoveAddInfo
         // 上位32ビットの演算
-        void setFinal() {    m_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW() {       m_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW() {     m_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW() {     m_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate() {   m_.set(LCT64_MPMATE); }
-        void setL2Mate() {   m_.set(LCT64_L2MATE); }
-        void setMPGiveUp() { m_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp() { m_.set(LCT64_L2GIVEUP); }
+        `
 
         // 当座支配
         void setDO() { m_ |= 1ULL<<(32+12); }
@@ -329,7 +312,7 @@ namespace UECda {
         void setRankLock() { m_|=1ULL<<(32+17); }
         
         // min_melds
-        void setIncMinNMelds(uint32_t dec) { m_|=((uint64_t)(dec))<<(32+8); }
+        void setIncMinNMelds(uint32_t dec) { m_ |= ((uint64_t)(dec))<<(32+8); }
         
         // edagari
         void excludeMyPlay() { m_|=1ULL<<(32+24); }
@@ -343,8 +326,8 @@ namespace UECda {
         }
         
         // kousoku
-        void setDConst() { m_|=1ULL<<(32+28); }
-        void setDW_NFH() { m_|=1ULL<<(32+29); }
+        void setDConst() { m_ |= 1ULL << (32+28); }
+        void setDW_NFH() { m_ |= 1ULL << (32+29); }
         
         void init() { m_&=0x00000000FFFFFFFF; }
         

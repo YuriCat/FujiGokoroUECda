@@ -378,7 +378,7 @@ int marge_card(int target_card[8][15], int add_card[8][15]) {
     
     for (i=0;i<=4;i++) {
         for (j=0;j<=14;j++) {
-            switch(add_card[i][j]) {
+            switch (add_card[i][j]) {
                 case 0:
                     break;
                 case 1:
@@ -518,7 +518,7 @@ int trans_work_card(int source_card[8][15], int target_card[8][15], int work_car
     
     for (i=0;i<=4;i++) {
         for (j=0;j<=14;j++) {
-            switch(work_card[i][j]) {
+            switch (work_card[i][j]) {
                 case 0:
                     break;
                 case 1:
@@ -537,7 +537,7 @@ int trans_work_card(int source_card[8][15], int target_card[8][15], int work_car
 }
 
 void tn_rand_init(unsigned long seed, int type) {
-    switch(type) {
+    switch (type) {
         case 0 :
             srand((int)seed);
             break;
@@ -548,7 +548,7 @@ void tn_rand_init(unsigned long seed, int type) {
 }
 
 double  tn_rand_gen(int type) {
-    switch(type) {
+    switch (type) {
         case 0 :
             return (double)rand()/((double)RAND_MAX-1.0);
         case 1 :
@@ -578,7 +578,7 @@ void tn_sekigae(int now_number_of_games, int sekijun[N_PLAYERS], int RULE_SEKIGA
     int flag;
     double tmp_seki[N_PLAYERS][2];
     
-    switch(RULE_SEKIGAE) {
+    switch (RULE_SEKIGAE) {
         case 1:
             if ((now_number_of_games % RULE_SEKIGAE_NUM)==1) {
                 for (i=0;i<N_PLAYERS;i++) {

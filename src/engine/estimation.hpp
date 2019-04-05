@@ -157,7 +157,6 @@ namespace UECda {
         void dealAllRand(Cards *const dst, dice64_t *const pdice) const {
             // 完全ランダム分配
             // 自分の分だけは実際のものにする
-            ana.start();
             DERR << "START DEAL-RAND" << endl << distCards << endl;
             BitCards tmp[N] = {0};
             tmp[myClass] = myCards;
@@ -173,13 +172,11 @@ namespace UECda {
             }
             checkDeal(dst);
             DERR << "END DEAL-RAND" << endl;
-            ana.end(0);
         }
         
         template <class dice64_t>
         void dealWithAbsSbjInfo(Cards *const dst, dice64_t *const pdice) const {
             // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
-            ana.start();
             DERR << "START DEAL-ABSSBJ" << endl << distCards << endl;
             BitCards tmp[N] = {0};
             dist64<N>(tmp, distCards, NDeal, pdice);
@@ -188,15 +185,12 @@ namespace UECda {
             }
             checkDeal(dst);
             DERR << "END DEAL-ABSSBJ" << endl;
-            ana.end(1);
         }
         
         template <class dice64_t>
         void dealWithBias(Cards *const dst, dice64_t *const pdice) const {
             //　逆関数法でバイアスを掛けて分配
             if (initGame) return dealWithAbsSbjInfo(dst, pdice);
-
-            ana.start();
             DERR << "START DEAL-BIAS" << endl << distCards << endl;
             
             std::array<Cards, N> tmp = detCards;
@@ -224,7 +218,6 @@ namespace UECda {
             }
             checkDeal(dst);
             DERR << "EAND DEAL-BIAS" << endl << distCards << endl;
-            ana.end(2);
         }
         
         void dealWithRejection(Cards *const dst, const EngineSharedData& shared,
@@ -232,13 +225,11 @@ namespace UECda {
             // 採択棄却法メイン
             // 設定されたレートの分、カード配置を作成し、手札親和度最大のものを選ぶ
             assert(HARate >= 1 && HARate < 64);
-            
-            ana.start();
+
             if (HARate <= 1) {
                 // 交換効果のみ検討
                 if (dealWithRejection_ChangePart(dst, shared, ptools) != 0) {
                     // 失敗報告。ただし、カードの分配自体は出来ているので問題ない。
-                    ana.addFailure(3);
                     // 失敗の回数が一定値を超えた場合には逆関数法に移行
                     if (++failures > 1) failed = true;
                 }
@@ -255,7 +246,6 @@ namespace UECda {
                 for (uint32_t t = 0; t < HARate; t++) {
                     if (dealWithRejection_ChangePart(cand[t], shared, ptools) != 0) {
                         // 失敗報告。ただし、カードの分配自体は出来ているので問題ない
-                        ana.addFailure(3);
                         ++failures;
                         if (failures > 1) {
                             // 失敗の回数が一定値を超えたので、以降は逆関数法に移行
@@ -282,7 +272,6 @@ namespace UECda {
                 }
                 DERR << bestLHS << endl;
             }
-            ana.end(3);
             for (int r = 0; r < N; r++) {
                 assert(countCards(dst[infoClassPlayer[r]]) == NOwn[r]);
             }
@@ -426,9 +415,7 @@ namespace UECda {
         uint32_t HARate;
         
         // 着手について検討の必要があるプレーヤーフラグ
-        BitSet32 playFlag;
-        
-        static AtomicAnalyzer<5, 1, 0> ana;
+        std::bitset<N_PLAYERS> playFlag;
         
         // inner function
         void checkDeal(Cards *const dst) const {
@@ -951,7 +938,7 @@ namespace UECda {
             
             BitSet32 pwFlag;
             std::array<Cards, N> orgCards;
-            BitSet32 tmpPlayFlag = playFlag;
+            auto tmpPlayFlag = playFlag;
             MoveInfo *const mv = ptools->buf;
             
             pwFlag.reset();
@@ -1023,6 +1010,4 @@ namespace UECda {
             return playLH;
         }
     };
-    
-    template <> AtomicAnalyzer<5, 1, 0> RandomDealer<N_PLAYERS>::ana("RandomDealer");
 }

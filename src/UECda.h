@@ -219,7 +219,7 @@ namespace UECda {
         clearAll(table);
         if (m.isPASS()) return;
         if (m.isSingleJOKER()) { // シングルジョーカー
-            int ord = bd.tmpOrder();
+            int ord = bd.order();
             if (bd.isNull()) {
                 table[0][(ord == 0) ? 14 : 0] = 2;
             } else {

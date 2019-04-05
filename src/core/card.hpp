@@ -14,9 +14,7 @@ namespace UECda {
     // U3456789TJQKA2O、CDHSの順番で0-59　ジョーカーは60
     
     // 定数
-    using IntCard = int;
-    
-    enum {
+    enum IntCard : int {
         INTCARD_CU, INTCARD_DU, INTCARD_HU, INTCARD_SU,
         INTCARD_C3, INTCARD_D3, INTCARD_H3, INTCARD_S3,
         INTCARD_C4, INTCARD_D4, INTCARD_H4, INTCARD_S4,
@@ -57,19 +55,19 @@ namespace UECda {
         return INTCARD_CU <= ic && ic <= INTCARD_JOKER;
     }
     inline IntCard RankSuitsToIntCard(int r, unsigned int s) {
-        return (r << 2) + SuitToSuitNum(s);
+        return IntCard((r << 2) + SuitToSuitNum(s));
     }
     inline IntCard Rank4xSuitsToIntCard(int r4x, unsigned int s) {
-        return r4x + SuitToSuitNum(s);
+        return IntCard(r4x + SuitToSuitNum(s));
     }
     inline constexpr IntCard RankSuitNumToIntCard(int r, int sn) {
-        return (r << 2) + sn;
+        return IntCard((r << 2) + sn);
     }
     
-    constexpr int IntCardToRank(IntCard ic) { return ic >> 2; }
-    constexpr int IntCardToRank4x(IntCard ic) { return ic & ~3U; }
-    constexpr int IntCardToSuitNum(IntCard ic) { return ic & 3U; }
-    constexpr int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
+    constexpr int IntCardToRank(IntCard ic) { return int(ic) >> 2; }
+    constexpr int IntCardToRank4x(IntCard ic) { return int(ic) & ~3; }
+    constexpr int IntCardToSuitNum(IntCard ic) { return int(ic) & 3; }
+    constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
     
     // 出力用クラス
     struct OutIntCard {
@@ -132,9 +130,6 @@ namespace UECda {
     inline constexpr BitCards IntCardToCards(IntCard ic) {
         return BitCards(CARDS_HORIZON << ic);
     }
-    
-    inline IntCard CardsToLowestIntCard(BitCards c) { return bsf64(c); } // 一番低いもの
-    inline IntCard CardsToHighestIntCard(BitCards c) { return bsr64(c); } // 一番高いもの
     
     // 定数
     constexpr BitCards CARDS_IMG_MIN = CARDS_HORIZON << INTCARD_IMG_MIN;
@@ -245,7 +240,6 @@ namespace UECda {
     constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
     
     // 限定
-    constexpr BitCards commonCards(BitCards c0, BitCards c1) { return c0 & c1; }
     constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
     
     // 削除（オーバーを引き起こさない）
@@ -256,7 +250,7 @@ namespace UECda {
     
     // カード減算
     // 全ての（安定でなくても良い）カード減算処理から最も高速なものとして定義したいところだが、
-    // 現在では整数としての引き算処理。
+    // 現在では整数としての引き算処理
     constexpr BitCards subtrCards(BitCards c0, BitCards c1) { return c0 - c1; }
     constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
     
@@ -332,18 +326,9 @@ namespace UECda {
     inline IntCard pickIntCardLow(const BitCards c) {
         return (IntCard)bsf64(c);
     }
-    
     inline IntCard pickIntCardHigh(const BitCards c) {
         ASSERT(anyCards(c),);
         return (IntCard)bsr64(c);
-    }
-    
-    inline constexpr BitCards pick(const BitCards c) {
-        return c & (-c);
-    }
-    
-    inline IntCard pickIntCard(const BitCards c) {
-        return pickIntCardLow(c);
     }
 
     // n番目(nは1から)に高い,低いもの
@@ -351,7 +336,6 @@ namespace UECda {
         assert(n > 0 && (int)countCards(c) >= n);
         return NthHighestBit(c, n);
     }
-    
     inline BitCards pickNthLow(BitCards c, int n) {
         assert(n > 0 && (int)countCards(c) >= n);
         return NthLowestBit(c, n);
@@ -362,7 +346,6 @@ namespace UECda {
         assert(n > 0 && (int)countCards(c) >= n);
         return subtrCards(c, pickNthHigh(c, n));
     }
-    
     inline BitCards maskNthLow(BitCards c, int n) {
         assert(n > 0 && (int)countCards(c) >= n);
         return subtrCards(c, pickNthLow(c, n));
@@ -391,14 +374,6 @@ namespace UECda {
     inline BitCards maskLower(BitCards c0, BitCards c1) {
         return c0 & ~allLowerBits(c1);
     }
-    
-    // 基準としてランクを用いる場合
-    inline constexpr BitCards higherMask(Rank r) {
-        return ~((1ULL << ((r + 1) * 4)) - 1ULL);
-    }
-    inline constexpr BitCards lowerMask(Rank r) {
-        return (1ULL << (r * 4)) - 1ULL;
-    }
 
     /**************************カード集合表現(クラス版)**************************/
 
@@ -406,6 +381,14 @@ namespace UECda {
         // ビット単位で1つずつ取り出す用
         BitCards c_;
         constexpr CardsAsSet(BitCards c): c_(c) {}
+
+        BitCards lowest() const { assert(c_); return c_ & -c_; }
+        BitCards popLowest() {
+            assert(c_);
+            BitCards l = lowest();
+            c_ -= l;
+            return l;
+        }
     
         class const_iterator : public std::iterator<std::input_iterator_tag, BitCards> {
             friend CardsAsSet;
@@ -443,6 +426,8 @@ namespace UECda {
         constexpr Cards() : c_() {}
         constexpr Cards(BitCards c): c_(c) {}
         constexpr Cards(const Cards& c): c_(c.c_) {}
+        //constexpr Cards(IntCard ic): c_(IntCardToCards(ic)) {}
+        constexpr Cards(IntCard ic) = delete;
 
         Cards(const std::string& str) {
             clear();
@@ -516,11 +501,11 @@ namespace UECda {
         // pick, pop
         IntCard lowest() const {
             assert(any());
-            return UECda::pickIntCardLow(c_);
+            return IntCard(bsf64(c_));
         }
         IntCard highest() const {
             assert(any());
-            return UECda::pickIntCardHigh(c_);
+            return IntCard(bsr64(c_));
         }
         IntCard popLowest() {
             assert(any());

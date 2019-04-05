@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) { // for UECda
                             // 突き返しがあったはず。サーバーがルール通りの献上(上位n枚)を行っていると信頼
                             // java版サーバーだと食い違うことがあるがそれで落ちはしない
                             int NKicked = changeQty - countCards(recvCards);
-                            Cards kickedCards = pickHigh(commonCards(dealtCards, newCards), NKicked);
+                            Cards kickedCards = pickHigh(dealtCards & newCards, NKicked);
                             sentCards = addCards(kickedCards, sentCards);
                             recvCards = addCards(kickedCards, recvCards);
                             
@@ -416,7 +416,7 @@ int main(int argc, char* argv[]) { // for UECda
             //field.broadcastPlay(turnPlayer, serverMove);
 #endif
             
-            switch(beGameEnd()) {
+            switch (beGameEnd()) {
                 case 0:
                     one_gameend_flag = 0; whole_gameend_flag = 0;
                     break;

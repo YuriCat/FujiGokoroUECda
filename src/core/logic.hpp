@@ -162,9 +162,9 @@ namespace UECda {
         
         if (order == 0) {
             if (ops || containsJOKER(myCards)) {
-                if (commonCards(myCards, maskCards(CARDS_3, CARDS_S3))) return true;
+                if (myCards & maskCards(CARDS_3, CARDS_S3)) return true;
             } else {
-                if (commonCards(myCards, CARDS_3)) return true;
+                if (myCards & CARDS_3) return true;
             }
             if (opsCards & CARDS_3) { ops += countCards(opsCards & CARDS_3); }
             
@@ -184,7 +184,7 @@ namespace UECda {
             }
             
         } else {
-            if (commonCards(myCards, CARDS_2)) return true;
+            if (myCards & CARDS_2) return true;
             for (tmp = CARDS_A; tmp > CARDS_8; tmp >>= 4) {
                 Cards rc = myCards & tmp;
                 if (rc) {
@@ -205,12 +205,12 @@ namespace UECda {
     
     // 半支配保証 & 半空場期待
     inline bool hasDWorNFH(const Cards myCards, const Cards opsCards,
-                                  const int tmpOrder, const uint64_t set) {
+                                  const int order, const uint64_t set) {
         
         if (set) { // オーダー固定
-            if (hasDW(myCards, opsCards, tmpOrder, 1)) return true;
-            if (hasNFH(myCards, opsCards, tmpOrder, 1)) return true;
-            if (tmpOrder == 0 || (!containsJOKER(opsCards))) {
+            if (hasDW(myCards, opsCards, order, 1)) return true;
+            if (hasNFH(myCards, opsCards, order, 1)) return true;
+            if (order == 0 || (!containsJOKER(opsCards))) {
                 if (containsS3(myCards)) return true; // 通常オーダーか、相手がジョーカーを持たない場合はS3は空場または支配場にしか出せないので
             }
         } else { // オーダー反転可能性あり

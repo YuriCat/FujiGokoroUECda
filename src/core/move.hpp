@@ -89,7 +89,6 @@ namespace UECda {
         };
     };
 
-    template <typename T>
     union MoveBase2 {
         struct {
             unsigned s       : 4;
@@ -100,6 +99,7 @@ namespace UECda {
             unsigned group   : 1;
             unsigned sequence: 1;
             unsigned padding :10;
+            unsigned flags   :32;
         };
     };
 
@@ -117,8 +117,7 @@ namespace UECda {
         void setPASS()                    { m_ = MOVE_PASS; }
         void setSingleJOKER()             { m_ = MOVE_SINGLEJOKER; } // シングルジョーカーのランクは未定義
         void setS3Flush()                 { m_ = MOVE_S3FLUSH; } // スペ3切りの場合のみ
-        void setRev()                     { m_ ^= MOVE_FLAG_ORD; }
-        void setBack()                    { m_ ^= MOVE_FLAG_TMPORD; }
+
         void setSingle()                  { m_ |= MOVE_FLAG_SINGLE; }
         void setGroup()                   { m_ |= MOVE_FLAG_GROUP; }
         void setSeq()                     { m_ |= MOVE_FLAG_SEQ; }
@@ -132,7 +131,6 @@ namespace UECda {
         void setSpecialJokerSuits()       { m_ |= SUITS_ALL << MOVE_LCT_JKSUITS; }
 
         // タイプを指定してまとめて処理
-        // 特殊効果フラグはここでの分岐処理は避け、呼び出し元で対応
         void setSingle(int rank, int suits) {
             setSingle(); setQty(1); setRank(rank); setSuits(suits);
         }
@@ -152,31 +150,10 @@ namespace UECda {
             setSeq(); setQty(qty); setRank4x(r4x); setSuits(suits);
         }
 
-        // IntCard型からシングル着手をセットする(特殊効果フラグ以外)
+        // IntCard型からシングル着手をセットする
         void setSingleByIntCard(IntCard ic) {
             setSingle(IntCardToRank(ic), IntCardToSuits(ic));
         }
-        
-        // 情報を得る
-        constexpr uint32_t suits()      const { return (m_ >> MOVE_LCT_SUITS)    & 15U; }
-        constexpr int qty()             const { return (m_ >> MOVE_LCT_QTY)      & 15U; }
-        constexpr int rank()            const { return (m_ >> MOVE_LCT_RANK)     & 15U; }
-        constexpr int jokerRank()       const { return (m_ >> MOVE_LCT_JKRANK)   & 15U; }
-        constexpr uint32_t jokerSuits() const { return (m_ >> MOVE_LCT_JKSUITS)  & 15U; }
-        constexpr int rank4x()          const { return (m_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
-        constexpr int jokerRank4x()     const { return (m_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
-        
-        // 部分に着目する
-        constexpr uint32_t orderPart()       const { return m_ & MOVE_FLAG_ORD;   }
-        constexpr uint32_t exceptOrderPart() const { return m_ & ~MOVE_FLAG_ORD;  }
-        constexpr uint32_t suitsPart()       const { return m_ & MOVE_FLAG_SUITS; }
-        constexpr uint32_t rankPart()        const { return m_ & MOVE_FLAG_RANK;  }
-        constexpr uint32_t qtyPart()         const { return m_ & MOVE_FLAG_QTY;   }
-        constexpr uint32_t typePart()        const { return m_ & MOVE_FLAG_TYPE;  } // サイズ + 形式
-        constexpr uint32_t jokerPart()       const { return m_ & MOVE_FLAG_JK;    } // ジョーカー関連
-        constexpr uint32_t exceptJokerPart() const { return m_ & ~MOVE_FLAG_JK;   } // ジョーカー関連以外
-        constexpr uint32_t charaPart()       const { return m_ & MOVE_FLAG_CHARA; } // 性質決定のための必要十分条件
-        constexpr uint32_t meldPart()        const { return m_ & MOVE_FLAG_MELD;  } // 性質決定のための必要十分条件
         
         // True or False
         constexpr bool isPASS() const { return (uint32_t)m_ == MOVE_PASS; }
@@ -198,22 +175,28 @@ namespace UECda {
             // rank と スートが一致するか
             return ((uint32_t)m_ & (MOVE_FLAG_RANK | MOVE_FLAG_SUITS)) == ((r << MOVE_LCT_RANK) | (s << MOVE_LCT_SUITS));
         }
+
+        // 情報を得る
+        constexpr uint32_t suits()      const { return (m_ >> MOVE_LCT_SUITS)    & 15U; }
+        constexpr int qty()             const { return (m_ >> MOVE_LCT_QTY)      & 15U; }
+        constexpr int rank()            const { return (m_ >> MOVE_LCT_RANK)     & 15U; }
+        constexpr int jokerRank()       const { return (m_ >> MOVE_LCT_JKRANK)   & 15U; }
+        constexpr uint32_t jokerSuits() const { return (m_ >> MOVE_LCT_JKSUITS)  & 15U; }
+        constexpr int rank4x()          const { return (m_ >> MOVE_LCT_RANK4X)   & (15U << 2); } // 4倍型
+        constexpr int jokerRank4x()     const { return (m_ >> MOVE_LCT_JKRANK4X) & (15U << 2); } // 4倍型
         
-        constexpr bool domInevitably() const {
-            if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
-            else return rank() == RANK_8;
-        }
-        constexpr bool isRev() const {
-            if (isSeq()) return qty() >= 5;
-            else return qty() >= 4;
-        }
-        constexpr bool isBack() const {
-            return false;
-        }
-        constexpr uint32_t changesPrmState() const {
-            return isRev();
-        }
-        
+        // 部分に着目する
+        constexpr uint32_t orderPart()       const { return m_ & MOVE_FLAG_ORD;   }
+        constexpr uint32_t exceptOrderPart() const { return m_ & ~MOVE_FLAG_ORD;  }
+        constexpr uint32_t suitsPart()       const { return m_ & MOVE_FLAG_SUITS; }
+        constexpr uint32_t rankPart()        const { return m_ & MOVE_FLAG_RANK;  }
+        constexpr uint32_t qtyPart()         const { return m_ & MOVE_FLAG_QTY;   }
+        constexpr uint32_t typePart()        const { return m_ & MOVE_FLAG_TYPE;  } // サイズ + 形式
+        constexpr uint32_t jokerPart()       const { return m_ & MOVE_FLAG_JK;    } // ジョーカー関連
+        constexpr uint32_t exceptJokerPart() const { return m_ & ~MOVE_FLAG_JK;   } // ジョーカー関連以外
+        constexpr uint32_t charaPart()       const { return m_ & MOVE_FLAG_CHARA; } // 性質決定のための必要十分条件
+        constexpr uint32_t meldPart()        const { return m_ & MOVE_FLAG_MELD;  } // 性質決定のための必要十分条件
+
         int typeNum() const {
             uint32_t q = qty();
             if (isSeq()) {
@@ -248,7 +231,6 @@ namespace UECda {
                 return c;
             }
         }
-
         Cards charaCards() const {
             // 性質カードを返す
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
@@ -281,7 +263,21 @@ namespace UECda {
                 return Cards(1U << (qty() - 1)) << rank4x();
             }
         }
-        
+
+        constexpr bool domInevitably() const {
+            if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
+            else return rank() == RANK_8;
+        }
+        constexpr bool isRev() const {
+            if (isSeq()) return qty() >= 5;
+            else return qty() >= 4;
+        }
+        constexpr bool isBack() const {
+            return false;
+        }
+        constexpr uint32_t changesPrmState() const {
+            return isRev();
+        }
         bool exam() const {
             // 変な値でないかチェック
             int q = qty();
@@ -393,7 +389,7 @@ namespace UECda {
         DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
         if (chara == CARDS_NULL) return MOVE_PASS;
         if (chara == CARDS_JOKER) return MOVE_SINGLEJOKER;
-        IntCard ic = CardsToLowestIntCard(chara);
+        IntCard ic = chara.lowest();
         int r4x = IntCardToRank4x(ic);
         uint32_t s = CardsRank4xToSuits(chara, r4x);
         uint32_t ps = CardsRank4xToSuits(used, r4x); // ジョーカーなしのスート
@@ -409,7 +405,7 @@ namespace UECda {
         } else { // 階段系
             m.setSeqByRank4x(q, r4x, s);
             if (containsJOKER(used)) {
-                IntCard jic = CardsToLowestIntCard(subtrCards(chara, maskJOKER(used)));
+                IntCard jic = Cards(subtrCards(chara, used.plain())).lowest();
                 uint32_t jr4x = IntCardToRank4x(jic);
                 m.setJokerRank4x(jr4x);
                 m.setJokerSuits(s);

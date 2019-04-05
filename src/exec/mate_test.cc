@@ -158,10 +158,10 @@ int testRecordMoveMate(const Record& record) {
             judgeTime[1] += cl.stop();         
             judgeMatrix[pw][mate] += 1;
     
-            if (mate && !pw) {
+            /*if (mate && !pw) {
                 cerr << field.toDebugString() << endl;
                 getchar();
-            }
+            }*/
             //cerr << "next" << endl;
             return 0;
         },

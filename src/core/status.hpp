@@ -31,11 +31,11 @@ namespace UECda{
             cerr << "[Seat " << s << "] : Player " << pNum;
             cerr << "  Class " << gLog.classOf(pNum);
             cerr << "  Score " << mLog.getScore(pNum) << " ( " << pos;
-            switch(pos % 100) {
+            switch (pos % 100) {
                 case 11: case 12:
                     cerr << "th"; break;
                 default:
-                    switch(pos % 10) {
+                    switch (pos % 10) {
                         case 1: cerr << "st"; break;
                         case 2: cerr << "nd"; break;
                         case 3: cerr << "rd"; break;

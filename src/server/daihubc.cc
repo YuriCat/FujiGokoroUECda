@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
         memcpy(&target_fds, &org_target_fds, sizeof(org_target_fds));
         waitval.tv_sec  = 2;
         waitval.tv_usec = 500;
-        switch(select(50,&target_fds,NULL,NULL,&waitval)) {
+        switch (select(50,&target_fds,NULL,NULL,&waitval)) {
             case -1:
                 printf("protocol_version: NONE\n");
                 exit(1);
@@ -838,7 +838,7 @@ int main(int argc, char *argv[]) {
             if ((error==0)&&(status_of_stages_card[0]==-1)) {
                 ps[now_player].getStage++;
                 ps[now_player].cardStrength+=status_of_submitted_card[0];
-                switch(status_of_submitted_card[3]) {
+                switch (status_of_submitted_card[3]) {
                     case 1:
                         break;
                     case 2:
@@ -855,7 +855,7 @@ int main(int argc, char *argv[]) {
                         break;
                 }
             } else if ((error==0)) {
-                switch(status_of_submitted_card[3]) {
+                switch (status_of_submitted_card[3]) {
                     case 1:
                         break;
                     case 2:
@@ -1064,7 +1064,7 @@ int main(int argc, char *argv[]) {
                     int hidarispace=21;
                     for (i=0;i<max(5, N_PLAYERS);i++) {
                         hidari=0;
-                        switch(i) {
+                        switch (i) {
                             case 0:
                                 printf("Turn %d:",count_turn);
                                 hidari+=6+1;
@@ -1093,13 +1093,13 @@ int main(int argc, char *argv[]) {
                                     for (w=1;w<=13;w++) {
                                         for (h=3;h>=0;h--) {
                                             if (stage_card[h][w]==1) {
-                                                switch(h) {
+                                                switch (h) {
                                                     case 0: printf("S");break;
                                                     case 1: printf("H");break;
                                                     case 2: printf("D");break;
                                                     case 3: printf("C");break;
                                                 }
-                                                switch(w) {
+                                                switch (w) {
                                                     case 8: printf("T");break;
                                                     case 9: printf("J");break;
                                                     case 10: printf("Q");break;
@@ -1131,13 +1131,13 @@ int main(int argc, char *argv[]) {
                                     for (w=1;w<=13;w++) {
                                         for (h=3;h>=0;h--) {
                                             if (stage_card[h][w]==1) {
-                                                switch(h) {
+                                                switch (h) {
                                                     case 0: printf("S");break;
                                                     case 1: printf("H");break;
                                                     case 2: printf("D");break;
                                                     case 3: printf("C");break;
                                                 }
-                                                switch(w) {
+                                                switch (w) {
                                                     case 8: printf("T");break;
                                                     case 9: printf("J");break;
                                                     case 10: printf("Q");break;
@@ -1182,7 +1182,7 @@ int main(int argc, char *argv[]) {
                             if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
                                 printf("  ");
                             } else {
-                                switch(work_card[6][sekijun[i]+5]) {
+                                switch (work_card[6][sekijun[i]+5]) {
                                     case DAIFUGO: printf("++"); break;
                                     case FUGO: printf(" +"); break;
                                     case HINMIN: printf(" -"); break;
@@ -1214,13 +1214,13 @@ int main(int argc, char *argv[]) {
                                 for (w=1;w<=13;w++) {
                                     for (h=3;h>=0;h--) {
                                         if (players_card[sekijun[i]][h][w]) {
-                                            switch(h) {
+                                            switch (h) {
                                                 case 0: printf("S");break;
                                                 case 1: printf("H");break;
                                                 case 2: printf("D");break;
                                                 case 3: printf("C");break;
                                             }
-                                            switch(w) {
+                                            switch (w) {
                                                 case 8: printf("T");break;
                                                 case 9: printf("J");break;
                                                 case 10: printf("Q");break;

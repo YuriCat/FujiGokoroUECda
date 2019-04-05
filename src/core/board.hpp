@@ -62,9 +62,10 @@ namespace UECda {
         }
         
         // get
-        constexpr uint32_t prmOrder()   const { return (b >> MOVE_LCT_PRMORD) & 1U; }
-        constexpr uint32_t tmpOrder()   const { return (b >> MOVE_LCT_TMPORD) & 1U; }
-        constexpr uint32_t suits()      const { return (b >> MOVE_LCT_SUITS) & 15U; }
+        constexpr int prmOrder()   const { return (b >> MOVE_LCT_PRMORD) & 1U; }
+        constexpr int order()      const { return (b >> MOVE_LCT_TMPORD) & 1U; }
+
+        constexpr uint32_t suits() const { return (b >> MOVE_LCT_SUITS) & 15U; }
         constexpr int qty()        const { return (b >> MOVE_LCT_QTY) & 15U; }
         constexpr int rank()       const { return (b >> MOVE_LCT_RANK) & 15U; }
         constexpr int rank4x()     const { return (b >> MOVE_LCT_RANK4X) & (15U << 2); } // 4倍型
@@ -88,7 +89,6 @@ namespace UECda {
         constexpr uint32_t suitsLocked() const { return b & MOVE_FLAG_SUITSLOCK; }
         constexpr uint32_t rankLocked() const { return b & MOVE_FLAG_RANKLOCK; }
         
-        constexpr bool order() const { return b & MOVE_FLAG_TMPORD; }
         constexpr bool isRev() const { return b & MOVE_FLAG_PRMORD; }
         
         constexpr uint32_t containsJOKER() const { return b & MOVE_FLAG_JK; }
@@ -207,7 +207,7 @@ namespace UECda {
         }
         // オーダー...一時オーダーのみ
         out << "  Order : ";
-        if (b.tmpOrder() == 0) {
+        if (b.order() == 0) {
             out << "NORMAL";
         } else {
             out << "REVERSED";
@@ -233,7 +233,7 @@ namespace UECda {
         if (!b.isNull()) {
             if (b.typePart() != mv.typePart()) return false; // 型違い
             if (b.isSeq()) {
-                if (!isValidSeqRank(mv.rank(), b.tmpOrder(), b.rank(), mv.qty())) {
+                if (!isValidSeqRank(mv.rank(), b.order(), b.rank(), mv.qty())) {
                     return false;
                 }
                 if (b.suitsLocked()) {
@@ -246,7 +246,7 @@ namespace UECda {
                 if (mv.isSingleJOKER()) {
                     if (!b.isSingle()) return false;
                 } else {
-                    if (!isValidGroupRank(mv.rank(), b.tmpOrder(), b.rank())) {
+                    if (!isValidGroupRank(mv.rank(), b.order(), b.rank())) {
                         return false;
                     }
                     if (b.suitsLocked()) {

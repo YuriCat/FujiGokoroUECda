@@ -64,9 +64,9 @@ namespace UECda {
         
         if (b.isSeq()) {
             if (b.suitsLocked()) { // スートロック
-                zone = ORSQToSCValidZone(b.tmpOrder(), b.rank(), b.suits(), qty);
+                zone = ORSQToSCValidZone(b.order(), b.rank(), b.suits(), qty);
             } else {
-                zone = ORQToSCValidZone(b.tmpOrder(), b.rank(), qty);
+                zone = ORQToSCValidZone(b.order(), b.rank(), qty);
             }
             return !canMakeSeq(andCards(cards, zone) | andCards(cards, CARDS_JOKER), qty);
         } else {
@@ -81,9 +81,9 @@ namespace UECda {
             
             if (containsJOKER(cards)) qty--;
             if (b.suitsLocked()) {
-                zone = ORSToGValidZone(b.tmpOrder(), b.rank(), b.suits());
+                zone = ORSToGValidZone(b.order(), b.rank(), b.suits());
             } else {
-                zone = ORToGValidZone(b.tmpOrder(), b.rank());
+                zone = ORToGValidZone(b.order(), b.rank());
             }
             return !canMakeGroup(andCards(cards, zone), qty);
         }
@@ -151,11 +151,11 @@ namespace UECda {
             if (b.qty() > 4) return true;
             Move mv = Move(b);
             Cards pqr = mv.charaPQR();
-            if (pqr & opsHand.nd[b.tmpOrder()]) { // 無支配型と交差あり
+            if (pqr & opsHand.nd[b.order()]) { // 無支配型と交差あり
                 if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
                     uint32_t qty = b.qty();
                     qty -= opsHand.jk;
-                    Cards zone = ORToGValidZone(b.tmpOrder(), b.rank());
+                    Cards zone = ORToGValidZone(b.order(), b.rank());
                     zone &= SuitsToCards(b.suits());
                     if (qty) return !canMakeGroup(opsHand.cards & zone, qty);
                 }
@@ -188,7 +188,7 @@ namespace UECda {
         const Board& b = field.board;
         const FieldAddInfo& fieldInfo = field.fieldInfo;
         
-        const int ord = b.tmpOrder();
+        const int ord = b.order();
         
         if (fieldInfo.isOrderSettled()) {
             // オーダー固定

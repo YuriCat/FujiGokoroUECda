@@ -17,8 +17,9 @@ namespace UECda {
             for (Cards c : myCards.divide()) *(pc++) = c;
         } else if (changeQty == 2) {
             while (tmp.any()) {
-                Cards c = tmp.popLowest();
-                for (Cards c1 : tmp.divide()) *(pc++) = c + c1;
+                Cards c = tmp.divide().lowest();
+                tmp -= c;
+                for (Cards c1 : tmp.divide()) *(pc++) = c | c1;
             }
         } else {
             UNREACHABLE;
@@ -820,7 +821,7 @@ mv->setGroup(q, r, s); op; mv++;}
             c &= RankRangeToCards(RANK_MIN , br - 1);
         }
         uint32_t s = b.suits();
-        int tmpOrd = b.tmpOrder();
+        int tmpOrd = b.order();
         
         for (int r = RANK_3; r <= RANK_2; r++) {
             int q = countCards(c & RankToCards(r));
