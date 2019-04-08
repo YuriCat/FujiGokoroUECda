@@ -992,12 +992,7 @@ namespace UECda {
                     dst->remCards -= dc;
                     dst->remQty -= dq;
                     dst->remHash ^= dkey;
-<<<<<<< HEAD
                     // あがり処理
-=======
-                    
-                 // あがり処理
->>>>>>> 3575f732001aff47ee57d545771488e07552b9b0
                     if (countCards(p) == pLog.getNCards(p)) {
                         dst->setPlayerNewClass(p, pLog.ps.getBestClass());
                     }

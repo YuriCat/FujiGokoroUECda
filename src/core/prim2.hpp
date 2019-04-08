@@ -299,36 +299,11 @@ namespace UECda {
         void setDomMe() { setDO(); }
         void setDomAll() { setDO(); }
 
-        // 当座でない支配
-        // 当座支配フラグを一緒に付けるかは要検討
-        void setP_DO() { setP_NFDO(); }
-        void setP_DM() { setP_NFDM(); }
-        void setP_DALL() { setP_NFDALL(); }
-        void setE_DO() { setE_NFDO(); }
-        void setE_DM() { setE_NFDM(); }
-        void setE_DALL() { setE_NFDALL(); }
-        void setP_NFDO() { set(18);setE_NFDO(); }
-        void setP_NFDM() { set(19);setE_NFDM(); }
-        void setP_NFDALL() { set(18, 19); setE_NFDALL(); }
-        void setE_NFDO() { set(20);setDO(); }
-        void setE_NFDM() { set(21);setDM(); }
-        void setE_NFDALL() { set(20, 21);setDALL(); }
-        
-        void setP_NFDALL_only() {
-            set(18, 19); set(20, 21);
-        } // P_NFDOだが当座支配は付けない。S3とジョーカーのダブルに適用
-        
-        void setTmpOrderRev() { set(14); }
-        void setPrmOrderRev() { set(15); }
-        void setSuitLock() { set(16); }
-        void setRankLock() { set(17); }
-        
         // min_melds
         void setIncMinNMelds(uint32_t dec) { Move::flags |= ((uint64_t)(dec))<<(8); }
 
         // kousoku
         void setDConst() { set(28); }
-        void setDW_NFH() { set(29); }
         
         void init() { Move::flags = 0; }
         
@@ -354,67 +329,37 @@ namespace UECda {
         
         uint32_t getIncMinNMelds() const { return (Move::flags >> 8) & 15; }
         
-        uint64_t isTmpOrderRev() const { return test((14)); }
-        uint64_t isSuitLock() const { return test((16)); }
-        
-        uint64_t isP_NFDO() const { return test((18)); }
-        uint64_t isP_NFDM() const { return test((19)); }
-        bool isP_NFDALL() const { return holds(18,19); }
-        uint64_t isE_NFDO() const { return test((20)); }
-        uint64_t isE_NFDM() const { return test((21)); }
-        bool isE_NFDALL() const { return holds(20,21); }
-        
         uint64_t isDConst() const { return test((28)); }
-        uint64_t isDW_NFH() const { return test((29)); }
     };
-    
-    static std::ostream& operator <<(std::ostream& out, const MoveInfo& mi) {
-        out << mi.mv(); // Move型として出力
-        return out;
-    }
-    
-    class MoveAddInfo : public MoveInfo {
-    public:
-        constexpr MoveAddInfo() {}
-        constexpr MoveAddInfo(const MoveInfo& arg): MoveInfo::MoveInfo(arg) {}
-    };
-    
-    static std::ostream& operator <<(std::ostream& out, const MoveAddInfo& i) { // 出力
-        
+
+    static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
+        std::ostringstream oss;
         // 勝敗
-        if (i.isFinal()) out << " -FIN";
-        else if (i.isPW()) out << " -PW";
-        else if (i.isBNPW()) out << " -BNPW";
-        else if (i.isBRPW()) out << " -BRPW";
-        else if (i.isMPMate()) out << " -MPMATE";
+        if (i.isFinal()) oss << " -FIN";
+        else if (i.isPW()) oss << " -PW";
+        else if (i.isBNPW()) oss << " -BNPW";
+        else if (i.isBRPW()) oss << " -BRPW";
+        else if (i.isMPMate()) oss << " -MPMATE";
         
-        if (i.isL2Mate()) out << " -L2MATE";
+        if (i.isL2Mate()) oss << " -L2MATE";
         
-        if (i.isMPGiveUp()) out << " -MPGIVEUP";
-        if (i.isL2GiveUp()) out << " -L2GIVEUP";
+        if (i.isMPGiveUp()) oss << " -MPGIVEUP";
+        if (i.isL2GiveUp()) oss << " -L2GIVEUP";
         
         // 後場
-        if (i.isTmpOrderRev()) out << " -TREV";
-        if (i.isSuitLock()) out << " -SLOCK";
+        if (b.afterTmpOrder(i) != 0) oss << " -TREV";
+        if (b.locksSuits(i)) oss << " -SLOCK";
         
         // パラメータ
-        out << " -MNM(" << i.getIncMinNMelds() << ")";
+        oss << " -MNM(" << i.getIncMinNMelds() << ")";
         
         // 当座支配
-        if (i.dominatesAll()) out<<" -DALL";
+        if (i.dominatesAll()) oss<< " -DALL";
         else {
-            if (i.dominatesOthers()) out << " -DO";
-            if (i.dominatesMe()) out << " -DM";
+            if (i.dominatesOthers()) oss << " -DO";
+            if (i.dominatesMe()) oss << " -DM";
         }
-
-        // 当座以外の支配
-        if (i.isP_NFDALL()) out << " -PNFDALL";
-        else {
-            if (i.isP_NFDO()) out << " -PNFDO";
-            if (i.isP_NFDM()) out << " -PNFDM";
-        }
-        
-        return out;
+        return oss.str();
     }
     
     /**************************プレーヤーの状態**************************/

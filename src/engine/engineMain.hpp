@@ -208,8 +208,8 @@ namespace UECda {
             calcChangePolicyScoreSlow(escore, cand, NCands, myCards, change_qty, field,
                                         shared.baseChangePolicy);
             // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
-            for (int m = 0; m < NCands; m++) {
-                score[m] = log(max(escore[m + 1] - escore[m], 0.000001)) * Settings::temperatureChange;
+            for (int i = 0; i < NCands; i++) {
+                score[i] = log(max(escore[i + 1] - escore[i], 0.000001)) * Settings::temperatureChange;
             }
             root.feedPolicyScore(score, NCands);
             
@@ -336,37 +336,40 @@ namespace UECda {
             
             // 合法着手生成(特別着手)
             int NSpecialMoves = 0;
-            if (bd.isNull())
+            if (bd.isNull()) {
                 NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
+            }
             if (containsJOKER(myCards) && containsS3(opsCards)) {
-                if (bd.isGroup())
+                if (bd.isGroup()) {
                     NSpecialMoves += genJokerGroup(mv + NMoves + NSpecialMoves, myCards, opsCards, bd);
+                }
             }
             NMoves += NSpecialMoves;
             
             // 着手多様性確保のため着手をランダムシャッフル
-            for (int i = NMoves; i > 1; --i)
+            for (int i = NMoves; i > 1; --i) {
                 std::swap(mv[dice.rand() % i], mv[i - 1]);
+            }
             
             // 場の情報をまとめる
             field.prepareForPlay(true);
             
             // 着手追加情報を設定
-            // 自分の着手の事なので詳しく調べる
-            
             int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
-            
-            setDomState(mv, NMoves, field); // 先の場も含めて支配状況をまとめて設定
-            
-            for (int m = 0; m < NMoves; ++m) {
-                MoveInfo *const mi = &mv[m];
+            for (int i = 0; i < NMoves; i++) {
+                MoveInfo *const mi = &mv[i];
                 const Move move = mi->mv();
                 
                 Cards nextCards = maskCards(myCards, move.cards());
-                // 後場情報
-                if (bd.afterPrmOrder(move) != 0) { mi->setPrmOrderRev(); }
-                if (bd.afterTmpOrder(move) != 0) { mi->setTmpOrderRev(); }
-                if (bd.afterSuitsLocked(move)) { mi->setSuitLock(); }
+                // 支配性
+                if (mi->qty() > fieldInfo.getMaxNCardsAwake()
+                    || dominatesCards(mi->mv(), opsCards, bd)) {
+                    mi->setDO(); // 他支配
+                }
+                if (mi->isPASS() || mi->qty() > myCards.count() - mi->qty()
+                    || dominatesCards(mi->mv(), myCards - mi->cards(), bd)) {
+                    mi->setDM(); // 自己支配
+                }
                 
                 if (Settings::MateSearchOnRoot) { // 多人数必勝判定
                     if (checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)) {
@@ -377,12 +380,11 @@ namespace UECda {
                     if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                         L2Judge lj(400000, searchBuffer);
                         int l2Result = (bd.isNull() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
-                        //cerr << l2Result << endl;
                         if (l2Result == L2_WIN) { // 勝ち
                             DERR << "l2win!" << endl;
                             mi->setL2Mate(); fieldInfo.setL2Mate();
                             DERR << fieldInfo << endl;
-                        }else if (l2Result == L2_LOSE) {
+                        } else if (l2Result == L2_LOSE) {
                             mi->setL2GiveUp();
                         }
                     }
@@ -406,21 +408,17 @@ namespace UECda {
                 }
             }
             if (Settings::MateSearchOnRoot) {
-                if (fieldInfo.isMPMate())
-                    shared.setMyMate(field.getBestClass());
+                if (fieldInfo.isMPMate()) shared.setMyMate(field.getBestClass());
             }
             
 #ifdef MONITOR
             // 着手候補一覧表示
             cerr << "My Cards : " << myCards << endl;
             cerr << bd << " " << fieldInfo << endl;
-            for (int m = 0; m < NMoves; ++m) {
-                Move move = mv[m].mv();
-                MoveAddInfo info = MoveAddInfo(mv[m]);
-                cerr << move << info << endl;
+            for (int i = 0; i < NMoves; i++) {
+                cerr << mv[i] << toInfoString(mv[i], bd) << endl;
             }
 #endif
-            //getchar();
             
             // ルートノード設定
             int limitSimulations = std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
