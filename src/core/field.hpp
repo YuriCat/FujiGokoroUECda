@@ -102,7 +102,7 @@ namespace UECda {
             uint32_t ret = 0U;
             int best = 99999;
             for (int p = 0; p < N_PLAYERS; p++) {
-                if (p != (int)myPlayerNum) {
+                if (p != myPlayerNum) {
                     int pos = positionOf(p);
                     if (pos < best) {
                         ret = (1U << p);
@@ -139,7 +139,7 @@ namespace UECda {
         uint32_t isAlive(const int p) const { return ps.isAlive(p); }
         uint32_t isAwake(const int p) const { return ps.isAwake(p); }
         uint32_t getNAwakePlayers() const { return ps.getNAwake(); }
-        uint32_t getNAlivePlayers() const  { return ps.getNAlive(); }
+        uint32_t getNAlivePlayers() const { return ps.getNAlive(); }
         
         uint32_t searchOpsPlayer(const int p) const {
             return ps.searchOpsPlayer(p);
