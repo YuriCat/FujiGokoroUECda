@@ -109,11 +109,9 @@ namespace UECda {
             if (mv.qty() > 4) return true;
             if (mv.charaPQR() & opsHand.nd[aftTmpOrd]) { // 無支配型と交差あり
                 if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
-                    int qty = mv.qty();
-                    qty -= opsHand.jk;
                     Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
                     zone &= SuitsToCards(mv.suits());
-                    if (qty) return !canMakeGroup(opsHand.cards & zone, qty);
+                    if (qty) return !canMakeGroup(opsHand.cards & zone, m.qty() - opsHand.jk);
                 }
                 return false;
             } else {

@@ -298,15 +298,12 @@ namespace UECda {
         BitCards r = highestBit(c);
         return r | highestBit(c - r);
     }
-    
-    // Cards pop
-    
+
     // IntCard型で1つ取り出し
     inline IntCard pickIntCardLow(const BitCards c) {
         return (IntCard)bsf64(c);
     }
     inline IntCard pickIntCardHigh(const BitCards c) {
-        ASSERT(anyCards(c),);
         return (IntCard)bsr64(c);
     }
 
@@ -320,24 +317,12 @@ namespace UECda {
         return NthLowestBit(c, n);
     }
     
-    // n番目(nは1から)に高い,低いもの以外
-    inline BitCards maskNthHigh(BitCards c, int n) {
-        assert(n > 0 && (int)countCards(c) >= n);
-        return subtrCards(c, pickNthHigh(c, n));
+    // 基準cより高い、低い(同じは含まず)もの
+    inline BitCards pickHigher(BitCards c) {
+        return allHigherBits(c);
     }
-    inline BitCards maskNthLow(BitCards c, int n) {
-        assert(n > 0 && (int)countCards(c) >= n);
-        return subtrCards(c, pickNthLow(c, n));
-    }
-    
-    // 基準c1より高い、低い(同じは含まず)もの
-    
-    // 単体。変なカードも入るが...
-    inline BitCards pickHigher(BitCards c1) {
-        return allHigherBits(c1);
-    }
-    inline BitCards pickLower(BitCards c1) {
-        return allLowerBits(c1);
+    inline BitCards pickLower(BitCards c) {
+        return allLowerBits(c);
     }
     inline BitCards pickHigher(BitCards c0, BitCards c1) {
         return c0 & allHigherBits(c1);
@@ -405,8 +390,7 @@ namespace UECda {
         constexpr Cards(): c_() {}
         constexpr Cards(BitCards c): c_(c) {}
         constexpr Cards(const Cards& c): c_(c.c_) {}
-        //constexpr Cards(IntCard ic): c_(IntCardToCards(ic)) {}
-        constexpr Cards(IntCard ic) = delete;
+        constexpr Cards(IntCard ic) = delete; // 混乱を避ける
 
         Cards(const std::string& str) {
             clear();
