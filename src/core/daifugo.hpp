@@ -6,13 +6,7 @@
 
 namespace UECda {
     
-    // 大富豪における最も基本的な型
-    // ランク int or uint32_t Rank
-    // スート uint32_t Suits
-    // 整数カード型 int IntCard
-    // カード集合型 uint64_t BitCards
-    // 単着手情報型 struct(uint32_t) Move
-    // 着手型と対応した場型 struct(uint32_t) Board
+    // 大富豪における最も基本的な型の実装
     
     /**************************オーダー**************************/
     
@@ -21,10 +15,6 @@ namespace UECda {
     /**************************ランク**************************/
     
     // Uが3の1つ下、Oが2の1つ上
-    // rank -> cards 計算等が絡む場合にはRankではなくRank4xを使う方が数命令減らせるかもしれない
-    
-    using Rank = int;
-    
     enum {
         RANK_U,
         RANK_3, RANK_4, RANK_5, RANK_6,
@@ -42,15 +32,11 @@ namespace UECda {
         
         RANK_NONE = -1
     };
-    
-    inline constexpr int flipRank(int r) {
-        // オーダー逆転時の仮ランクを使用する場合
-        return RANK_3 + RANK_2 - r;
-    }
+
     inline bool isEightSeqRank(int rank, int qty) {
         return rank <= RANK_8 && RANK_8 < rank + qty;
     }
-    
+
     // 出力
     static const std::string rankChar  = "-3456789TJQKA2+:";
     static const std::string rankCharM = "-3456789tjqka2+:";
@@ -107,9 +93,7 @@ namespace UECda {
     }
     
     /**************************スート番号**************************/
-    
-    using SuitNum = int;
-    
+
     // 単スート
     enum {
         SUITNUM_C, SUITNUM_D, SUITNUM_H, SUITNUM_S,
