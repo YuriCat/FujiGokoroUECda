@@ -55,111 +55,88 @@ namespace UECda {
     
     // 引数として場を取った場合
     // パスの時は場を更新してから判定しても仕方ないので注意
-    /*bool dominatesCards(const Board b, const Cards cards) {
+    bool dominatesCards(const Board b, const Cards oc) {
         if (b.isNull()) return false;
-        if (b.domInevitably()) return true; // ジョーカースペ3の場もこれで判定出来るようにしている
+        if (b.domInevitably()) return true;
+
+        if (b.isSingleJOKER()) return !containsS3(oc);
+        if (!b.isSeq() && b.qty() <= oc.joker()) return false;
         
-        int qty = b.qty();
         Cards zone = -1;
-        
-        if (b.isSeq()) {
-            if (b.suitsLocked()) { // スートロック
-                zone = ORSQToSCValidZone(b.order(), b.rank(), b.suits(), qty);
-            } else {
-                zone = ORQToSCValidZone(b.order(), b.rank(), qty);
-            }
-            return !canMakeSeq(andCards(cards, zone) | andCards(cards, CARDS_JOKER), qty);
+        if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
+
+        if (!b.isSeq()) {
+            zone &= ORToGValidZone(b.order(), b.rank());
+            return !canMakeGroup(oc & zone, b.qty() - oc.joker());
         } else {
-            if (qty > 4) return true;
-            if (qty == 1) {
-                if (b.isSingleJOKER()) {
-                    return !containsS3(cards);
-                } else {
-                    if (containsJOKER(cards)) return false;
-                }
-            }
-            
-            if (containsJOKER(cards)) qty--;
-            if (b.suitsLocked()) {
-                zone = ORSToGValidZone(b.order(), b.rank(), b.suits());
-            } else {
-                zone = ORToGValidZone(b.order(), b.rank());
-            }
-            return !canMakeGroup(andCards(cards, zone), qty);
+            zone &= ORQToSCValidZone(b.order(), b.rank(), b.qty());
+            return !canMakeSeq(oc & zone, oc.joker(), b.qty());
         }
-    }*/
+    }
     
-    inline bool dominatesHand(const Move mv, const Hand& opsHand, const Board b) {
+    inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
         // Hand型への支配(着手を引数に取る場合)
         // ops.jk, ops.nd, ops.seq が計算されている事が必要あり
-        assert(opsHand.exam_jk());
-        assert(opsHand.exam_seq());
-        assert(opsHand.exam_nd());
+        assert(oh.exam_jk());
+        assert(oh.exam_seq());
+        assert(oh.exam_nd());
         
-        if (mv.isPASS()) return false;
-        if (mv.domInevitably()) return true;
-        if (b.domConditionally(mv)) return true;
+        if (m.isPASS()) return false;
+        if (m.domInevitably()) return true;
+        if (b.domConditionally(m)) return true;
+
+        if (m.isSingleJOKER()) return !containsS3(oh);
+        if (!m.isSeq() && m.qty() <= oh.jk) return false;
         
-        if (!mv.isSeq()) {
-            // Joker -> S3 を判定
-            if (mv.isSingleJOKER()) {
-                return !containsS3(opsHand.cards);
-            }
-            int aftTmpOrd = b.afterTmpOrder(mv);
-            if (mv.qty() > 4) return true;
-            if (!(mv.charaPQR() & opsHand.nd[aftTmpOrd])) return true;
-            if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
-                Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
-                zone &= SuitsToCards(mv.suits());
-                return !canMakeGroup(opsHand.cards & zone, mv.qty() - opsHand.jk);
+        if (!m.isSeq()) {
+            int aftTmpOrd = b.afterTmpOrder(m);
+            if (m.qty() > 4) return true;
+            if (!(m.charaPQR() & oh.nd[aftTmpOrd])) return true; // 無支配型と交差なし
+            if (b.locksSuits(m)) { // スートロックの場合はまだ支配可能性あり
+                Cards zone = ORToGValidZone(aftTmpOrd, m.rank());
+                zone &= SuitsToCards(m.suits());
+                return !canMakeGroup(oh.cards & zone, m.qty() - oh.jk);
             }
         } else {
-            if (!anyCards(opsHand.seq)) return true;
-            Cards zone = ORQToSCValidZone(b.afterTmpOrder(mv), mv.rank(), mv.qty());
-            if (b.locksSuits(mv)) zone &= SuitsToCards(mv.suits());
-            return !canMakeSeq(opsHand.cards & zone, opsHand.jk, mv.qty());
+            if (!oh.seq) return true;
+            Cards zone = ORQToSCValidZone(b.afterTmpOrder(m), m.rank(), m.qty());
+            if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
+            return !canMakeSeq(oh.cards & zone, oh.jk, m.qty());
         }
         return false;
     }
     
-    inline bool dominatesHand(const Board b, const Hand& opsHand) {
+    inline bool dominatesHand(const Board b, const Hand& oh) {
         // Hand型への支配(場を引数に取る場合)
         // ops.jk, ops.nd, ops.seq が計算されている事が必要あり
-        assert(opsHand.exam_jk());
-        assert(opsHand.exam_seq());
-        assert(opsHand.exam_nd());
+        assert(oh.exam_jk());
+        assert(oh.exam_seq());
+        assert(oh.exam_nd());
         
         if (b.isNull()) return false;
         if (b.domInevitably()) return true;
+
+        if (b.isSingleJOKER()) return !containsS3(oh);
+        if (!b.isSeq() && b.qty() <= oh.jk) return false;
         
         if (!b.isSeq()) { // グループ
-            if (b.isSingleJOKER()) {
-                return !containsS3(opsHand.cards);
-            }
             if (b.qty() > 4) return true;
-            Move mv = Move(b);
-            Cards pqr = mv.charaPQR();
-            if (pqr & opsHand.nd[b.order()]) { // 無支配型と交差あり
-                if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
-                    Cards zone = ORToGValidZone(b.order(), b.rank());
-                    zone &= SuitsToCards(b.suits());
-                    return !canMakeGroup(opsHand.cards & zone, b.qty() - opsHand.jk);
-                }
-                return false;
-            } else {
-                return true;
+            Move m = Move(b);
+            Cards pqr = m.charaPQR();
+            if (!(pqr & oh.nd[b.order()])) return true; // 無支配型と交差なし
+            if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
+                Cards zone = ORToGValidZone(b.order(), b.rank());
+                zone &= SuitsToCards(b.suits());
+                return !canMakeGroup(oh.cards & zone, b.qty() - oh.jk);
             }
         } else { // 階段
-            if (anyCards(opsHand.seq)) {
-                int qty = b.qty();
-                Cards zone = ORQToSCValidZone(b.order(), b.rank(), qty);
-                if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
-                return !canMakeSeq(opsHand.cards & zone, opsHand.jk, qty);
-            } else {
-                return true;
-            }
+            if (!oh.seq) return true;
+            int qty = b.qty();
+            Cards zone = ORQToSCValidZone(b.order(), b.rank(), qty);
+            if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
+            return !canMakeSeq(oh.cards & zone, oh.jk, qty);
         }
-        UNREACHABLE;
+        return false;
     }
     
     template <class move_t, class sbjField_t>
@@ -180,26 +157,26 @@ namespace UECda {
             // オーダー固定
             
             // 現在オーダーについてのみ調べる
-            for (int m = candidates - 1; m >= 0; --m) {
-                move_t *const mv = &buf[m];
+            for (int i = 0; i < candidates; i++) {
+                move_t *const m = &buf[i];
                 
                 // 無条件
-                if (mv->domInevitably()) { // 永続的完全支配
-                    mv->setP_DALL();
+                if (m->domInevitably()) { // 永続的完全支配
+                    m->setP_DALL();
                     continue;
                 }
                 
-                if (mv->cards() == (CARDS_S3 | CARDS_JOKER)) { mv->setP_NFDALL_only(); continue; } // 永続的完全支配と等価(特別)
+                if (m->cards() == (CARDS_S3 | CARDS_JOKER)) { m->setP_NFDALL_only(); continue; } // 永続的完全支配と等価(特別)
                 
-                const uint32_t qty = mv->qty();
+                const uint32_t qty = m->qty();
                 
                 // 空場
                 if ((qty > fieldInfo.getMaxNCards())
-                   || dominatesCards(mv->mv(), opsCards, OrderToNullBoard(ord))) {
-                    mv->setP_NFDO(); // 永続的空場他支配
+                   || dominatesCards(m->mv(), opsCards, OrderToNullBoard(ord))) {
+                    m->setP_NFDO(); // 永続的空場他支配
                 }
-                //if ((qty > fieldInfo.getMaxNCards()) || ::dominatesCards(mv,subtrCards(myCards,mv.extract()),makeBoardNF(ord))) {
-                // mInfo->setP_NFDM();//永続的空場自己支配
+                //if ((qty > fieldInfo.getMaxNCards()) || ::dominatesCards(m,subtrCards(myCards,m.extract()),makeBoardNF(ord))) {
+                // mInfo->setP_NFDmv();//永続的空場自己支配
                 //}
             }
             
@@ -207,25 +184,25 @@ namespace UECda {
             // オーダー固定でない
             
             // 現在オーダーと逆転オーダーの両方を調べる
-            for (int m = candidates - 1; m >= 0; --m) {
-                move_t *const mv = &buf[m];
+             for (int i = 0; i < candidates; i++) {
+                move_t *const m = &buf[i];
                 
                 // 無条件
-                if (mv->domInevitably()) { // 永続的完全支配
-                    mv->setP_DALL();
+                if (m->domInevitably()) { // 永続的完全支配
+                    m->setP_DALL();
                     continue;
                 }
                 
-                if (mv->cards() == (CARDS_S3 | CARDS_JOKER)) { mv->setP_NFDALL_only(); continue; } // 永続的完全支配と等価(特別)
+                if (m->cards() == (CARDS_S3 | CARDS_JOKER)) { m->setP_NFDALL_only(); continue; } // 永続的完全支配と等価(特別)
                 
-                const uint32_t qty = mv->qty();
+                const uint32_t qty = m->qty();
                 if (qty > fieldInfo.getMaxNCards()) {
-                    mv->setP_NFDO();
-                }else if (dominatesCards(mv->mv(), opsCards, OrderToNullBoard(ord))) {
-                    if (dominatesCards(mv->mv(), opsCards, OrderToNullBoard(flipOrder(ord)))) {
-                        mv->setP_NFDO(); // 永続的空場他支配
+                    m->setP_NFDO();
+                }else if (dominatesCards(m->mv(), opsCards, OrderToNullBoard(ord))) {
+                    if (dominatesCards(m->mv(), opsCards, OrderToNullBoard(flipOrder(ord)))) {
+                        m->setP_NFDO(); // 永続的空場他支配
                     } else {
-                        mv->setE_NFDO(); // 一時的空場他支配
+                        m->setE_NFDO(); // 一時的空場他支配
                     }
                 }
             }
@@ -235,19 +212,19 @@ namespace UECda {
         
         // 当座
         // 他の情報と被るので無駄がある
-        for (int m = candidates - 1; m >= 0; --m) {
-            move_t *const mv = &buf[m];
+        for (int i = 0; i < candidates; i++) {
+            move_t *const m = &buf[i];
             
-            const uint32_t qty = mv->qty();
+            const uint32_t qty = m->qty();
             
             if (qty > fieldInfo.getMaxNCardsAwake()
-               || dominatesCards(mv->mv(), opsCards, b)) {
-                mv->setDO(); // 当座他支配
+               || dominatesCards(m->mv(), opsCards, b)) {
+                m->setDO(); // 当座他支配
             }
-            if (mv->isPASS()
+            if (m->isPASS()
                || qty > NMyCards - qty
-               || dominatesCards(mv->mv(), myCards - mv->cards(), b)) {
-                mv->setDM(); // 当座自己支配
+               || dominatesCards(m->mv(), myCards - m->cards(), b)) {
+                m->setDM(); // 当座自己支配
             }
         }
     }

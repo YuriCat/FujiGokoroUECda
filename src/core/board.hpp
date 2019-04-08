@@ -32,7 +32,8 @@ namespace UECda {
         
         // 2体情報をメンバ関数で返す関数
         // 半マスク化みたいな感じ
-        constexpr uint32_t domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
+        constexpr bool domInevitably() const { return invalid; }
+        constexpr bool domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
         
         constexpr bool locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
         constexpr bool locksRank(Move m) const { return false; } // ルールにない
