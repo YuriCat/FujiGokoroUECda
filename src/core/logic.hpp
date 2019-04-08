@@ -134,11 +134,11 @@ namespace UECda {
         if (order == 0) {
             IntCard ic = pickIntCardLow(ops);
             int r = IntCardToRank(ic);
-            ret = mine & RankRangeToCards(RANK_MIN * 4, r);
+            ret = mine & RankRangeToCards(RANK_MIN, r);
         } else {
             IntCard ic = pickIntCardHigh(ops);
             int r = IntCardToRank(ic);
-            ret = mine & RankRangeToCards(r, RANK_MAX  *4);
+            ret = mine & RankRangeToCards(r, RANK_MAX);
         }
         if (containsS3(ret)) {
             if (containsJOKER(addCards(mine, ops))) ret -= CARDS_S3;
