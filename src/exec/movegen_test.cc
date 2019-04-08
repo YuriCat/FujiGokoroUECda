@@ -126,8 +126,8 @@ int testRecordMoves(const Record& record) {
             return -1;
         }
     }
-    cerr << "generation rate (cards) = " << genHolded[0] / (double)genCount[0] << endl;
-    cerr << "generation time (cards) = " << genTime[0] / (double)genCount[0] << endl;
+    cerr << "generation rate = " << genHolded[0] / (double)genCount[0] << endl;
+    cerr << "generation time = " << genTime[0] / (double)genCount[0] << endl;
     return 0;
 }
 
