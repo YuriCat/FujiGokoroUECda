@@ -26,19 +26,284 @@ namespace UECda {
         }
         return pc - pc0;
     }
+
+    /**************************階段生成**************************/
+
+#define GEN_BASE(q, oc, op) {\
+for (IntCard ic : (oc)) {\
+int r = IntCardToRank(ic);\
+uint32_t s = IntCardToSuits(ic);\
+mv->setSeq(q, r, s);\
+op; mv++; }}
+
+#define GEN(q, oc) GEN_BASE(q, oc,)
+#define GEN_J(q, oc, jdr) GEN_BASE(q, oc, mv->setJokerRank(r + jdr); mv->setJokerSuits(s))
+
+    inline int genAllSeqWithJoker(MoveInfo *const mv0, const Cards x) {
+        Cards c = maskJOKER(x);
+        if (!c) return 0;
+        MoveInfo *mv = mv0;
+        
+        // 3枚階段
+        const Cards c1_1 = polymJump(c);
+        const Cards c2 = polymRanks<2>(c);
+        const Cards c3 = c1_1 & c2;
+        // プレーンを作成
+        const Cards seq3 = c3;
+        GEN(3, seq3);
+        // 1_1型を作成
+        const Cards seq1_1 = c1_1 & ~seq3;
+        GEN_J(3, seq1_1, 1);
+        // 2型を両側で作成
+        const Cards seq2_ = c2 & ~seq3;
+        const Cards seq_2 = (c2 >> 4) & ~seq3;
+        GEN_J(3, seq_2, 0);
+        GEN_J(3, seq2_, 2);
+        
+        // 4枚階段
+        const Cards c2_1 = c2 & (c1_1 >> 4);
+        const Cards c1_2 = c1_1 & (c2 >> 8);
+        const Cards c4 = c3 & c2_1;
+        // プレーンを作成
+        const Cards seq4 = c4;
+        GEN(4, seq4);
+        // 2_1型と1_2型を作成
+        const Cards seq2_1 = c2_1 & ~seq4;
+        const Cards seq1_2 = c1_2 & ~seq4;
+        GEN_J(4, seq2_1, 2);
+        GEN_J(4, seq1_2, 1);
+        // 3型を両側で作成
+        const Cards seq3_ = c3 & ~seq4;
+        const Cards seq_3 = (c3 >> 4) & ~seq4;
+        GEN_J(4, seq_3, 0);
+        GEN_J(4, seq3_, 3);
+        
+        // 5枚階段
+        const Cards c3_1 = c3 & (c2_1 >> 4);
+        const Cards c1_3 = c1_2 & (c3 >> 8);
+        const Cards c2_2 = c2_1 & (c1_2 >> 4);
+        const Cards c5 = c4 & c3_1;
+        // プレーンを作成
+        const Cards seq5 = c5;
+        GEN(5, seq5);
+        // 2_2型を作成
+        const Cards seq2_2 = c2_2 & ~seq5;
+        GEN_J(5, seq2_2, 2);
+        // 3_1型と1_3型を作成
+        const Cards seq3_1 = c3_1 & ~seq5;
+        const Cards seq1_3 = c1_3 & ~seq5;
+        GEN_J(5, seq3_1, 3);
+        GEN_J(5, seq1_3, 1);
+        // 4型を両側で作成
+        const Cards seq4_ = c4 & ~seq5;
+        const Cards seq_4 = (c4 >> 4) & ~seq5;
+        GEN_J(5, seq_4, 0);
+        GEN_J(5, seq4_, 4);
+        
+        // 6枚階段
+        if (c3) {
+            const Cards c4_1 = c4 & (c3_1 >> 4);
+            const Cards c1_4 = c1_3 & (c4 >> 8);
+            const Cards c3_2 = c3_1 & (c2_2 >> 4);
+            const Cards c2_3 = c2_2 & (c1_3 >> 4);
+            const Cards c6 = c5 & c4_1;
+            // プレーンを作成
+            const Cards seq6 = c6;
+            GEN(6, seq6);
+            // 3_2型と2_3型を作成
+            const Cards seq3_2 = c3_2 & ~seq6;
+            const Cards seq2_3 = c2_3 & ~seq6;
+            GEN_J(6, seq3_2, 3);
+            GEN_J(6, seq2_3, 2);
+            // 4_1型と1_4型を作成
+            const Cards seq4_1 = c4_1 & ~seq6;
+            const Cards seq1_4 = c1_4 & ~seq6;
+            GEN_J(6, seq4_1, 4);
+            GEN_J(6, seq1_4, 1);
+            // 5型を両側で作成
+            const Cards seq5_ = c5 & ~seq6;
+            const Cards seq_5 = (c5 >> 4) & ~seq6;
+            GEN_J(6, seq_5, 0);
+            GEN_J(6, seq5_, 5);
+        }
+        
+        // 7枚以上階段は未実装
+        return mv - mv0;
+    }
+
+    int genAllPlainSeq(MoveInfo *const mv0, const Cards x) {
+        // ジョーカーを入れない階段のみ生成
+        // 生成ランク制限無し
+        MoveInfo *mv = mv0;
+        Cards c = polymRanks<3>(x);
+        for (int q = 3; anyCards(c); q++) {
+            for (IntCard ic : c) {
+                int rank = IntCardToRank(ic);
+                uint32_t suit = IntCardToSuits(ic);
+                (mv++)->setSeq(q, rank, suit);
+            }
+            // 次の枚数を考える
+            c = polymRanks<2>(c); // ランク a かつランク a + 1 の n 枚階段があればランク a の n + 1 枚階段が出来る
+        }
+        return mv - mv0;
+    }
+
+    inline int genAllSeq(MoveInfo *const mv, const Cards c) {
+        if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
+        else return genAllSeqWithJoker(mv, c);
+    }
+
+    inline int genFollowPlainSeq(MoveInfo *const mv0, Cards c, Board b) {
+        uint32_t r = b.rank();
+        uint32_t q = b.qty();
+        assert(q >= 3);
+        if (b.order() == 0) { // 通常
+            if (r + (q << 1) > RANK_MAX + 1) return 0;
+            c &= RankRangeToCards(r + q, RANK_MAX);
+        } else { // オーダー逆転中
+            if (r < RANK_MIN + q) return 0;
+            c &= RankRangeToCards(RANK_MIN, r - 1);
+        }
+        c = polymRanks<3>(c);
+        if (!c) return 0;
+        if (q > 3) c = polymRanks(c, q - 3 + 1);
+        if (!c) return 0;
+        if (b.suitsLocked()) c &= SuitsToCards(b.suits());
+        MoveInfo *mv = mv0;
+        for (IntCard ic : c) {
+            int r = IntCardToRank(ic);
+            uint32_t s = IntCardToSuits(ic);
+            (mv++)->setSeq(q, r, s);
+        }
+        return mv - mv0;
+    }
+
+    inline int genFollowSeqWithJoker(MoveInfo *const mv0, const Cards plain, const Board b) {
+        const uint32_t r = b.rank();
+        const uint32_t qty = b.qty();
+        assert(qty >= 3);
+        Cards c = plain;
+        Cards rCards; // 合法カードゾーン
+        Cards validSeqZone; // 合法階段ゾーン
+        if (b.order() == 0) { // 通常
+            if (r + (qty << 1) > RANK_MAX + 2) return 0;
+            rCards = RankRangeToCards(r + qty, RANK_MAX + 1);
+            validSeqZone = RankRangeToCards(r + qty, RANK_MAX + 1);
+        } else { // オーダー逆転中
+            if (r < qty + RANK_MIN - 1) return 0;
+            rCards = RankRangeToCards(RANK_MIN - 1, r - 1);
+            validSeqZone = RankRangeToCards(RANK_MIN - 1, r - qty);
+        }
+        c &= rCards;
+        if (b.suitsLocked()) c &= SuitsToCards(b.suits());
+        if (!c) return 0;
+        MoveInfo *mv = mv0;
+        switch (qty) {
+            case 0: UNREACHABLE; break;
+            case 1: UNREACHABLE; break;
+            case 2: UNREACHABLE; break;
+            case 3: {
+                const Cards c1_1 = polymJump(c);
+                const Cards c2 = polymRanks<2>(c);
+                
+                const Cards c3 = c1_1 & c2;
+                
+                // プレーンを作成
+                const Cards seq3 = c3 & validSeqZone;
+                GEN(3, seq3);
+                // 1_1型を作成
+                const Cards seq1_1 = c1_1 & validSeqZone & ~seq3;
+                GEN_J(3, seq1_1, 1);
+                // 2型を両側で作成
+                const Cards seq2_ = c2 & validSeqZone & ~seq3;
+                const Cards seq_2 = (c2 >> 4) & validSeqZone & ~seq3;
+                GEN_J(3, seq_2, 0);
+                GEN_J(3, seq2_, 2);
+            } break;
+            case 4: {
+                const Cards c1_1 = polymJump(c);
+                const Cards c2 = polymRanks<2>(c);
+                
+                const Cards c3 = c1_1 & c2;
+                const Cards c2_1 = c2 & (c1_1 >> 4);
+                const Cards c1_2 = c1_1 & (c2 >> 8);
+                
+                const Cards c4 = c3 & c2_1;
+                
+                // プレーンを作成
+                const Cards seq4 = c4 & validSeqZone;
+                GEN(4, seq4);
+                // 2_1型と1_2型を作成
+                const Cards seq2_1 = c2_1 & validSeqZone & ~seq4;
+                const Cards seq1_2 = c1_2 & validSeqZone & ~seq4;
+                GEN_J(4, seq2_1, 2);
+                GEN_J(4, seq1_2, 1);
+                // 3型を両側で作成
+                const Cards seq3_ = c3 & validSeqZone & ~seq4;
+                const Cards seq_3 = (c3 >> 4) & validSeqZone & ~seq4;
+                GEN_J(4, seq3_, 3);
+                GEN_J(4, seq_3, 0);
+            } break;
+            case 5: {
+                const Cards c1_1 = polymJump(c);
+                const Cards c2 = polymRanks<2>(c);
+                
+                const Cards c3 = c1_1 & c2;
+                
+                if (!c3) break;
+                
+                const Cards c2_1 = c2 & (c1_1 >> 4);
+                const Cards c1_2 = c1_1 & (c2 >> 8);
+                
+                const Cards c4 = c3 & c2_1;
+                const Cards c3_1 = c3 & (c2_1 >> 4);
+                const Cards c1_3 = c1_2 & (c3 >> 8);
+                const Cards c2_2 = c2_1 & (c1_2 >> 4);
+                
+                const Cards c5 = c4 & c3_1;
+                
+                // プレーンを作成
+                const Cards seq5 = c5 & validSeqZone;
+                GEN(5, seq5);
+                // 2_2型を作成
+                const Cards seq2_2 = c2_2 & validSeqZone & ~seq5;
+                GEN_J(5, seq2_2, 2);
+                // 3_1型と1_3型を作成
+                const Cards seq3_1 = c3_1 & validSeqZone & ~seq5;
+                const Cards seq1_3 = c1_3 & validSeqZone & ~seq5;
+                GEN_J(5, seq3_1, 3);
+                GEN_J(5, seq1_3, 1);
+                // 4型を両側で作成
+                const Cards seq4_ = c4 & validSeqZone & ~seq5;
+                const Cards seq_4 = (c4 >> 4) & validSeqZone & ~seq5;
+                GEN_J(5, seq_4, 0);
+                GEN_J(5, seq4_, 4);
+            } break;
+            default: break; // 6枚以上階段は未実装
+        }
+        return mv - mv0;
+    }
+
+    inline int genFollowSeq(MoveInfo *const mv, const Cards c, const Board b) {
+        if (!containsJOKER(c)) return genFollowPlainSeq(mv, c, b);
+        else return genFollowSeqWithJoker(mv, c, b);
+    }
     
+#undef GEN_BASE
+#undef GEN
+#undef GEN_J
+
     /**************************フォロー着手生成**************************/
-    
+
     // 引数の型がHandとCardsのどちらでもOKにするためのサブルーチン
-    inline Cards genNRankInGenFollowGroup(const Cards& c, Cards valid, int q) {
+    inline Cards genNRankInGenFollowGroup(const Cards c, Cards valid, int q) {
         Cards vc = c & valid;
         return CardsToNR(vc, q);
     }
-    
-    template <class move_t>
-    inline int genFollowSingle(move_t *mv0, const Cards myCards, const Board b) {
+
+    inline int genFollowSingle(MoveInfo *const mv0, const Cards myCards, const Board b) {
         Cards c = myCards;
-        move_t *mv = mv0;
+        MoveInfo *mv = mv0;
         if (b.isSingleJOKER()) {
             if (containsS3(c)) {
                 mv->setSingle(INTCARD_S3);
@@ -62,14 +327,12 @@ namespace UECda {
         }
         return mv - mv0;
     }
-    
+
 #define GEN_BASE(q, s, op) { mv->setGroup(q, r, s); op; mv++; }
-    
 #define GEN(q, s) GEN_BASE(q, s,)
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
-    
-    template <class move_t>
-    inline int genFollowDouble(move_t *const mv0, const Cards hand, const Board b) {
+
+    inline int genFollowDouble(MoveInfo *const mv0, const Cards hand, const Board b) {
         const Cards x = hand;
         const int br = b.rank();
         Cards valid;
@@ -78,7 +341,7 @@ namespace UECda {
         } else { // オーダー逆転中
             valid = RankRangeToCards(RANK_MIN, br - 1);
         }
-        move_t *mv = mv0;
+        MoveInfo *mv = mv0;
         if (!b.suitsLocked()) { // スートしばりなし
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
             // 4枚ある箇所から各スートで生成
@@ -186,9 +449,8 @@ namespace UECda {
         }
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genFollowTriple(move_t *const mv0, const Cards hand, const Board b) {
+
+    inline int genFollowTriple(MoveInfo *const mv0, const Cards hand, const Board b) {
         const int br = b.rank();
         const Cards x = Cards(hand);
         Cards valid;
@@ -197,7 +459,7 @@ namespace UECda {
         } else { // オーダー逆転中
             valid = RankRangeToCards(RANK_MIN, br - 1);
         }
-        move_t *mv = mv0;
+        MoveInfo *mv = mv0;
         
         if (!b.suitsLocked()) { // スートしばりなし
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
@@ -270,10 +532,9 @@ namespace UECda {
         }
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genFollowQuadruple(move_t *const mv0, const Cards hand, const Board b) {
-        move_t *mv = mv0;
+
+    inline int genFollowQuadruple(MoveInfo *const mv0, const Cards hand, const Board b) {
+        MoveInfo *mv = mv0;
         const Cards x = Cards(hand);
         const int br = b.rank();
         Cards valid;
@@ -296,10 +557,9 @@ namespace UECda {
         }
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genAllSingle(move_t *const mv0, Cards c) {
-        move_t *mv = mv0;
+
+    inline int genAllSingle(MoveInfo *const mv0, Cards c) {
+        MoveInfo *mv = mv0;
         if (c.joker()) {
             (mv++)->setSingleJOKER();
             c = c.plain();
@@ -307,12 +567,11 @@ namespace UECda {
         for (IntCard ic : c) (mv++)->setSingle(ic);
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genLead(move_t *const mv0, const Cards hand) {
+
+    inline int genLead(MoveInfo *const mv0, const Cards hand) {
         const Cards c = Cards(hand);
         bool jk = containsJOKER(c) ? true : false;
-        move_t *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
+        MoveInfo *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
         Cards x;
         if (jk) {
             x = maskJOKER(c);
@@ -485,283 +744,11 @@ namespace UECda {
         mv += genAllSeq(mv, c); // 階段を生成
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genLegalLead(move_t *const mv0, const Cards hand) {
+
+    inline int genLegalLead(MoveInfo *const mv0, const Cards hand) {
         int cnt = genLead(mv0, hand);
         (mv0 + cnt)->setPASS();
         return cnt + 1;
-    }
-    
-#undef GEN_BASE
-    
-#undef GEN
-#undef GEN_J
-    
-#define GEN_BASE(q, oc, op) {\
-for (IntCard ic : (oc)) {\
-int r = IntCardToRank(ic);\
-uint32_t s = IntCardToSuits(ic);\
-mv->setSeq(q, r, s);\
-op; mv++; }}
-
-#define GEN(q, oc) GEN_BASE(q, oc,)
-#define GEN_J(q, oc, jdr) GEN_BASE(q, oc, mv->setJokerRank(r + jdr); mv->setJokerSuits(s))
-    
-    template <class move_t>
-    inline int genAllSeqWithJoker(move_t *const mv0, const Cards x) {
-        Cards c = maskJOKER(x);
-        if (!c) return 0;
-        move_t *mv = mv0;
-        
-        // 3枚階段
-        const Cards c1_1 = polymJump(c);
-        const Cards c2 = polymRanks<2>(c);
-        const Cards c3 = c1_1 & c2;
-        // プレーンを作成
-        const Cards seq3 = c3;
-        GEN(3, seq3);
-        // 1_1型を作成
-        const Cards seq1_1 = c1_1 & ~seq3;
-        GEN_J(3, seq1_1, 1);
-        // 2型を両側で作成
-        const Cards seq2_ = c2 & ~seq3;
-        const Cards seq_2 = (c2 >> 4) & ~seq3;
-        GEN_J(3, seq_2, 0);
-        GEN_J(3, seq2_, 2);
-        
-        // 4枚階段
-        const Cards c2_1 = c2 & (c1_1 >> 4);
-        const Cards c1_2 = c1_1 & (c2 >> 8);
-        const Cards c4 = c3 & c2_1;
-        // プレーンを作成
-        const Cards seq4 = c4;
-        GEN(4, seq4);
-        // 2_1型と1_2型を作成
-        const Cards seq2_1 = c2_1 & ~seq4;
-        const Cards seq1_2 = c1_2 & ~seq4;
-        GEN_J(4, seq2_1, 2);
-        GEN_J(4, seq1_2, 1);
-        // 3型を両側で作成
-        const Cards seq3_ = c3 & ~seq4;
-        const Cards seq_3 = (c3 >> 4) & ~seq4;
-        GEN_J(4, seq_3, 0);
-        GEN_J(4, seq3_, 3);
-        
-        // 5枚階段
-        const Cards c3_1 = c3 & (c2_1 >> 4);
-        const Cards c1_3 = c1_2 & (c3 >> 8);
-        const Cards c2_2 = c2_1 & (c1_2 >> 4);
-        const Cards c5 = c4 & c3_1;
-        // プレーンを作成
-        const Cards seq5 = c5;
-        GEN(5, seq5);
-        // 2_2型を作成
-        const Cards seq2_2 = c2_2 & ~seq5;
-        GEN_J(5, seq2_2, 2);
-        // 3_1型と1_3型を作成
-        const Cards seq3_1 = c3_1 & ~seq5;
-        const Cards seq1_3 = c1_3 & ~seq5;
-        GEN_J(5, seq3_1, 3);
-        GEN_J(5, seq1_3, 1);
-        // 4型を両側で作成
-        const Cards seq4_ = c4 & ~seq5;
-        const Cards seq_4 = (c4 >> 4) & ~seq5;
-        GEN_J(5, seq_4, 0);
-        GEN_J(5, seq4_, 4);
-        
-        // 6枚階段
-        if (c3) {
-            const Cards c4_1 = c4 & (c3_1 >> 4);
-            const Cards c1_4 = c1_3 & (c4 >> 8);
-            const Cards c3_2 = c3_1 & (c2_2 >> 4);
-            const Cards c2_3 = c2_2 & (c1_3 >> 4);
-            const Cards c6 = c5 & c4_1;
-            // プレーンを作成
-            const Cards seq6 = c6;
-            GEN(6, seq6);
-            // 3_2型と2_3型を作成
-            const Cards seq3_2 = c3_2 & ~seq6;
-            const Cards seq2_3 = c2_3 & ~seq6;
-            GEN_J(6, seq3_2, 3);
-            GEN_J(6, seq2_3, 2);
-            // 4_1型と1_4型を作成
-            const Cards seq4_1 = c4_1 & ~seq6;
-            const Cards seq1_4 = c1_4 & ~seq6;
-            GEN_J(6, seq4_1, 4);
-            GEN_J(6, seq1_4, 1);
-            // 5型を両側で作成
-            const Cards seq5_ = c5 & ~seq6;
-            const Cards seq_5 = (c5 >> 4) & ~seq6;
-            GEN_J(6, seq_5, 0);
-            GEN_J(6, seq5_, 5);
-        }
-        
-        // 7枚以上階段は未実装
-        return mv - mv0;
-    }
-    
-    template <class move_t>
-    int genAllPlainSeq(move_t *const mv0, const Cards x) {
-        // ジョーカーを入れない階段のみ生成
-        // 生成ランク制限無し
-        move_t *mv = mv0;
-        Cards c = polymRanks<3>(x);
-        for (int q = 3; anyCards(c); q++) {
-            for (IntCard ic : c) {
-                int rank = IntCardToRank(ic);
-                uint32_t suit = IntCardToSuits(ic);
-                (mv++)->setSeq(q, rank, suit);
-            }
-            // 次の枚数を考える
-            c = polymRanks<2>(c); // ランク a かつランク a + 1 の n 枚階段があればランク a の n + 1 枚階段が出来る
-        }
-        return mv - mv0;
-    }
-    
-    template <class move_t>
-    inline int genAllSeq(move_t *const mv, const Cards c) {
-        if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
-        else return genAllSeqWithJoker(mv, c);
-    }
-    
-    template <class move_t>
-    inline int genFollowSeq(move_t *const mv, const Cards c, const Board b) {
-        if (!containsJOKER(c)) return genFollowPlainSeq(mv, c, b);
-        else return genFollowSeqWithJoker(mv, c, b);
-    }
-    
-    template <class move_t>
-    inline int genFollowPlainSeq(move_t *const mv0, Cards c, Board b) {
-        uint32_t r = b.rank();
-        uint32_t q = b.qty();
-        assert(q >= 3);
-        if (b.order() == 0) { // 通常
-            if (r + (q << 1) > RANK_MAX + 1) return 0;
-            c &= RankRangeToCards(r + q, RANK_MAX);
-        } else { // オーダー逆転中
-            if (r < RANK_MIN + q) return 0;
-            c &= RankRangeToCards(RANK_MIN, r - 1);
-        }
-        c = polymRanks<3>(c);
-        if (!c) return 0;
-        if (q > 3) c = polymRanks(c, q - 3 + 1);
-        if (!c) return 0;
-        if (b.suitsLocked()) c &= SuitsToCards(b.suits());
-        move_t *mv = mv0;
-        for (IntCard ic : c) {
-            int r = IntCardToRank(ic);
-            uint32_t s = IntCardToSuits(ic);
-            (mv++)->setSeq(q, r, s);
-        }
-        return mv - mv0;
-    }
-    
-    template <class move_t>
-    inline int genFollowSeqWithJoker(move_t *const mv0, const Cards plain, const Board b) {
-        const uint32_t r = b.rank();
-        const uint32_t qty = b.qty();
-        assert(qty >= 3);
-        Cards c = plain;
-        Cards rCards; // 合法カードゾーン
-        Cards validSeqZone; // 合法階段ゾーン
-        if (b.order() == 0) { // 通常
-            if (r + (qty << 1) > RANK_MAX + 2) return 0;
-            rCards = RankRangeToCards(r + qty, RANK_MAX + 1);
-            validSeqZone = RankRangeToCards(r + qty, RANK_MAX + 1);
-        } else { // オーダー逆転中
-            if (r < qty + RANK_MIN - 1) return 0;
-            rCards = RankRangeToCards(RANK_MIN - 1, r - 1);
-            validSeqZone = RankRangeToCards(RANK_MIN - 1, r - qty);
-        }
-        c &= rCards;
-        if (b.suitsLocked()) c &= SuitsToCards(b.suits());
-        if (!c) return 0;
-        move_t *mv = mv0;
-        switch (qty) {
-            case 0: UNREACHABLE; break;
-            case 1: UNREACHABLE; break;
-            case 2: UNREACHABLE; break;
-            case 3: {
-                const Cards c1_1 = polymJump(c);
-                const Cards c2 = polymRanks<2>(c);
-                
-                const Cards c3 = c1_1 & c2;
-                
-                // プレーンを作成
-                const Cards seq3 = c3 & validSeqZone;
-                GEN(3, seq3);
-                // 1_1型を作成
-                const Cards seq1_1 = c1_1 & validSeqZone & ~seq3;
-                GEN_J(3, seq1_1, 1);
-                // 2型を両側で作成
-                const Cards seq2_ = c2 & validSeqZone & ~seq3;
-                const Cards seq_2 = (c2 >> 4) & validSeqZone & ~seq3;
-                GEN_J(3, seq_2, 0);
-                GEN_J(3, seq2_, 2);
-            } break;
-            case 4: {
-                const Cards c1_1 = polymJump(c);
-                const Cards c2 = polymRanks<2>(c);
-                
-                const Cards c3 = c1_1 & c2;
-                const Cards c2_1 = c2 & (c1_1 >> 4);
-                const Cards c1_2 = c1_1 & (c2 >> 8);
-                
-                const Cards c4 = c3 & c2_1;
-                
-                // プレーンを作成
-                const Cards seq4 = c4 & validSeqZone;
-                GEN(4, seq4);
-                // 2_1型と1_2型を作成
-                const Cards seq2_1 = c2_1 & validSeqZone & ~seq4;
-                const Cards seq1_2 = c1_2 & validSeqZone & ~seq4;
-                GEN_J(4, seq2_1, 2);
-                GEN_J(4, seq1_2, 1);
-                // 3型を両側で作成
-                const Cards seq3_ = c3 & validSeqZone & ~seq4;
-                const Cards seq_3 = (c3 >> 4) & validSeqZone & ~seq4;
-                GEN_J(4, seq3_, 3);
-                GEN_J(4, seq_3, 0);
-            } break;
-            case 5: {
-                const Cards c1_1 = polymJump(c);
-                const Cards c2 = polymRanks<2>(c);
-                
-                const Cards c3 = c1_1 & c2;
-                
-                if (!c3) break;
-                
-                const Cards c2_1 = c2 & (c1_1 >> 4);
-                const Cards c1_2 = c1_1 & (c2 >> 8);
-                
-                const Cards c4 = c3 & c2_1;
-                const Cards c3_1 = c3 & (c2_1 >> 4);
-                const Cards c1_3 = c1_2 & (c3 >> 8);
-                const Cards c2_2 = c2_1 & (c1_2 >> 4);
-                
-                const Cards c5 = c4 & c3_1;
-                
-                // プレーンを作成
-                const Cards seq5 = c5 & validSeqZone;
-                GEN(5, seq5);
-                // 2_2型を作成
-                const Cards seq2_2 = c2_2 & validSeqZone & ~seq5;
-                GEN_J(5, seq2_2, 2);
-                // 3_1型と1_3型を作成
-                const Cards seq3_1 = c3_1 & validSeqZone & ~seq5;
-                const Cards seq1_3 = c1_3 & validSeqZone & ~seq5;
-                GEN_J(5, seq3_1, 3);
-                GEN_J(5, seq1_3, 1);
-                // 4型を両側で作成
-                const Cards seq4_ = c4 & validSeqZone & ~seq5;
-                const Cards seq_4 = (c4 >> 4) & validSeqZone & ~seq5;
-                GEN_J(5, seq_4, 0);
-                GEN_J(5, seq4_, 4);
-            } break;
-            default: break; // 6枚以上階段は未実装
-        }
-        return mv - mv0;
     }
     
 #undef GEN_BASE
@@ -777,26 +764,23 @@ op; mv++; }}
     // ジョーカーによって出す着手
     // 8か最強ランクであり、
     // 本来そのランクが無くなるはずの着手についてのみ検討する
-    
-    template <class move_t>
-    inline int genNullPass(move_t *const mv0) {
+
+    inline int genNullPass(MoveInfo *const mv0) {
         // 空場でのパスを生成
         mv0->setPASS();
         return 1;
     }
-    
-#define GEN_BASE(q, s, op) {mv->setGroup(q, r, s); op; mv++;}
 
+#define GEN_BASE(q, s, op) { mv->setGroup(q, r, s); op; mv++; }
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
-    
-    template <class move_t>
-    inline int genJokerGroup(move_t *const mv0, Cards c, const Cards ops, const Board b) {
+
+    inline int genJokerGroup(MoveInfo *const mv0, Cards c, const Cards ops, const Board b) {
         
         assert(containsJOKER(c));
         assert(containsS3(ops));
         assert(b.isGroup());
         
-        move_t *mv = mv0;
+        MoveInfo *mv = mv0;
         int br = b.rank();
         if (b.order() == 0) { // 通常
             c &= RankRangeToCards(br + 1, RANK_MAX);
@@ -902,10 +886,9 @@ op; mv++; }}
     }
 #undef GEN_BASE
 #undef GEN_J
-    
-    template <class move_t>
-    inline int genGroupDebug(move_t *const mv0, Cards c, Board b) {
-        move_t *mv = mv0;
+
+    inline int genGroupDebug(MoveInfo *const mv0, Cards c, Board b) {
+        MoveInfo *mv = mv0;
         int st, ed;
         // 速度は問わず、全ての合法着手を生成
         if (b.isNull()) {
@@ -938,9 +921,8 @@ op; mv++; }}
         }
         return mv - mv0;
     }
-    
-    template <class move_t>
-    inline int genFollowExceptPASS(move_t *const mv, const Cards c, const Board b) {
+
+    inline int genFollowExceptPASS(MoveInfo *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
         int ret = 0;
         if (!b.isSeq()) {
@@ -956,19 +938,17 @@ op; mv++; }}
             return ret;
         } else return genFollowSeq(mv, c, b);
     }
-    template <class move_t>
-    inline int genFollow(move_t *const mv, const Cards c, const Board b) {
+
+    inline int genFollow(MoveInfo *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
         mv->setPASS();
         return 1 + genFollowExceptPASS(mv + 1, c, b);
     }
-    template <class move_t>
-    inline int genMove(move_t *mv, const Cards c, const Board b) {
+    inline int genMove(MoveInfo *mv, const Cards c, const Board b) {
         if (b.isNull()) return genLead(mv, c);
         else return genFollow(mv, c, b);
     }
-    template <class move_t>
-    inline int genLegal(move_t *mv, const Cards c, const Board b) {
+    inline int genLegal(MoveInfo *mv, const Cards c, const Board b) {
         if (b.isNull()) return genLegalLead(mv, c);
         else return genFollow(mv, c, b);
     }
