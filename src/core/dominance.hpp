@@ -107,29 +107,19 @@ namespace UECda {
             }
             int aftTmpOrd = b.afterTmpOrder(mv);
             if (mv.qty() > 4) return true;
-            if (mv.charaPQR() & opsHand.nd[aftTmpOrd]) { // 無支配型と交差あり
-                if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
-                    Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
-                    zone &= SuitsToCards(mv.suits());
-                    if (qty) return !canMakeGroup(opsHand.cards & zone, m.qty() - opsHand.jk);
-                }
-                return false;
-            } else {
-                return true;
+            if (!(mv.charaPQR() & opsHand.nd[aftTmpOrd])) return true;
+            if (b.locksSuits(mv)) { // スートロックの場合はまだ支配可能性あり
+                Cards zone = ORToGValidZone(aftTmpOrd, mv.rank());
+                zone &= SuitsToCards(mv.suits());
+                return !canMakeGroup(opsHand.cards & zone, mv.qty() - opsHand.jk);
             }
         } else {
-            assert(mv.isSeq());
-            if (anyCards(opsHand.seq)) {
-                uint32_t qty = mv.qty();
-                int aftTmpOrd = b.afterTmpOrder(mv);
-                Cards zone = ORQToSCValidZone(aftTmpOrd, mv.rank(), qty);
-                if (b.locksSuits(mv)) zone &= SuitsToCards(mv.suits());
-                return !canMakeSeq(opsHand.cards & zone, opsHand.jk, qty);
-            } else {
-                return true;
-            }
+            if (!anyCards(opsHand.seq)) return true;
+            Cards zone = ORQToSCValidZone(b.afterTmpOrder(mv), mv.rank(), mv.qty());
+            if (b.locksSuits(mv)) zone &= SuitsToCards(mv.suits());
+            return !canMakeSeq(opsHand.cards & zone, opsHand.jk, mv.qty());
         }
-        UNREACHABLE;
+        return false;
     }
     
     inline bool dominatesHand(const Board b, const Hand& opsHand) {
@@ -151,11 +141,9 @@ namespace UECda {
             Cards pqr = mv.charaPQR();
             if (pqr & opsHand.nd[b.order()]) { // 無支配型と交差あり
                 if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
-                    uint32_t qty = b.qty();
-                    qty -= opsHand.jk;
                     Cards zone = ORToGValidZone(b.order(), b.rank());
                     zone &= SuitsToCards(b.suits());
-                    if (qty) return !canMakeGroup(opsHand.cards & zone, qty);
+                    return !canMakeGroup(opsHand.cards & zone, b.qty() - opsHand.jk);
                 }
                 return false;
             } else {
