@@ -759,8 +759,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             if (mv.containsJOKER()) {
                                 if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
                                 else FooM(base + 2)
-                            else if (mv.domInevitably()) FooM(base + 3)
-                        else FooM(base + 0)
+                            } else if (mv.domInevitably()) FooM(base + 3)
+                        } else FooM(base + 0)
                     }
                 }
 #endif
