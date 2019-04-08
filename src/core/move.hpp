@@ -6,74 +6,6 @@
 namespace UECda {
     
     /**************************着手表現**************************/
-    
-    // 32ビット着手表現
-    // beersongのものと並びは違うが、情報はそれほど変わりはない
-    // 支配能については過程を示す（支配して流れた後の情報ではない）
-    // 場に依存しない情報のみを載せ、前計算による役生成からの合法性判断にも対応
-    
-    // 0 一時オーダー逆転(永続、一時双方のオーダー逆転能力を持つ場合は打ち消し合って0になる)
-    // 1 永続オーダー逆転
-    // 2 スートしばり
-    // 3 ランクしばり
-    // 4-7 サイズ
-    // 8-11 ランク(小さい方)
-    // 12-15 スート
-    // 16 シングル
-    // 17 グループ(シングル除く)
-    // 18 階段
-    // 19 (空き)
-    // 20-23 ジョーカーが占めているランク
-    // 24-27 ジョーカーが占めているスート
-    // 28 条件付き完全支配(JOKER, S3双方にフラグ)
-    // 29 無条件完全支配(8切り)
-    
-    enum {
-        MOVE_LCT_SUITS = 0, MOVE_LCT_RANK = 4,
-        MOVE_LCT_JKSUITS = 8, MOVE_LCT_JKRANK = 12,
-        MOVE_LCT_QTY = 16,
-        MOVE_LCT_TMPORD = 20, MOVE_LCT_PRMORD, MOVE_LCT_SUITSLOCK, MOVE_LCT_RANKLOCK,
-        MOVE_LCT_SINGLE = 24, MOVE_LCT_GROUP, MOVE_LCT_SEQ,
-        MOVE_LCT_INVALID = 29,
-        MOVE_LCT_RANK4X   = MOVE_LCT_RANK - 2,
-        MOVE_LCT_JKRANK4X = MOVE_LCT_JKRANK - 2
-    };
-    
-    constexpr uint32_t MOVE_NONE           = 0xFFFFFFFF; // 存在しない着手
-
-    constexpr uint32_t MOVE_PASS           = 0;
-    constexpr uint32_t MOVE_NULL           = 0; // ある着手について何も情報が無い状態を示す
-    
-    constexpr uint32_t MOVE_FLAG_TMPORD    = 1 << MOVE_LCT_TMPORD;
-    constexpr uint32_t MOVE_FLAG_PRMORD    = 1 << MOVE_LCT_PRMORD;
-    
-    constexpr uint32_t MOVE_FLAG_SUITSLOCK = 1 << MOVE_LCT_SUITSLOCK;
-    constexpr uint32_t MOVE_FLAG_RANKLOCK  = 1 << MOVE_LCT_RANKLOCK;
-    
-    constexpr uint32_t MOVE_FLAG_QTY       = 15 << MOVE_LCT_QTY;
-    
-    constexpr uint32_t MOVE_FLAG_RANK      = 15 << MOVE_LCT_RANK;
-    constexpr uint32_t MOVE_FLAG_SUITS     = 15 << MOVE_LCT_SUITS;
-    
-    constexpr uint32_t MOVE_FLAG_SINGLE    = 1 << MOVE_LCT_SINGLE;
-    constexpr uint32_t MOVE_FLAG_GROUP     = 1 << MOVE_LCT_GROUP;
-    constexpr uint32_t MOVE_FLAG_SEQ       = 1 << MOVE_LCT_SEQ;
-    
-    constexpr uint32_t MOVE_FLAG_JKRANK    = 15 << MOVE_LCT_JKRANK;
-    constexpr uint32_t MOVE_FLAG_JKSUITS   = 15 << MOVE_LCT_JKSUITS;
-
-    constexpr uint32_t MOVE_FLAG_INVALID = 1 << MOVE_LCT_INVALID;
-    
-    constexpr uint32_t MOVE_FLAG_ORD       = MOVE_FLAG_TMPORD    | MOVE_FLAG_PRMORD;
-    constexpr uint32_t MOVE_FLAG_LOCK      = MOVE_FLAG_SUITSLOCK | MOVE_FLAG_RANKLOCK;
-    constexpr uint32_t MOVE_FLAG_FORM      = MOVE_FLAG_SINGLE    | MOVE_FLAG_GROUP     | MOVE_FLAG_SEQ;
-    constexpr uint32_t MOVE_FLAG_TYPE      = MOVE_FLAG_FORM      | MOVE_FLAG_QTY;
-    constexpr uint32_t MOVE_FLAG_CHARA     = MOVE_FLAG_TYPE      | MOVE_FLAG_RANK      | MOVE_FLAG_SUITS; // 下16ビットさえあれば性質が分かる
-    constexpr uint32_t MOVE_FLAG_JK        = MOVE_FLAG_JKRANK    | MOVE_FLAG_JKSUITS;
-    constexpr uint32_t MOVE_FLAG_MELD      = MOVE_FLAG_CHARA     | MOVE_FLAG_JK;
-    
-    constexpr uint32_t MOVE_FLAG_STATUS    = MOVE_FLAG_ORD | MOVE_FLAG_LOCK;
-    constexpr uint32_t MOVE_FLAG_EFFECTS   = MOVE_FLAG_ORD | MOVE_FLAG_LOCK;
 
     // 最小のMove構造
     union Move16 {
@@ -86,97 +18,86 @@ namespace UECda {
         };
     };
 
-    union MoveBase2 {
-        struct {
-            
-        };
-    };
-
     struct Move {
         unsigned s       : 4;
-        signed   r       : 4;
+        unsigned r       : 4;
         unsigned jks     : 4;
-        signed   jkr     : 4;
-        signed   q       : 4;
-        unsigned single  : 1
-        unsigned group   : 1;
-        unsigned sequence: 1;
-        unsigned padding : 9;
+        unsigned jkr     : 4;
+        unsigned q       : 4;
+        unsigned t       : 2;
+        unsigned         : 1;
+        unsigned invalid : 1;
+        unsigned o       : 1;
+        unsigned po      : 1;
+        unsigned sl      : 1;
+        unsigned rl      : 1;
+        unsigned reverse : 1;
+        unsigned         : 3;
         unsigned flags   :32;
 
-        constexpr MoveBase() : m_() {}
-        constexpr MoveBase(uint64_t m) : m_(m) {}
+        uint32_t toInt() const {
+            return uint32_t(*reinterpret_cast<const uint64_t*>(this));
+        }
         
-        constexpr operator uint64_t() const { return m_; }
-        constexpr T data() const { return m_; }
-        
-        void setNULL()                    { (*this) = {0}; }
-        void setPASS()                    { (*this) = {0}; }
-        void setSingleJOKER()             { setNULL(); q = 1; single = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
-        void setS3Flush()                 { setNULL(); setSingle(RANK_3, SUITS_S); } // スペ3切りの場合のみ
+        void clear()                      { Move tmp = {0}; (*this) = tmp; }
+        void setPASS()                    { clear(); t = 0; }
+        void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
+        void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ
 
-        void setSingle()                  { single = 1; }
-        void setGroup()                   { group = 1; }
-        void setSeq()                     { sequence = 1; }
+        void setSingle()                  { t = 1; }
+        void setGroup()                   { t = 2; }
+        void setSeq()                     { t = 3; }
         void setQty(uint32_t qty)         { q = qty; }
         void setRank(uint32_t rank)       { r = rank; }
         void setSuits(uint32_t suits)     { s = suits; }
         void setJokerRank(uint32_t jr)    { jkr = jr; }
         void setJokerSuits(uint32_t js)   { jks = js; }
-        void setSpecialJokerSuits()       { jks = SUITS_ALL }
+        void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
         // タイプを指定してまとめて処理
         void setSingle(int rank, int suits) {
+            clear();
             setSingle(); setQty(1); setRank(rank); setSuits(suits);
         }
-        void setSingleByRank4x(int r4x, int suits) {
-            setSingle(); setQty(1); setRank4x(r4x); setSuits(suits);
-        }
         void setGroup(int qty, int rank, int suits) {
+            clear();
             setGroup(); setQty(qty); setRank(rank); setSuits(suits);
         }
-        void setGroupByRank4x(int qty, int r4x, int suits) {
-            setGroup(); setQty(qty); setRank4x(r4x); setSuits(suits);
-        }
         void setSeq(int qty, int rank, int suits) {
+            clear();
             setSeq(); setQty(qty); setRank(rank); setSuits(suits);
         }
-        void setSeqByRank4x(int qty, int r4x, int suits) {
-            setSeq(); setQty(qty); setRank4x(r4x); setSuits(suits);
-        }
-
         // IntCard型からシングル着手をセットする
-        void setSingleByIntCard(IntCard ic) {
+        void setSingle(IntCard ic) {
             setSingle(IntCardToRank(ic), IntCardToSuits(ic));
         }
         
         // True or False
-        constexpr bool isPASS() const { return (uint32_t)m_ == MOVE_PASS; }
-        constexpr uint32_t isSeq() const { return m_ & MOVE_FLAG_SEQ; }
-        constexpr uint32_t isGroup() const { return m_ & MOVE_FLAG_GROUP; }
-        constexpr uint32_t isSingle() const { return m_ & MOVE_FLAG_SINGLE; }
-        constexpr uint32_t isSingleOrGroup() const { return m_ & (MOVE_FLAG_SINGLE | MOVE_FLAG_GROUP); }
+        constexpr bool isPASS() const { return  t == 0; }
+        constexpr uint32_t isSeq() const { return  t == 3; }
+        constexpr uint32_t isGroup() const { return  t == 2; }
+        constexpr uint32_t isSingle() const { return  t == 1; }
+        constexpr uint32_t isSingleOrGroup() const { return  t == 1 ||  t == 2; }
         constexpr bool isQuintuple() const {
-            return typePart() == (MOVE_FLAG_GROUP | (5U << MOVE_LCT_QTY));
+            return isGroup() && q == 5;
         }
-        constexpr uint32_t containsJOKER() const { return m_ & MOVE_FLAG_JK; }
+        constexpr uint32_t containsJOKER() const { return jks || jkr; }
         
-        constexpr bool isSingleJOKER() const { return (((uint32_t)m_) & (MOVE_FLAG_SINGLE | MOVE_FLAG_RANK)) == MOVE_FLAG_SINGLE; }
-        constexpr bool isS3Flush() const {
-            return isSingle() && rank() == RANK_3 && suits() == SUITS_S;
-        }
+        constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
+        constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
         
         constexpr bool isEqualRankSuits(uint32_t r, uint32_t s) const {
             // rank と スートが一致するか
-            return ((uint32_t)m_ & (MOVE_FLAG_RANK | MOVE_FLAG_SUITS)) == ((r << MOVE_LCT_RANK) | (s << MOVE_LCT_SUITS));
+            return rank() == r && suits() == s;
         }
 
         // 情報を得る
-        constexpr uint32_t suits()      const { return (m_ >> MOVE_LCT_SUITS)    & 15U; }
-        constexpr int qty()             const { return (m_ >> MOVE_LCT_QTY)      & 15U; }
-        constexpr int rank()            const { return (m_ >> MOVE_LCT_RANK)     & 15U; }
-        constexpr int jokerRank()       const { return (m_ >> MOVE_LCT_JKRANK)   & 15U; }
-        constexpr uint32_t jokerSuits() const { return (m_ >> MOVE_LCT_JKSUITS)  & 15U; }
+        constexpr uint32_t suits()      const { return s; }
+        constexpr int qty()             const { return q; }
+        constexpr int rank()            const { return r; }
+        constexpr int jokerRank()       const { return jkr; }
+        constexpr uint32_t jokerSuits() const { return jks; }
+        constexpr uint32_t type()       const { return t; }
 
         int typeNum() const {
             uint32_t q = qty();
@@ -192,7 +113,7 @@ namespace UECda {
         Cards cards() const { // 構成するカード集合を得る
             if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
-            int r4x = rank4x();
+            int r = rank();
             uint32_t s = suits();
             if (!isSeq()) {
                 Cards c = CARDS_NULL;
@@ -201,12 +122,12 @@ namespace UECda {
                     c |= CARDS_JOKER;
                     if (jks != SUITS_CDHS) s -= jks; // クインタプル対策
                 }
-                return c | Rank4xSuitsToCards(r4x, s);
+                return c | RankSuitsToCards(r, s);
             } else {
-                Cards c = Rank4xSuitsToCards(r4x, s);
+                Cards c = RankSuitsToCards(r, s);
                 c = extractRanks(c, qty());
                 if (containsJOKER()) {
-                    c -= Rank4xSuitsToCards(jokerRank4x(), s);
+                    c -= RankSuitsToCards(jokerRank(), s);
                     c |= CARDS_JOKER;
                 }
                 return c;
@@ -217,7 +138,7 @@ namespace UECda {
             // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
             if (isPASS()) return CARDS_NULL;
             if (isSingleJOKER()) return CARDS_JOKER;
-            Cards c = Rank4xSuitsToCards(rank4x(), suits());
+            Cards c = RankSuitsToCards(rank(), suits());
             if (isSeq()) c = extractRanks(c, qty());
             return c;
         }
@@ -232,16 +153,16 @@ namespace UECda {
             if (QTY == 0) {
                 return CARDS_NULL;
             } else if (QTY == 1) {
-                return CARDS_HORIZON << rank4x();
+                return CARDS_HORIZON << (rank() << 2);
             } else if (QTY != 256) {
                 constexpr int sft = (QTY - 1) >= 0 ? ((QTY - 1) < 32 ? (QTY - 1) : 31) : 0; // warningに引っかからないように...
                 if (1 <= QTY && QTY <= 4) {
-                    return Cards(1U << sft) << rank4x();
+                    return Cards(1U << sft) << (rank() << 2);
                 } else {
                     return CARDS_NULL;
                 }
             } else {
-                return Cards(1U << (qty() - 1)) << rank4x();
+                return Cards(1U << (qty() - 1)) << (rank() << 2);
             }
         }
 
@@ -285,16 +206,20 @@ namespace UECda {
             }
             return true;
         }
+
+        bool operator ==(const Move& m) const {
+            return toInt() == m.toInt();
+        }
     };
-    
-    using Move = MoveBase<uint32_t>;
-    
-    class MeldChar : public Move {
-        // Moveと全く同じデータなのだが、構成するカード集合に言及する気がないときにこっちで表記
-    public:
-        MeldChar(const Move& arg) : Move(arg.m_) {}
+
+    const Move MOVE_NULL = {0};
+    const Move MOVE_PASS = {0};
+    const Move MOVE_NONE = {15, 15};
+
+    struct MeldChar : public Move {
+        MeldChar(Move m): Move(m) {}
     };
-    
+
     std::ostream& operator <<(std::ostream& out, const MeldChar& m) { // MeldChar出力
         if (m.isPASS()) {
             out << "PASS";
@@ -329,7 +254,7 @@ namespace UECda {
     class LogMove : public Move {
         // ログ出力用
     public:
-        LogMove(const Move& arg) : Move(arg.m_) {}
+        LogMove(const Move& arg) : Move(arg) {}
     };
     
     static std::ostream& operator <<(std::ostream& out, const LogMove& m) { // LogMove出力
@@ -369,26 +294,29 @@ namespace UECda {
         Move m = MOVE_NULL;
         DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
         if (chara == CARDS_NULL) return MOVE_PASS;
-        if (chara == CARDS_JOKER) return MOVE_SINGLEJOKER;
+        if (chara == CARDS_JOKER) {
+            m.setSingleJOKER();
+            return m;
+        }
         IntCard ic = chara.lowest();
-        int r4x = IntCardToRank4x(ic);
-        uint32_t s = CardsRank4xToSuits(chara, r4x);
-        uint32_t ps = CardsRank4xToSuits(used, r4x); // ジョーカーなしのスート
+        int r = IntCardToRank(ic);
+        uint32_t s = chara[r];
+        uint32_t ps = used[r]; // ジョーカーなしのスート
         int q = countCards(chara);
         if (!polymRanks<2>(chara)) { // グループ系
             if (q == 1) {
-                m.setSingleByRank4x(r4x, s);
+                m.setSingle(r, s);
             } else {
-                m.setGroupByRank4x(q, r4x, s);
+                m.setGroup(q, r, s);
                 uint32_t js = s - ps;
                 if (js) m.setJokerSuits(js);
             }
         } else { // 階段系
-            m.setSeqByRank4x(q, r4x, s);
+            m.setSeq(q, r, s);
             if (containsJOKER(used)) {
                 IntCard jic = Cards(subtrCards(chara, used.plain())).lowest();
-                uint32_t jr4x = IntCardToRank4x(jic);
-                m.setJokerRank4x(jr4x);
+                uint32_t jr = IntCardToRank(jic);
+                m.setJokerRank(jr);
                 m.setJokerSuits(s);
             }
         }
@@ -409,7 +337,10 @@ namespace UECda {
         
         // special
         if (str == "p") return MOVE_PASS;
-        if (str == "jk") return MOVE_SINGLEJOKER;
+        if (str == "jk") {
+            mv.setSingleJOKER();
+            return mv;
+        }
         // suits
         for (; i < str.size(); i++) {
             char c = str[i];
@@ -489,20 +420,19 @@ namespace UECda {
     }
     
     // 生成関数
-    constexpr Move IntCardToSingleMove(IntCard ic) {
+    Move IntCardToSingleMove(IntCard ic) {
         // IntCard型から対応するシングル役に変換
         // シングルジョーカー、ジョーカーS3は非対応
-        return Move(MOVE_FLAG_SINGLE
-                    | (1U << MOVE_LCT_QTY)
-                    | (IntCardToSuits(ic) << MOVE_LCT_SUITS)
-                    | (IntCardToRank(ic) << MOVE_LCT_RANK));
+        Move m = MOVE_NULL;
+        m.setSingle(IntCardToRank(ic), IntCardToSuits(ic));
+        return m;
     }
     
     template <class move_buf_t>
     int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move) {
         // 同じ着手の探索
         for (int m = 0; m < moves; m++) {
-            if (buf[m].meldPart() == move.meldPart()) return m;
+            if (buf[m]== move) return m;
         }
         return -1;
     }

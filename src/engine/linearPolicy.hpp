@@ -265,11 +265,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     
     template <
     int M = 1, // 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存
-    class move_t, class field_t, class policy_t>
+    class move_t, class policy_t>
     int calcPlayPolicyScoreSlow(double *const dst,
                                 move_t *const buf,
                                 const int NMoves,
-                                const field_t& field,
+                                const Field& field,
                                 policy_t& pol) { // learnerとして呼ばれうるため const なし
         
         using namespace PlayPolicySpace;
@@ -535,7 +535,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // s3(move)
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_S3);
-                    if (bd.isSingleJOKER() && mv.isS3Flush()) {
+                    if (bd.isSingleJOKER() && mv.isS3()) {
                         int key = base + (fieldInfo.isPassDom() ? 1 : 0);
                         Foo(key)
                     }
@@ -647,16 +647,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                         if (mv.isSingleJOKER()) {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                                uint32_t qb = (afterPqr >> (f * 4)) & SUITS_ALL;
+                                uint32_t qb = afterPqr[f];
                                 if (qb) {
-                                    int key = base + Index::get(order, RANK_MAX + 2, 0, f, qb);
+                                    int key = base + Index::get(order, RANK_JOKER, 0, f, qb);
                                     // suits - suits のパターン数より少ないのでOK
                                     Foo(key)
                                 }
                             }
                         } else {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                                uint32_t as = (afterCards >> (f * 4)) & SUITS_ALL;
+                                uint32_t as = afterCards[f];
                                 if (as) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), as));
@@ -665,7 +665,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             }
                             if (containsJOKER(afterCards)) {
                                 int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
-                                                            RANK_MAX + 2, mv.qty());
+                                                            RANK_JOKER, mv.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key)
                             }
@@ -675,7 +675,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         constexpr int base = FEA_IDX(FEA_SEQ_CARDS);
                         using Index = TensorIndexType<2, 16, 3, 16, N_PATTERNS_SUIT_SUITS>;
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                            uint32_t as = (afterCards >> (f * 4)) & SUITS_ALL;
+                            uint32_t as = afterCards[f];
                             if (as) {
                                 int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
                                                             f, getSuitSuitsIndex(mv.suits(), as));
@@ -684,7 +684,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         }
                         if (containsJOKER(afterCards)) {
                             int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                        RANK_MAX + 2, 0);
+                                                        RANK_JOKER, 0);
                             Foo(key)
                         }
                     }
@@ -697,16 +697,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                         if (mv.isSingleJOKER()) {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                                uint32_t qb = (opsHand.pqr >> (f * 4)) & SUITS_ALL;
+                                uint32_t qb = opsHand.pqr[f];
                                 if (qb) {
-                                    int key = base + Index::get(order, RANK_MAX + 2, 0, f, qb);
+                                    int key = base + Index::get(order, RANK_JOKER, 0, f, qb);
                                     // suits - suits のパターン数より少ないのでOK
                                     Foo(key)
                                 }
                             }
                         } else {
                             for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
-                                uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                                uint32_t os = opsCards[f];
                                 if (os) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), os));
@@ -715,7 +715,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             }
                             if (containsJOKER(opsCards)) {
                                 int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
-                                                            RANK_MAX + 2, mv.qty());
+                                                            RANK_JOKER, mv.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key);
                             }
@@ -725,7 +725,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         constexpr int base = FEA_IDX(FEA_SEQ_MO);
                         using Index = TensorIndexType<2, 16, 3, 16, N_PATTERNS_SUIT_SUITS>;
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                            uint32_t os = (opsCards >> (f * 4)) & SUITS_ALL;
+                            uint32_t os = opsCards[f];
                             if (os) {
                                 int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
                                                             f, getSuitSuitsIndex(mv.suits(), os));
@@ -734,7 +734,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         }
                         if (containsJOKER(opsCards)) {
                             int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                        RANK_MAX + 2, 0);
+                                                        RANK_JOKER, 0);
                             Foo(key);
                         }
                     }
@@ -759,8 +759,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             if (mv.containsJOKER()) {
                                 if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
                                 else FooM(base + 2)
-                            } else if (mv.domInevitably()) FooM(base + 3)
-                        } else FooM(base + 0)
+                            else if (mv.domInevitably()) FooM(base + 3)
+                        else FooM(base + 0)
                     }
                 }
 #endif
@@ -774,13 +774,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return 0;
     }
 
-    template <int M = 1, class field_t, class policy_t>
+    template <int M = 1, class policy_t>
     int calcChangePolicyScoreSlow(double *const dst,
                                   const Cards *const change,
                                   const int NChanges,
                                   const Cards myCards,
                                   const int NChangeCards,
-                                  const field_t& field,
+                                  const Field& field,
                                   policy_t& pol) { // learnerとして呼ばれうるため const なし
         
         using namespace ChangePolicySpace;
@@ -805,7 +805,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         //typename policy_t::real_t *baseAddress = pol.param_ + FEA_IDX(FEA_CHANGE_CC) + ;
         
         
-        for (int m = 0; m < NChanges; ++m) {
+        for (int m = 0; m < NChanges; m++) {
             
             pol.template initCalculatingCandidateScore();
             
@@ -929,8 +929,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
                 if (containsJOKER(changeCards)) {
                     for (int r = RANK_MIN; r <= RANK_MAX; ++r) {
-                        FooX(base + Index::get(RANK_MAX + 2, r, (pqr >> (r * 4)) & SUITS_ALL), -1);
-                        Foo(base + Index::get(RANK_MAX + 2, r, (afterPqr >> (r * 4)) & SUITS_ALL));
+                        FooX(base + Index::get(RANK_MAX + 2, r, pqr[r]), -1);
+                        Foo(base + Index::get(RANK_MAX + 2, r, afterPqr[r]));
                         // suits - suits のパターン数より少ないのでOK
                     }
                 }
@@ -938,16 +938,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // 交換するランクのカードと他のカードとの関係
                 const Cards diffRanks = CardsToER(changeCards);
                 for (IntCard ic : diffRanks) {
-                    unsigned int r4x = IntCardToRank4x(ic);
-                    unsigned int rank = r4x / 4;
+                    unsigned int rank = IntCardToRank(ic);
                     // プレーンカード同士の関係
                     for (int r = RANK_MIN; r <= RANK_MAX; r++) {
-                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex((myCards >> r4x) & SUITS_ALL, (myCards >> (r * 4)) & SUITS_ALL)), -1);
-                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex((afterCards >> r4x) & SUITS_ALL, (afterCards >> (r * 4)) & SUITS_ALL)));
+                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex(myCards[rank], myCards[r])), -1);
+                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex(afterCards[rank], afterCards[r])));
                     }
                     // ジョーカーとの関係
-                    FooX(base + Index::get(rank, RANK_MAX + 2, (pqr >> r4x) & SUITS_ALL), -1);
-                    Foo(base + Index::get(rank, RANK_MAX + 2, (afterPqr >> r4x) & SUITS_ALL));
+                    FooX(base + Index::get(rank, RANK_JOKER, pqr[rank]), -1);
+                    Foo(base + Index::get(rank, RANK_JOKER, afterPqr[rank]));
                 }
             }
             
@@ -966,20 +965,20 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     
 #undef FooX
 #undef Foo
-    template <class field_t, class policy_t>
+    template <class policy_t>
     int calcPlayPolicyScoreSlow(double *const dst,
-                                const field_t& field,
+                                const Field& field,
                                 const policy_t& pol,
                                 int mode = 1) {
         if (mode == 0) return calcPlayPolicyScoreSlow<0>(dst, field.mv, field.NActiveMoves, field, pol);
         else if (mode == 1) return calcPlayPolicyScoreSlow<1>(dst, field.mv, field.NActiveMoves, field, pol);
         else return calcPlayPolicyScoreSlow<2>(dst, field.mv, field.NActiveMoves, field, pol);
     }
-    template <class move_t, class field_t, class policy_t>
+    template <class move_t, class policy_t>
     double calcPlayPolicyExpScoreSlow(double *const dst,
                                       move_t *const buf,
                                       const int NMoves,
-                                      const field_t& field,
+                                      const Field& field,
                                       const policy_t& pol,
                                       int mode = 1) {
         // 指数をかけるところまで計算したsoftmax policy score
@@ -996,8 +995,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return sum;
     }
     
-    template <int STOCK = 0, class move_t, class field_t, class policy_t, class dice_t>
-    int playWithPolicy(move_t *const buf, const int NMoves, const field_t& field, const policy_t& pol, dice_t *const pdice,
+    template <int STOCK = 0, class move_t, class policy_t, class dice_t>
+    int playWithPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t *const pdice,
                        double *const pentropy = nullptr) {
         double score[N_MAX_MOVES + 1];
         double sum = calcPlayPolicyExpScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
@@ -1018,17 +1017,17 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return m;
     }
 
-    template <class cards_t, class field_t, class policy_t, class dice_t>
+    template <class cards_t, class policy_t, class dice_t>
     int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                             const field_t& field, const policy_t& pol, dice_t *const pdice) {
+                             const Field& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
         calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
         double r = pdice->drand() * score[NChanges];
         return sortedDAsearch(score, 0, NChanges, r);
     }
-    template <class cards_t, class field_t, class policy_t, class dice_t>
-    int changeWithBestPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                             const field_t& field, const policy_t& pol, dice_t *const pdice) {
+    template <class policy_t, class dice_t>
+    int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
+                             const Field& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
         calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
         int bestIndex[N_MAX_CHANGES];
@@ -1041,40 +1040,32 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 bestIndex[0] = m;
                 bestScore = s;
                 NBestMoves = 1;
-            }else if (s == bestScore) {
-                bestIndex[NBestMoves] = m;
-                ++NBestMoves;
+            } else if (s == bestScore) {
+                bestIndex[NBestMoves++] = m;
             }
         }
-        if (NBestMoves <= 1) {
-            return bestIndex[0];
-        } else {
-            return bestIndex[pdice->rand() % NBestMoves];
-        }
+        if (NBestMoves <= 1) return bestIndex[0];
+        else return bestIndex[pdice->rand() % NBestMoves];
     }
-    template <int STOCK = 0, class move_t, class field_t, class policy_t, class dice_t>
-    int playWithBestPolicy(move_t *const buf, const int NMoves, const field_t& field, const policy_t& pol, dice_t *const pdice) {
+    template <int STOCK = 0, class move_t, class policy_t, class dice_t>
+    int playWithBestPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_MOVES + 1];
         calcPlayPolicyScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
         int bestIndex[N_MAX_MOVES];
         bestIndex[0] = -1;
         int NBestMoves = 0;
         double bestScore = -DBL_MAX;
-        for (int m = 0; m < NMoves; ++m) {
+        for (int m = 0; m < NMoves; m++) {
             double s = score[m];
             if (s > bestScore) {
                 bestIndex[0] = m;
                 bestScore = s;
                 NBestMoves = 1;
-            }else if (s == bestScore) {
-                bestIndex[NBestMoves] = m;
-                ++NBestMoves;
+            } else if (s == bestScore) {
+                bestIndex[NBestMoves++] = m;
             }
         }
-        if (NBestMoves <= 1) {
-            return bestIndex[0];
-        } else {
-            return bestIndex[pdice->rand() % NBestMoves];
-        }
+        if (NBestMoves <= 1) return bestIndex[0];
+        else return bestIndex[pdice->rand() % NBestMoves];
     }
 }

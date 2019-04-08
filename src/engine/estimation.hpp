@@ -982,7 +982,7 @@ namespace UECda {
                         if (NMoves > 1) {
                             // search move
                             int chosenIdx = searchMove(mv, NMoves, [chosenMove](const auto& tmp)->bool{
-                                return tmp.meldPart() == chosenMove.meldPart();
+                                return tmp == chosenMove;
                             });
                             
                             if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された

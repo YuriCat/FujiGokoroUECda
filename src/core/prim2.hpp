@@ -12,6 +12,17 @@ namespace UECda {
     
     // 試合結果の宣言情報
     
+    constexpr int LCT_FINAL    = 0;
+    constexpr int LCT_PW       = 1;
+    constexpr int LCT_BNPW     = 2;
+    constexpr int LCT_BRPW     = 3;
+    constexpr int LCT_MPMATE   = 4;
+    constexpr int LCT_L2MATE   = 5;
+    constexpr int LCT_MPGIVEUP = 6;
+    constexpr int LCT_L2GIVEUP = 7;
+
+    constexpr int LCT_MINNMELDS = 8;
+
     // 場の一時状況に対するする宣言情報
     constexpr int LCT_SELFFOLLOW = 16;
     constexpr int LCT_UNRIVALED = 17;
@@ -21,40 +32,48 @@ namespace UECda {
     constexpr int LCT_PDOM = 21;
     constexpr int LCT_BDOMOTHERS = 22;
     constexpr int LCT_BDOMME = 23; // <-NoChanceのこと
+
+    constexpr int LCT_TMPORDSETTLED = 24;
+    constexpr int LCT_PRMORDSETTLED = 25;
+
+    constexpr int LCT_DCONST = 28;
+
+    constexpr uint32_t FLAG_MATE   = 0x3fU;
+    constexpr uint32_t FLAG_GIVEUP = 0xc0U;
+
+    constexpr int LCT64_FINAL    = 0 + 32;
+    constexpr int LCT64_PW       = 1 + 32;
+    constexpr int LCT64_BNPW     = 2 + 32;
+    constexpr int LCT64_BRPW     = 3 + 32;
+    constexpr int LCT64_MPMATE   = 4 + 32;
+    constexpr int LCT64_L2MATE   = 5 + 32;
+    constexpr int LCT64_MPGIVEUP = 6 + 32;
+    constexpr int LCT64_L2GIVEUP = 7 + 32;
+
+    constexpr int LCT64_MINNMELDS = 8 + 32;
+
+    constexpr int LCT64_SELFFOLLOW = 16 + 32;
+    constexpr int LCT64_UNRIVALED = 17 + 32;
+    constexpr int LCT64_LASTAWAKE = 18 + 32;
+    constexpr int LCT64_FLUSHLEAD = 19 + 32;
+    constexpr int LCT64_NPDOM = 20 + 32;
+    constexpr int LCT64_PDOM = 21 + 32;
+    constexpr int LCT64_BDOMOTHERS = 22 + 32;
+    constexpr int LCT64_BDOMME = 23 + 32; // <-NoChanceのこと
     
-    constexpr int LCT64_FINAL    = 32 + 0;
-    constexpr int LCT64_PW       = 32 + 1;
-    constexpr int LCT64_BNPW     = 32 + 2;
-    constexpr int LCT64_BRPW     = 32 + 3;
-    constexpr int LCT64_MPMATE   = 32 + 4;
-    constexpr int LCT64_L2MATE   = 32 + 5;
-    constexpr int LCT64_MPGIVEUP = 32 + 6;
-    constexpr int LCT64_L2GIVEUP = 32 + 7;
-    
-    constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
-    constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
-    
-    constexpr int LCT64_MINNMELDS = 32 + 8;
-    
-    constexpr int LCT64_SELFFOLLOW = 32 + 16;
-    constexpr int LCT64_UNRIVALED = 32 + 17;
-    constexpr int LCT64_LASTAWAKE = 32 + 18;
-    constexpr int LCT64_FLUSHLEAD = 32 + 19;
-    constexpr int LCT64_NPDOM = 32 + 20;
-    constexpr int LCT64_PDOM = 32 + 21;
-    constexpr int LCT64_BDOMOTHERS = 32 + 22;
-    constexpr int LCT64_BDOMME = 32 + 23; // <-NoChanceのこと
-    
-    constexpr int LCT64_TMPORDSETTLED = 32 + 24;
-    constexpr int LCT64_PRMORDSETTLED = 32 + 25;
-    
-    constexpr int LCT64_DCONST = 32 + 28;
-    
+    constexpr int LCT64_TMPORDSETTLED = 24 + 32;
+    constexpr int LCT64_PRMORDSETTLED = 25 + 32;
+
+    constexpr int LCT64_DCONST = 28 + 32;
+
     constexpr int LCT_MINNCARDS = 0;
     constexpr int LCT_MAXNCARDS = 4;
     constexpr int LCT_MINNCARDSAWAKE = 8;
     constexpr int LCT_MAXNCARDSAWAKE = 12;
-    
+
+    constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
+    constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
+
     constexpr uint64_t MASK64_TMPINFO = (1ULL << LCT64_TMPORDSETTLED) | (1ULL << LCT64_PRMORDSETTLED);
     
     class FieldAddInfo {
@@ -200,33 +219,28 @@ namespace UECda {
     
     static ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
         out << "Field :";
-        if (i.isFinal())out << " -FIN";
-        else if (i.isPW())out << " -PW";
-        else if (i.isBNPW())out << " -BNPW";
-        else if (i.isBRPW())out << " -BRPW";
-        else if (i.isMPMate())out << " -MPMATE";
+        if (i.isFinal()) out << " -FIN";
+        else if (i.isPW()) out << " -PW";
+        else if (i.isBNPW()) out << " -BNPW";
+        else if (i.isBRPW()) out << " -BRPW";
+        else if (i.isMPMate()) out << " -MPMATE";
         
-        if (i.isL2Mate())out << " -L2MATE";
+        if (i.isL2Mate()) out << " -L2MATE";
         
-        if (i.isMPGiveUp())out << " -MPGIVEUP";
-        if (i.isL2GiveUp())out << " -L2GIVEUP";
+        if (i.isMPGiveUp()) out << " -MPGIVEUP";
+        if (i.isL2GiveUp()) out << " -L2GIVEUP";
         
-        if (i.isSelfFollow())out << " -SFOL";
-        if (i.isUnrivaled())out << " -UNRIV";
-        if (i.isLastAwake())out << " -LA";
-        if (i.isFlushLead())out << " -FLEAD";
-        if (i.isNonPassDom())out << " -NPD";
-        if (i.isPassDom())out << " -PD";
+        if (i.isSelfFollow()) out << " -SFOL";
+        if (i.isUnrivaled()) out << " -UNRIV";
+        if (i.isLastAwake()) out << " -LA";
+        if (i.isFlushLead()) out << " -FLEAD";
+        if (i.isNonPassDom()) out << " -NPD";
+        if (i.isPassDom()) out << " -PD";
         
-        if (i.isBDALL()) {
-            out << " -BDALL";
-        } else {
-            if (i.isBDO()) {
-                out << " -BDO";
-            }
-            if (i.isBDM()) {
-                out << " -BDM";
-            }
+        if (i.isBDALL()) out << " -BDALL";
+        else {
+            if (i.isBDO()) out << " -BDO";
+            if (i.isBDM()) out << " -BDM";
         }
         return out;
     }
@@ -251,29 +265,31 @@ namespace UECda {
     
     // 基本的にはこれを使う
     
-    constexpr uint64_t MOVEINFO_NULL = 0ULL;
-    constexpr uint64_t MOVEINFO_PASS = (uint64_t)MOVE_PASS;
-    constexpr uint64_t MOVEINFO_SINGLEJOKER = (uint64_t)MOVE_SINGLEJOKER;
-    constexpr uint64_t MOVEINFO_S3FLUSH = (uint64_t)MOVE_S3FLUSH;
-    constexpr uint64_t MOVEINFO_NONE = (uint64_t)MOVE_NONE;
-    
     struct MoveInfo : public Move {
-        using data_t = uint64_t;
-        using move_t = Move;
-        
-        uint64_t test(int n) const { return m_.test(n); }
-        
-        constexpr MoveInfo(): MoveBase() {}
-        constexpr MoveInfo(uint64_t arg): MoveBase(arg) {}
-        constexpr move_t mv() const { return Move(m_); }
 
-        void set(size_t i) { base_t::flags |= 1U << i; }
+        constexpr MoveInfo(): Move() {}
+        constexpr MoveInfo(const Move& m): Move(m) {}
+        constexpr MoveInfo(const MoveInfo& m): Move(m) {}
+        constexpr Move mv() const { return Move(*this); }
+
+        void set(size_t i) { Move::flags |= 1U << i; }
         void set(size_t i0, size_t i1) { set(i0); set(i1); }
-        bool holds(size_t i0, size_t i1) {
+        void set(size_t i0, size_t i1, size_t i2) { set(i0); set(i1); set(i2); }
+        bool holds(size_t i0, size_t i1) const {
             uint32_t dst = (1U << i0) | (1U << i1);
-            return !(~base_t::flags & dst);
+            return !(~Move::flags & dst);
         }
-        bool test(size_t i) { return base_t::flags & (1ULL << i); }
+        bool test(size_t i) const { return Move::flags & (1ULL << i); }
+
+        
+        void setFinal() {    set(LCT_FINAL, LCT_PW, LCT_MPMATE); }
+        void setPW() {       set(LCT_PW, LCT_MPMATE); }
+        void setBNPW() {     set(LCT_BNPW, LCT_MPMATE); }
+        void setBRPW() {     set(LCT_BRPW, LCT_MPMATE); }
+        void setMPMate() {   set(LCT_MPMATE); }
+        void setL2Mate() {   set(LCT_L2MATE); }
+        void setMPGiveUp() { set(LCT_MPGIVEUP); }
+        void setL2GiveUp() { set(LCT_L2GIVEUP); }
 
         // 当座支配
         void setDO() { set(12); }
@@ -308,24 +324,13 @@ namespace UECda {
         void setRankLock() { set(17); }
         
         // min_melds
-        void setIncMinNMelds(uint32_t dec) { base_t::flags |= ((uint64_t)(dec))<<(8); }
-        
-        // edagari
-        void excludeMyPlay() { set(24); }
-        void excludeMyPonder() { set(25); }
-        void excludeAllPonder() { set(26); }
-        
-        void excludeAll() {
-            excludeMyPlay();
-            excludeMyPonder();
-            excludeAllPonder();
-        }
-        
+        void setIncMinNMelds(uint32_t dec) { Move::flags |= ((uint64_t)(dec))<<(8); }
+
         // kousoku
         void setDConst() { set(28); }
         void setDW_NFH() { set(29); }
         
-        void init() { m_&=0x00000000FFFFFFFF; }
+        void init() { Move::flags = 0; }
         
         // get
         uint64_t isFinal() const {    return test(LCT_FINAL); }
@@ -336,8 +341,8 @@ namespace UECda {
         uint64_t isMPGiveUp() const { return test(LCT_MPGIVEUP); }
         uint64_t isL2Mate() const {   return test(LCT_L2MATE); }
         uint64_t isL2GiveUp() const { return test(LCT_L2GIVEUP); }
-        uint64_t isMate() const {     return m_ & FLAG_MATE; }
-        uint64_t isGiveUp() const {   return m_ & FLAG_GIVEUP; }
+        uint64_t isMate() const {     return Move::flags & FLAG_MATE; }
+        uint64_t isGiveUp() const {   return Move::flags & FLAG_GIVEUP; }
         
         uint64_t isDO() const { return test(12); }
         uint64_t isDM() const { return test(13); }
@@ -347,7 +352,7 @@ namespace UECda {
         uint64_t dominatesMe() const { return isDM(); }
         uint64_t dominatesAll() const { return isDALL(); }
         
-        uint32_t getIncMinNMelds() const { return (base_t::flags >> 8) & 15; }
+        uint32_t getIncMinNMelds() const { return (Move::flags >> 8) & 15; }
         
         uint64_t isTmpOrderRev() const { return test((14)); }
         uint64_t isSuitLock() const { return test((16)); }
@@ -377,46 +382,36 @@ namespace UECda {
     static std::ostream& operator <<(std::ostream& out, const MoveAddInfo& i) { // 出力
         
         // 勝敗
-        if (i.isFinal())out << " -FIN";
-        else if (i.isPW())out << " -PW";
-        else if (i.isBNPW())out << " -BNPW";
-        else if (i.isBRPW())out << " -BRPW";
-        else if (i.isMPMate())out << " -MPMATE";
+        if (i.isFinal()) out << " -FIN";
+        else if (i.isPW()) out << " -PW";
+        else if (i.isBNPW()) out << " -BNPW";
+        else if (i.isBRPW()) out << " -BRPW";
+        else if (i.isMPMate()) out << " -MPMATE";
         
-        if (i.isL2Mate())out << " -L2MATE";
+        if (i.isL2Mate()) out << " -L2MATE";
         
-        if (i.isMPGiveUp())out << " -MPGIVEUP";
-        if (i.isL2GiveUp())out << " -L2GIVEUP";
+        if (i.isMPGiveUp()) out << " -MPGIVEUP";
+        if (i.isL2GiveUp()) out << " -L2GIVEUP";
         
         // 後場
-        if (i.isTmpOrderRev())out << " -TREV";
-        if (i.isSuitLock())out << " -SLOCK";
+        if (i.isTmpOrderRev()) out << " -TREV";
+        if (i.isSuitLock()) out << " -SLOCK";
         
         // パラメータ
         out << " -MNM(" << i.getIncMinNMelds() << ")";
         
         // 当座支配
-        if (i.dominatesAll()) {
-            out<<" -DALL";
-        } else {
-            if (i.dominatesOthers()) {
-                out << " -DO";
-            }
-            if (i.dominatesMe()) {
-                out << " -DM";
-            }
+        if (i.dominatesAll()) out<<" -DALL";
+        else {
+            if (i.dominatesOthers()) out << " -DO";
+            if (i.dominatesMe()) out << " -DM";
         }
-        
+
         // 当座以外の支配
-        if (i.isP_NFDALL()) {
-            out << " -PNFDALL";
-        } else {
-            if (i.isP_NFDO()) {
-                out << " -PNFDO";
-            }
-            if (i.isP_NFDM()) {
-                out << " -PNFDM";
-            }
+        if (i.isP_NFDALL()) out << " -PNFDALL";
+        else {
+            if (i.isP_NFDO()) out << " -PNFDO";
+            if (i.isP_NFDM()) out << " -PNFDM";
         }
         
         return out;

@@ -41,35 +41,29 @@ namespace UECda {
         move_t *mv = mv0;
         if (b.isSingleJOKER()) {
             if (containsS3(c)) {
-                mv->setS3Flush();
+                mv->setSingle(INTCARD_S3);
                 return 1;
             }
             return 0;
         }
         if (containsJOKER(c)) {
-            mv->setSingleJOKER();
+            (mv++)->setSingleJOKER();
             c = c.plain();
-            mv++;
         }
         if (b.suitsLocked()) c &= SuitsToCards(b.suits());
         if (c) {
-            int br4x = b.rank4x();
+            int br = b.rank();
             if (b.order() == 0) { // normal order
-                c &= RankRange4xToCards(br4x + 4, RANK_MAX * 4);
+                c &= RankRangeToCards(br + 1, RANK_MAX);
             } else { // reversed
-                c &= RankRange4xToCards(RANK_MIN * 4, br4x - 4);
+                c &= RankRangeToCards(RANK_MIN, br - 1);
             }
-            for (IntCard ic : c) {
-                mv->setNULL();
-                mv->setSingleByIntCard(ic);
-                mv++;
-            }
+            for (IntCard ic : c) (mv++)->setSingle(ic);
         }
         return mv - mv0;
     }
     
-#define GEN_BASE(q, s, op) mv->setNULL();\
-    mv->setGroupByRank4x(q, r4x, s);op;mv++;
+#define GEN_BASE(q, s, op) { mv->setGroup(q, r, s); op; mv++; }
     
 #define GEN(q, s) GEN_BASE(q, s,)
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
@@ -77,19 +71,19 @@ namespace UECda {
     template <class move_t>
     inline int genFollowDouble(move_t *const mv0, const Cards hand, const Board b) {
         const Cards x = hand;
-        const int br4x = b.rank4x();
+        const int br = b.rank();
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
+            valid = RankRangeToCards(br + 1, RANK_MAX);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
+            valid = RankRangeToCards(RANK_MIN, br - 1);
         }
         move_t *mv = mv0;
         if (!b.suitsLocked()) { // スートしばりなし
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
             // 4枚ある箇所から各スートで生成
             for (IntCard ic : c4) {
-                int r4x = IntCardToRank4x(ic);
+                int r = IntCardToRank(ic);
                 GEN(2, SUITS_CD);
                 GEN(2, SUITS_CH);
                 GEN(2, SUITS_CS);
@@ -102,8 +96,8 @@ namespace UECda {
             if (!containsJOKER(hand)) {
                 // 3枚だけの箇所を生成
                 for (IntCard ic : c3) {
-                    int r4x = IntCardToRank4x(ic);
-                    uint32_t suits = CardsRank4xToSuits(x, r4x);
+                    int r = IntCardToRank(ic);
+                    uint32_t suits = x[r];
                     uint32_t s0 = lowestBit(suits);
                     uint32_t s1 = lowestBit(suits - s0);
                     uint32_t s2 = suits - s0 - s1;
@@ -114,14 +108,14 @@ namespace UECda {
                 }
                 // 2枚だけの箇所を生成
                 for (IntCard ic : c2) {
-                    int r4x = IntCardToRank4x(ic);
-                    GEN(2, CardsRank4xToSuits(x, r4x));
+                    int r = IntCardToRank(ic);
+                    GEN(2, x[r]);
                 }
             } else {
                 // ジョーカーあり
                 for (IntCard ic : c3) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suits = CardsRank4xToSuits(x, r4x);
+                    int r = IntCardToRank(ic);
+                    const uint32_t suits = x[r];
                     const uint32_t s0 = lowestBit(suits);
                     const uint32_t s1 = lowestBit(suits - s0);
                     const uint32_t s2 = suits - s0 - s1;
@@ -138,8 +132,8 @@ namespace UECda {
                     GEN_J(2, s2 | isuits, isuits);
                 }
                 for (IntCard ic : c2) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suits = CardsRank4xToSuits(x, r4x);
+                    int r = IntCardToRank(ic);
+                    const uint32_t suits = x[r];
                     const uint32_t s0 = lowestBit(suits);
                     const uint32_t s1 = suits - s0;
                     const uint32_t isuits = SUITS_ALL - suits;
@@ -158,8 +152,8 @@ namespace UECda {
                 // 1枚だけの箇所を生成
                 Cards c1 = genNRankInGenFollowGroup(hand, valid, 1);
                 for (IntCard ic : c1) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suits = CardsRank4xToSuits(x, r4x);
+                    int r = IntCardToRank(ic);
+                    const uint32_t suits = x[r];
                     const uint32_t isuits = SUITS_ALL - suits;
                     const uint32_t is0 = lowestBit(isuits);
                     const uint32_t is1 = lowestBit(isuits - is0);
@@ -177,15 +171,15 @@ namespace UECda {
             // ランクごとに4ビット全て立っているか判定
             Cards c4 = CardsToFR(vc);
             for (IntCard ic : c4) {
-                const int r4x = IntCardToRank4x(ic);
+                int r = IntCardToRank(ic);
                 GEN(2, suits);
             }
             if (containsJOKER(hand)) {
                 // 3ビット立っている部分からジョーカーを利用して生成
                 Cards c3 = CardsTo3R(vc);
                 for (IntCard ic : c3) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suit = (x >> r4x) & suits;
+                    int r = IntCardToRank(ic);
+                    const uint32_t suit = (x >> (r << 2)) & suits;
                     GEN_J(2, suits, suits - suit);
                 }
             }
@@ -195,13 +189,13 @@ namespace UECda {
     
     template <class move_t>
     inline int genFollowTriple(move_t *const mv0, const Cards hand, const Board b) {
-        const int br4x = b.rank4x();
+        const int br = b.rank();
         const Cards x = Cards(hand);
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
+            valid = RankRangeToCards(br + 1, RANK_MAX);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
+            valid = RankRangeToCards(RANK_MIN, br - 1);
         }
         move_t *mv = mv0;
         
@@ -209,7 +203,7 @@ namespace UECda {
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
             // 4枚ある箇所から各スートで生成
             for (IntCard ic : c4) {
-                int r4x = IntCardToRank4x(ic);
+                int r = IntCardToRank(ic);
                 for (uint32_t s = SUITS_C; s <= SUITS_S; s <<= 1) {
                     GEN(3, SUITS_ALL - s);
                 }
@@ -219,15 +213,15 @@ namespace UECda {
                 // ジョーカーなし スートロックなし
                 // 3枚だけの箇所を生成
                 for (IntCard ic : c3) {
-                    int r4x = IntCardToRank4x(ic);
-                    GEN(3, (x >> r4x) & SUITS_ALL);
+                    int r = IntCardToRank(ic);
+                    GEN(3, x[r]);
                 }
             } else {
                 // ジョーカーあり スートロックなし
                 // 3枚だけの箇所を生成
                 for (IntCard ic : c3) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suits = CardsRank4xToSuits(x, r4x);
+                    int r = IntCardToRank(ic);
+                    const uint32_t suits = x[r];
                     // プレーン
                     GEN(3, suits);
                     // ジョーカー使用
@@ -242,8 +236,8 @@ namespace UECda {
                 // 2枚だけの箇所を生成
                 Cards c2 = genNRankInGenFollowGroup(hand, valid, 2);
                 for (IntCard ic : c2) {
-                    const int r4x = IntCardToRank4x(ic);
-                    const uint32_t suits = (x >> r4x) & SUITS_ALL;
+                    int r = IntCardToRank(ic);
+                    const uint32_t suits = x[r];
                     const uint32_t isuits = SUITS_ALL - suits;
                     const uint32_t is0 = lowestBit(isuits);
                     const uint32_t is1 = isuits - is0;
@@ -262,15 +256,15 @@ namespace UECda {
             // ジョーカーあり スートロックあり
             // virtual cardを加えて4枚ある箇所からプレーンで生成
             for (IntCard ic : c4) {
-                const int r4x = IntCardToRank4x(ic);
+                int r = IntCardToRank(ic);
                 GEN(3, suits);
             }
             if (containsJOKER(hand)) {
                 // 3枚だけの箇所をジョーカー込みで生成
                 Cards c3 = CardsTo3R(vc);
                 for (IntCard ic : c3) {
-                    const int r4x = IntCardToRank4x(ic);
-                    GEN_J(3, suits, SUITS_ALL & ~CardsRank4xToSuits(vc, r4x));
+                    int r = IntCardToRank(ic);
+                    GEN_J(3, suits, SUITS_ALL & ~vc[r]);
                 }
             }
         }
@@ -281,42 +275,36 @@ namespace UECda {
     inline int genFollowQuadruple(move_t *const mv0, const Cards hand, const Board b) {
         move_t *mv = mv0;
         const Cards x = Cards(hand);
-        const int br4x = b.rank4x();
+        const int br = b.rank();
         Cards valid;
         if (b.order() == 0) { // 通常
-            valid = RankRange4xToCards(br4x + 4, RANK_MAX * 4);
+            valid = RankRangeToCards(br + 1, RANK_MAX);
         } else { // オーダー逆転中
-            valid = RankRange4xToCards(RANK_MIN * 4, br4x - 4);
+            valid = RankRangeToCards(RANK_MIN, br - 1);
         }
         Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
         for (IntCard ic : c4) {
-            int r4x = IntCardToRank4x(ic);
+            int r = IntCardToRank(ic);
             GEN(4, SUITS_CDHS);
         }
         if (containsJOKER(hand)) {
             Cards c3 = genNRankInGenFollowGroup(hand, valid, 3);
             for (IntCard ic : c3) {
-                int r4x = IntCardToRank4x(ic);
-                GEN_J(4, SUITS_CDHS, ~(uint32_t)(x >> r4x) & SUITS_CDHS);
+                int r = IntCardToRank(ic);
+                GEN_J(4, SUITS_CDHS, Cards(~x)[r]);
             }
         }
         return mv - mv0;
     }
     
     template <class move_t>
-    inline int genAllSingle(move_t *const mv0, const Cards hand) {
-        Cards c = Cards(hand);
+    inline int genAllSingle(move_t *const mv0, Cards c) {
         move_t *mv = mv0;
-        if (containsJOKER(c)) {
-            mv->setSingleJOKER();
+        if (c.joker()) {
+            (mv++)->setSingleJOKER();
             c = c.plain();
-            mv++;
         }
-        for (IntCard ic : c) {
-            mv->setNULL();
-            mv->setSingle(IntCardToRank(ic), IntCardToSuits(ic));
-            mv++;
-        }
+        for (IntCard ic : c) (mv++)->setSingle(ic);
         return mv - mv0;
     }
     
@@ -332,8 +320,8 @@ namespace UECda {
             x = BitCards(CardsToQR(c)) & PQR_234;
         }
         while (x) {
-            const int r4x = IntCardToRank4x(pickIntCardLow(x));
-            switch (uint32_t(c >> r4x) & 15U) {
+            int r = IntCardToRank(pickIntCardLow(x));
+            switch (c[r]) {
                 case 0: UNREACHABLE; break;
                 case 1: {
                     if (!jk) break; // ジョーカーがなければ飛ばす
@@ -492,7 +480,7 @@ namespace UECda {
                 } break;
                 default: UNREACHABLE; break;
             }
-            x = maskCards(x, Rank4xToCards(r4x));
+            x = maskCards(x, RankToCards(r));
         }
         mv += genAllSeq(mv, c); // 階段を生成
         return mv - mv0;
@@ -501,7 +489,7 @@ namespace UECda {
     template <class move_t>
     inline int genLegalLead(move_t *const mv0, const Cards hand) {
         int cnt = genLead(mv0, hand);
-        (mv0 + cnt)->setNULL();
+        (mv0 + cnt)->setPASS();
         return cnt + 1;
     }
     
@@ -514,7 +502,7 @@ namespace UECda {
 for (IntCard ic : (oc)) {\
 int r = IntCardToRank(ic);\
 uint32_t s = IntCardToSuits(ic);\
-mv->setNULL(); mv->setSeq(q, r, s);\
+mv->setSeq(q, r, s);\
 op; mv++; }}
 
 #define GEN(q, oc) GEN_BASE(q, oc,)
@@ -623,9 +611,7 @@ op; mv++; }}
             for (IntCard ic : c) {
                 int rank = IntCardToRank(ic);
                 uint32_t suit = IntCardToSuits(ic);
-                mv->setNULL();
-                mv->setSeq(q, rank, suit);
-                mv++;
+                (mv++)->setSeq(q, rank, suit);
             }
             // 次の枚数を考える
             c = polymRanks<2>(c); // ランク a かつランク a + 1 の n 枚階段があればランク a の n + 1 枚階段が出来る
@@ -666,9 +652,7 @@ op; mv++; }}
         for (IntCard ic : c) {
             int r = IntCardToRank(ic);
             uint32_t s = IntCardToSuits(ic);
-            mv->setNULL();
-            mv->setSeq(q, r, s);
-            mv++;
+            (mv++)->setSeq(q, r, s);
         }
         return mv - mv0;
     }
@@ -797,12 +781,11 @@ op; mv++; }}
     template <class move_t>
     inline int genNullPass(move_t *const mv0) {
         // 空場でのパスを生成
-        mv0->setNULL();
+        mv0->setPASS();
         return 1;
     }
     
-#define GEN_BASE(q, s, op) {mv->setNULL();\
-mv->setGroup(q, r, s); op; mv++;}
+#define GEN_BASE(q, s, op) {mv->setGroup(q, r, s); op; mv++;}
 
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
     
@@ -940,13 +923,10 @@ mv->setGroup(q, r, s); op; mv++;}
                 if (b.isNull() || b.suits() == s) {
                     int q = countSuits(s);
                     if (holdsCards(c, RankSuitsToCards(r, s))) {
-                        mv->setNULL();
-                        mv->setGroup(r, s, countSuits(s));
-                        mv++;
+                        (mv++)->setGroup(r, s, countSuits(s));
                     } else if (containsJOKER(c)) {
                         for (uint32_t js = SUIT_MIN; s <= SUIT_MAX; s <<= 1) {
                             if ((s & js) && holdsCards(c, RankSuitsToCards(r, s - js))) {
-                                mv->setNULL();
                                 mv->setGroup(r, s, countSuits(s));
                                 mv->setJokerSuits(js);
                                 mv++;
@@ -979,7 +959,7 @@ mv->setGroup(q, r, s); op; mv++;}
     template <class move_t>
     inline int genFollow(move_t *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
-        mv->setNULL();
+        mv->setPASS();
         return 1 + genFollowExceptPASS(mv + 1, c, b);
     }
     template <class move_t>

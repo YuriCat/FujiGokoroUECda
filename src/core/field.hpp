@@ -745,7 +745,7 @@ namespace UECda {
         return turn();
     }
     inline int Field::proc(const int tp, const Move mv) {
-        return proc(tp, (MoveInfo)mv);
+        return proc(tp, MoveInfo(mv));
     }
     
     inline int Field::procSlowest(const Move mv) {

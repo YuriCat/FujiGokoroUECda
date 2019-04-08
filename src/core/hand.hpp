@@ -127,7 +127,7 @@ namespace UECda {
             assert(holds(dc));
             
             uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
-            uint32_t r4x = mv.rank4x();
+            uint32_t r = mv.rank();
             
             cards -= dc; // 通常型は引けば良い
             qty -= dq; // 枚数進行
@@ -141,23 +141,23 @@ namespace UECda {
                     // グループ系統
                     // ジョーカーの存在により少し処理が複雑に
                     dq -= djk; // ジョーカーの分引く
-                    Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
+                    Cards mask = RankToCards(r); // 当該ランクのマスク
                     
                     // 枚数型は当該ランクの枚数を引く
-                    qr -= ((Cards)(dq)) << r4x;
+                    qr -= ((Cards)(dq)) << (r << 2);
                     
                     // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                     pqr = (((pqr & mask) >> dq) & mask) | (pqr & ~mask);
                 } else {
                     // 階段
-                    Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
+                    Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
                     
                     Cards dqr = dc;
                     
                     Cards jkmask;
                     
                     if (djk) {
-                        jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                        jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr = maskJOKER(dqr);
                     }
@@ -183,7 +183,7 @@ namespace UECda {
             ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << dc << " from " << cards << endl; );
             
             int djk = UECda::containsJOKER(dc) ? 1 : 0;
-            int r4x = mv.rank4x();
+            int r = mv.rank();
             
             cards -= dc; // 通常型は引けば良い
             qty -= dq; // 枚数進行
@@ -216,11 +216,11 @@ namespace UECda {
                     // ジョーカーの存在により少し処理が複雑に
                     dq -= djk; // ジョーカーの分引く
                     
-                    Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
+                    Cards mask = RankToCards(r); // 当該ランクのマスク
                     Cards opqr = pqr & mask; // 当該ランクの元々のpqr
                     
                     // 枚数型は当該ランクの枚数を引く
-                    qr -= ((Cards)(dq)) << r4x;
+                    qr -= ((Cards)(dq)) << (r << 2);
                     
                     // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                     // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
@@ -269,11 +269,11 @@ namespace UECda {
                     
                 } else {
                     // 階段
-                    Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
+                    Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
                     Cards dqr = dc;
 
                     if (djk) {
-                        Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                        Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
                         mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr = maskJOKER(dqr);
                     }
@@ -315,7 +315,7 @@ namespace UECda {
                    cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
             
             int djk = mv.containsJOKER() ? 1 : 0;
-            int r4x = mv.rank4x();
+            int r = mv.rank();
             
             cards += dc; // 通常型は足せば良い
             qty += dq; // 枚数進行
@@ -340,16 +340,15 @@ namespace UECda {
                     // ジョーカーの存在により少し処理が複雑に
                     dq -= djk; // ジョーカーの分引く
                     
-                    Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
+                    Cards mask = RankToCards(r); // 当該ランクのマスク
                     
                     // 枚数型は当該ランクの枚数を足す
-                    qr += (Cards(dq)) << r4x;
-                    
-                    uint32_t nq = (uint32_t(qr >> r4x)) & 15U; // 当該ランクの新しい枚数
+                    qr += (Cards(dq)) << (r << 2);
+                    uint32_t nq = qr[r]; // 当該ランクの新しい枚数
                     
                     // 枚数位置型、圧縮型ともに新しい枚数に入れ替える
-                    pqr = ((Cards(1U << (nq - 1U))) << r4x) | (pqr & ~mask);
-                    sc |= Cards((1U << nq) -1U) << r4x;
+                    pqr = ((Cards(1U << (nq - 1U))) << (r << 2)) | (pqr & ~mask);
+                    sc |= Cards((1U << nq) -1U) << (r << 2);
                     
                     Cards npqr = pqr & mask; // 当該ランクの新しいpqr
                     
@@ -367,20 +366,20 @@ namespace UECda {
                     
                     // 通常オーダー
                     if (!(npqr & nd[0])) { // 増分が無支配ゾーンに関係するので更新の必要あり
-                        nd[0] |= ORQ_NDTable[0][(r4x / 4) - 1][nq - 1];
+                        nd[0] |= ORQ_NDTable[0][r - 1][nq - 1];
                     }
                     // 逆転オーダー
                     if (!(npqr & nd[1])) { // 増分が無支配ゾーンに関係するので更新の必要あり
-                        nd[1] |= ORQ_NDTable[1][(r4x / 4) + 1][nq - 1];
+                        nd[1] |= ORQ_NDTable[1][r + 1][nq - 1];
                     }
                     
                 } else {
                     // 階段
-                    Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
+                    Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
                     Cards dqr = dc >> SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
     
                     if (djk) {
-                        Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                        Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
                         mask ^= jkmask; // ジョーカー部分はマスクに関係ないので外す
                         dqr &= ~jkmask;
                     }
@@ -640,7 +639,7 @@ namespace UECda {
         ASSERT(arg.holds(dc), cerr << arg << dc << endl; );
         
         uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
-        uint32_t r4x = mv.rank4x();
+        uint32_t r = mv.rank();
         
         dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
         dst->qty = arg.qty - dq; // 枚数進行
@@ -654,20 +653,20 @@ namespace UECda {
                 // グループ系統
                 // ジョーカーの存在により少し処理が複雑に
                 dq -= djk; // ジョーカーの分引く
-                Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
+                Cards mask = RankToCards(r); // 当該ランクのマスク
                 
                 // 枚数型は当該ランクの枚数を引く
-                dst->qr = arg.qr - (((Cards)(dq)) << r4x);
+                dst->qr = arg.qr - (((Cards)(dq)) << (r << 2));
                 
                 // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                 dst->pqr = (((arg.pqr & mask) >> dq) & mask) | (arg.pqr & ~mask);
             } else {
                 // 階段
-                Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
+                Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
                 Cards dqr = dc;
                 
                 if (djk) {
-                    Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                    Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                     dqr = maskJOKER(dqr);
                 }
@@ -703,7 +702,7 @@ namespace UECda {
         assert(arg.holds(dc));
         
         int djk = UECda::containsJOKER(dc) ? 1 : 0;
-        int r4x = mv.rank4x();
+        int r = mv.rank();
         
         dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
         dst->qty = arg.qty - dq; // 枚数進行
@@ -738,11 +737,11 @@ namespace UECda {
                 // ジョーカーの存在により少し処理が複雑に
                 dq -= djk; // ジョーカーの分引く
                 
-                Cards mask = Rank4xToCards(r4x); // 当該ランクのマスク
+                Cards mask = RankToCards(r); // 当該ランクのマスク
                 Cards opqr = arg.pqr & mask; // 当該ランクの元々のpqr
                 
                 // 枚数型は当該ランクの枚数を引く
-                dst->qr = arg.qr - (((Cards)(dq)) << r4x);
+                dst->qr = arg.qr - (((Cards)(dq)) << (r << 2));
                 
                 // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                 // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
@@ -791,11 +790,11 @@ namespace UECda {
                 
             } else {
                 // 階段
-                Cards mask = RankRange4xToCards(r4x, r4x + ((dq - 1) << 2)); // 当該ランクのマスク
+                Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
                 Cards dqr = dc;
 
                 if (djk) {
-                    Cards jkmask = Rank4xToCards(mv.jokerRank4x()); // ジョーカーがある場合のマスク
+                    Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
                     mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                     dqr = maskJOKER(dqr);
                 }

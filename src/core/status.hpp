@@ -62,7 +62,7 @@ namespace UECda{
                 } else {
                     cerr << "  ASLEEP  ";
                 }
-            }else if (ps.isExcluded(pNum)) {
+            } else if (ps.isExcluded(pNum)) {
                 cerr << " EXCLUDED ";
             } else {
                 cerr << "  DEAD(";

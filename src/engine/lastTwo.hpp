@@ -226,10 +226,7 @@ namespace UECda {
         L2Judge(int nl,MoveInfo *const argMI):
         NODE_LIMIT(nl), buf(argMI) { init(); }
         ~L2Judge() {}
-        
-        // IS_NF 空場
-        // DOM_PROC 支配進行
-        
+
         // 再帰版
         template <int S_LEVEL, int E_LEVEL>
         int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
@@ -297,16 +294,16 @@ namespace UECda {
                 // 必敗判定
                 if (field.isNull()) {
                     if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.containsJOKER() && !myHand.containsS3() && field.b.order() == 0) {
-                        int myHR = IntCardToRank4x(pickIntCardHigh(myHand.cards));
-                        int opsLR = IntCardToRank4x(pickIntCardLow(opsHand.cards));
+                        int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
+                        int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
                         if (myHR < opsLR) {
                             //DERR << myHand <<" vs " << opsHand << endl; getchar();
                             DERR << Space(2 * depth) << "-EMATELOSE" << endl;
                             return L2_LOSE;
                         } else {
-                            Cards tmp = maskCards(opsHand.cards, Rank4xToCards(opsLR));
+                            Cards tmp = maskCards(opsHand.cards, RankToCards(opsLR));
                             if (tmp) {
-                                opsLR = IntCardToRank4x(pickIntCardLow(tmp));
+                                opsLR = IntCardToRank(pickIntCardLow(tmp));
                                 if (myHR < opsLR) {
                                     //DERR << myHand << " vs " << opsHand << endl; getchar();
                                     DERR << Space(2 * depth) << "-EMATELOSE" << endl;

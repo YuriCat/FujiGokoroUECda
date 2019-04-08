@@ -185,7 +185,7 @@ namespace UECda {
         }
         
         void clear() {
-            move = MOVEINFO_NONE;
+            move = MOVE_NONE;
             changeCards = CARDS_NULL;
             simulations = 0;
             turnSum = 0;

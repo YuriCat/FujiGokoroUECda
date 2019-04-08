@@ -69,7 +69,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     // 排他性
     for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
         for (const move_t *tmp2 = mv0; tmp2 != tmp; tmp2++) {
-            if (tmp->meldPart() == tmp2->meldPart()) {
+            if (*tmp == *tmp2) {
                 // 同じ役であった
                 cerr << "same meld " << c << " -> " << *tmp << " <-> " << *tmp2 << " on " << field.board << endl;
                 return -1;
@@ -112,7 +112,7 @@ int testRecordMoves(const Record& record) {
                 // 棋譜の着手が生成されているかチェック
                 if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
                     cerr << "ungenerated record move " << move;
-                    cerr << " " << std::hex << move.meldPart() << std::dec;
+                    cerr << " " << std::hex << move.toInt() << std::dec;
                     cerr << " by " << cards << " on " << bd << endl;
                 } else {
                     genHolded[0] += 1;

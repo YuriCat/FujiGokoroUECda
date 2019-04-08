@@ -31,7 +31,7 @@ bool judgeCardsPWSlow(MoveInfo *const buf,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
-    uint64_t key = uint64_t(myCards) ^ -uint32_t(bd);
+    uint64_t key = uint64_t(myCards) ^ -bd.toInt();
     if (bd.isNull()) {
         if (visitedCards.find(key) != visitedCards.end()) {
             return visitedCards[key];
@@ -111,7 +111,7 @@ int searchCardsPWSlow(MoveInfo *const buf, const int moves,
     for (int i = 0; i < moves; i++) {
         if (buf[i].qty() >= countCards(myCards)) { // final move
             mateIndex = i;
-            if (M) mateMoves.insert(uint32_t(buf[mateIndex].mv()));
+            if (M) mateMoves.insert(buf[mateIndex].mv().toInt());
             else return i;
         }
     }
@@ -207,9 +207,7 @@ int testRecordMoveMate(const Record& record) {
             bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
                                         myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
             checkTime[1] += cl.stop();
-            
             checkMatrix[pw][mate] += 1;
-            
             return 0;
         },
         [&](const auto& field) {} // last callback

@@ -138,7 +138,7 @@ namespace UECda {
                     if (NMoves == 1) { return 0; }
                     
                     int idx = searchMove(buf, NMoves, [chosenMove](const auto& mv)->bool{
-                        return mv.mv().meldPart() == chosenMove.meldPart();
+                        return mv.mv() == chosenMove;
                     });
                     
                     if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) {                         return 0;

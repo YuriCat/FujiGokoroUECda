@@ -92,7 +92,7 @@ namespace UECda {
     // 空場
     // 空場のときは、場の変数はオーダー関連だけである事が多いのでそのまま
     constexpr uint64_t NullBoardToHashKey(Board bd) {
-        return (uint64_t)bd;
+        return bd.order();
     }
     constexpr uint64_t NullStateToHashKey(uint64_t aliveKey, uint64_t fullAwakeKey,
                                           PlayersState ps, int ntp) {
@@ -111,8 +111,8 @@ namespace UECda {
         0x237395283fc3e25a, 0x56564d4dda42ec2a, 0x7786549ce8365630, 0x0e338bf62ab5547e,
     };
     
-    inline uint64_t BoardToHashKey(Board bd) {
-        return (uint32_t)bd & (MOVE_FLAG_CHARA | MOVE_FLAG_STATUS);
+    uint64_t BoardToHashKey(Board bd) {
+        return bd.toInt();
     }
     inline uint64_t StateToAliveHashKey(PlayersState ps) {
         uint64_t key = 0;

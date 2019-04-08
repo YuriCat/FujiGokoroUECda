@@ -422,16 +422,15 @@ namespace UECda {
                     const MoveInfo& mv = buf[m];
                     if (mv.qty() >= myHand.qty) return true; // 即上がり
                     
-                    Board nb = b;
                     Hand nextHand;
                     
                     makeMove1stHalf(myHand, &nextHand, mv.mv());
-                    
-                    nb.procOrder(mv.mv());
                     if (!depth && mv.qty() > 4) {
+                        Board nb = b;
+                        nb.procOrder(mv.mv());
                         // 5枚以上の階段は支配としとく
                         if (judgeHandPW_NF(nextHand, opsHand, b)
-                           || judgeHandPW_NF(nextHand, opsHand, (uint32_t)b ^ (MOVE_FLAG_TMPORD | MOVE_FLAG_PRMORD))) {
+                           || judgeHandPW_NF(nextHand, opsHand, nb)) {
                             // いずれかのオーダーで必勝ならOK
                             return true;
                         }
@@ -482,7 +481,8 @@ namespace UECda {
                 // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
                 Hand nextHand;
                 makeMove1stHalf(myHand, &nextHand, mv.mv());
-                nextHand.makeMove1stHalf(MOVE_SINGLEJOKER, CARDS_JOKER, 1);
+                Move sj; sj.setSingleJOKER();
+                nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                 nextFieldInfo.setMinNCards(aw - mv.qty());
                 nextFieldInfo.setMinNCardsAwake(aw - mv.qty());
@@ -492,7 +492,8 @@ namespace UECda {
                 // ジョーカー -> S3 からの空場必勝を確認
                 if (nextHand.containsS3()) {
                     if (nextHand.qty == 1) return true;
-                    nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1);
+                    Move s3; s3.setSingle(INTCARD_S3);
+                    nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
                     if (judgeHandMate(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                         return true;
                     }
@@ -596,7 +597,8 @@ namespace UECda {
             }
             // 自分の出したジョーカーをS3で返してからの必勝チェック
             if (mv.isSingleJOKER() && nextHand.containsS3()) {
-                nextHand.makeMove1stHalf(MOVE_S3FLUSH);
+                Move s3; s3.setSingle(INTCARD_S3);
+                nextHand.makeMove1stHalf(s3);
                 return judgeHandMate(0, buf, nextHand, opsHand, bd, nextFieldInfo);
             }
         } else { // 支配しない
@@ -617,7 +619,8 @@ namespace UECda {
                         Hand nextHand;
                         makeMove1stHalf(myHand, &nextHand, mv.mv());
                         if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
-                            nextHand.makeMove1stHalf(MOVE_S3FLUSH, CARDS_S3, 1); // S3 で進める
+                            Move s3; s3.setSingle(INTCARD_S3);
+                            nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
                             if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
                                 // 両方で勝ったので必勝
                                 DERR << "BRPW(S3)!!!" << endl;

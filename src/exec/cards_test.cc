@@ -210,41 +210,6 @@ int testRankCards() {
     return 0;
 }
 
-int testRank4xCards() {
-    uint64_t time[3] = {0};
-    for (int r4x = RANK_U * 4; r4x <= RANK_O * 4; r4x += 4) {
-        cl.start();
-        Cards test = Rank4xToCards(r4x);
-        time[0] += cl.restart();
-        Cards ans = rankCardsTable[r4x / 4];
-        time[1] += cl.stop();
-        if (test != ans) {
-            cerr << "inconsistent Rank4x -> Cards conversion!" << endl;
-            cerr << OutRank(r4x / 4) << " : " << test << " <-> " << ans << endl;
-            return -1;
-        }
-    }
-    for (int r4x = RANK_U * 4; r4x <= RANK_O * 4; r4x += 4) {
-        Cards ans = CARDS_NULL;
-        for (int rr4x = r4x; rr4x <= RANK_O * 4; rr4x += 4) {
-            cl.start();
-            Cards test = RankRange4xToCards(r4x, rr4x);
-            time[2] += cl.stop();
-            ans |= rankCardsTable[rr4x / 4];
-            if (test != ans) {
-                cerr << "inconsistent [Rank4x, Rank4x] -> Cards conversion!" << endl;
-                cerr << "[" << OutRank(r4x / 4) << ", " << OutRank(rr4x / 4) << "]";
-                cerr << " : " << test << " <-> " << ans << endl;
-                return -1;
-            }
-        }
-    }
-    cerr << "r4x        -> c test : " << time[0] << " clock" << endl;
-    cerr << "r4x        -> c ans  : " << time[1] << " clock" << endl;
-    cerr << "[r4x, r4x] -> c test : " << time[2] << " clock" << endl;
-    return 0;
-}
-
 int testSuitCards() {
     // スート->カード集合変換テスト
     uint64_t time[2] = {0};
@@ -439,12 +404,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     cerr << "passed Rank -> Cards test." << endl << endl;
-    
-    if (testRank4xCards()) {
-        cerr << "failed Rank4x -> Cards test." << endl;
-        return -1;
-    }
-    cerr << "passed Rank4x -> Cards test." << endl << endl;
     
     if (testSuitCards()) {
         cerr << "failed Suits -> Cards test." << endl;

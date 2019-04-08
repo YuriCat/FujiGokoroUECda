@@ -2,7 +2,7 @@
 # 1. General Compiler Settings
 #
 CXX       = g++
-CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -fno-exceptions -fno-rtti -march=native
+CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-missing-field-initializers -fno-exceptions -fno-rtti -march=native
 INCLUDES  =
 LIBRARIES = -lpthread
 

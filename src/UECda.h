@@ -256,14 +256,14 @@ namespace UECda {
         return CardsToMove(chara, used);
     }
     
-    static Board TableToBoard(const int table[8][15]) {
+    /*static Board TableToBoard(const int table[8][15]) {
         Move mv = TableToMove(table);
         Board bd = MoveToBoard(mv);
         if (suitsLocked(table)) { bd.lockSuits(); }
         bd.setPrmOrder(getPrmOrder(table));
         bd.setTmpOrder(getTmpOrder(table));
         return bd;
-    }
+    }*/
     
     static std::string toString(const int table[8][15]) { // 出力
         std::ostringstream oss;

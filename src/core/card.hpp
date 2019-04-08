@@ -57,15 +57,10 @@ namespace UECda {
     inline IntCard RankSuitsToIntCard(int r, unsigned int s) {
         return IntCard((r << 2) + SuitToSuitNum(s));
     }
-    inline IntCard Rank4xSuitsToIntCard(int r4x, unsigned int s) {
-        return IntCard(r4x + SuitToSuitNum(s));
-    }
     inline constexpr IntCard RankSuitNumToIntCard(int r, int sn) {
         return IntCard((r << 2) + sn);
     }
-    
     constexpr int IntCardToRank(IntCard ic) { return int(ic) >> 2; }
-    constexpr int IntCardToRank4x(IntCard ic) { return int(ic) & ~3; }
     constexpr int IntCardToSuitNum(IntCard ic) { return int(ic) & 3; }
     constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
     
@@ -183,16 +178,6 @@ namespace UECda {
         return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
                & ((CARDS_HORIZON << ((r1 + 1) << 2)) - 1ULL);
     }
-    // あるランク4xのカード全て
-    inline constexpr BitCards Rank4xToCards(int r4x) {
-        return CARDS_HORIZONRANK << r4x;
-    }
-    // ランク4x間（両端含む）のカード全て
-    inline constexpr BitCards RankRange4xToCards(int r4x0, int r4x1) {
-        return ~((CARDS_HORIZON << r4x0) - 1ULL)
-               & ((CARDS_HORIZON << (r4x1 + 4)) - 1ULL);
-    }
-    
     // スート
     // 各スートのカードにはジョーカーは含めない
     // UやOは含めるので注意
@@ -223,12 +208,6 @@ namespace UECda {
     // スートは集合として用いる事が出来る
     inline constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
         return (BitCards)s << (r << 2);
-    }
-    inline constexpr BitCards Rank4xSuitsToCards(int r4x, uint32_t s) {
-        return (BitCards)s << r4x;
-    }
-    inline constexpr uint32_t CardsRank4xToSuits(BitCards c, int r4x) {
-        return uint32_t(c >> r4x) & 15U;
     }
     
     // Cards型基本演算
@@ -423,7 +402,7 @@ namespace UECda {
         } bf_;
 
         // 定数
-        constexpr Cards() : c_() {}
+        constexpr Cards(): c_() {}
         constexpr Cards(BitCards c): c_(c) {}
         constexpr Cards(const Cards& c): c_(c.c_) {}
         //constexpr Cards(IntCard ic): c_(IntCardToCards(ic)) {}
@@ -660,16 +639,6 @@ namespace UECda {
     
     // 役の作成可能性
     // あくまで作成可能性。展開可能な型ではなく有無判定の速度を優先したもの
-    // 先にスート圧縮版、ランク重合版を計算していた場合はそっちを使った方が速いはず
-    // ジョーカーがあるか(JK)は重要な情報なので、テンプレートで分岐可能とする(通常は_BOTH)
-    // 特に階段においてn枚階段判定は出されている状態でm枚判定を出すような状況にも対応が必要
-
-    inline BitCards canMakePlainSeq2(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4); }
-    inline BitCards canMakePlainSeq3(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8); }
-    inline BitCards canMakePlainSeq4(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12); }
-    inline BitCards canMakePlainSeq5(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16); }
-    inline BitCards canMakePlainSeq6(BitCards c) { assert(!containsJOKER(c)); return c & (c >> 4) & (c >> 8) & (c >> 12) & (c >> 16) & (c >> 20); }
-
     inline BitCards canMakeJokerSeq2(BitCards c) { assert(!containsJOKER(c)); return anyCards(c); }
     inline BitCards canMakeJokerSeq3(BitCards c) { assert(!containsJOKER(c)); return (c & (c >> 4)) | (c & (c >> 8)); }
     inline BitCards canMakeJokerSeq4(BitCards c) {
@@ -685,17 +654,7 @@ namespace UECda {
     
     inline BitCards canMakePlainSeq(BitCards c, int qty) {
         assert(!containsJOKER(c));
-        BitCards res;
-        switch (qty) {
-            case 0: res = CARDS_NULL; break;
-            case 1: res = c; break;
-            case 2: res = canMakePlainSeq2(c); break;
-            case 3: res = canMakePlainSeq3(c); break;
-            case 4: res = canMakePlainSeq4(c); break;
-            case 5: res = canMakePlainSeq5(c); break;
-            default: res = CARDS_NULL; break;
-        }
-        return res;
+        return polymRanks(c, qty);
     }
     inline BitCards canMakeJokerSeq(BitCards c, int joker, int qty) {
         assert(!containsJOKER(c));

@@ -396,7 +396,7 @@ int main(int argc, char* argv[]) { // for UECda
             DERR << "org server move = " << serverMove << " " << serverUsedCards << endl;
             
             // すでに場に出ていた役が調べることで、パスを判定
-            if (serverMove.cards() == BoardToMove(playRecord.bd).cards()) {
+            if (serverMove.cards() == playRecord.bd.move().cards()) {
                 serverMove = MOVE_PASS;
                 serverUsedCards = CARDS_NULL;
             }
