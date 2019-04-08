@@ -97,7 +97,7 @@ namespace UECda {
     }
     
 #define Foo() {DERR << "unexpected command : " << q.front() << endl; goto NEXT;}
-#define ToI(str) atoi(str.c_str())
+#define ToI(str) stoll(str)
     
     template <class matchLog_t>
     int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
@@ -304,7 +304,7 @@ namespace UECda {
                 }
                 flagGame.set(8);
             }
-            else{
+            else {
                 // いかなるコマンドでもないので読み飛ばし
                 q.pop();
             }
@@ -993,7 +993,7 @@ namespace UECda {
                     dst->remQty -= dq;
                     dst->remHash ^= dkey;
                     
-                    // あがり処理
+                 // あがり処理
                     if (countCards(p) == pLog.getNCards(p)) {
                         dst->setPlayerNewClass(p, pLog.ps.getBestClass());
                     }
@@ -1025,14 +1025,6 @@ namespace UECda {
             dst->common.turn = gLog.current.turn();
             dst->common.owner = gLog.current.owner();
             dst->common.firstTurn = gLog.current.firstTurn();
-            
-            dst->originalKey = CardsToHashKey(gLog.getOrgCards(myPlayerNum));
-            dst->recordKey = CardsArrayToHashKey<N_PLAYERS>(dst->usedCards.data());
-            dst->numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return gLog.current.getNCards(p); });
-            dst->boardKey = BoardToHashKey(dst->board);
-            dst->aliveKey = StateToAliveHashKey(dst->ps);
-            dst->fullAwakeKey = StateToFullAwakeHashKey(dst->ps);
-            dst->stateKey = StateToHashKey(dst->aliveKey, dst->ps, dst->turn());
         }
     }
 }

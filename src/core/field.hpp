@@ -65,21 +65,11 @@ namespace UECda {
         BitArray32<4, N_PLAYERS> infoSeatPlayer;
         BitArray32<4, N_PLAYERS> infoNewClass;
         BitArray32<4, N_PLAYERS> infoNewClassPlayer;
-        
         BitArray32<4, N_PLAYERS> infoPosition;
-        
         
         uint32_t remQty;
         Cards remCards;
         uint64_t remHash;
-        
-        // 局面ハッシュ値
-        uint64_t originalKey; // 交換後の手札配置のハッシュ値
-        uint64_t recordKey; // 着手の試合進行のハッシュ値(現在は使用済み手札集合のみ)
-        uint64_t boardKey; // 現時点の場のハッシュ値
-        uint64_t stateKey; // 現時点で誰がパスをしていて、手番が誰かを示すハッシュ値
-        uint64_t numCardsKey; // 各プレーヤーの手札枚数のハッシュ値
-        uint64_t aliveKey, fullAwakeKey;
         
         // 手札
         std::array<Hand, N_PLAYERS> hand;
@@ -198,12 +188,7 @@ namespace UECda {
         Cards getUsedCards(int p) const { return usedCards[p]; }
         Cards getSentCards(int p) const { return sentCards[p]; }
         Cards getRecvCards(int p) const { return recvCards[p]; }
-        
-        uint64_t getSubjectiveHashKey(int p) const {
-            // プレーヤー p から見た盤面の主観的ハッシュ値を返す
-            return hand[p].hash ^ boardKey ^ stateKey ^ recordKey;
-        }
-        
+
         uint32_t getFlushLeadPlayer() const {
             // 全員パスの際に誰から始まるか
             if (isNull()) return turn();
@@ -242,7 +227,6 @@ namespace UECda {
         void flushState() { // 場を流す ただし b はすでに流れているとき
             ps.flush();
             flushTurnPlayer();
-            flushBoardStateHash(turn());
         }
         void flush() { // 場を流す
             board.flush();
@@ -282,61 +266,7 @@ namespace UECda {
         uint32_t getOpsMinNCardsAwake(int pn) const { return searchOpsMinNCardsAwake(pn); }
         uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
         uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
-        
-        // ハッシュ値更新
-        void procBoardStateDead(int p) {
-            aliveKey ^= deadHashKeyTable[p];
-            fullAwakeKey ^= awakeHashKeyTable[p];
-            stateKey ^= deadHashKeyTable[p] ^ awakeHashKeyTable[p];
-            ASSERT(aliveKey == StateToAliveHashKey(ps),
-                   cerr << std::hex << aliveKey << " <-> " << StateToAliveHashKey(ps) << std::dec << endl;
-                   cerr << toDebugString(););
-            ASSERT(fullAwakeKey == StateToFullAwakeHashKey(ps),
-                   cerr << std::hex << fullAwakeKey << " <-> " << StateToFullAwakeHashKey(ps) << std::dec << endl;
-                   cerr << toDebugString(););
-        }
-        void procBoardStateHashNonPass(int p, int ntp) {
-            // b, ps の更新後に呼ばれる必要がある
-            boardKey = BoardToHashKey(board);
-            stateKey = procStateHashKeyNonPass(stateKey, p, ntp);
-            // 差分計算 <-> 一括計算 チェック
-            ASSERT(boardKey == BoardToHashKey(board),
-                   cerr << std::hex << boardKey << " <-> " << BoardToHashKey(board) << std::dec << endl;
-                   cerr << toDebugString(););
-            ASSERT(stateKey == StateToHashKey(aliveKey, ps, ntp),
-                   cerr << std::hex << stateKey << " <-> " << StateToHashKey(aliveKey, ps, ntp) << std::dec << endl;
-                   cerr << toDebugString(););
-        }
-        void procBoardStateHashPass(int p, int ntp) {
-            // b, ps の更新後に呼ばれる必要がある
-            stateKey = procStateHashKeyPass(stateKey, p, ntp);
-            // 差分計算 <-> 一括計算 チェック
-            ASSERT(stateKey == StateToHashKey(aliveKey, ps, ntp),
-                   cerr << std::hex << stateKey << " <-> " << StateToHashKey(aliveKey, ps, ntp) << std::dec << endl;
-                   cerr << toDebugString(););
-        }
-        void flushBoardStateHash(int ntp) {
-            // b, ps の更新後に呼ばれる必要がある
-            boardKey = NullBoardToHashKey(board);
-            stateKey = NullStateToHashKey(aliveKey, fullAwakeKey, ps, ntp);
-        }
-        void procRecordHash(int p, uint64_t dkey) {
-            recordKey = procCardsArrayHashKey<N_PLAYERS>(recordKey, p, dkey);
-            // 差分計算 <-> 一括計算 チェック
-            ASSERT(recordKey == CardsArrayToHashKey<N_PLAYERS>(usedCards.data()),
-                   cerr << std::hex << recordKey << " <-> " << CardsArrayToHashKey<N_PLAYERS>(usedCards.data()) << std::dec << endl;
-                   cerr << toDebugString(););
-        }
-        void procNumCardsHash(int p) {
-            numCardsKey = procNumCardsHashKey<N_PLAYERS>(numCardsKey, p, hand[p].qty);
-            // 差分計算 <-> 一括計算 チェック
-            ASSERT(numCardsKey == NumCardsToHashKey<N_PLAYERS>([&](int pp)->int{ return this->hand[pp].qty; }),
-                   cerr << std::hex << numCardsKey << " <-> " << NumCardsToHashKey<N_PLAYERS>([&](int pp)->int{
-                return this->hand[pp].qty;
-            }) << std::dec << endl;
-                   cerr << toDebugString(););
-        }
-        
+
         void procHand(int tp, Move mv, Cards dc, uint32_t dq) {
             ASSERT(anyCards(dc) && mv.cards() == dc && countCards(dc) == dq,
                    cerr << mv << " " << dc << " " << dq << endl;
@@ -358,8 +288,6 @@ namespace UECda {
             for (int p = tp + 1; p < N_PLAYERS; p++) {
                 if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dhash);
             }
-            procRecordHash(tp, dhash); // 棋譜ハッシュ値の更新
-            procNumCardsHash(tp); // 手札枚数ハッシュ値の更新
         }
         
         void procAndKillHand(int tp, Move mv, Cards dc, uint32_t dq) {
@@ -375,12 +303,9 @@ namespace UECda {
             hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
             
             assert(!isAlive(tp)); // agari player is not alive
-            
             for (int p = 0; p < N_PLAYERS; p++) {
                 if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dhash);
             }
-            procRecordHash(tp, dhash); // 棋譜ハッシュ値の更新
-            procNumCardsHash(tp); // 手札枚数ハッシュ値の更新
         }
 
         // 局面更新
@@ -607,14 +532,6 @@ namespace UECda {
             remCards = CARDS_ALL;
             remQty = countCards(CARDS_ALL);
             remHash = HASH_CARDS_ALL;
-            
-            originalKey = 0ULL;
-            recordKey = 0ULL;
-            boardKey = 0ULL;
-            aliveKey = StateToAliveHashKey(ps);
-            fullAwakeKey = StateToFullAwakeHashKey(ps);
-            stateKey = 0ULL;
-            numCardsKey = 0ULL;
         }
         
         void prepareAfterChange() {
@@ -624,12 +541,9 @@ namespace UECda {
                     setTurn(p);
                     setFirstTurn(p);
                     setOwner(p);
-                    stateKey = StateToHashKey(aliveKey, ps, p);
                     break;
                 }
             }
-            // ハッシュ値を設定
-            numCardsKey = NumCardsToHashKey<N_PLAYERS>([&](int p)->int{ return this->hand[p].qty; });
             ASSERT(exam(), cerr << toDebugString() << endl;);
         }
         
@@ -659,13 +573,6 @@ namespace UECda {
             for (int p = 0; p < N_PLAYERS; p++) {
                 oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
             }
-            oss << std::hex;
-            oss << "board key = " << boardKey << endl;
-            oss << "alive key = " << aliveKey << endl;
-            oss << "full awake key = " << fullAwakeKey << endl;
-            oss << "state key = " << stateKey << endl;
-            oss << "record key = " << recordKey << endl;
-            oss << "num cards key = " << numCardsKey << endl;
             return oss.str();
         }
     };
@@ -679,7 +586,6 @@ namespace UECda {
             } else {
                 setPlayerAsleep(tp);
                 rotateTurnPlayer(tp);
-                procBoardStateHashPass(tp, turn());
             }
             common.turnCount++;
         } else {
@@ -699,7 +605,6 @@ namespace UECda {
                         setPlayerNewClass(tp, getBestClass());
                         ps.setDead(tp);
                         attractedPlayers.reset(tp);
-                        procBoardStateDead(tp);
                         procAndKillHand(tp, mv.mv(), mv.cards(), mv.qty());
                     } else {
                         procHand(tp, mv.mv(), mv.cards(), mv.qty());
@@ -724,8 +629,6 @@ namespace UECda {
                             // 自分以外全員をasleepにして自分の手番
                             setAllAsleep();
                             setPlayerAwake(tp);
-                            stateKey = aliveKey ^ awakeHashKeyTable[tp] ^ tp;
-                            procBoardStateHashNonPass(tp, tp);
                         } else {
                             // 流れる
                             flush();
@@ -734,7 +637,6 @@ namespace UECda {
                 } else { // 支配なし
                     if (ps.anyAwake()) {
                         rotateTurnPlayer(tp);
-                        procBoardStateHashNonPass(tp, turn());
                     } else {
                         flush();
                     }
@@ -758,7 +660,6 @@ namespace UECda {
             } else {
                 setPlayerAsleep(tp);
                 rotateTurnPlayer(tp);
-                procBoardStateHashPass(tp, turn());
             }
             common.turnCount++;
         } else {
@@ -769,7 +670,6 @@ namespace UECda {
                     setPlayerNewClass(ps.searchL1Player(), getBestClass());
                     return -1;
                 }
-                procBoardStateDead(tp);
                 procAndKillHand(tp, mv, mv.cards(), mv.qty());
             } else {
                 procHand(tp, mv, mv.cards(), mv.qty());
@@ -783,7 +683,6 @@ namespace UECda {
             } else {
                 if (ps.anyAwake()) {
                     rotateTurnPlayer(tp);
-                    procBoardStateHashNonPass(tp, turn());
                 } else {
                     flush();
                 }
@@ -822,15 +721,6 @@ namespace UECda {
         dst->infoPosition = arg.infoPosition;
         
         dst->common = arg.common;
-        
-        // copy hash_value
-        dst->originalKey = arg.originalKey;
-        dst->recordKey = arg.recordKey;
-        dst->numCardsKey = arg.numCardsKey;
-        dst->boardKey = arg.boardKey;
-        dst->aliveKey = arg.aliveKey;
-        dst->fullAwakeKey = arg.fullAwakeKey;
-        dst->stateKey = arg.stateKey;
         
         // we don't have to copy each player's hand,
         // because card-position will be set in the opening of playout.
