@@ -127,18 +127,9 @@ namespace UECda {
     }
     
     // 定数
-    constexpr BitCards CARDS_IMG_MIN = CARDS_HORIZON << INTCARD_IMG_MIN;
-    constexpr BitCards CARDS_IMG_MAX = CARDS_HORIZON << INTCARD_IMG_MAX;
-    
     constexpr BitCards CARDS_MIN = CARDS_HORIZON << INTCARD_MIN;
     constexpr BitCards CARDS_MAX = CARDS_HORIZON << INTCARD_MAX;
-    
-    constexpr BitCards CARDS_IMG_MINRANK = CARDS_HORIZONRANK << RANK_IMG_MIN;
-    constexpr BitCards CARDS_IMG_MAXRANK = CARDS_HORIZONRANK << RANK_IMG_MAX;
-    
-    constexpr BitCards CARDS_MINRANK = CARDS_HORIZONRANK << RANK_MIN;
-    constexpr BitCards CARDS_MAXRANK = CARDS_HORIZONRANK << RANK_MAX;
-    
+
     constexpr BitCards CARDS_NULL = 0ULL;
     constexpr BitCards CARDS_ALL = 0x10FFFFFFFFFFFFF0; // このゲームに登場する全て
     constexpr BitCards CARDS_IMG_ALL = 0x1FFFFFFFFFFFFFFF; // 存在を定義しているもの全て
@@ -201,9 +192,6 @@ namespace UECda {
     inline constexpr BitCards SuitsToCards(uint32_t s) {
         return CARDS_HORIZONSUIT * s; // あるスートのカード全て
     }
-    
-    // ランク x スート
-    
     // ランクとスートの指定からカード集合を生成する
     // スートは集合として用いる事が出来る
     inline constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
@@ -235,7 +223,6 @@ namespace UECda {
     
     // 要素数
     constexpr uint32_t countFewCards(BitCards c) { return countFewBits64(c); } // 要素が比較的少ない時の速度優先
-    inline uint32_t countManyCards(BitCards c) { return countBits64(c); } // 要素が比較的多い時の速度優先
     inline uint32_t countCards(BitCards c) { return countBits64(c); } // 基本のカウント処理
     constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
     
@@ -262,41 +249,12 @@ namespace UECda {
     
     // 特定順序の要素を選ぶ（元のデータは変えない）
     inline BitCards pickLow(const BitCards c, int n) {
-        assert(n > 0);
-        assert((int)countCards(c) >= n);
+        assert(n > 0 && (int)countCards(c) >= n);
         return lowestNBits(c, n);
     }
-    template <int N = 1>
-    inline BitCards pickLow(const BitCards c) {
-        assert(N > 0);
-        assert((int)countCards(c) >= N);
-        return pickLow(c, N);
-    }
-    template <> inline constexpr BitCards pickLow<1>(const BitCards c) {
-        return lowestBit(c);
-    }
-    template <> inline BitCards pickLow<2>(const BitCards c) {
-        BitCards res = lowestBit(c);
-        return res | lowestBit(c - res);
-    }
-    
     inline BitCards pickHigh(const BitCards c, int n) {
-        assert(n > 0);
-        assert((int)countCards(c) >= n);
+        assert(n > 0 && (int)countCards(c) >= n);
         return highestNBits(c, n);
-    }
-    template <int N = 1>
-    inline BitCards pickHigh(const BitCards c) {
-        assert(N > 0);
-        assert((int)countCards(c) >= N);
-        return pickHigh(c, N);
-    }
-    template <> inline BitCards pickHigh<1>(const BitCards c) {
-        return highestBit(c);
-    }
-    template <> inline BitCards pickHigh<2>(const BitCards c) {
-        BitCards r = highestBit(c);
-        return r | highestBit(c - r);
     }
 
     // IntCard型で1つ取り出し
@@ -329,14 +287,6 @@ namespace UECda {
     }
     inline BitCards pickLower(BitCards c0, BitCards c1) {
         return c0 & allLowerBits(c1);
-    }
-    
-    // 基準c1より高い、低い(同じは含まず)もの以外
-    inline BitCards maskHigher(BitCards c0, BitCards c1) {
-        return c0 & ~allHigherBits(c1);
-    }
-    inline BitCards maskLower(BitCards c0, BitCards c1) {
-        return c0 & ~allLowerBits(c1);
     }
 
     /**************************カード集合表現(クラス版)**************************/

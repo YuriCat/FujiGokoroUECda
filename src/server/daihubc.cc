@@ -582,12 +582,12 @@ int main(int argc, char *argv[]) {
             //search change cards
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 1]]);
-                c=pickHigh<2>(c);
+                c=pickHigh(c,2);
                 game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 1],mibun[0],c));
             }
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 2]]);
-                c=pickHigh<1>(c);
+                c=pickHigh(c,2);
                 game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 2],mibun[1],c));
             }
             
