@@ -2,8 +2,7 @@
 
 // ぱおーん氏、beersong.cのコードをベースにしている部分があります
 
-#include "move.hpp"
-#include "hand.hpp"
+#include "daifugo.hpp"
 #include "field.hpp"
 
 namespace UECda {
