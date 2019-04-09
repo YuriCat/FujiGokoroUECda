@@ -3,8 +3,6 @@
 // プリミティブな型 少し複雑なもの
 
 #include "daifugo.hpp"
-#include "card.hpp"
-#include "move.hpp"
 
 namespace UECda {
     
@@ -106,44 +104,44 @@ namespace UECda {
         
     public:
         using data_t = uint64_t;
-        
+
         // set
-        void setFinal() {    i_.set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-        void setPW() {       i_.set(LCT64_PW, LCT64_MPMATE); }
-        void setBNPW() {     i_.set(LCT64_BNPW, LCT64_MPMATE); }
-        void setBRPW() {     i_.set(LCT64_BRPW, LCT64_MPMATE); }
-        void setMPMate() {   i_.set(LCT64_MPMATE); }
-        void setL2Mate() {   i_.set(LCT64_L2MATE); }
-        void setMPGiveUp() { i_.set(LCT64_MPGIVEUP); }
-        void setL2GiveUp() { i_.set(LCT64_L2GIVEUP); }
-        
-        void setSelfFollow() { i_.set(LCT64_SELFFOLLOW,
+        void setFinal() {    set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
+        void setPW() {       set(LCT64_PW, LCT64_MPMATE); }
+        void setBNPW() {     set(LCT64_BNPW, LCT64_MPMATE); }
+        void setBRPW() {     set(LCT64_BRPW, LCT64_MPMATE); }
+        void setMPMate() {   set(LCT64_MPMATE); }
+        void setL2Mate() {   set(LCT64_L2MATE); }
+        void setMPGiveUp() { set(LCT64_MPGIVEUP); }
+        void setL2GiveUp() { set(LCT64_L2GIVEUP); }
+
+        void setSelfFollow() { set(LCT64_SELFFOLLOW,
                                             LCT64_UNRIVALED,
                                             LCT64_LASTAWAKE,
                                             LCT64_FLUSHLEAD,
                                             LCT64_NPDOM,
                                             LCT64_PDOM); }
-        void setUnrivaled() { i_.set(LCT64_UNRIVALED,
+        void setUnrivaled() { set(LCT64_UNRIVALED,
                                            LCT64_FLUSHLEAD,
                                            LCT64_NPDOM,
                                            LCT64_PDOM); }
-        void setLastAwake() { i_.set(LCT64_LASTAWAKE,
+        void setLastAwake() { set(LCT64_LASTAWAKE,
                                            LCT64_NPDOM,
                                            LCT64_BDOMOTHERS); }
-        void setFlushLead() { i_.set(LCT64_FLUSHLEAD); }
-        void setNPDom() { i_.set(LCT64_NPDOM); }
-        void setPassDom() { i_.set(LCT64_PDOM); }
-        void setBDO() { i_.set(LCT64_BDOMOTHERS); }
-        void setBDM() { i_.set(LCT64_BDOMME); }
-        void setBDALL() { i_.set(LCT64_BDOMOTHERS,
+        void setFlushLead() { set(LCT64_FLUSHLEAD); }
+        void setNPDom() { set(LCT64_NPDOM); }
+        void setPassDom() { set(LCT64_PDOM); }
+        void setBDO() { set(LCT64_BDOMOTHERS); }
+        void setBDM() { set(LCT64_BDOMME); }
+        void setBDALL() { set(LCT64_BDOMOTHERS,
                                        LCT64_BDOMME); }
         void setNoChance() { setBDM(); }
         
-        void settlePrmOrder() { i_.set(LCT64_TMPORDSETTLED); }
-        void settleTmpOrder() { i_.set(LCT64_TMPORDSETTLED,
+        void settlePrmOrder() { set(LCT64_TMPORDSETTLED); }
+        void settleTmpOrder() { set(LCT64_TMPORDSETTLED,
                                              LCT64_PRMORDSETTLED); }
         
-        void setDConst() { i_.set(LCT64_DCONST); }
+        void setDConst() { set(LCT64_DCONST); }
         
         void setMinNMelds(uint32_t n) { i_ |= uint64_t(n & 15U) << LCT64_MINNMELDS; }
         
@@ -151,9 +149,7 @@ namespace UECda {
         void setMaxNCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
         void setMinNCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
         void setMaxNCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
-        
-        uint64_t test(int n) const { return i_.test(n); }
-        
+
         // get
         // 一時情報
         uint64_t isFinal() const {    return test(LCT64_FINAL); }
@@ -175,7 +171,7 @@ namespace UECda {
         uint64_t isPassDom() const { return test(LCT64_PDOM); }
         uint64_t isBDO() const { return test(LCT64_BDOMOTHERS); }
         uint64_t isBDM() const { return test(LCT64_BDOMME); }
-        bool isBDALL() const { return i_.holds(LCT64_BDOMOTHERS,
+        bool isBDALL() const { return holds(LCT64_BDOMOTHERS,
                                                      LCT64_BDOMME); }
         uint64_t isNoChance() const { return isBDM(); }
         
@@ -192,7 +188,7 @@ namespace UECda {
         uint32_t getMinNCardsAwake() const { return (i_ >> 8) & 15U; }
         uint32_t getMaxNCardsAwake() const { return (i_ >> 12) & 15U; }
         
-        void initHalf() { i_.reset(); }
+        void initHalf() { i_ = 0; }
         
         void init() {
             // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
@@ -207,14 +203,21 @@ namespace UECda {
             i_ &= i_ & (MASK64_TMPINFO | 0xFFFFULL);
         }
         
-        constexpr data_t data() const { return i_.data(); }
-        
-        constexpr FieldAddInfo():i_() {}
-        constexpr FieldAddInfo(const FieldAddInfo& arg):
-        i_(arg.data()) {} // コピー
+        constexpr data_t data() const { return i_; }
+        constexpr FieldAddInfo(): i_() {}
+        constexpr FieldAddInfo(const FieldAddInfo& arg): i_(arg.data()) {}
         
     protected:
-        BitSetInRegister<data_t> i_;
+        data_t i_;
+
+        void set(size_t i) { i_ |= 1ULL << i; }
+        template <class... args_t>
+        void set(size_t i0, args_t... args) { set(i0); set(args...); }
+        bool holds(size_t i0, size_t i1) const {
+            uint64_t dst = (1ULL << i0) | (1ULL << i1);
+            return !(~i_ & dst);
+        }
+        uint64_t test(size_t i) const { return i_ & (1ULL << i); }
     };
     
     static ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
@@ -273,14 +276,13 @@ namespace UECda {
         constexpr Move mv() const { return Move(*this); }
 
         void set(size_t i) { Move::flags |= 1U << i; }
-        void set(size_t i0, size_t i1) { set(i0); set(i1); }
-        void set(size_t i0, size_t i1, size_t i2) { set(i0); set(i1); set(i2); }
+        template <class... args_t>
+        void set(size_t i0, args_t... args) { set(i0); set(args...); }
         bool holds(size_t i0, size_t i1) const {
             uint32_t dst = (1U << i0) | (1U << i1);
             return !(~Move::flags & dst);
         }
-        bool test(size_t i) const { return Move::flags & (1ULL << i); }
-
+        uint32_t test(size_t i) const { return Move::flags & (1U << i); }
         
         void setFinal() {    set(LCT_FINAL, LCT_PW, LCT_MPMATE); }
         void setPW() {       set(LCT_PW, LCT_MPMATE); }
