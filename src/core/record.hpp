@@ -226,7 +226,7 @@ namespace UECda {
                 for (int i = 0; i < N; i++) {
                     const string& str = q.front();
                     if (isCommand(str)) Foo();
-                    infoClass.replace(i, ToI(str));
+                    infoClass.assign(i, ToI(str));
                     q.pop();
                 }
                 flagGame.set(2);
@@ -235,7 +235,7 @@ namespace UECda {
                 for (int i = 0; i < N; i++) {
                     const string& str = q.front();
                     if ( isCommand(str) ) { Foo(); }
-                    infoSeat.replace(i, ToI(str));
+                    infoSeat.assign(i, ToI(str));
                     q.pop();
                 }
                 flagGame.set(3);
@@ -299,7 +299,7 @@ namespace UECda {
                 for (int i = 0; i < N; i++) {
                     const string& str = q.front();
                     if (isCommand(str)) Foo();
-                    infoNewClass.replace(i, ToI(str));
+                    infoNewClass.assign(i, ToI(str));
                     q.pop();
                 }
                 flagGame.set(8);
@@ -357,7 +357,7 @@ namespace UECda {
                 ps.setAsleep(tp);
             } else { // パスでない
                 bd.procExceptFlush(move);
-                infoNCards.subtr(tp, countCards(dc));
+                infoNCards.sub(tp, countCards(dc));
                 if (getNCards(tp) <= 0) {//あがり
                     ps.setDead(tp);
                     dead = true;
@@ -824,7 +824,7 @@ namespace UECda {
         for (int p = 0; p < N_PLAYERS; p++) {
             Cards c = field.hand[p].cards;
             field.hand[p].setAll(c);
-            field.opsHand[p].set(subtrCards(CARDS_ALL, c));
+            field.opsHand[p].set(CARDS_ALL - c);
             field.opsHand[p].setHash(HASH_CARDS_ALL ^ field.hand[p].hash);
             field.addAttractedPlayer(p);
         }
@@ -839,7 +839,7 @@ namespace UECda {
             const typename game_t::change_t& change = gLog.change(t);
             if (field.classOf(change.from) >= HINMIN) {
                 // 献上以外
-                field.hand[change.from].subtrAll(change.cards);
+                field.hand[change.from].subAll(change.cards);
                 field.opsHand[change.from].addAll(change.cards);
             } else {
                 int ret = changeCallback(field, change.from, change.to, change.cards);
@@ -867,7 +867,7 @@ namespace UECda {
         for (int p = 0; p < N_PLAYERS; p++) {
             Cards tmp = Cards(hand[p]);
             field.hand[p].setAll(tmp);
-            field.opsHand[p].set(subtrCards(CARDS_ALL, tmp));
+            field.opsHand[p].set(CARDS_ALL - tmp);
             field.opsHand[p].setHash(HASH_CARDS_ALL ^ field.hand[p].hash);
             field.addAttractedPlayer(p);
         }
@@ -1006,14 +1006,13 @@ namespace UECda {
             DERR << "oc = " << gLog.getOrgCards(myPlayerNum) << endl;
             DERR << "uc = " << dst->usedCards[myPlayerNum] << endl;
             DERR << "rc = " << dst->remCards << endl;
-            Cards myCards = subtrCards(gLog.getOrgCards(myPlayerNum),
-                                       dst->usedCards[myPlayerNum]);
+            Cards myCards = gLog.getOrgCards(myPlayerNum) - dst->usedCards[myPlayerNum];
             uint32_t myQty = countCards(myCards);
             uint64_t myKey = CardsToHashKey(myCards);
             if (anyCards(myCards)) {
                 dst->hand[myPlayerNum].setAll(myCards, myQty, myKey);
             }
-            Cards opsCards = subtrCards(dst->remCards, myCards);
+            Cards opsCards = dst->remCards - myCards;
             if (anyCards(opsCards)) {
                 dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty, dst->remHash ^ myKey);
             }

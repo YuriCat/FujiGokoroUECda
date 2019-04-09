@@ -250,7 +250,7 @@ namespace UECda {
             worstReward = shared.gameReward[worstClass];
             rewardGap = bestReward - worstReward;
             uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
-            if (countBits(rivals) == 1) {
+            if (popcnt(rivals) == 1) {
                 int rnum = bsf(rivals);
                 if (field.isAlive(rnum)) {
                     rivalPlayerNum = rnum;

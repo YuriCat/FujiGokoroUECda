@@ -163,7 +163,7 @@ namespace UECda {
         SUITS_ALL = SUITS_CDHS,
     };
     
-    inline int countSuits(uint32_t s) { return countBits(s); }
+    inline int countSuits(uint32_t s) { return popcnt(s); }
     
     // スートインデックス
     // スートビットから、その種類の役の中で何番目のスートパターンとされているかを得る
@@ -269,9 +269,9 @@ namespace UECda {
         for (uint32_t s0 = 0; s0 < 16; s0++) {
             for (uint32_t s1 = 0; s1 < 16; s1++) {
                 const uint32_t s01 = s0 & s1;
-                const uint32_t c0 = countBits(s0), c1 = countBits(s1);
+                const uint32_t c0 = popcnt(s0), c1 = popcnt(s1);
                 const uint32_t cmin = min(c0, c1), cmax = max(c0, c1);
-                const uint32_t c01 = countBits(s01);
+                const uint32_t c01 = popcnt(s01);
 
                 suitsSuitsIndexTable[s0][s1]
                 = suitsSuitsCountIndex[c0][c1][c01];
@@ -298,8 +298,8 @@ namespace UECda {
             for (uint32_t s1 = 0; s1 < 16; ++s1) {
                 const uint32_t s0 = SuitNumToSuits(sn0);
                 const uint32_t s01 = s0 & s1;
-                const uint32_t c1 = countBits(s1);
-                const uint32_t c01 = countBits(s01);
+                const uint32_t c1 = popcnt(s1);
+                const uint32_t c01 = popcnt(s01);
                 
                 suitSuitsIndexTable[s0].assign(s1, suitSuitsCountIndex[c1][c01]);
             }
@@ -313,9 +313,9 @@ namespace UECda {
                 for (uint32_t s2 = 0; s2 < 16; ++s2) {
                     const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
                     const uint32_t s012 = s0 & s1 & s2;
-                    const uint32_t c0 = countBits(s0), c1 = countBits(s1), c2 = countBits(s2);
-                    const uint32_t c01 = countBits(s01), c02 = countBits(s02), c12 = countBits(s12);
-                    const uint32_t c012 = countBits(s012);
+                    const uint32_t c0 = popcnt(s0), c1 = popcnt(s1), c2 = popcnt(s2);
+                    const uint32_t c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
+                    const uint32_t c012 = popcnt(s012);
                     std::array<uint32_t, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
                     int cnt;
                     if (sssMap.count(pattern) == 0) {
@@ -340,8 +340,8 @@ namespace UECda {
                 for (uint32_t s2 = 0; s2 < 16; ++s2) {
                     const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
                     const uint32_t s012 = s0 & s1 & s2;
-                    const uint32_t c1 = countBits(s1), c2 = countBits(s2);
-                    const uint32_t c01 = countBits(s01), c02 = countBits(s02), c12 = countBits(s12);
+                    const uint32_t c1 = popcnt(s1), c2 = popcnt(s2);
+                    const uint32_t c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
                     std::array<uint32_t, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
                     int cnt;
                     if (s1ssMap.count(pattern) == 0) {
@@ -578,8 +578,8 @@ namespace UECda {
     constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
     
     // 要素数
-    constexpr uint32_t countFewCards(BitCards c) { return countFewBits64(c); } // 要素が比較的少ない時の速度優先
-    inline uint32_t countCards(BitCards c) { return countBits64(c); } // 基本のカウント処理
+    constexpr uint32_t countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
+    inline uint32_t countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
     constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
     
     // 排他性
@@ -620,17 +620,6 @@ namespace UECda {
     inline IntCard pickIntCardHigh(const BitCards c) {
         return (IntCard)bsr64(c);
     }
-
-    // n番目(nは1から)に高い,低いもの
-    inline BitCards pickNthHigh(BitCards c, int n) {
-        assert(n > 0 && (int)countCards(c) >= n);
-        return NthHighestBit(c, n);
-    }
-    inline BitCards pickNthLow(BitCards c, int n) {
-        assert(n > 0 && (int)countCards(c) >= n);
-        return NthLowestBit(c, n);
-    }
-
     // 基準cより高い、低い(同じは含まず)もの
     inline BitCards pickHigher(BitCards c) {
         return allHigherBits(c);

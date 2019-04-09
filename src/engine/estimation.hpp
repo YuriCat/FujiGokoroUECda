@@ -92,23 +92,23 @@ namespace UECda {
         uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
         uint64_t all = arg | rest0 | rest1;
         
-        DERR << "all(" << countBits64(all) << ")" << all << endl;
+        DERR << "all(" << popcnt64(all) << ")" << all << endl;
         DERR << "goal (" << N0 << "," << N1 << ")" << endl;
-        DERR << "div(" << countBits64(arg) << ")" << arg << endl;
-        DERR << "rest0(" << countBits64(rest0) << ")" << rest0 << endl;
-        DERR << "rest1(" << countBits64(rest1) << ")" << rest1 << endl;
+        DERR << "div(" << popcnt64(arg) << ")" << arg << endl;
+        DERR << "rest0(" << popcnt64(rest0) << ")" << rest0 << endl;
+        DERR << "rest1(" << popcnt64(rest1) << ")" << rest1 << endl;
         
         // まず確定ビットを探す
         if (rest0) {
             uint64_t low = highestNBits(all, N1 + N_REST);
             uint64_t set0 = rest0 & ~low;
             if (set0) {
-                int NSet0 = countBits64(set0);
+                int NSet0 = popcnt64(set0);
                 tmp0 |= set0; all -= set0; N0 -= NSet0;
             }
         }
         
-        assert((int)countBits64(all) == N0 + N1);
+        assert((int)popcnt64(all) == N0 + N1);
         dist2_64(&tmp0, &tmp1, all, N0, N1, pdice);
         // 献上
         uint64_t highNRest = highestNBits(tmp1, N_REST);
@@ -378,12 +378,12 @@ namespace UECda {
         
         // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
         std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
-        BitArray32<4, N> NOwn; // 持っているカード数
-        BitArray32<4, N> NDet; // 特定＋使用カード数
-        BitArray32<4, N> NDeal; // 配布カード数
-        BitArray32<4, N> NOrg; // 初期配布カード数
-        BitArray32<4, N> infoClassPlayer;
-        BitArray32<4, N> infoClass;
+        std::array<int8_t, N> NOwn; // 持っているカード数
+        std::array<int8_t, N> NDet; // 特定＋使用カード数
+        std::array<int8_t, N> NDeal; // 配布カード数
+        std::array<int8_t, N> NOrg; // 初期配布カード数
+        std::array<int8_t, N> infoClassPlayer;
+        std::array<int8_t, N> infoClass;
         uint32_t NDistCards;
         Cards remCards; // まだ使用されていないカード
         Cards distCards; // まだ特定されていないカード
@@ -935,13 +935,9 @@ namespace UECda {
             
             // 対数尤度
             double playLH = 0;
-            
-            BitSet32 pwFlag;
             std::array<Cards, N> orgCards;
             auto tmpPlayFlag = playFlag;
             MoveInfo *const mv = ptools->buf;
-            
-            pwFlag.reset();
             for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
             
             Field field;
@@ -951,7 +947,7 @@ namespace UECda {
                 // after change callback
                 [](const auto& field)->void{},
                 // play callback
-                [&pwFlag, &playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
+                [&playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
                 (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
                     const uint32_t tp = field.turn();
                     
@@ -970,9 +966,9 @@ namespace UECda {
                         assert(NMoves > 0);
                         
                         if (NMoves > 1) {
-                            for (int m = 0; m < NMoves; m++) {
-                                bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, board, field.fieldInfo);
-                                if (mate) mv[m].setMPMate();
+                            for (int i = 0; i < NMoves; i++) {
+                                bool mate = checkHandMate(0, mv + NMoves, mv[i], myHand, opsHand, board, field.fieldInfo);
+                                if (mate) mv[i].setMPMate();
                             }
                         }
                         
@@ -992,8 +988,8 @@ namespace UECda {
                                 calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
                                 // Mateの手のスコアを設定
                                 double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
-                                for (int m = 0; m < NMoves; m++) {
-                                    if (mv[m].isMate())score[m] = maxScore + 4;
+                                for (int i = 0; i < NMoves; i++) {
+                                    if (mv[i].isMate()) score[i] = maxScore + 4;
                                 }
                                 SoftmaxSelector selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
                                 selector.to_prob();

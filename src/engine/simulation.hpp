@@ -121,7 +121,7 @@ namespace UECda {
         }
     GAME_END:
         for (int p = 0; p < N_PLAYERS; p++) {
-            pfield->infoReward.replace(p, pshared->gameReward[pfield->newClassOf(p)]);
+            pfield->infoReward.assign(p, pshared->gameReward[pfield->newClassOf(p)]);
         }
         return 0;
     }

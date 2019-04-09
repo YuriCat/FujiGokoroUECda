@@ -56,30 +56,10 @@ namespace UECda {
     
     // 支配保証判定など、複数のカード集合間に成立する関係を保存する場合に使うかも
     inline uint64_t CardsCardsToHashKey(Cards c0, Cards c1) {
-        return crossBits64(CardsToHashKey(c0), CardsToHashKey(c1));
+        return cross64(CardsToHashKey(c0), CardsToHashKey(c1));
     }
-    
     inline uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
-        return crossBits64(key0, key1);
-    }
-    
-    template <int N>
-    inline uint64_t CardsArrayToHashKey(const Cards c[]) {
-        uint64_t hash_c[N];
-        for (int n = 0; n < N; ++n) {
-            hash_c[n] = CardsToHashKey(c[n]);
-        }
-        return crossBits64<N>(hash_c);
-    }
-    
-    template <int N>
-    inline uint64_t knitCardsArrayHashKey(const Cards hash_c[]) {
-        return crossBits64<N>(hash_c);
-    }
-    
-    template <int N>
-    inline uint64_t procCardsArrayHashKey(const uint64_t okey, const int n, const uint64_t dkey) {
-        return procCrossedHash<N>(okey, n, dkey);
+        return cross64(key0, key1);
     }
     
     // 交換可能なもの

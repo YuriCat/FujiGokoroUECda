@@ -1019,7 +1019,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
 
     template <class cards_t, class policy_t, class dice_t>
     int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                             const Field& field, const policy_t& pol, dice_t *const pdice) {
+                         const Field& field, const policy_t& pol, dice_t *const pdice) {
         double score[N_MAX_CHANGES + 1];
         calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
         double r = pdice->drand() * score[NChanges];

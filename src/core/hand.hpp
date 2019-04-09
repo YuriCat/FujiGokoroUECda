@@ -144,7 +144,7 @@ namespace UECda {
                     Cards mask = RankToCards(r); // 当該ランクのマスク
                     
                     // 枚数型は当該ランクの枚数を引く
-                    qr -= ((Cards)(dq)) << (r << 2);
+                    qr = qr.data() - (BitCards(dq) << (r << 2));
                     
                     // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                     pqr = (((pqr & mask) >> dq) & mask) | (pqr & ~mask);
@@ -164,7 +164,7 @@ namespace UECda {
                     dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
                     
                     // 枚数型はジョーカー以外の差分を引く
-                    qr -= dqr;
+                    qr = qr.data() - dqr;
 
                     // 枚数位置型、圧縮型は当該ランクを1枚分シフト
                     // ただしグループと違って元々1枚の場合に注意
@@ -220,7 +220,7 @@ namespace UECda {
                     Cards opqr = pqr & mask; // 当該ランクの元々のpqr
                     
                     // 枚数型は当該ランクの枚数を引く
-                    qr -= ((Cards)(dq)) << (r << 2);
+                    qr = qr.data() - (BitCards(dq) << (r << 2));
                     
                     // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
                     // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
@@ -280,7 +280,7 @@ namespace UECda {
                     dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
                     
                     //枚数型はジョーカー以外の差分を引く
-                    qr -= dqr;
+                    qr = qr.data() - dqr;
                     // 枚数位置型、圧縮型は当該ランクを1枚分シフト
                     // ただしグループと違って元々1枚の場合に注意
                     pqr = ((pqr & mask & PQR_234) >> 1) | (pqr & ~mask);
@@ -343,7 +343,7 @@ namespace UECda {
                     Cards mask = RankToCards(r); // 当該ランクのマスク
                     
                     // 枚数型は当該ランクの枚数を足す
-                    qr += (Cards(dq)) << (r << 2);
+                    qr = qr.data() + ((BitCards(dq)) << (r << 2));
                     uint32_t nq = qr[r]; // 当該ランクの新しい枚数
                     
                     // 枚数位置型、圧縮型ともに新しい枚数に入れ替える
@@ -385,7 +385,7 @@ namespace UECda {
                     }
                     
                     // 枚数型はジョーカー以外の差分を足す
-                    qr += dqr;
+                    qr = qr.data() + dqr;
                     
                     // 枚数位置型は当該ランクを1枚分シフトし、元々無かった所には1枚をうめる
                     // 圧縮型は当該ランクを1枚分シフトし、1枚のところを埋める

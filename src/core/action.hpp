@@ -360,8 +360,8 @@ op; mv++; }}
                 for (IntCard ic : c3) {
                     int r = IntCardToRank(ic);
                     uint32_t suits = x[r];
-                    uint32_t s0 = lowestBit(suits);
-                    uint32_t s1 = lowestBit(suits - s0);
+                    uint32_t s0 = lsb(suits);
+                    uint32_t s1 = lsb(suits - s0);
                     uint32_t s2 = suits - s0 - s1;
                     
                     GEN(2, s0 | s1);
@@ -378,8 +378,8 @@ op; mv++; }}
                 for (IntCard ic : c3) {
                     int r = IntCardToRank(ic);
                     const uint32_t suits = x[r];
-                    const uint32_t s0 = lowestBit(suits);
-                    const uint32_t s1 = lowestBit(suits - s0);
+                    const uint32_t s0 = lsb(suits);
+                    const uint32_t s1 = lsb(suits - s0);
                     const uint32_t s2 = suits - s0 - s1;
                     
                     // プレーン
@@ -396,10 +396,10 @@ op; mv++; }}
                 for (IntCard ic : c2) {
                     int r = IntCardToRank(ic);
                     const uint32_t suits = x[r];
-                    const uint32_t s0 = lowestBit(suits);
+                    const uint32_t s0 = lsb(suits);
                     const uint32_t s1 = suits - s0;
                     const uint32_t isuits = SUITS_ALL - suits;
-                    const uint32_t is0 = lowestBit(isuits);
+                    const uint32_t is0 = lsb(isuits);
                     const uint32_t is1 = isuits - is0;
                     
                     // プレーン
@@ -417,8 +417,8 @@ op; mv++; }}
                     int r = IntCardToRank(ic);
                     const uint32_t suits = x[r];
                     const uint32_t isuits = SUITS_ALL - suits;
-                    const uint32_t is0 = lowestBit(isuits);
-                    const uint32_t is1 = lowestBit(isuits - is0);
+                    const uint32_t is0 = lsb(isuits);
+                    const uint32_t is1 = lsb(isuits - is0);
                     const uint32_t is2 = isuits - is0 - is1;
                     // ジョーカー使用
                     GEN_J(2, suits | is0, is0);
@@ -500,7 +500,7 @@ op; mv++; }}
                     int r = IntCardToRank(ic);
                     const uint32_t suits = x[r];
                     const uint32_t isuits = SUITS_ALL - suits;
-                    const uint32_t is0 = lowestBit(isuits);
+                    const uint32_t is0 = lsb(isuits);
                     const uint32_t is1 = isuits - is0;
                     // ジョーカー使用
                     GEN_J(3, suits | is0, is0);
