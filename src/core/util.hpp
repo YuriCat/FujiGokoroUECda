@@ -77,3 +77,39 @@ public:
     constexpr XorShift64(): x(), y(), z(), t() {}
     XorShift64(const uint64_t s): x(), y(), z(), t() { srand(s); }
 };
+
+template <typename T, size_t N>
+static std::array<T, N> invert(const std::array<T, N>& a, size_t n = N) {
+    std::array<T, N> r;
+    for (size_t i = 0; i < n; i++) r[a[i]] = i;
+    for (size_t i = n; i < N; i++) r[i] = a[i];
+    return r;
+}
+
+template <typename T, size_t N>
+static std::vector<T> a2v(const std::array<T, N>& a) {
+    std::vector<T> v;
+    for (const T& val : a) v.push_back(val);
+    return v;
+}
+
+#include "../../CppCommon/src/util/string.hpp"
+#include "../../CppCommon/src/util/random.hpp"
+#include "../../CppCommon/src/util/bitOperation.hpp"
+#include "../../CppCommon/src/util/container.hpp"
+#include "../../CppCommon/src/util/arrays.h"
+#include "../../CppCommon/src/util/bitSet.hpp"
+#include "../../CppCommon/src/util/bitArray.hpp"
+#include "../../CppCommon/src/util/atomic.hpp"
+#include "../../CppCommon/src/util/bitPartition.hpp"
+#include "../../CppCommon/src/util/math.hpp"
+#include "../../CppCommon/src/hash/hashFunc.hpp"
+#include "../../CppCommon/src/hash/hashBook.hpp"
+#include "../../CppCommon/src/util/softmaxClassifier.hpp"
+#include "../../CppCommon/src/util/selection.hpp"
+#include "../../CppCommon/src/util/lock.hpp"
+#include "../../CppCommon/src/util/io.hpp"
+#include "../../CppCommon/src/util/pd.hpp"
+#include "../../CppCommon/src/util/statistics.hpp"
+#include "../../CppCommon/src/util/index.hpp"
+#include "../../CppCommon/src/analyze/analyzer.hpp"

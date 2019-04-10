@@ -781,18 +781,14 @@ namespace UECda {
         field.initGame();
         field.setMoveBuffer(nullptr);
         field.setDice(nullptr);
-        if (gLog.isInitGame()) {
-            field.setInitGame();
-            field.infoClass.fill(Class::MIDDLE);
-        } else {
-            field.infoClass = gLog.infoClass;
-            field.infoClassPlayer = invert(gLog.infoClass);
+        if (gLog.isInitGame()) field.setInitGame();
+        field.infoNewClass.fill(-1);
+        field.infoNewClassPlayer.fill(-1);
+        for (int p = 0; p < N_PLAYERS; p++) {
+            field.setClassOf(p, gLog.classOf(p));
+            field.setSeatOf(p, gLog.seatOf(p));
+            field.setPositionOf(p, gLog.positionOf(p));
         }
-        field.infoSeat = gLog.infoSeat;
-        field.infoSeatPlayer = invert(gLog.infoSeat);
-        field.infoNewClass.clear();
-        field.infoNewClassPlayer.clear();
-        field.infoPosition = gLog.infoPosition;
     }
     
     template <class field_t, class game_t,
@@ -917,8 +913,7 @@ namespace UECda {
         int ret = iterateGameLogInGame(field, gLog, gLog.plays(), gLog.orgCards,
                                        firstCallback, playCallback, initialized);
         if (ret <= -2) return ret; // この試合もう進めない
-        field.infoNewClass = gLog.infoNewClass;
-        field.infoNewClassPlayer = invert(gLog.infoNewClass);
+        for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, gLog.newClassOf(p));
         lastCallback(field);
         return 0;
     }
@@ -994,7 +989,7 @@ namespace UECda {
                     dst->remHash ^= dkey;
                     // あがり処理
                     if (countCards(p) == pLog.getNCards(p)) {
-                        dst->setPlayerNewClass(p, pLog.ps.getBestClass());
+                        dst->setNewClassOf(p, pLog.ps.getBestClass());
                     }
                 }
             }
