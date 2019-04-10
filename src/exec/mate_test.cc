@@ -333,7 +333,7 @@ int analyzeMateDistribution(const Record& record) {
         [&](const auto& field) {} // last callback
         );
     }
-    cerr << "number of mate moves = " << toString(mateMovesDistribution) << endl;
+    cerr << "number of mate moves = " << mateMovesDistribution << endl;
     
     return 0;
 }

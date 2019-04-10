@@ -381,7 +381,7 @@ namespace UECda {
         constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
         // set
         void setAsleep(const int p) {
-            ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << (uint32_t)i << endl;); // 現在Awake
+            ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << data() << endl;); // 現在Awake
             base_t::data_ -= (BMASK << 24) + ((BMASK << 16) << p);
         }
         void setDead(const int p) {

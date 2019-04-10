@@ -1368,9 +1368,9 @@ int main(int argc, char *argv[]) {
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;
                 playerRateExpMean[p] = playerRateExpMean[p] * rateEpsilon + playerRate[p] * (1 - rateEpsilon);
             }
-            cerr << toString(playerRate) << endl;
-            cerr << toString(playerRateMean) << endl;
-            cerr << toString(playerRateExpMean) << endl;
+            cerr << playerRate << endl;
+            cerr << playerRateMean << endl;
+            cerr << playerRateExpMean << endl;
         }
         
         if (WINDOW_TYPE==2) {

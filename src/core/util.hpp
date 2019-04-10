@@ -1,5 +1,7 @@
 #pragma once
 
+#include <dirent.h>
+#include <sys/stat.h>
 #include <bitset>
 #include <cassert>
 
@@ -131,7 +133,7 @@ inline uint64_t pick1Bit64(uint64_t arg, dice64_t *const dice) {
 }
 
 template <class dice64_t>
-static uint64_t pickNBits64NoPdep(uint64_t arg, int N0, int N1, dice64_t *const pdice) {
+static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t *const pdice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
     assert((int)popcnt(arg) == N0 + N1);
@@ -197,10 +199,18 @@ static uint64_t pickNBits64NoPdep(uint64_t arg, int N0, int N1, dice64_t *const 
     return res;
 }
 
-template <int N, class array_t, class dice64_t>
-static void dist64(uint64_t *const dst, uint64_t arg, const array_t& argNum, dice64_t *const dice) {
-    static_assert(N > 0, "");
-    if (N == 1) dst[0] = arg;
+template <class dice64_t>
+static void dist2_64(uint64_t *goal0, uint64_t *goal1,
+                     uint64_t arg, int N0, int N1, dice64_t *const dice) {
+    assert((int)popcnt64(arg) == N0 + N1);
+    uint64_t tmp = pickNBits64(arg, N0, N1, dice);
+    *goal0 |= tmp;
+    *goal1 |= (arg - tmp);
+}
+template <int N, typename T, class dice64_t>
+static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t *const dice) {
+    if (N <= 1) dst[0] = arg;
+    else if (N == 2) dist2_64(dst, dst + 1, arg, argNum[0], argNum[1], dice);
     else {
         const int NH = N / 2;
         int num[2] = {0};
@@ -210,7 +220,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const array_t& argNum, dic
         uint64_t half[2] = {0};
         dist64<2>(half, arg, num, dice);
         dist64<NH>(dst, half[0], argNum, dice);
-        dist64<N - NH>(dst + NH, half[1], rightShift(argNum, NH), dice);
+        dist64<N - NH>(dst + NH, half[1], argNum + NH, dice);
     }
 }
 
@@ -254,7 +264,7 @@ template <typename T, size_t B, size_t N>
 class MiniBitArray {
     static_assert(sizeof(T) * 8 >= B * N, "");
     static constexpr T MASK_BASE = (T(1) << B) - T(1);
-    static constexpr size_t place(const size_t p) { return p * N; }
+    static constexpr size_t place(const size_t p) { return p * B; }
     static constexpr T mask(const size_t p) { return MASK_BASE << place(p); }
     static constexpr T mask_lower(const size_t p) { return (T(1) << place(p)) - T(1); }
     static constexpr T mask_range(const size_t p0, const size_t p1) {
@@ -314,27 +324,39 @@ MiniBitArray<T, B, N> invert(const MiniBitArray<T, B, N>& ba) {
     for (size_t i = 0; i < N; i++) ret.set(ba[i], i);
     return ret;
 }
-template <typename T, size_t B, size_t N>
-MiniBitArray<T, B, N> rightShift(MiniBitArray<T, B, N> ba, size_t n) {
-    ba >>= n;
-    return ba;
-}
 
+template <class T, std::size_t N>
+std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
+    ost << "{";
+    for (int i = 0; i < (int)N - 1; i++) ost << a[i] << ", ";
+    if (a.size() > 0) ost << a[N - 1];
+    ost << "}";
+    return ost;
+}
+template <class T>
+std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
+    ost << "{";
+    for (int i = 0; i < (int)v.size() - 1; i++) ost << v[i] << ", ";
+    if (v.size() > 0) ost << v.back();
+    ost << "}";
+    return ost;
+}
 template <typename T, size_t B, size_t N>
-static std::ostream& operator <<(std::ostream& out, const MiniBitArray<T, B, N>& ba) {
-    out << "{";
-    size_t cnt = 0;
-    for (size_t i = 0; i < ba.size(); i++) {
-        if (cnt++ > 0) out << ",";
-        out << uint64_t(ba[i]);
-    }
-    out << "}";
-    return out;
+static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>& ba) {
+    ost << "{";
+    for (int i = 0; i < (int)N - 1; i++) ost << ba[i] << ", ";
+    if (ba.size() > 0) ost << ba[N - 1];
+    ost << "}";
+    return ost;
 }
 
 template <size_t B, size_t N = 32 / B> using BitArray32 = MiniBitArray<std::uint32_t, B, N>;
 template <size_t B, size_t N = 64 / B> using BitArray64 = MiniBitArray<std::uint64_t, B, N>;
 
+static bool isSuffix(const std::string& s, const std::string& suffix) {
+    if (s.size() < suffix.size()) return false;
+    return s.substr(s.size() - suffix.size()) == suffix;
+}
 static std::vector<std::string> split(const std::string& s,
                                       char separator) {
     std::vector<std::string> result;
@@ -371,4 +393,53 @@ static std::vector<std::string> split(const std::string& s,
     } while(found);
     result.emplace_back(s, p);
     return result;
+}
+
+template <typename T, size_t N>
+static std::array<T, N> invert(const std::array<T, N>& a, size_t n = N) {
+    std::array<T, N> r;
+    for (size_t i = 0; i < n; i++) r[a[i]] = i;
+    for (size_t i = n; i < N; i++) r[i] = a[i];
+    return r;
+}
+
+template <typename T, size_t N>
+static std::vector<T> a2v(const std::array<T, N>& a) {
+    std::vector<T> v;
+    for (const T& val : a) v.push_back(val);
+    return v;
+}
+
+static std::vector<std::string> getFilePathVector(const std::string& ipath, const std::string& suffix = "",
+                                                  bool recursive = false) {
+    // make file path vector by suffix
+    std::vector<std::string> file_names;
+    DIR *pdir;
+    dirent *pentry;
+
+    pdir = opendir(ipath.c_str());
+    if (pdir == nullptr) return file_names;
+    do {
+        pentry = readdir(pdir);
+        if (pentry != nullptr) {
+            const std::string name = std::string(pentry->d_name);
+            const std::string full_path = ipath + name;
+            struct stat st;
+            stat(full_path.c_str(), &st);
+            if ((st.st_mode & S_IFMT) == S_IFDIR) { // is directory
+                if (recursive && name != "." && name != "..") {
+                    std::vector<std::string> tfile_names = getFilePathVector(full_path + "/", suffix, true);
+                    file_names.insert(file_names.end(), tfile_names.begin(), tfile_names.end()); // add vector
+                }
+            } else if (suffix.size() == 0 || isSuffix(name, suffix)) {
+                file_names.emplace_back(full_path);
+            }
+        }
+    } while (pentry != nullptr);
+    return file_names;
+}
+
+static std::vector<std::string> getFilePathVectorRecursively(const std::string& ipath, const std::string& suffix = "") {
+    // make file path vector by suffix recursively
+    return getFilePathVector(ipath, suffix, true);
 }

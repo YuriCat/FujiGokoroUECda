@@ -35,12 +35,12 @@ namespace UECda {
                 int l2Result = l2.start_judge(pfield->hand[blackPlayer], pfield->hand[whitePlayer], pfield->board, pfield->fieldInfo);
 
                 if (l2Result == L2_WIN) {
-                    pfield->setPlayerNewClass(blackPlayer, pfield->getWorstClass() - 1);
-                    pfield->setPlayerNewClass(whitePlayer, pfield->getWorstClass());
+                    pfield->setNewClassOf(blackPlayer, pfield->getWorstClass() - 1);
+                    pfield->setNewClassOf(whitePlayer, pfield->getWorstClass());
                     goto GAME_END;
                 } else if (l2Result == L2_LOSE) {
-                    pfield->setPlayerNewClass(whitePlayer, pfield->getWorstClass() - 1);
-                    pfield->setPlayerNewClass(blackPlayer, pfield->getWorstClass());
+                    pfield->setNewClassOf(whitePlayer, pfield->getWorstClass() - 1);
+                    pfield->setNewClassOf(blackPlayer, pfield->getWorstClass());
                     goto GAME_END;
                 }
 #endif // SEARCH_LEAF_L2

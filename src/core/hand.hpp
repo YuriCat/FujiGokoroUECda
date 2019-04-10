@@ -343,7 +343,7 @@ namespace UECda {
                     Cards mask = RankToCards(r); // 当該ランクのマスク
                     
                     // 枚数型は当該ランクの枚数を足す
-                    qr = qr.data() + ((BitCards(dq)) << (r << 2));
+                    qr = qr.data() + (BitCards(dq) << (r << 2));
                     uint32_t nq = qr[r]; // 当該ランクの新しい枚数
                     
                     // 枚数位置型、圧縮型ともに新しい枚数に入れ替える

@@ -98,7 +98,7 @@ int testSuitSuits() {
                 uint32_t os0 = SuitNumToSuits(osn);
                 for (uint32_t os1 = 0; os1 < 16; ++os1) {
                     int oindex = getSuitSuitsIndex(os0, os1);
-                    bool equivalence = countBits(s1) == countBits(os1) && countBits(s0 & s1) == countBits(os0 & os1);
+                    bool equivalence = popcnt(s1) == popcnt(os1) && popcnt(s0 & s1) == popcnt(os0 & os1);
                     if (equivalence != (index == oindex)) {
                         cerr << "inconsistent pattern index. ";
                         cerr << index << " (" << s0 << ", " << s1 << ")" << " <-> ";
@@ -127,9 +127,9 @@ int test2Suits() {
             for (uint32_t os0 = 0; os0 < 16; ++os0) {
                 for (uint32_t os1 = 0; os1 < 16; ++os1) {
                     int oindex = get2SuitsIndex(os0, os1);
-                    bool equivalence = (countBits(s0) + countBits(s1)) == (countBits(os0) + countBits(os1))
-                    && abs((int)countBits(s0) - (int)countBits(s1)) == abs((int)countBits(os0) - (int)countBits(os1))
-                    && countBits(s0 & s1) == countBits(os0 & os1);
+                    bool equivalence = (popcnt(s0) + popcnt(s1)) == (popcnt(os0) + popcnt(os1))
+                    && abs((int)popcnt(s0) - (int)popcnt(s1)) == abs((int)popcnt(os0) - (int)popcnt(os1))
+                    && popcnt(s0 & s1) == popcnt(os0 & os1);
                     if (equivalence != (index == oindex)) {
                         cerr << "inconsistent pattern index. ";
                         cerr << index << " (" << s0 << ", " << s1 << ")" << " <-> ";
@@ -158,9 +158,9 @@ int testSuitsSuits() {
             for (uint32_t os0 = 0; os0 < 16; ++os0) {
                 for (uint32_t os1 = 0; os1 < 16; ++os1) {
                     int oindex = getSuitsSuitsIndex(os0, os1);
-                    bool equivalence = countBits(s0) == countBits(os0)
-                    && countBits(s1) == countBits(os1)
-                    && countBits(s0 & s1) == countBits(os0 & os1);
+                    bool equivalence = popcnt(s0) == popcnt(os0)
+                    && popcnt(s1) == popcnt(os1)
+                    && popcnt(s0 & s1) == popcnt(os0 & os1);
                     if (equivalence != (index == oindex)) {
                         cerr << "inconsistent pattern index. ";
                         cerr << index << " (" << s0 << ", " << s1 << ")" << " <-> ";
