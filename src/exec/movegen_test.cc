@@ -23,7 +23,7 @@ std::mt19937 mt;
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
 int moves = genLead(buffer, c);\
 cerr << moves << " moves were generated for " << c << endl;\
-for (int m = 0; m < moves; ++m) { cerr << buffer[m].mv() << " "; }\
+for (int m = 0; m < moves; ++m) { cerr << buffer[m] << " "; }\
 cerr << endl;}
 
 int outputGenerationResult() {
@@ -57,7 +57,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     
     // 主観的合法性
     for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
-        if (!isSubjectivelyValid(field.board, tmp->mv(), c,
+        if (!isSubjectivelyValid(field.board, *tmp, c,
                                  field.getNCards(field.turn()))) {
             // 主観的合法性違反
             cerr << "invalid move" << c << "(" << field.getNCards(field.turn()) << ")";

@@ -77,8 +77,8 @@ bool checkCardsPWSlow(MoveInfo *const buf,
                     const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
                     if (opsMoves > 0) {
                         // ここからBNPW判定
-                        /*for (int m = 0; m < opsMoves; ++m) {
-                            Move opsMove = buf[m].mv();
+                        /*for (int m = 0; m < opsMoves; m++) {
+                            Move opsMove = buf[m];
                             Board nextBd = bd;
                             nextBd.proc(opsMove);
                             if (nextBd.isNull())continue; // 相手に流されたらそこで終了
@@ -111,13 +111,13 @@ int searchCardsPWSlow(MoveInfo *const buf, const int moves,
     for (int i = 0; i < moves; i++) {
         if (buf[i].qty() >= countCards(myCards)) { // final move
             mateIndex = i;
-            if (M) mateMoves.insert(buf[mateIndex].mv().toInt());
+            if (M) mateMoves.insert(buf[mateIndex].toInt());
             else return i;
         }
     }
     if (mateIndex >= 0) return mateIndex;
     for (int i = 0; i < moves; i++) {
-        if (checkCardsPWSlow<M>(buf + moves, p, buf[i].mv(), myCards, opsCards, bd, ps, flushLead)) {
+        if (checkCardsPWSlow<M>(buf + moves, p, buf[i], myCards, opsCards, bd, ps, flushLead)) {
             if (M) mateIndex = i;
             else return i;
         }
@@ -249,7 +249,7 @@ int testRecordMoveMate(const Record& record) {
             searchTime[0] += cl.stop();
             searchCount += 1;
             
-            /*for (int m = 0; m < moves; ++m) {
+            /*for (int m = 0; m < moves; m++) {
                 bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
                 cerr << buffer[m] << " : " << check << endl;
             }*/
@@ -265,7 +265,7 @@ int testRecordMoveMate(const Record& record) {
             
             /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
                 
-                for (int m = 0; m < moves; ++m) {
+                for (int m = 0; m < moves; m++) {
                     bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
                     cerr << buffer[m] << " : " << check << endl;
                 }

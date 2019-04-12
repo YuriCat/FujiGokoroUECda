@@ -88,7 +88,7 @@ namespace UECda {
 #ifdef DEBUG
         pnext->p = cur.p;
 #endif
-        const Move mv = mi.mv();
+        const Move mv = mi;
         
         if (cur.isUnrivaled()) { // 独壇場
             if (mv.isPASS()) { // pass
@@ -355,7 +355,7 @@ namespace UECda {
                               const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         if (field.isUnrivaled()
             || tmp.isDO()
-            || dominatesCards(tmp.mv(), opsHand.cards, field.b)) { // 他支配チェック
+            || dominatesCards(tmp, opsHand.cards, field.b)) { // 他支配チェック
 
             tmp.setDomOthers();
             if (myHand.qty - tmp.qty() <= 1) {
@@ -366,12 +366,12 @@ namespace UECda {
             int res;
             Hand nextHand;
             if (!tmp.isPASS()) {
-                makeMove1stHalf(myHand, &nextHand, tmp.mv());
+                makeMove1stHalf(myHand, &nextHand, tmp);
                 if (judgeMate_Easy_NF(nextHand)) {
                     DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
-                L2Field nextField = procAndFlushL2Field(field, tmp.mv());
+                L2Field nextField = procAndFlushL2Field(field, tmp);
                 nextHand.hash = myHand.hash ^ CardsToHashKey(tmp.cards());
                 res = judge<3, 4>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
@@ -379,7 +379,7 @@ namespace UECda {
                     DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
-                L2Field nextField = procAndFlushL2Field(field, tmp.mv());
+                L2Field nextField = procAndFlushL2Field(field, tmp);
                 res = judge<3, 4>(depth + 1, buf, myHand, opsHand, nextField);
             }
             if (res == L2_WIN) {
@@ -436,13 +436,13 @@ namespace UECda {
         
         // 支配性判定
         if (!pass && (field.isLastAwake() || tmp.dominatesOthers())) {
-            if (dominatesCards(tmp.mv(), myHand.cards, field.b)) {
+            if (dominatesCards(tmp, myHand.cards, field.b)) {
                 tmp.setDomMe();
             }
         }
         
         if (!pass) {
-            makeMoveAll(myHand, &nextHand, tmp.mv());
+            makeMoveAll(myHand, &nextHand, tmp);
             DERR << " " << myHand << " -> " << nextHand;
             
             nextPlayer = procL2Field(field, &nextField, tmp);

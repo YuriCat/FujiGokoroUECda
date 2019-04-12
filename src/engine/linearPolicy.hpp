@@ -327,7 +327,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 s -= 1000; // Mateのときは低い点にする
             } else {
                 // 着手パラメータ
-                const int aftOrd = bd.afterTmpOrder(mv.mv());
+                const int aftOrd = bd.afterTmpOrder(mv);
                 const int q4 = min(mv.qty(), 4);
                 
                 const Cards afterCards = subtrCards(myCards, mv.cards());
@@ -451,7 +451,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 {
                     constexpr int base = FEA_IDX(FEA_SUITLOCK_EFFECT);
                     if (!mv.isPASS() && !bd.isNull()) {
-                        if (!fieldInfo.isLastAwake() && bd.locksSuits(mv.mv())) { // LAでなく、スートロックがかかる
+                        if (!fieldInfo.isLastAwake() && bd.locksSuits(mv)) { // LAでなく、スートロックがかかる
                             int key;
                             if (mv.qty() > 1) key = base + 2; // 2枚以上のロックは強力
                             else {
@@ -597,7 +597,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // NF_Dominance Move On PassDom
                 {
                     if (fieldInfo.isPassDom()) {
-                        if (mv.domInevitably() || dominatesHand(mv.mv(), opsHand, OrderToNullBoard(order))) {
+                        if (mv.domInevitably() || dominatesHand(mv, opsHand, OrderToNullBoard(order))) {
                             int key = FEA_IDX(FEA_MOVE_NFDOM_PASSDOM);
                             Foo(key)
                         }
@@ -659,13 +659,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                                 uint32_t as = afterCards[f];
                                 if (as) {
-                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
+                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), as));
                                     Foo(key)
                                 }
                             }
                             if (containsJOKER(afterCards)) {
-                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
+                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
                                                             RANK_JOKER, mv.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key)
@@ -709,13 +709,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
                                 uint32_t os = opsCards[f];
                                 if (os) {
-                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
+                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
                                                                 f, getSuitsSuitsIndex(mv.suits(), os));
                                     Foo(key)
                                 }
                             }
                             if (containsJOKER(opsCards)) {
-                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv.mv()) ? 1 : 0,
+                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
                                                             RANK_JOKER, mv.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key);

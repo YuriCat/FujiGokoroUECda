@@ -41,20 +41,20 @@ namespace UECda {
         }
         
         virtual Move play() {
-            MoveInfo buf[1024];
+            Move buf[1024];
             const int NMoves = genMove(buf, field.getMyCards(), field.board);
             
-            for (int i = 0; i < NMoves; ++i) {
+            for (int i = 0; i < NMoves; i++) {
                 CERR << i << " : " << buf[i] << endl;
             }
-            MoveInfo mv;
+            Move mv;
             if (NMoves == 1 && buf[0].isPASS()) {
                 mv = buf[0];
             } else {
                 mv = buf[dice.rand() % NMoves];
             }
             CERR << mv << " by " << field.getMyCards() << endl;
-            return mv.mv();
+            return mv;
         }
         ~RandomEngine() { closeMatch(); }
     };
@@ -71,7 +71,7 @@ namespace UECda {
             Cards cand[N_MAX_CHANGES]; // 最大候補数
             const int NCands = genChange(cand, myCards, change_qty);
             
-            for (int i = 0; i < NCands; ++i) {
+            for (int i = 0; i < NCands; i++) {
                 cerr << i << " : " << cand[i] << endl;
             }
             int chosen = -1;
@@ -83,10 +83,10 @@ namespace UECda {
         }
 
         virtual Move play() { // プレー関数
-            MoveInfo buf[512];
+            Move buf[512];
             const int NMoves = genMove(buf, field.getMyCards(), field.board);
             
-            for (int i = 0; i < NMoves; ++i) {
+            for (int i = 0; i < NMoves; i++) {
                 cerr << i << " : " << buf[i] << endl;
             }
             
@@ -100,7 +100,7 @@ namespace UECda {
                 std::cin >> chosen;
                 if (0 <= chosen && chosen < NMoves) break;
             }
-            return buf[chosen].mv();
+            return buf[chosen];
         }
     };
 }

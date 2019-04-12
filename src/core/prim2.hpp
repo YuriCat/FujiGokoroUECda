@@ -273,7 +273,6 @@ namespace UECda {
         constexpr MoveInfo(): Move() {}
         constexpr MoveInfo(const Move& m): Move(m) {}
         constexpr MoveInfo(const MoveInfo& m): Move(m) {}
-        constexpr Move mv() const { return Move(*this); }
 
         void set(size_t i) { Move::flags |= 1U << i; }
         template <class... args_t>

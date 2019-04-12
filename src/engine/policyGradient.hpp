@@ -59,7 +59,7 @@ namespace UECda {
                         cerr << tmp.data() << endl;
                         cerr << field.toDebugString();
                         for (int m = 0;m < NMoves; ++m) {
-                            cerr << buf[m] << buf[m].mv().bits() << " ";
+                            cerr << buf[m] << buf[m].bits() << " ";
                         }
                         cerr << endl;
                         getchar();
@@ -138,7 +138,7 @@ namespace UECda {
                     if (NMoves == 1) { return 0; }
                     
                     int idx = searchMove(buf, NMoves, [chosenMove](const auto& mv)->bool{
-                        return mv.mv() == chosenMove;
+                        return mv == chosenMove;
                     });
                     
                     if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) {                         return 0;
@@ -154,7 +154,7 @@ namespace UECda {
                         cerr << tmp.data() << endl;
                         cerr << field.toDebugString();
                         for (int m = 0; m < NMoves; ++m) {
-                            cerr << buf[m] << buf[m].mv().bits() << " ";
+                            cerr << buf[m] << buf[m].bits() << " ";
                         }
                         cerr << endl;
                         getchar();

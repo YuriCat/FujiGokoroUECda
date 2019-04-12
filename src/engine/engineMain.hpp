@@ -327,7 +327,7 @@ namespace UECda {
                     else cerr << "no chance. PASS" << endl;
                 }
                 if (!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
-                return mv[0].mv();
+                return mv[0];
             }
             
             // 合法着手生成(特別着手)
@@ -353,40 +353,39 @@ namespace UECda {
             // 着手追加情報を設定
             int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
             for (int i = 0; i < NMoves; i++) {
-                MoveInfo *const mi = &mv[i];
-                const Move move = mi->mv();
+                MoveInfo& move = mv[i];
                 
                 Cards nextCards = maskCards(myCards, move.cards());
                 // 支配性
-                if (mi->qty() > fieldInfo.getMaxNCardsAwake()
-                    || dominatesCards(mi->mv(), opsCards, bd)) {
-                    mi->setDO(); // 他支配
+                if (move.qty() > fieldInfo.getMaxNCardsAwake()
+                    || dominatesCards(move, opsCards, bd)) {
+                    move.setDO(); // 他支配
                 }
-                if (mi->isPASS() || mi->qty() > myCards.count() - mi->qty()
-                    || dominatesCards(mi->mv(), myCards - mi->cards(), bd)) {
-                    mi->setDM(); // 自己支配
+                if (move.isPASS() || move.qty() > myCards.count() - move.qty()
+                    || dominatesCards(move, myCards - move.cards(), bd)) {
+                    move.setDM(); // 自己支配
                 }
                 
                 if (Settings::MateSearchOnRoot) { // 多人数必勝判定
-                    if (checkHandMate(1, searchBuffer, *mi, myHand, opsHand, bd, fieldInfo)) {
-                        mi->setMPMate(); fieldInfo.setMPMate();
+                    if (checkHandMate(1, searchBuffer, move, myHand, opsHand, bd, fieldInfo)) {
+                        move.setMPMate(); fieldInfo.setMPMate();
                     }
                 }
                 if (Settings::L2SearchOnRoot) {
                     if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                         L2Judge lj(400000, searchBuffer);
-                        int l2Result = (bd.isNull() && mi->isPASS()) ? L2_LOSE : lj.start_check(*mi, myHand, opsHand, bd, fieldInfo);
+                        int l2Result = (bd.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, bd, fieldInfo);
                         if (l2Result == L2_WIN) { // 勝ち
                             DERR << "l2win!" << endl;
-                            mi->setL2Mate(); fieldInfo.setL2Mate();
+                            move.setL2Mate(); fieldInfo.setL2Mate();
                             DERR << fieldInfo << endl;
                         } else if (l2Result == L2_LOSE) {
-                            mi->setL2GiveUp();
+                            move.setL2GiveUp();
                         }
                     }
                 }
                 // 最小分割数の減少量
-                mi->setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
+                move.setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
             }
             
             // 判定結果を報告
@@ -499,7 +498,7 @@ namespace UECda {
                 // 9. 自分を支配していないものを優先
                 next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
                 
-                playMove = root.child[0].move.mv(); // 必勝手から選ぶ
+                playMove = root.child[0].move; // 必勝手から選ぶ
             }
             
 #ifdef POLICY_ONLY
@@ -510,12 +509,12 @@ namespace UECda {
                                                        Settings::simulationAmplifyCoef,
                                                        Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                playMove = mv[selector.select(dice.drand())].mv();
+                playMove = mv[selector.select(dice.drand())];
             }
 #endif
             if (playMove == MOVE_NONE) {
                 // 最高評価の着手を選ぶ
-                playMove = root.child[0].move.mv();
+                playMove = root.child[0].move;
             }
             if (monitor) {
                 cerr << root.toString();

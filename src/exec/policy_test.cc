@@ -120,7 +120,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
             clock.start();
             int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, &dice);
             time[turn] += clock.stop();
-            Move p = moves[index].mv();
+            Move p = moves[index];
             
             if (pl == p) sameCount[turn] += 1;
             trials[turn] += 1;

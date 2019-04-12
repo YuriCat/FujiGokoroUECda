@@ -424,10 +424,10 @@ namespace UECda {
                     
                     Hand nextHand;
                     
-                    makeMove1stHalf(myHand, &nextHand, mv.mv());
+                    makeMove1stHalf(myHand, &nextHand, mv);
                     if (!depth && mv.qty() > 4) {
                         Board nb = b;
-                        nb.procOrder(mv.mv());
+                        nb.procOrder(mv);
                         // 5枚以上の階段は支配としとく
                         if (judgeHandPW_NF(nextHand, opsHand, b)
                            || judgeHandPW_NF(nextHand, opsHand, nb)) {
@@ -435,7 +435,7 @@ namespace UECda {
                             return true;
                         }
                     } else {
-                        if (dominatesHand(mv.mv(), opsHand, b)) {
+                        if (dominatesHand(mv, opsHand, b)) {
                             if (judgeHandPW_NF(nextHand, opsHand, b)) return true;
                         } else {
                             // 支配的でない場合、この役を最後に出すことを検討
@@ -480,7 +480,7 @@ namespace UECda {
                 }
                 // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
                 Hand nextHand;
-                makeMove1stHalf(myHand, &nextHand, mv.mv());
+                makeMove1stHalf(myHand, &nextHand, mv);
                 Move sj; sj.setSingleJOKER();
                 nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
@@ -539,14 +539,14 @@ namespace UECda {
                 Hand nextHand;
                 Board bd = b;
                 FieldAddInfo nextFieldInfo;
-                makeMove1stHalf(myHand, &nextHand, mv.mv());
-                if (dominatesCards(mv.mv(), nextHand.cards, b)) { // 自己支配
+                makeMove1stHalf(myHand, &nextHand, mv);
+                if (dominatesCards(mv, nextHand.cards, b)) { // 自己支配
                     mv.setDM(); // 支配フラグ付加
-                    bd.procAndFlush(mv.mv());
+                    bd.procAndFlush(mv);
                     flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                     return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
                 } else { // セルフフォロー必勝を判定
-                    bd.proc(mv.mv());
+                    bd.proc(mv);
                     procUnrivaled(fieldInfo, &nextFieldInfo);
                     return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
                 }
@@ -573,16 +573,16 @@ namespace UECda {
         // DERR << depth << endl;
         // 通常
         if (mv.qty() >= myHand.qty) return true; // 即上がり
-        if (dominatesHand(mv.mv(), opsHand, b)
+        if (dominatesHand(mv, opsHand, b)
            || mv.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
             
             mv.setDO(); // 支配フラグ付加
             
             Board bd = b;
-            bd.proc(mv.mv());
+            bd.proc(mv);
             Hand nextHand;
 
-            makeMove1stHalf(myHand, &nextHand, mv.mv());
+            makeMove1stHalf(myHand, &nextHand, mv);
             
             // セルフフォロー
             
@@ -612,12 +612,12 @@ namespace UECda {
                    && containsS3(myHand.cards) // 残り手札にS3がある
                    && !mv.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
                     Cards zone = ORToGValidZone(b.order(), mv.rank());
-                    if (b.locksSuits(mv.mv())) {
+                    if (b.locksSuits(mv)) {
                         zone &= SuitsToCards(mv.suits());
                     }
                     if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
                         Hand nextHand;
-                        makeMove1stHalf(myHand, &nextHand, mv.mv());
+                        makeMove1stHalf(myHand, &nextHand, mv);
                         if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
                             Move s3; s3.setSingle(INTCARD_S3);
                             nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める

@@ -38,10 +38,10 @@ op; mv++; }}
 #define GEN(q, oc) GEN_BASE(q, oc,)
 #define GEN_J(q, oc, jdr) GEN_BASE(q, oc, mv->setJokerRank(r + jdr); mv->setJokerSuits(s))
 
-    inline int genAllSeqWithJoker(MoveInfo *const mv0, const Cards x) {
+    inline int genAllSeqWithJoker(Move *const mv0, const Cards x) {
         Cards c = maskJOKER(x);
         if (!c) return 0;
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         
         // 3枚階段
         const Cards c1_1 = polymJump(c);
@@ -130,10 +130,10 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    int genAllPlainSeq(MoveInfo *const mv0, const Cards x) {
+    int genAllPlainSeq(Move *const mv0, const Cards x) {
         // ジョーカーを入れない階段のみ生成
         // 生成ランク制限無し
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         Cards c = polymRanks<3>(x);
         for (int q = 3; anyCards(c); q++) {
             for (IntCard ic : c) {
@@ -147,12 +147,12 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genAllSeq(MoveInfo *const mv, const Cards c) {
+    inline int genAllSeq(Move *const mv, const Cards c) {
         if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
         else return genAllSeqWithJoker(mv, c);
     }
 
-    inline int genFollowPlainSeq(MoveInfo *const mv0, Cards c, Board b) {
+    inline int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
         uint32_t r = b.rank();
         uint32_t q = b.qty();
         assert(q >= 3);
@@ -168,7 +168,7 @@ op; mv++; }}
         if (q > 3) c = polymRanks(c, q - 3 + 1);
         if (!c) return 0;
         if (b.suitsLocked()) c &= SuitsToCards(b.suits());
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         for (IntCard ic : c) {
             int r = IntCardToRank(ic);
             uint32_t s = IntCardToSuits(ic);
@@ -177,7 +177,7 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genFollowSeqWithJoker(MoveInfo *const mv0, const Cards plain, const Board b) {
+    inline int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
         const uint32_t r = b.rank();
         const uint32_t qty = b.qty();
         assert(qty >= 3);
@@ -196,7 +196,7 @@ op; mv++; }}
         c &= rCards;
         if (b.suitsLocked()) c &= SuitsToCards(b.suits());
         if (!c) return 0;
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         switch (qty) {
             case 0: UNREACHABLE; break;
             case 1: UNREACHABLE; break;
@@ -283,7 +283,7 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genFollowSeq(MoveInfo *const mv, const Cards c, const Board b) {
+    inline int genFollowSeq(Move *const mv, const Cards c, const Board b) {
         if (!containsJOKER(c)) return genFollowPlainSeq(mv, c, b);
         else return genFollowSeqWithJoker(mv, c, b);
     }
@@ -300,9 +300,9 @@ op; mv++; }}
         return CardsToNR(vc, q);
     }
 
-    inline int genFollowSingle(MoveInfo *const mv0, const Cards myCards, const Board b) {
+    inline int genFollowSingle(Move *const mv0, const Cards myCards, const Board b) {
         Cards c = myCards;
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         if (b.isSingleJOKER()) {
             if (containsS3(c)) {
                 mv->setSingle(INTCARD_S3);
@@ -331,7 +331,7 @@ op; mv++; }}
 #define GEN(q, s) GEN_BASE(q, s,)
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
 
-    inline int genFollowDouble(MoveInfo *const mv0, const Cards hand, const Board b) {
+    inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
         const Cards x = hand;
         const int br = b.rank();
         Cards valid;
@@ -340,7 +340,7 @@ op; mv++; }}
         } else { // オーダー逆転中
             valid = RankRangeToCards(RANK_MIN, br - 1);
         }
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         if (!b.suitsLocked()) { // スートしばりなし
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
             // 4枚ある箇所から各スートで生成
@@ -449,7 +449,7 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genFollowTriple(MoveInfo *const mv0, const Cards hand, const Board b) {
+    inline int genFollowTriple(Move *const mv0, const Cards hand, const Board b) {
         const int br = b.rank();
         const Cards x = Cards(hand);
         Cards valid;
@@ -458,7 +458,7 @@ op; mv++; }}
         } else { // オーダー逆転中
             valid = RankRangeToCards(RANK_MIN, br - 1);
         }
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         
         if (!b.suitsLocked()) { // スートしばりなし
             Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
@@ -532,8 +532,8 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genFollowQuadruple(MoveInfo *const mv0, const Cards hand, const Board b) {
-        MoveInfo *mv = mv0;
+    inline int genFollowQuadruple(Move *const mv0, const Cards hand, const Board b) {
+        Move *mv = mv0;
         const Cards x = Cards(hand);
         const int br = b.rank();
         Cards valid;
@@ -557,8 +557,8 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genAllSingle(MoveInfo *const mv0, Cards c) {
-        MoveInfo *mv = mv0;
+    inline int genAllSingle(Move *const mv0, Cards c) {
+        Move *mv = mv0;
         if (c.joker()) {
             (mv++)->setSingleJOKER();
             c = c.plain();
@@ -567,10 +567,10 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genLead(MoveInfo *const mv0, const Cards hand) {
+    inline int genLead(Move *const mv0, const Cards hand) {
         const Cards c = Cards(hand);
         bool jk = containsJOKER(c) ? true : false;
-        MoveInfo *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
+        Move *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
         Cards x;
         if (jk) {
             x = maskJOKER(c);
@@ -744,7 +744,7 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genLegalLead(MoveInfo *const mv0, const Cards hand) {
+    inline int genLegalLead(Move *const mv0, const Cards hand) {
         int cnt = genLead(mv0, hand);
         (mv0 + cnt)->setPASS();
         return cnt + 1;
@@ -764,7 +764,7 @@ op; mv++; }}
     // 8か最強ランクであり、
     // 本来そのランクが無くなるはずの着手についてのみ検討する
 
-    inline int genNullPass(MoveInfo *const mv0) {
+    inline int genNullPass(Move *const mv0) {
         // 空場でのパスを生成
         mv0->setPASS();
         return 1;
@@ -773,13 +773,13 @@ op; mv++; }}
 #define GEN_BASE(q, s, op) { mv->setGroup(q, r, s); op; mv++; }
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
 
-    inline int genJokerGroup(MoveInfo *const mv0, Cards c, const Cards ops, const Board b) {
+    inline int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b) {
         
         assert(containsJOKER(c));
         assert(containsS3(ops));
         assert(b.isGroup());
         
-        MoveInfo *mv = mv0;
+        Move *mv = mv0;
         int br = b.rank();
         if (b.order() == 0) { // 通常
             c &= RankRangeToCards(br + 1, RANK_MAX);
@@ -886,8 +886,8 @@ op; mv++; }}
 #undef GEN_BASE
 #undef GEN_J
 
-    inline int genGroupDebug(MoveInfo *const mv0, Cards c, Board b) {
-        MoveInfo *mv = mv0;
+    inline int genGroupDebug(Move *const mv0, Cards c, Board b) {
+        Move *mv = mv0;
         int st, ed;
         // 速度は問わず、全ての合法着手を生成
         if (b.isNull()) {
@@ -921,7 +921,7 @@ op; mv++; }}
         return mv - mv0;
     }
 
-    inline int genFollowExceptPASS(MoveInfo *const mv, const Cards c, const Board b) {
+    inline int genFollowExceptPASS(Move *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
         int ret = 0;
         if (!b.isSeq()) {
@@ -938,16 +938,16 @@ op; mv++; }}
         } else return genFollowSeq(mv, c, b);
     }
 
-    inline int genFollow(MoveInfo *const mv, const Cards c, const Board b) {
+    inline int genFollow(Move *const mv, const Cards c, const Board b) {
         // 返り値は、生成した手の数
         mv->setPASS();
         return 1 + genFollowExceptPASS(mv + 1, c, b);
     }
-    inline int genMove(MoveInfo *mv, const Cards c, const Board b) {
+    inline int genMove(Move *mv, const Cards c, const Board b) {
         if (b.isNull()) return genLead(mv, c);
         else return genFollow(mv, c, b);
     }
-    inline int genLegal(MoveInfo *mv, const Cards c, const Board b) {
+    inline int genLegal(Move *mv, const Cards c, const Board b) {
         if (b.isNull()) return genLegalLead(mv, c);
         else return genFollow(mv, c, b);
     }

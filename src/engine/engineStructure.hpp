@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 // 思考用の構造体
 #include "../core/data.hpp"
@@ -431,7 +431,7 @@ namespace UECda {
                 oss << m << " ";
                 
                 if (isChange) oss << child[m].changeCards;
-                else oss << child[m].move.mv();
+                else oss << child[m].move;
                 
                 oss << " : ";
                 

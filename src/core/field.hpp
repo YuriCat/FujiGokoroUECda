@@ -611,16 +611,16 @@ int Field::proc(const int tp, const MoveInfo mv) {
                     setNewClassOf(tp, getBestClass());
                     ps.setDead(tp);
                     attractedPlayers.reset(tp);
-                    procAndKillHand(tp, mv.mv(), mv.cards(), mv.qty());
+                    procAndKillHand(tp, mv, mv.cards(), mv.qty());
                 } else {
-                    procHand(tp, mv.mv(), mv.cards(), mv.qty());
+                    procHand(tp, mv, mv.cards(), mv.qty());
                 }
             }
         } else {
-            procHand(tp, mv.mv(), mv.cards(), mv.qty());
+            procHand(tp, mv, mv.cards(), mv.qty());
         }
         
-        board.proc(mv.mv());
+        board.proc(mv);
         setOwner(tp);
         common.turnCount++;
         if (board.isNull()) { // 流れた
@@ -698,7 +698,7 @@ inline int Field::procSlowest(const Move mv) {
     return turn();
 }
 inline int Field::procSlowest(const MoveInfo mv) {
-    return procSlowest(mv.mv());
+    return procSlowest(mv);
 }
 
 // copy Field arg to dst before playout
