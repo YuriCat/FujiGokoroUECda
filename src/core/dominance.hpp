@@ -57,7 +57,7 @@ namespace UECda {
         if (m.domInevitably()) return true;
         if (b.domConditionally(m)) return true;
 
-        if (m.isSingleJOKER()) return !containsS3(oh);
+        if (m.isSingleJOKER()) return !containsS3(oh.cards);
         if (!m.isSeq() && m.qty() <= oh.jk) return false;
         
         if (!m.isSeq()) {
@@ -88,7 +88,7 @@ namespace UECda {
         if (b.isNull()) return false;
         if (b.domInevitably()) return true;
 
-        if (b.isSingleJOKER()) return !containsS3(oh);
+        if (b.isSingleJOKER()) return !containsS3(oh.cards);
         if (!b.isSeq() && b.qty() <= oh.jk) return false;
         
         if (!b.isSeq()) { // グループ

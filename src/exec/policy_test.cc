@@ -170,8 +170,7 @@ int testSelector(const MatchRecord& mrecord) {
                     
                     double temp = 0.7 + 0.1 * i;
                     
-                    SoftmaxSelector selector(tscore, moves, temp);
-                    selector.to_prob();
+                    SoftmaxSelector<double> selector(tscore, moves, temp);
                     if (recordIndex >= 0) {
                         sameProb[0][i][0] += selector.prob(recordIndex);
                     }
@@ -186,9 +185,7 @@ int testSelector(const MatchRecord& mrecord) {
                         double temp = 0.7 + 0.1 * i;
                         double threshold = (4 - j) * 0.01;
                         
-                        ThresholdSoftmaxSelector selector(tscore, moves, temp, threshold);
-                        selector.cut();
-                        selector.to_prob();
+                        ThresholdSoftmaxSelector<double> selector(tscore, moves, temp, threshold);
                         if (recordIndex >= 0) {
                             sameProb[1][i][j] += selector.prob(recordIndex);
                         }
@@ -203,10 +200,7 @@ int testSelector(const MatchRecord& mrecord) {
                         double coef = 0.4 - 0.1 * j;
                         double rate = SIMULATION_AMPLIFY_EXPONENT;
                         
-                        BiasedSoftmaxSelector selector(tscore, moves, temp, coef, rate);
-                        selector.amplify();
-                        selector.to_prob();
-                        
+                        BiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, rate);
                         if (recordIndex >= 0) {
                             sameProb[2][i][j] += selector.prob(recordIndex);
                         }
@@ -222,10 +216,7 @@ int testSelector(const MatchRecord& mrecord) {
                         double etemp = 1 / log(2);
                         //double etemp = 0.1 * pow(4, j);
                         
-                        ExpBiasedSoftmaxSelector selector(tscore, moves, temp, coef, etemp);
-                        selector.amplify();
-                        selector.to_prob();
-                        
+                        ExpBiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, etemp);
                         if (recordIndex >= 0) {
                             sameProb[3][i][j] += selector.prob(recordIndex);
                         }

@@ -260,8 +260,8 @@ public:
             }
             
             //ランダムに選んでどうか
-            SoftmaxSelector selector(candLHS, HARate, 0.3);
-            bestCand = selector.run_all(&ptools->dice);
+            SoftmaxSelector<double> selector(candLHS, HARate, 0.3);
+            bestCand = selector.select(ptools->dice.drand());
             
             for (int p = 0; p < N; p++) dst[p] = cand[bestCand][p];
             for (int p = 0; p < N; p++) {
@@ -985,9 +985,8 @@ private:
                         for (int i = 0; i < NMoves; i++) {
                             if (mv[i].isMate()) score[i] = maxScore + 4;
                         }
-                        SoftmaxSelector selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
-                        selector.to_prob();
-                        if (selector.sum != 0) {
+                        SoftmaxSelector<double> selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
+                        if (selector.sum_ != 0) {
                             playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
                         } else { // 等確率とする
                             playLH += log(1 / (double)NMoves);

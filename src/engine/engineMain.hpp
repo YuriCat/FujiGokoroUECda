@@ -41,6 +41,7 @@ namespace UECda {
     public:
         EngineSharedData shared;
         decltype(shared.record)& record = shared.record;
+        bool monitor = false;
         
         void setRandomSeed(uint64_t s) {
             // 乱数系列を初期化
@@ -113,10 +114,8 @@ namespace UECda {
             RootInfo root;
             Cards changeCards = CARDS_NULL;
             const Cards myCards = gameLog.getDealtCards(myPlayerNum);
-            
-#ifdef MONITOR
-            cerr << "My Cards : " << myCards << endl;
-#endif
+
+            if (monitor) cerr << "My Cards : " << myCards << endl;
             
 #ifdef RARE_PLAY
             // レアプレーを行っていない場合は行う
@@ -240,12 +239,12 @@ namespace UECda {
 #ifdef POLICY_ONLY
             if (changeCards == CARDS_NULL && Settings::temperatureChange > 0) {
                 // 確率的に選ぶ場合
-                BiasedSoftmaxSelector selector(score, root.candidates,
-                                                Settings::simulationTemperatureChange,
-                                                Settings::simulationAmplifyCoef,
-                                                Settings::simulationAmplifyExponent);
+                BiasedSoftmaxSelector<double> selector(score, root.candidates,
+                                                       Settings::simulationTemperatureChange,
+                                                       Settings::simulationAmplifyCoef,
+                                                       Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                changeCards = cand[selector.run_all(dice.drand())];
+                changeCards = cand[selector.select(dice.drand())];
             }
 #endif
             if (changeCards == CARDS_NULL) {
@@ -256,14 +255,14 @@ namespace UECda {
         DECIDED_CHANGE:
             assert(countCards(changeCards) == change_qty);
             assert(holdsCards(myCards, changeCards));
-#ifdef MONITOR
-            cerr << root.toString();
-            cerr << "\033[1m";
-            cerr << "\033[" << 34 << "m";
-            cerr << "Best Change : " << changeCards << endl;
-            cerr << "\033[" << 39 << "m";
-            cerr << "\033[0m";
-#endif
+            if (monitor) {
+                cerr << root.toString();
+                cerr << "\033[1m";
+                cerr << "\033[" << 34 << "m";
+                cerr << "Best Change : " << changeCards << endl;
+                cerr << "\033[" << 39 << "m";
+                cerr << "\033[0m";
+            }
             return changeCards;
         }
         
@@ -323,13 +322,10 @@ namespace UECda {
             if (NMoves == 1) {
                 // 合法着手1つ。パスのみか、自分スタートで手札1枚
                 // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
-#ifdef MONITOR
-                if (!mv[0].isPASS()) {
-                    cerr << "final move. " << mv[0] << endl;
-                } else {
-                    cerr << "no chance. PASS" << endl;
+                if (monitor) {
+                    if (!mv[0].isPASS()) cerr << "final move. " << mv[0] << endl;
+                    else cerr << "no chance. PASS" << endl;
                 }
-#endif
                 if (!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
                 return mv[0].mv();
             }
@@ -410,15 +406,15 @@ namespace UECda {
             if (Settings::MateSearchOnRoot) {
                 if (fieldInfo.isMPMate()) shared.setMyMate(field.getBestClass());
             }
-            
-#ifdef MONITOR
-            // 着手候補一覧表示
-            cerr << "My Cards : " << myCards << endl;
-            cerr << bd << " " << fieldInfo << endl;
-            for (int i = 0; i < NMoves; i++) {
-                cerr << mv[i] << toInfoString(mv[i], bd) << endl;
+
+            if (monitor) {
+                // 着手候補一覧表示
+                cerr << "My Cards : " << myCards << endl;
+                cerr << bd << " " << fieldInfo << endl;
+                for (int i = 0; i < NMoves; i++) {
+                    cerr << mv[i] << toInfoString(mv[i], bd) << endl;
+                }
             }
-#endif
             
             // ルートノード設定
             int limitSimulations = std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
@@ -509,26 +505,26 @@ namespace UECda {
 #ifdef POLICY_ONLY
             if (playMove == MOVE_NONE && Settings::temperaturePlay > 0) {
                 // 確率的に選ぶ場合
-                BiasedSoftmaxSelector selector(score, root.candidates,
-                                                Settings::simulationTemperaturePlay,
-                                                Settings::simulationAmplifyCoef,
-                                                Settings::simulationAmplifyExponent);
+                BiasedSoftmaxSelector<double> selector(score, root.candidates,
+                                                       Settings::simulationTemperaturePlay,
+                                                       Settings::simulationAmplifyCoef,
+                                                       Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                playMove = mv[selector.run_all(dice.drand())].mv();
+                playMove = mv[selector.select(dice.drand())].mv();
             }
 #endif
             if (playMove == MOVE_NONE) {
                 // 最高評価の着手を選ぶ
                 playMove = root.child[0].move.mv();
             }
-#ifdef MONITOR
-            cerr << root.toString();
-            cerr << "\033[1m";
-            cerr << "\033[" << 31 << "m";
-            cerr << "Best Move : " << playMove << endl;
-            cerr << "\033[" << 39 << "m";
-            cerr << "\033[0m";
-#endif
+            if (monitor) {
+                cerr << root.toString();
+                cerr << "\033[1m";
+                cerr << "\033[" << 31 << "m";
+                cerr << "Best Move : " << playMove << endl;
+                cerr << "\033[" << 39 << "m";
+                cerr << "\033[0m";
+            }
             
             return playMove;
         }

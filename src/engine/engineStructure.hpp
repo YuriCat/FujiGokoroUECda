@@ -294,20 +294,22 @@ namespace UECda {
                 double r = (child[m].policyScore - minScore) / (maxScore - minScore);
                 child[m].monteCarloScore += BetaDistribution(r, 1 - r) * n;
             }
-            for (int m = 0; m < candidates; m++)
+            for (int m = 0; m < candidates; m++) {
                 monteCarloAllScore += child[m].monteCarloScore;
+            }
         }
         
         void feedPolicyScore(const double *const score, int num) {
             // 方策関数の出力得点と選択確率を記録
             assert(num <= actions && actions > 0 && num > 0);
             double tscore[N_MAX_MOVES + 64];
-            for (int m = 0; m < num; m++)
-                child[m].policyScore = tscore[m] = score[m];
-            SoftmaxSelector selector(tscore, num, 1);
-            selector.to_prob();
-            for (int m = 0; m < num; m++)
-                child[m].policyProb = selector.prob(m);
+            for (int i = 0; i < num; i++) {
+                child[i].policyScore = tscore[i] = score[i];
+            }
+            SoftmaxSelector<double> selector(tscore, num, 1);
+            for (int i = 0; i < num; i++) {
+                child[i].policyProb = selector.prob(i);
+            }
         }
 
         void feedSimulationResult(int triedIndex, const Field& field, EngineSharedData *const pshared) {

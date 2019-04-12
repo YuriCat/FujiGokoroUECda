@@ -7,6 +7,7 @@
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
 #include "../core/logic.hpp"
+#include "softmaxClassifier.hpp"
 
 namespace UECda {
     
@@ -1020,10 +1021,10 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     template <class cards_t, class policy_t, class dice_t>
     int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
                          const Field& field, const policy_t& pol, dice_t *const pdice) {
-        double score[N_MAX_CHANGES + 1];
-        calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
+        std::array<double, N_MAX_CHANGES + 1> score;
+        calcChangePolicyScoreSlow<0>(score.data(), buf, NChanges, myCards, NChangeCards, field, pol);
         double r = pdice->drand() * score[NChanges];
-        return sortedDAsearch(score, 0, NChanges, r);
+        return std::upper_bound(score.begin(), score.begin() + NChanges, r) - score.begin() - 1;
     }
     template <class policy_t, class dice_t>
     int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards myCards, const int NChangeCards,

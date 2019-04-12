@@ -55,8 +55,6 @@ namespace UECda {
         auto& dice = ptools->dice;
         auto& gal = ptools->gal;
         
-        Clock clock;
-        
         const int myPlayerNum = proot->myPlayerNum;
         const int candidates = proot->candidates; // 候補数
         auto& child = proot->child;
@@ -86,7 +84,7 @@ namespace UECda {
         uint64_t estTime = 0ULL; // 局面推定にかかった時間
         
         // 諸々の準備が終わったので時間計測開始
-        clock.start();
+        ClockMicS clock(0);
         
         while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
             
@@ -181,8 +179,8 @@ namespace UECda {
                 
                 // Regretによる打ち切り判定
                 struct Dist { double mean, sem, reg; };
-                double tmpClock = simuTime;
-                double line = -1600.0 * double(2 * tmpClock * VALUE_PER_CLOCK) / proot->rewardGap;
+                double tmpClock = simuTime / pow(10, 6);
+                double line = -1600.0 * double(2 * tmpClock * VALUE_PER_SEC) / proot->rewardGap;
                 
                 // regret check
                 Dist d[N_MAX_MOVES + 64];
@@ -196,7 +194,7 @@ namespace UECda {
                     double tmpScore[256];
                     for (int m = 0; m < candidates; m++) {
                         const Dist& tmpD = d[m];
-                        NormalDistribution<double> norm(tmpD.mean, tmpD.sem);
+                        NormalDistribution norm(tmpD.mean, tmpD.sem);
                         double tmpDBL = norm.rand(&dice);
                         tmpScore[m] = tmpDBL;
                         if (tmpDBL > tmpBest) tmpBest = tmpDBL;

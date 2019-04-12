@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) { // for UECda
     
     bool seedSet = false;
     int seed = -1;
+    bool monitor = false;
     
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
@@ -63,6 +64,8 @@ int main(int argc, char* argv[]) { // for UECda
         } else if (!strcmp(argv[c], "-s")) { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
+        } else if (!strcmp(argv[c], "-m")) { // output directory
+            monitor = true;
         }
 #ifdef _ENGINE_FUJI_
 #ifndef MATCH
@@ -134,9 +137,9 @@ int main(int argc, char* argv[]) { // for UECda
     int myPlayerNum = entryToGame(); // ゲームに参加
     
     record.myPlayerNum = myPlayerNum;
-    engine.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない
-    
+    engine.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない 
     if (seedSet) engine.setRandomSeed(seed); // シード指定
+    engine.monitor = monitor;
     
 #ifdef BROADCAST
     //broadcastBMatch();

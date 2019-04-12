@@ -36,7 +36,7 @@ namespace UECda {
         // 8切り関係の3手詰み等も含めた高速化は別関数にて
         if (myHand.qty <= 1) return true;
         Cards pqr = myHand.pqr;
-        if (myHand.containsJOKER()) { // ジョーカーあり
+        if (myHand.jk) { // ジョーカーあり
             if (!any2Cards(pqr)) return true;
             if (myHand.seq) {
                 if (myHand.qty == 3) return true;
@@ -57,7 +57,7 @@ namespace UECda {
         if (myHand.qty <= 1) return true;
         Cards pqr = myHand.pqr;
         if (!any2Cards(maskCards(pqr, CARDS_8 | CARDS_JOKER))) return true;
-        if (myHand.containsJOKER()) { // ジョーカーあり
+        if (myHand.jk) { // ジョーカーあり
             if (myHand.seq) {
                 if (myHand.qty == 3) return true;
                 if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
@@ -165,7 +165,7 @@ namespace UECda {
                     }
                 } else {
                     //ジョーカーが無いので、革命が支配的かつ他のも全て支配的が必須
-                    if (!ndpqr_new && !(quad & nd[ flipOrder(ord)] & ~CARDS_8)) {
+                    if (!ndpqr_new && !(quad & nd[flipOrder(ord)] & ~CARDS_8)) {
                         DERR << "NJ_QUAD PPW " << cards << endl;
                         return true;
                     }
@@ -312,10 +312,10 @@ namespace UECda {
                 if (myHand.pqr & PQR_4) {
                     // ジョーカーを使わない革命あり。
                     Cards quad = myHand.pqr & PQR_4;
-                    Cards nd_quad = ndpqr & quad & opsHand.nd[flipOrder(ord)];
+                    //Cards nd_quad = ndpqr & quad & opsHand.nd[flipOrder(ord)];
                     Cards ndpqr_new = ndpqr & ~quad & opsHand.nd[flipOrder(ord)];
                     
-                    if (nd_quad) {
+                    if (!ndpqr_new) {
                         // 全部支配できた。勝ち
                         DERR << "NJ_QUAD PW0~1 " << myHand.cards << " , " << opsHand.cards << endl;
                         return true;
@@ -469,7 +469,7 @@ namespace UECda {
                 // シングルジョーカーは少なくともBNPWではない
                 return false;
             }
-            if (myHand.containsJOKER() && !opsHand.containsS3()) { // まずジョーカーを検討
+            if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
                 if (ops8 && isValidGroupRank(RANK_8, curOrder, mv.rank())) {
                     // 相手に8切りで返される可能性があればだめ
                     return false;
@@ -490,7 +490,7 @@ namespace UECda {
                     return true;
                 }
                 // ジョーカー -> S3 からの空場必勝を確認
-                if (nextHand.containsS3()) {
+                if (containsS3(nextHand.cards)) {
                     if (nextHand.qty == 1) return true;
                     Move s3; s3.setSingle(INTCARD_S3);
                     nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
@@ -596,7 +596,7 @@ namespace UECda {
                 return true;
             }
             // 自分の出したジョーカーをS3で返してからの必勝チェック
-            if (mv.isSingleJOKER() && nextHand.containsS3()) {
+            if (mv.isSingleJOKER() && containsS3(nextHand.cards)) {
                 Move s3; s3.setSingle(INTCARD_S3);
                 nextHand.makeMove1stHalf(s3);
                 return judgeHandMate(0, buf, nextHand, opsHand, bd, nextFieldInfo);

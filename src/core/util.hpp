@@ -1,9 +1,123 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <algorithm>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <bitset>
 #include <cassert>
+
+#if !defined(NDEBUG)
+#define UNREACHABLE assert(0)
+#elif defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#define UNREACHABLE __assume(0)
+#elif defined(__INTEL_COMPILER)
+#define UNREACHABLE __assume(0)
+#elif defined(__GNUC__) && (4 < __GNUC__ || (__GNUC__ == 4 && 4 < __GNUC_MINOR__))
+#define UNREACHABLE __builtin_unreachable()
+#else
+#define UNREACHABLE assert(0)
+#endif
+
+// 条件x、命令等y
+#ifdef NDEBUG
+#define ASSERT(X, Y)
+#define FASSERT(f, o)
+#define FEQUALS(f0, f1, o)
+#define ASSERT_EQ(k0, k1)
+#else
+#define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
+// 浮動小数点がまともな値を取っているかどうかのアサーション
+#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ cerr << (f) << endl; {o}\
+assert(!std::isinf(f) && !std::isnan(f)); assert(0); };
+// 浮動小数点が「ほぼ」同じ値を取っているかのチェック && FASSERT
+#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ cerr << (f0) << endl; {o}\
+assert(!std::isinf(f0) && !std::isnan(f0)); assert(0); };\
+if(!(!std::isinf(f1) && !std::isnan(f1))){ cerr << (f1) << endl; {o}};\
+assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
+if(!(abs((f0) - (f1)) <= 0.00001)){ cerr << (f0) << " <-> " << (f1) << endl; {o}\
+assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
+#define ASSERT_EQ(k0, k1) ASSERT((k0) == (k1), cerr << (k0) << " <-> " << (k1) << endl;);
+#endif // NDEBUG
+
+// 標準ライブラリ使用
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::max;
+using std::min;
+using std::size_t;
+
+template <typename T>
+constexpr T cmax(const T& a, const T& b) { return a < b ? b : a; }
+template <typename T>
+constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
+
+// 出力
+#ifdef DEBUG
+#define DOUT std::cout
+#define DERR std::cerr
+#else
+#define DERR 0 && std::cerr
+#define DOUT 0 && std::cout
+#endif
+
+#ifndef MINIMUM
+#define COUT cout
+#define CERR cerr
+#else
+#define CERR 0 && cerr
+#define COUT 0 && cout
+#endif
+
+static double internal_clock_sec() {
+    return double(clock()) / CLOCKS_PER_SEC;
+}
+static double clock_sec() {
+    // clock() is insuffient in multi thread procedure
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + (double)tv.tv_usec * 1e-6;
+}
+
+static uint64_t cputime() {
+    unsigned int ax, dx;
+    asm volatile("rdtsc\nmovl %%eax,%0\nmovl %%edx,%1":"=g"(ax),"=g"(dx): :"eax","edx");
+    return ((unsigned long long)(dx) << 32) + (unsigned long long)(ax);
+}
+
+class Clock {
+private:
+    uint64_t c_start;
+public:
+    void start() { c_start = cputime(); }
+    uint64_t stop() const { return cputime() - c_start; }
+    uint64_t restart() { // 結果を返し、0から再スタート
+        uint64_t tmp = cputime();
+        uint64_t diff = tmp - c_start;
+        c_start = tmp;
+        return diff;
+    }
+    constexpr Clock(): c_start() {}
+};
+
+class ClockMicS { // microsec単位
+public:
+    void start() { t_ = clock_sec(); }
+    double stop() const { return (clock_sec() - t_) * 1000000; }
+    double restart() { // 結果を返し、0から再スタート
+        double t = clock_sec();
+        double diff = t - t_;
+        t_ = t;
+        return diff * 1000000;
+    }
+    ClockMicS() {}
+    ClockMicS(int m) { start(); }
+private:
+    double t_;
+};
 
 template <typename T>
 constexpr bool holdsBits(T a, T b) {
@@ -258,7 +372,324 @@ public:
     XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
 };
 
-//constexpr int ipow(int m, int n) { return n <= 0 ? 1 : (m * ipow(m, n - 1)); }
+double dFactorial(int n) {
+    double ans = 1;
+    while (n > 1) ans *= n--;
+    return ans;
+}
+static double dPermutation(int n, int r) {
+    double ans = 1;
+    while (r--) ans *= n - r;
+    return ans;
+}
+static double dCombination(int n, int r) {
+    if (n >= r) return dPermutation(n, r) / dFactorial(r);
+    else return 0;
+}
+constexpr int ipow(int m, int n) { return n <= 0 ? 1 : (m * ipow(m, n - 1)); }
+static double sigmoid(double x, double alpha = 1) {
+    return 1 / (1 + std::exp(-x / alpha));
+}
+static double logit(double s, double alpha = 1) {
+    return -std::log((1.0 / s) - 1.0) * alpha;
+}
+static double beta(double x, double y){ // ベータ関数
+    return tgamma(x) * tgamma(y) / tgamma(x + y);
+}
+static double log_beta(double x, double y) {
+    return lgamma(x) + lgamma(y) - lgamma(x + y);
+}
+
+struct ExponentialDistribution {
+  double lambda;
+
+  ExponentialDistribution(double l): lambda(l) {}
+
+  double random(double urand) const { return -std::log(urand) / lambda; }
+  template<class dice_t>
+  double random(dice_t *const pdice) const { return random(pdice->random()); }
+
+  double relative_dens(double x) const { return std::exp(-lambda * x); }
+  double dens(double x) const { return lambda * relative_dens(x); }
+  double dist(double x) const { return 1 - std::exp(-lambda * x); }
+  double mean() const { return 1 / lambda; }
+  double med() const { return std::log(2) / lambda; }
+  double var() const { return 1 / (lambda * lambda); }
+  double std() const { return 1 / lambda; }
+  double ent() const { return 1 - std::log(lambda); }
+
+  static double mod() { return 0; }
+  static double skew() { return 2; }
+  static double kur() { return 6; }
+};
+
+struct GammaDistribution {
+  double k, theta;
+
+  GammaDistribution(): k(), theta() {}
+  GammaDistribution(double ak, double atheta = 1): k(ak), theta(atheta) {};
+
+  GammaDistribution& set(double ak, double atheta = 1) {
+    k = ak; theta = atheta;
+    return *this;
+  }
+
+  template <class dice_t>
+  double rand(dice_t *const pdice) const {
+    double x, y, z;
+    double u, v, w, b, c, e;
+    if (k < 1) {
+      ExponentialDistribution ex(1);
+      e = ex.random(pdice);
+      do {
+        x = std::pow(pdice->drand(), 1 / k);
+        y = std::pow(pdice->drand(), 1 / (1 - k));
+      } while (x + y > 1);
+      return (e * x / (x + y)) * theta;
+    } else {
+      b = k - 1;
+      c = 3 * k - 0.75;
+      while (true) {
+        u = pdice->drand();
+        v = pdice->drand();
+        w = u * (1 - u);
+        y = std::sqrt(c / w) * (u - 0.5);
+        x = b + y;
+        if (x >= 0) {
+          z = 64 * w * w * w * v * v;
+          if (z <= 1 - (2 * y * y) / x) {
+            return x * theta;
+          } else {
+            if (std::log(z) < 2 * (b * std::log(x / b) - y)) {
+              return x * theta;
+            }
+          }
+        }
+      }
+      return x * theta;
+    }
+  }
+
+  double ralative_dens(double x) const { return std::pow(x, k - 1) * std::exp(-x / theta); }
+  double dens(double x) const { return ralative_dens(x) / tgamma(k) / std::pow(theta, k); }
+  double mean() const { return k * theta; }
+  double mod() const { return (k - 1) * theta; }
+  double var() const { return k * theta * theta; }
+  double std() const { return std::sqrt(k) * theta; }
+};
+
+struct BetaDistribution{
+    double a, b;
+    
+    template<class dice_t>
+    double rand(dice_t *const pdice)const{
+        double r1 = GammaDistribution(a).rand(pdice);
+        double r2 = GammaDistribution(b).rand(pdice);
+        return r1 / (r1 + r2);
+    }
+    constexpr double size() const { return a + b; }
+    constexpr double mean() const { return a / (a + b); }
+    constexpr double rate() const { return a / b; }
+    constexpr double med() const {
+        return (a - 1 / 3.0) / (a + b - 2 / 3.0); // a, b > 1 での近似値
+    }
+    constexpr double mod() const {
+        return (a - 1) / (a + b - 2); // a, b > 1 のとき
+    }
+    double var() const {
+        return (a * b) / ((a + b) * (a + b) * (a + b + 1));
+    }
+    double std() const {
+        return sqrt(a * b / (a + b + 1)) / (a + b);
+    }
+    double relative_dens(double x) const {
+        return pow(x, a - 1) * pow(1 - x, b - 1);
+    }
+    double dens(double x) const {
+        return relative_dens(x) / beta(a, b);
+    }
+    double log_relative_dens(double x) const {
+        return (a - 1) * log(x) + (b - 1) * log(1 - x);
+    }
+    double log_dens(double x) const {
+        return log_relative_dens(x) - log_beta(a, b);
+    }
+    
+    BetaDistribution& add(const BetaDistribution& arg)noexcept{
+        a += arg.a;
+        b += arg.b;
+        return *this;
+    }
+    BetaDistribution& subtr(const BetaDistribution& arg)noexcept{
+        a -= arg.a;
+        b -= arg.b;
+        return *this;
+    }
+    
+    BetaDistribution& operator+=(const BetaDistribution& rhs)noexcept{
+        a += rhs.a;
+        b += rhs.b;
+        return *this;
+    }
+    BetaDistribution& operator-=(const BetaDistribution& rhs)noexcept{
+        a -= rhs.a;
+        b -= rhs.b;
+        return *this;
+    }
+    BetaDistribution& operator*=(const double m)noexcept{
+        a *= m;
+        b *= m;
+        return *this;
+    }
+    BetaDistribution& operator/=(const double d){
+        (*this) *= 1 / d;
+        return *this;
+    }
+    BetaDistribution& mul(const double m)noexcept{
+        a *= m;
+        b *= m;
+        return *this;
+    }
+    
+    BetaDistribution& rev()noexcept{
+        std::swap(a, b);
+        return *this;
+    }
+    
+    BetaDistribution& set(const double aa, const double ab)noexcept{
+        a = aa;
+        b = ab;
+        return *this;
+    }
+    BetaDistribution& set_by_mean(double m, double size)noexcept{
+        set(m * size, (1 - m) * size);
+        return *this;
+    }
+    BetaDistribution& set_by_rate(double r, double size)noexcept{
+        set_by_mean(r / (1 + r), size);
+        return *this;
+    }
+    
+    BetaDistribution& resize(double h){
+        // サイズをhにする
+        double s = size();
+        
+        assert(s);
+        
+        double h_s = h / s;
+        a *= h_s;
+        b *= h_s;
+        return *this;
+    }
+    
+    bool exam()const noexcept{
+        if(a < 0 || b < 0){ return false; }
+        if(a == 0 && b == 0){ return false; }
+        return true;
+    }
+    
+    std::string toString()const{
+        std::ostringstream oss;
+        oss << "Be(" << a << ", " << b << ")";
+        return oss.str();
+    }
+    
+    constexpr BetaDistribution():
+    a(), b(){}
+    explicit constexpr BetaDistribution(const double aa, const double ab):
+    a(aa), b(ab){}
+};
+
+inline BetaDistribution operator+(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+    return BetaDistribution(lhs.a + rhs.a, lhs.b + rhs.b);
+}
+inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+    return BetaDistribution(lhs.a - rhs.a, lhs.b - rhs.b);
+}
+inline BetaDistribution operator*(const BetaDistribution& lhs, const double m)noexcept{
+    return BetaDistribution(lhs.a * m, lhs.b * m);
+}
+inline BetaDistribution operator*(const double m, const BetaDistribution& rhs)noexcept{
+    return BetaDistribution(rhs.a * m, rhs.b * m);
+}
+
+static std::ostream& operator<<(std::ostream& out, const BetaDistribution& b){
+    out << b.toString();
+    return out;
+}
+
+struct NormalDistribution {
+    double mu, sigma;
+    
+    template<class dice_t>
+    double rand(dice_t *const pdice)const{
+        // Box-Muller
+        double r1 = pdice->drand();
+        double r2 = pdice->drand();
+        double z1 = std::sqrt(-2.0 * std::log(r1)) * std::cos(2.0 * M_PI * r2);
+        return z1 * sigma + mu;
+    }
+    template<class dice_t>
+    void rand(double *const pa, double *const pb, dice_t *const pdice)const{
+        // 2つ同時に発生させる
+        double r1 = pdice->drand();
+        double r2 = pdice->drand();
+        
+        double z1 = std::sqrt(-2.0 * std::log(r1)) * std::cos(2.0 * M_PI * r2);
+        double z2 = std::sqrt(-2.0 * std::log(r1)) * std::sin(2.0 * M_PI * r2);
+        *pa = z1 * sigma + mu;
+        *pb = z2 * sigma + mu;
+    }
+    
+    double relative_dens(double x)const{
+        return exp(-(x - mu) * (x - mu) / (2 * sigma * sigma));
+    }
+    double dens(double x)const{
+        return relative_dens(x) / sigma * (1 / sqrt(2 * M_PI));
+    }
+    double dist(double x)const{
+        return (1 + erf((x - mu) / sigma * (1 / sqrt(2)))) / 2;
+    }
+    
+    double ent()const{
+        return sigma * sqrt(2 * M_PI * exp(1));
+    }
+    constexpr double mean()const noexcept{ return mu; }
+    constexpr double var()const noexcept{ return sigma * sigma; }
+    constexpr double std()const noexcept{ return sigma; }
+    constexpr double med()const noexcept{ return mu; }
+    constexpr double mod()const noexcept{ return mu; }
+    
+    NormalDistribution& operator*=(const double m) {
+        sigma *= m;
+        return *this;
+    }
+    NormalDistribution& operator/=(const double m) {
+        sigma /= m;
+        return *this;
+    }
+    
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << "N(" << mu << ", " << sigma << ")";
+        return oss.str();
+    }
+    
+    constexpr NormalDistribution(): mu(),sigma() {}
+    constexpr NormalDistribution(double argMu, double argSigma)
+    :mu(argMu), sigma(argSigma){}
+    
+    NormalDistribution& set(double argMu, double argSigma) {
+        mu = argMu;
+        sigma = argSigma;
+        return *this;
+    }
+};
+
+static std::ostream& operator<<(std::ostream& out, const NormalDistribution& n){
+    out << n.toString();
+    return out;
+}
 
 template <typename T, size_t B, size_t N>
 class MiniBitArray {
@@ -318,6 +749,212 @@ protected:
     T data_;
 };
 
+template <size_t B, size_t N = 32 / B> using BitArray32 = MiniBitArray<std::uint32_t, B, N>;
+template <size_t B, size_t N = 64 / B> using BitArray64 = MiniBitArray<std::uint64_t, B, N>;
+
+class TwoValuePage32 {
+public:
+    uint32_t any() const { return data_; }
+    void regist(uint32_t value, uint64_t key) {
+        assert(value < 4U);
+        data_ = ((uint32_t)(key >> 32) & ~3U) | value;
+    }
+    uint32_t compareKey(uint64_t key) const {
+        return (data_ ^ uint32_t(key >> 32)) & ~3U;
+    }
+    uint32_t value() const { return data_ & 3U; }
+private:
+    uint32_t data_;
+};
+
+template <size_t N>
+class TwoValueBook {
+    // 2(+中間1)値を保存するハッシュ表
+public:
+    using page_t = TwoValuePage32;
+    
+    void init() {
+        memset(page_, 0, sizeof(page_));
+    }
+    void clear() {}
+    TwoValueBook() { init(); }
+    
+    int read(uint64_t key) {
+        const page_t& fpage = page_[KeyToIndex(key)];
+        if (!fpage.any() || fpage.compareKey(key)) return -1;
+        return fpage.value();
+    }
+    void regist(uint32_t value, uint64_t key) {
+        page_t& fpage = page_[KeyToIndex(key)];
+        fpage.regist(value, key);
+    }
+private:
+    page_t page_[N];
+    static constexpr int KeyToIndex(uint64_t key) {
+        return key % N;
+    }
+};
+
+template <typename T = int>
+class SpinLock {
+public:
+    void lock() {
+        while (true) {
+            while (data_);
+            T tmp = 1;
+            if (data_.exchange(tmp, std::memory_order_acquire) == 0) return;
+        }
+    }
+    bool try_lock() {
+        T tmp = 1;
+        if (data_.exchange(tmp, std::memory_order_acquire) == 0) return true;
+        return false;
+    }
+    void unlock() { data_ = 0; }
+    SpinLock() { unlock(); }
+private:
+    std::atomic<T> data_; 
+};
+
+template <int L, int ... shape_t>
+struct TensorIndexTypeImpl {
+    template <typename ... args_t>
+    static constexpr int get(int i, args_t ... args) {
+        return i * size() + TensorIndexTypeImpl<shape_t...>::get(args...);
+    }
+    static constexpr int size() {
+        return L * TensorIndexTypeImpl<shape_t...>::size();
+    }
+};
+template <int L>
+struct TensorIndexTypeImpl<L> {
+    template <typename ... args_t>
+    static constexpr int get(int i, int j) { return i * size() + j; }
+    static constexpr int size() { return L; }
+};
+template <int L, int ... shape_t>
+struct TensorIndexType {
+    template <typename ... args_t>
+    static constexpr int get(args_t ... args) {
+        return TensorIndexTypeImpl<shape_t...>::get(args...);
+    }
+    static constexpr int size() {
+        return L * TensorIndexType<shape_t...>::size();
+    }
+};
+template <int L>
+struct TensorIndexType<L> {
+    static constexpr int get(int i) { return i; }
+    static constexpr int size() { return L; }
+};
+
+template <typename T>
+struct StochasticSelector {
+    T *const score_;
+    const int size_;
+
+    double sum_;
+
+    StochasticSelector(T *const ascore, int asize):
+    score_(ascore), size_(asize), sum_(0) {}
+
+    double prob(int i) const {
+        return score_[i] / sum_;
+    }
+    int select(double urand) const {
+        double r = urand * sum_;
+        int i = 0;
+        for (; i < size_ - 1; i++) {
+            r -= score_[i];
+            if (r <= 0) break;
+        }
+        return i;
+    }
+    double entropy() const {
+        double ent = 0;
+        for (int i = 0; i < size_; i++) {
+            double prb = prob(i);
+            if (prb > 0) ent -= prb * std::log(prb);
+        }
+        return ent / std::log(2);
+    }
+};
+
+template <typename T>
+struct SoftmaxSelector : public StochasticSelector<T> {
+    using base_t = StochasticSelector<T>;
+
+    SoftmaxSelector(T *const ascore, int asize, double atemp):
+    base_t(ascore, asize) {
+        for (int i = 0; i < asize; i++) {
+            double es = std::exp(base_t::score_[i] / atemp);
+            base_t::score_[i] = es;
+            base_t::sum_ += es;
+        }
+    }
+};
+
+template <typename T>
+struct ThresholdSoftmaxSelector : public StochasticSelector<T> {
+    using base_t = StochasticSelector<T>;
+
+    ThresholdSoftmaxSelector(T *const ascore, int asize, double atemp, double athreshold):
+    base_t(ascore, asize) {
+        for (int i = 0; i < asize; i++) {
+            double es = std::exp(base_t::score_[i] / atemp);
+            base_t::score_[i] = es;
+        }
+        for (int i = 0; i < asize; i++) {
+            base_t::score_[i] = std::max(base_t::score_[i] - athreshold, 1e-8);
+            base_t::sum_ += base_t::score_[i];
+        }
+    }
+};
+
+template <typename T>
+struct BiasedSoftmaxSelector : public StochasticSelector<T> {
+    using base_t = StochasticSelector<T>;
+    BiasedSoftmaxSelector(T *const ascore, int asize,
+                          double atemp, double acoef, double arate):
+    base_t(ascore, asize) {
+        T max_score = -std::numeric_limits<T>::max();
+        for (int i = 0; i < asize; i++) {
+            max_score = std::max(max_score, base_t::score_[i]);
+        }
+        // minus bias by the difference from best score
+        for (int i = 0; i < asize; i++) {
+            base_t::score_[i] -= acoef * std::pow(max_score - base_t::score_[i], arate);
+        }
+        for (int i = 0; i < asize; i++) {
+            double es = std::exp(base_t::score_[i] / atemp);
+            base_t::score_[i] = es;
+            base_t::sum_ += es;
+        }
+    }
+};
+
+template <typename T>
+struct ExpBiasedSoftmaxSelector : public StochasticSelector<T> {
+    using base_t = StochasticSelector<T>;
+    ExpBiasedSoftmaxSelector(T *const ascore, int asize,
+                             double atemp, double acoef, double aetemp):
+    base_t(ascore, asize) {
+        T max_score = -std::numeric_limits<T>::max();
+        for (int i = 0; i < asize; i++) {
+            max_score = std::max(max_score, base_t::score_[i]);
+        }
+        // minus bias by the difference from best score
+        for (int i = 0; i < asize; i++) {
+            base_t::score_[i] -= acoef * std::exp(max_score - base_t::score_[i] / aetemp);
+        }
+        for (int i = 0; i < asize; i++) {
+            double es = std::exp(base_t::score_[i] / atemp);
+            base_t::score_[i] = es;
+            base_t::sum_ += es;
+        }
+    }
+};
+
 template <typename T, size_t B, size_t N>
 MiniBitArray<T, B, N> invert(const MiniBitArray<T, B, N>& ba) {
     MiniBitArray<T, B, N> ret(0);
@@ -350,9 +987,16 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     return ost;
 }
 
-template <size_t B, size_t N = 32 / B> using BitArray32 = MiniBitArray<std::uint32_t, B, N>;
-template <size_t B, size_t N = 64 / B> using BitArray64 = MiniBitArray<std::uint64_t, B, N>;
-
+static std::string toupper(const std::string& str) {
+    std::string s;
+    for (char c : str) s.push_back(std::toupper(c));
+    return s;
+}
+static std::string tolower(const std::string& str) {
+    std::string s;
+    for (char c : str) s.push_back(std::tolower(c));
+    return s;
+}
 static bool isSuffix(const std::string& s, const std::string& suffix) {
     if (s.size() < suffix.size()) return false;
     return s.substr(s.size() - suffix.size()) == suffix;

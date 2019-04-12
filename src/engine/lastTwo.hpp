@@ -7,10 +7,12 @@
 #include "../core/logic.hpp"
 #include "mate.hpp"
 
+using std::string;
+
 namespace UECda {
     namespace L2 {
         // L2関連
-        TwoValueBook<(1 << 18)> book("L2Book");
+        TwoValueBook<(1 << 18)> book;
     }
     
     enum {
@@ -275,7 +277,7 @@ namespace UECda {
                     res = L2::book.read(fhash);
                     if (res != -1) { // 結果が既に登録されていた
 #ifdef DEBUG
-                        DERR << Space(2 * depth);
+                        DERR << string(2 * depth, ' ');
                         switch (res) {
                             case L2_WIN: DERR << "-HASHWIN"; break;
                             case L2_DRAW: DERR << "-HASHDRAW"; break;
@@ -293,12 +295,12 @@ namespace UECda {
                 // 簡易評価
                 // 必敗判定
                 if (field.isNull()) {
-                    if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.containsJOKER() && !myHand.containsS3() && field.b.order() == 0) {
+                    if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.b.order() == 0) {
                         int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
                         int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
                         if (myHR < opsLR) {
                             //DERR << myHand <<" vs " << opsHand << endl; getchar();
-                            DERR << Space(2 * depth) << "-EMATELOSE" << endl;
+                            DERR << string(2 * depth, ' ') << "-EMATELOSE" << endl;
                             return L2_LOSE;
                         } else {
                             Cards tmp = maskCards(opsHand.cards, RankToCards(opsLR));
@@ -306,7 +308,7 @@ namespace UECda {
                                 opsLR = IntCardToRank(pickIntCardLow(tmp));
                                 if (myHR < opsLR) {
                                     //DERR << myHand << " vs " << opsHand << endl; getchar();
-                                    DERR << Space(2 * depth) << "-EMATELOSE" << endl;
+                                    DERR << string(2 * depth, ' ') << "-EMATELOSE" << endl;
                                     return L2_LOSE;
                                 }
                             }
@@ -357,7 +359,7 @@ namespace UECda {
 
             tmp.setDomOthers();
             if (myHand.qty - tmp.qty() <= 1) {
-                DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
+                DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                 return L2_WIN;
             }
 
@@ -366,7 +368,7 @@ namespace UECda {
             if (!tmp.isPASS()) {
                 makeMove1stHalf(myHand, &nextHand, tmp.mv());
                 if (judgeMate_Easy_NF(nextHand)) {
-                    DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
+                    DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
                 L2Field nextField = procAndFlushL2Field(field, tmp.mv());
@@ -374,14 +376,14 @@ namespace UECda {
                 res = judge<3, 4>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
                 if (judgeMate_Easy_NF(myHand)) {
-                    DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
+                    DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
                 L2Field nextField = procAndFlushL2Field(field, tmp.mv());
                 res = judge<3, 4>(depth + 1, buf, myHand, opsHand, nextField);
             }
             if (res == L2_WIN) {
-                DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
+                DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                 return res;
             }
         }
@@ -394,11 +396,11 @@ namespace UECda {
         bool pass = tmp.isPASS();
         bool unriv = field.isUnrivaled();
         int res;
-        DERR << Space(depth * 2) << "<" << field.turn() << ">" << tmp;
+        DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp;
 
         if (!checkedEasy) {
             if (tmp.qty() >= myHand.qty) {
-                DERR << Space(depth * 2) << tmp << " -FIN" << endl;
+                DERR << string(2 * depth, ' ') << tmp << " -FIN" << endl;
                 return L2_WIN;
             }
             if (checkDomMate(depth, buf, tmp, myHand, opsHand, field) == L2_WIN) return L2_WIN;
@@ -415,7 +417,7 @@ namespace UECda {
                 if (!tmp.dominatesOthers()) { // 他支配でない
                     if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.order(), field.info.isOrderSettled())) { // 残り札に支配保証or空場期待がある
                         //DERR << tmp << ": DWorNFH_REST FAIL " << myHand << " vs " << opsHand << endl; getchar();
-                        DERR << Space(2 * depth) << "<" << field.turn() << ">" << tmp << " -RESTLOSE" << endl;
+                        DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -RESTLOSE" << endl;
                         return L2_LOSE; // 拘束条件違反で負けとみなす
                     }
                 } else {
@@ -463,7 +465,7 @@ namespace UECda {
             }
         }
         
-        DERR << Space(depth * 2);
+        DERR << string(2 * depth, ' ');
         switch (res) {
             case L2_WIN: DERR << "-WIN"; break;
             case L2_DRAW: DERR << "-DRAW"; break;
@@ -483,7 +485,7 @@ namespace UECda {
         // 1手詰み
         //for (int m = NMoves - 1; m >= 0; m--) {
         //    if (buf[m].qty() >= myHand.qty) {
-        //        DERR << Space(depth * 2) << tmp << " -FIN" << endl; return m;
+        //        DERR << string(2 * depth, ' ') << tmp << " -FIN" << endl; return m;
         //    }
         //}
         // 支配からの簡単詰み

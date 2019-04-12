@@ -220,7 +220,7 @@ namespace UECda {
         uint64_t test(size_t i) const { return i_ & (1ULL << i); }
     };
     
-    static ostream& operator <<(ostream& out, const FieldAddInfo& i) { // 出力
+    static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 出力
         out << "Field :";
         if (i.isFinal()) out << " -FIN";
         else if (i.isPW()) out << " -PW";

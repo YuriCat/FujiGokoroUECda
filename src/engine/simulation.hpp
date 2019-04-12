@@ -80,32 +80,11 @@ namespace UECda {
                         calcPlayPolicyScoreSlow(score, *pfield, pshared->basePlayPolicy, 0);
 
                         // 行動評価関数からの着手の選び方は複数パターン用意して実験できるようにする
-                        int idx;
-                        if (Settings::simulationSelector == Selector::EXP_BIASED) {
-                            // 点差の指数増幅
-                            ExpBiasedSoftmaxSelector selector(score, pfield->NActiveMoves,
-                                                                Settings::simulationTemperaturePlay,
-                                                                Settings::simulationAmplifyCoef,
-                                                                1 / log(Settings::simulationAmplifyExponent));
-                            selector.amplify();
-                            selector.to_prob();
-                            idx = selector.select(ptools->dice.drand());
-                        } else if (Settings::simulationSelector == Selector::POLY_BIASED) {
-                            // 点差の多項式増幅
-                            BiasedSoftmaxSelector selector(score, pfield->NActiveMoves,
-                                                            Settings::simulationTemperaturePlay,
-                                                            Settings::simulationAmplifyCoef,
-                                                            Settings::simulationAmplifyExponent);
-                            selector.amplify();
-                            selector.to_prob();
-                            idx = selector.select(ptools->dice.drand());
-                        } else if (Settings::simulationSelector == Selector::THRESHOLD) {
-                            // 閾値ソフトマックス
-                            idx = selectByThresholdSoftmax(score, pfield->NActiveMoves, Settings::simulationTemperaturePlay, 0.02, &ptools->dice);
-                        } else {
-                            // 単純ソフトマックス
-                            idx = selectBySoftmax(score, pfield->NActiveMoves, Settings::simulationTemperaturePlay, &ptools->dice);
-                        }
+                        BiasedSoftmaxSelector<double> selector(score, pfield->NActiveMoves,
+                                                               Settings::simulationTemperaturePlay,
+                                                               Settings::simulationAmplifyCoef,
+                                                               Settings::simulationAmplifyExponent);
+                        int idx = selector.select(ptools->dice.drand());
                         pfield->setPlayMove(pfield->mv[idx]);
                     }
                 }

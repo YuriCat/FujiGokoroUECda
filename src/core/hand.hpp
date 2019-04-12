@@ -44,17 +44,6 @@ namespace UECda {
         // qrは使わなさそう?
         
         constexpr operator Cards() const { return cards; }
-        
-        constexpr uint64_t containsJOKER() const {
-            return UECda::containsJOKER(cards);
-        }
-        constexpr uint64_t containsS3() const {
-            return UECda::containsS3(cards);
-        }
-        constexpr uint64_t containsSeq() const {
-            return seq;
-        }
-        
         bool holds(Cards ac) const {
             return holdsCards(cards, ac);
         }
@@ -126,7 +115,7 @@ namespace UECda {
             assert(!mv.isPASS());
             assert(holds(dc));
             
-            uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
+            uint32_t djk = dc.joker();
             uint32_t r = mv.rank();
             
             cards -= dc; // 通常型は引けば良い
@@ -182,7 +171,7 @@ namespace UECda {
             assert(!mv.isPASS());
             ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << dc << " from " << cards << endl; );
             
-            int djk = UECda::containsJOKER(dc) ? 1 : 0;
+            int djk = dc.joker();
             int r = mv.rank();
             
             cards -= dc; // 通常型は引けば良い
@@ -314,7 +303,7 @@ namespace UECda {
             ASSERT(isExclusiveCards(cards, dc),
                    cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
             
-            int djk = mv.containsJOKER() ? 1 : 0;
+            int djk = mv.containsJOKER();
             int r = mv.rank();
             
             cards += dc; // 通常型は足せば良い
@@ -547,7 +536,7 @@ namespace UECda {
             // 無支配型をpqrからの変形によって確かめる
             // pqr -> nd は正確と仮定
             Cards tmpnd[2];
-            PQRToND(pqr, UECda::containsJOKER(cards) ? 1 : 0, tmpnd);
+            PQRToND(pqr, containsJOKER(cards) ? 1 : 0, tmpnd);
             if (nd[0] != tmpnd[0]) {
                 cerr << "Hand : exam_nd_by_pqr() nd[0]" << endl;
                 return false;
@@ -623,14 +612,10 @@ namespace UECda {
                             
     };
     
-    inline ostream& operator <<(ostream& out, const Hand& hand) { // 出力
+    inline std::ostream& operator <<(std::ostream& out, const Hand& hand) { // 出力
         out << hand.cards << "(" << hand.qty << ")";
         return out;
     }
-                            
-    inline Cards containsJOKER(const Hand& hand) { return containsJOKER(hand.cards); }
-    inline Cards containsS3(const Hand& hand) { return containsS3(hand.cards); }
-    
     // 別インスタンスに手札進行
     inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq) {
         // 更新するものは最初にチェック
@@ -638,7 +623,7 @@ namespace UECda {
         assert(!mv.isPASS());
         ASSERT(arg.holds(dc), cerr << arg << dc << endl; );
         
-        uint32_t djk = UECda::containsJOKER(dc) ? 1 : 0;
+        uint32_t djk = containsJOKER(dc) ? 1 : 0;
         uint32_t r = mv.rank();
         
         dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
@@ -701,7 +686,7 @@ namespace UECda {
         assert(!mv.isPASS());
         assert(arg.holds(dc));
         
-        int djk = UECda::containsJOKER(dc) ? 1 : 0;
+        int djk = dc.joker();
         int r = mv.rank();
         
         dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い

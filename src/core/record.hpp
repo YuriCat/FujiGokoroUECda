@@ -21,16 +21,6 @@ namespace UECda {
         return commandMap.find(str) != commandMap.end();
     }
     
-    static int StringsToCardsM(std::vector<std::string>& vec, Cards *const dst) {
-        *dst = CARDS_NULL;
-        for (const std::string& str : vec) {
-            IntCard ic = StringToIntCardM(str);
-            if (ic < 0) return -1;
-            dst->insert(ic);
-        }
-        return 0;
-    }
-    
     static int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
         *dst = CARDS_NULL;
         const std::string& str = q.front();
@@ -49,7 +39,7 @@ namespace UECda {
             if (isCommand(str)) {
                 cerr << "com" << endl; return -1;
             }
-            IntCard ic = StringToIntCardM(str);
+            IntCard ic = StringToIntCard(str);
             if (!examIntCard(ic)) {
                 cerr << "bad intcard " << ic << " by " << str << endl; return -1;
             }
@@ -119,7 +109,7 @@ namespace UECda {
         ifs.open(fName, std::ios::in);
         
         if (!ifs) {
-            cerr << "UECda::readMatchLogFile() : no log file." << endl;
+            cerr << "readMatchLogFile() : no log file." << endl;
             return -1;
         }
         
@@ -520,7 +510,7 @@ namespace UECda {
             oss << endl;
             oss << "dealt ";
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << getDealtCards(p).toLowerString() << " ";
+                oss << tolower(getDealtCards(p).toString()) << " ";
             }
             oss << endl;
             oss << "changed ";
@@ -531,12 +521,12 @@ namespace UECda {
                 changeCards[base::change(c).from] = base::change(c).cards;
             }
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << changeCards[p].toLowerString() << " ";
+                oss << tolower(changeCards[p].toString()) << " ";
             }
             oss << endl;
             oss << "original ";
             for (int p = 0; p < N_PLAYERS; p++) {
-                oss << getOrgCards(p).toLowerString() << " ";
+                oss << tolower(getOrgCards(p).toString()) << " ";
             }
             oss << endl;
             oss << "play ";
