@@ -863,7 +863,7 @@ inline int Field::procSlowest(const Move mv) {
     return turn();
 }
 inline int Field::procSlowest(const MoveInfo mv) {
-    return procSlowest(mv);
+    return procSlowest(Move(mv));
 }
 
 // copy Field arg to dst before playout

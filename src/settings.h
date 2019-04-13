@@ -38,7 +38,7 @@
 // 並列化
 // スレッド数(ビルド時決定)
 // 0以下を設定すると勝手に1になります
-#define N_THREADS (4)
+#define N_THREADS (8)
 
 // 末端報酬を階級リセットから何試合前まで計算するか
 constexpr int N_REWARD_CALCULATED_GAMES = 32;

@@ -463,7 +463,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                 if (!anyCards(maskJOKER(afterCards))) key = base + 0;
                                 else {
                                     Cards ops = maskJOKER(opsCards) & lockedSuitCards;
-                                    bool hasStrong = afterOrder == 0 ? (mine > ops) : (pickLow(mine, 1) < pickLow(ops, 1));
+                                    bool hasStrong = afterOrder == 0 ?
+                                                     (mine > ops) :
+                                                     (pickLow(mine + CARDS_JOKER, 1) < pickLow(ops + CARDS_JOKER, 1));
                                     if (hasStrong) key = base + 0;
                                     else {
                                         if (!containsS3(opsCards) && !any2Cards(CardsToPQR(maskJOKER(afterCards)))) {
