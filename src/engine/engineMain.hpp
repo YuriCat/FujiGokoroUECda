@@ -5,6 +5,8 @@
 
 #define _ENGINE_FUJI_
 
+#include <thread>
+
 // 思考部ヘッダ
 #include "engineSettings.h"
 #include "engineStructure.hpp"

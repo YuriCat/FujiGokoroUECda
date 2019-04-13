@@ -1,5 +1,6 @@
 // 方策関数の学習
 
+#include <thread>
 #include "../UECda.h"
 #include "../core/record.hpp"
 #include "../engine/engineSettings.h"
