@@ -1,7 +1,7 @@
 
 // 方策関数のテスト
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"

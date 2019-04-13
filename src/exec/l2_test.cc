@@ -1,7 +1,7 @@
 
 // ラスト2人完全情報状態の勝敗判定動作テスト
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"

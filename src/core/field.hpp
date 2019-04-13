@@ -5,11 +5,8 @@
 #include "daifugo.hpp"
 #include "prim2.hpp"
 #include "hand.hpp"
-#include "hash.hpp"
 #include "logic.hpp"
 #include "dominance.hpp"
-
-using namespace UECda;
 
 /**************************完全情報空間**************************/
 
@@ -34,6 +31,174 @@ struct CommonStatus {
         phase.reset();
     }
 };
+
+
+/**************************プレーヤー状態**************************/
+
+struct PlayersState : public BitArray32<8, 4> {
+    // Boardと合わせて、場の状態を表す
+    // 0-7   Alive
+    // 8-15   NAlive
+    // 16-23  Awake
+    // 24-31 Nawake
+    using base_t = BitArray32<8, 4>;
+    using data_t = typename base_t::data_type;
+    constexpr static int N = N_PLAYERS;
+    constexpr static uint32_t BMASK = 1U; // 基準ビット
+    constexpr static uint32_t PMASK = (1 << 8) - 1; // プレーヤー全体
+    constexpr static uint32_t REALPMASK = (1 << N) - 1; // 実際にいるプレーヤー全体
+    constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
+    // set
+    void setAsleep(const int p) {
+        ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << data() << endl;); // 現在Awake
+        base_t::data_ -= (BMASK << 24) + ((BMASK << 16) << p);
+    }
+    void setDead(const int p) {
+        // プレーヤーがあがった
+        ASSERT(isAwake(p), cerr << "p = " << p <<endl;);
+        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在AliveかつAwakeの必要
+        base_t::data_ -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
+    }
+    void setDeadOnly(const int p) {
+        // プレーヤーがあがった
+        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在Aliveの必要
+        base_t::data_ -= (BMASK << 8) + ((1U << 0) << p);
+    }
+    void setAwake(const int p) {
+        assert(!isAwake(p));
+        base_t::data_ += (BMASK << 24) + ((BMASK << 16) << p);
+    }
+    void setAlive(const int p) {
+        // プレーヤー復活
+        assert(!isAwake(p)); assert(!isAlive(p));
+        base_t::data_ += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
+    }
+    
+    void setAllAsleep() {
+        base_t::data_ &= (PMASK << 0) | (NMASK << 8);
+    }
+    
+    void setNAlive(const int n) {
+        assign(1, n);
+    }
+    void setNAwake(const int n) {
+        assign(3, n);
+    }
+    // get
+    
+    constexpr data_t isAlive(int p) const { return data() & ((BMASK << 0) << p); }
+    constexpr data_t isAwake(int p) const { return data() & ((BMASK << 16) << p); }
+    constexpr bool isExcluded(int p) const { return false; } // あがり以外の除外(都落ち)
+    
+    constexpr bool isAllAsleepExcept(int p) const { // p以外全員asleep
+        return !(data() & ((PMASK << 16) ^ ((BMASK << 16) << p)));
+    }
+    
+    uint32_t searchOpsPlayer(int p) const {
+        // p以外でaliveなプレーヤーを1人挙げる
+        // pがaliveであることは保証される
+        assert(isAlive(p));
+        assert(getNAlive() >= 2);
+        return bsf32(data() ^ (BMASK << p));
+    }
+    
+    constexpr data_t getNAlive() const { return (*this)[1]; }
+    constexpr data_t getNAwake() const { return (*this)[3]; }
+    
+    uint32_t countNAlive() const { return popcnt(part(0)); }
+    uint32_t countNAwake() const { return popcnt(part(2)); }
+    
+    constexpr data_t anyAlive() const { return data() & (PMASK <<  0); }
+    constexpr data_t anyAwake() const { return data() & (PMASK << 16); }
+    
+    bool isSoloAlive() const { return part(1)  == (1U <<  8); }
+    bool isSoloAwake() const { return part(3)  == (1U << 24); }
+    
+    constexpr data_t getBestClass() const { return N - getNAlive(); } // 最高の階級 = 全員 - 残っている人数
+    constexpr data_t getWorstClass() const { return N - 1; } // 最低の階級 = 全員の最後
+    
+    uint32_t searchL1Player() const {
+        // 最後に残ったプレーヤーを探す
+        assert(popcnt32(data() & PMASK) == 1); // 1人だけ残っている
+        return bsf32(data());
+    }
+    
+    void flush() {
+        // 場が流れる
+        data_t alive = data() & ((PMASK << 0) | (NMASK << 8)); // alive情報
+        base_t::data_ = alive | (alive << 16); // awake情報をalive情報に置き換える
+    }
+    void init() {
+        base_t::data_  = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
+    }
+    
+    bool exam_alive() const {
+        if (getNAlive() <= 0 || N < getNAlive()) {
+            cerr << "PlayersState : illegal NAlive " << getNAlive() << endl;
+            return false;
+        }
+        if (getNAlive() != countNAlive()) {
+            cerr << "PlayersState : NAlive != count()" << endl;
+            return false;
+        }
+        return true;
+    }
+    bool exam_awake() const {
+        if (getNAwake() <= 0 || N < getNAwake()) {
+            cerr << "PlayersState : illegal NAwake " << getNAwake() << endl;
+            return false;
+        }
+        if (getNAwake() != countNAwake()) {
+            cerr << "PlayersState : NAwake != count()" << endl;
+            return false;
+        }
+        return true;
+    }
+    
+    //validator
+    bool exam() const {
+        //各要素
+        if (!exam_alive()) return false;
+        if (!exam_awake()) return false;
+        
+        //awakeとaliveの関係
+        if (getNAlive() < getNAwake()) {
+            cerr << "PlayersState : NAlive < NAwake" << endl;
+            return false;
+        }
+        if (!holdsBits((*this)[0], (*this)[2])) {
+            cerr << "PlayersState : !holds( alive, awake )" << endl;
+            return false;
+        }
+        return true;
+    }
+    bool examNF() const {
+        // awake情報とalive情報が同じはず
+        if (data() >> 16 != (data() & ((1U << 16) - 1))) return false;
+        return true;
+    }
+    bool examSemiNF() const {
+        return exam();
+    }
+    
+    constexpr PlayersState() : base_t() {}
+    constexpr PlayersState(const PlayersState& arg) : base_t(arg) {}
+};
+
+static std::ostream& operator <<(std::ostream& out, const PlayersState& arg) { // 出力
+    // 勝敗
+    out << "al{";
+    for (int i = 0; i < PlayersState::N; i++) {
+        if (arg.isAlive(i)) out << i;
+    }
+    out << "}";
+    out << " aw{";
+    for (int i = 0; i < PlayersState::N; i++) {
+        if (arg.isAwake(i)) out << i;
+    }	
+    out << "}";
+    return out;
+}
 
 struct Field {
     

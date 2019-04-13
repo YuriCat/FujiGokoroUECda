@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../include.h"
-
 // 機械学習の対象とする部分以外のヒューリスティクス
 
 namespace UECda {

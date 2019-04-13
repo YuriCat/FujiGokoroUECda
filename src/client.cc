@@ -8,18 +8,15 @@
 
 
 #include "connection.h"
-
-#include "include.h"
+#include "UECda.h"
 
 std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-
 // クライアント
 #ifdef HUMAN_MODE
 #elif RANDOM_MODE
 #else
 #include "engine/engineMain.hpp"
 #endif
-
 WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda

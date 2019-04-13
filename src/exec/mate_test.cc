@@ -1,7 +1,7 @@
 
 // 必勝判定の動作テスト
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"

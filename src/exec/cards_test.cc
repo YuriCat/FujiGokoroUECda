@@ -6,7 +6,7 @@
 // カード集合系データ構造の動作テスト
 // カード集合の前のランクやスートのテストも含む
 
-#include "../include.h"
+#include "../UECda.h"
 
 using namespace UECda;
 

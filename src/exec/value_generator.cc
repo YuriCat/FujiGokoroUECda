@@ -2,7 +2,7 @@
 // 試合の棋譜から末端報酬を計算
 // 考え方: 階級の遷移確率行列から後の試合も考えた順位報酬を算出
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/record.hpp"
 
 using namespace UECda;

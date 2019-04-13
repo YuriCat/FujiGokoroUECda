@@ -1,8 +1,13 @@
 #pragma once
 
-// 思考部本体でだけでなくテストコード等でも読み込むコードとデータのヘッダ
+#include "../settings.h"
 
-#include "../include.h"
+// 思考部本体でだけでなくテストコード等でも読み込むコードとデータのヘッダ
+#ifdef MATCH
+#define MATCH_CONST constexpr
+#else
+#define MATCH_CONST
+#endif
 
 namespace UECda {
     namespace Settings {

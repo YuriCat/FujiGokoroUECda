@@ -1,11 +1,4 @@
-/*
- galaxy.hpp
- Katsuki Ohto
- */
-
 #pragma once
-
-#include "../include.h"
 
 namespace UECda{
     

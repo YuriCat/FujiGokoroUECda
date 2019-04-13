@@ -1,13 +1,37 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <algorithm>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <algorithm>
+#include <array>
+#include <atomic>
 #include <bitset>
 #include <cassert>
+#include <cmath>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <random>
+#include <set>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#endif
 
 #if !defined(NDEBUG)
 #define UNREACHABLE assert(0)
@@ -642,17 +666,17 @@ struct NormalDistribution {
     }
     
     double relative_dens(double x)const{
-        return exp(-(x - mu) * (x - mu) / (2 * sigma * sigma));
+        return std::exp(-(x - mu) * (x - mu) / (2 * sigma * sigma));
     }
     double dens(double x)const{
-        return relative_dens(x) / sigma * (1 / sqrt(2 * M_PI));
+        return relative_dens(x) / sigma * (1 / std::sqrt(2 * M_PI));
     }
     double dist(double x)const{
-        return (1 + erf((x - mu) / sigma * (1 / sqrt(2)))) / 2;
+        return (1 + std::erf((x - mu) / sigma * (1 / std::sqrt(2)))) / 2;
     }
     
     double ent()const{
-        return sigma * sqrt(2 * M_PI * exp(1));
+        return sigma * std::sqrt(2 * M_PI * std::exp(1));
     }
     constexpr double mean()const noexcept{ return mu; }
     constexpr double var()const noexcept{ return sigma * sigma; }
@@ -774,7 +798,7 @@ public:
     using page_t = TwoValuePage32;
     
     void init() {
-        memset(page_, 0, sizeof(page_));
+        std::memset(page_, 0, sizeof(page_));
     }
     void clear() {}
     TwoValueBook() { init(); }

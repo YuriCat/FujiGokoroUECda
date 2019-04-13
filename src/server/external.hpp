@@ -14,7 +14,7 @@
 #include<X11/Xutil.h>*/
 #include "mt19937ar.h"
 
-#include "../include.h"
+#include "../UECda.h"
 #include "define.h"
 
 using namespace UECda;

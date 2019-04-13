@@ -1,9 +1,7 @@
 // 方策関数の学習
 
-#include <bitset>
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/record.hpp"
-
 #include "../engine/engineSettings.h"
 #include "../engine/linearPolicy.hpp"
 #include "../engine/policyGradient.hpp"
@@ -14,7 +12,6 @@ struct ThreadTools {
 };
 
 using namespace std;
-using namespace UECda;
 
 string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
@@ -26,7 +23,7 @@ enum {
     MODE_FLAG_SHUFFLE = 8,
 };
 
-namespace LearningSettings{
+namespace LearningSettings {
     // 学習用パラメータの設定
     constexpr int N_MAX_THREADS = 64;
     int threads = 1;

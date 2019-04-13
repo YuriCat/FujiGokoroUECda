@@ -1,7 +1,7 @@
 
 // 支配性判定のテスト
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"

@@ -1,7 +1,7 @@
 
 // 棋譜ファイルからの基本統計量の計算
 
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"

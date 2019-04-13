@@ -1,14 +1,7 @@
 
 // 着手生成のテスト
 
-#include "../settings.h"
-
-// アナライザを強制使用にする
-#ifndef USE_ANALYZER
-#define USE_ANALYZER
-#endif
-
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
