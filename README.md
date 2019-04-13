@@ -4,7 +4,7 @@ UECコンピュータ大貧民大会（UECda）ルール・プロトコルに準
 
 Daifugo Program for UEC Computer Daihinmin Contest (UECda) 
 
-UECda2014, 2015, 2016 無差別級で優勝しています。
+UECda2014, 2015, 2016, 2017 無差別級で優勝しています。
 
 2016/5/19深夜放送の日本テレビ系「変ラボ」にてタレントの手越祐也さんと対決させていただきました。
 
@@ -44,13 +44,9 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
 
 http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/document.html
 
-## 今年度の大会
+## 大会での利用について
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/
-
-今年度の大会は2017/11/25(土)に開催される予定だそうです。
-
-大会では基本的に公開されている過去の出場プログラムを自由に改変して出場可能のはずですが、
+コンピュータ大貧民大会では基本的に公開されている過去の出場プログラムを自由に改変して出場可能のはずですが、
 
 特に私の製作プログラムについては、こちらの開発版コードの利用しての出場も許可します。
 
