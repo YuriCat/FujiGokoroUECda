@@ -396,7 +396,7 @@ public:
     XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
 };
 
-double dFactorial(int n) {
+static double dFactorial(int n) {
     double ans = 1;
     while (n > 1) ans *= n--;
     return ans;
