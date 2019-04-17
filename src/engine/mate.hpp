@@ -598,7 +598,7 @@ namespace UECda {
             // 自分の出したジョーカーをS3で返してからの必勝チェック
             if (mv.isSingleJOKER() && containsS3(nextHand.cards)) {
                 Move s3; s3.setSingle(INTCARD_S3);
-                nextHand.makeMove1stHalf(s3);
+                nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
                 return judgeHandMate(0, buf, nextHand, opsHand, bd, nextFieldInfo);
             }
         } else { // 支配しない

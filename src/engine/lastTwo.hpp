@@ -241,7 +241,7 @@ namespace UECda {
         int res;
         nodes++;
         
-        uint64_t fhash = -1;
+        uint64_t fkey = -1;
 
         switch (S_LEVEL) {
             case 0: res = L2_NONE; if (E_LEVEL <= 0) break; // fallthrough
@@ -264,11 +264,11 @@ namespace UECda {
 #ifdef USE_L2BOOK
                 // NFのみ
                 if (field.isNull()) {
-                    ASSERT(myHand.exam_hash(), cerr << myHand.toDebugString(););
-                    ASSERT(opsHand.exam_hash(), cerr << opsHand.toDebugString(););
+                    ASSERT(myHand.exam_key(), cerr << myHand.toDebugString(););
+                    ASSERT(opsHand.exam_key(), cerr << opsHand.toDebugString(););
                     
-                    fhash = knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.b));
-                    res = L2::book.read(fhash);
+                    fkey = knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b));
+                    res = L2::book.read(fkey);
                     if (res != -1) { // 結果が既に登録されていた
 #ifdef DEBUG
                         DERR << string(2 * depth, ' ');
@@ -325,16 +325,16 @@ namespace UECda {
                 if (res >= 0) {
 #ifdef USE_L2BOOK
                     if (field.isNull()) {
-                        ASSERT(fhash == knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.b)), cerr << fhash << endl;);
-                        L2::book.regist(L2_WIN, fhash);
+                        ASSERT(fkey == knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b)), cerr << fkey << endl;);
+                        L2::book.regist(L2_WIN, fkey);
                     }
 #endif
                     return L2_WIN;
                 } else if (res == -1) {
 #ifdef USE_L2BOOK
                     if (field.isNull()) {
-                        ASSERT(fhash == knitL2NullFieldHashKey(myHand.hash, opsHand.hash, NullBoardToHashKey(field.b)), cerr << fhash << endl;);
-                        L2::book.regist(L2_LOSE, fhash);
+                        ASSERT(fkey == knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b)), cerr << fkey << endl;);
+                        L2::book.regist(L2_LOSE, fkey);
                     }
 #endif
                     return L2_LOSE;
@@ -366,7 +366,7 @@ namespace UECda {
                     return L2_WIN;
                 }
                 L2Field nextField = procAndFlushL2Field(field, tmp);
-                nextHand.hash = myHand.hash ^ CardsToHashKey(tmp.cards());
+                nextHand.key = myHand.key ^ CardsToHashKey(tmp.cards());
                 res = judge<3, 4>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
                 if (judgeMate_Easy_NF(myHand)) {
