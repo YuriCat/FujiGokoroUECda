@@ -5,7 +5,6 @@
 #include "daifugo.hpp"
 #include "prim2.hpp"
 #include "hand.hpp"
-#include "logic.hpp"
 #include "dominance.hpp"
 
 /**************************完全情報空間**************************/
@@ -669,16 +668,6 @@ struct Field {
                         }
                     }
                 }
-            }
-        }
-        
-        if (isRoot) {
-            // オーダー固定か否か
-            if (isNoBack(getCards(tp), getOpsCards(tp))
-               && isNoRev(getCards(tp), getOpsCards(tp))) {
-                // 革命もJバックもなし
-                DERR << "ORDER SETTLED." << endl;
-                fieldInfo.settleTmpOrder();
             }
         }
     }

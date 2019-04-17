@@ -4,7 +4,6 @@
 #include "../core/daifugo.hpp"
 #include "../core/prim2.hpp"
 #include "../core/hand.hpp"
-#include "../core/logic.hpp"
 #include "mate.hpp"
 
 using std::string;
@@ -36,14 +35,9 @@ namespace UECda {
         uint64_t isFlushLead() const { return info.isFlushLead(); }
         uint64_t isUnrivaled() const { return info.isUnrivaled(); }
         
-        uint64_t isOrderSettled() const { return info.isOrderSettled(); }
-        uint64_t isDConst() const { return info.isDConst(); }
-        
         void setSelfFollow() { info.setSelfFollow(); }
         void setLastAwake() { info.setLastAwake(); }
         void setFlushLead() { info.setFlushLead(); }
-        
-        void setDConst() { info.setDConst();}
         
         int turn() const {
 #ifdef DEBUG
@@ -295,7 +289,7 @@ namespace UECda {
                 // 簡易評価
                 // 必敗判定
                 if (field.isNull()) {
-                    if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.b.order() == 0) {
+                    if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.order() == 0) {
                         int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
                         int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
                         if (myHR < opsLR) {
@@ -394,7 +388,6 @@ namespace UECda {
                        const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
         
         bool pass = tmp.isPASS();
-        bool unriv = field.isUnrivaled();
         int res;
         DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp;
 
@@ -406,33 +399,6 @@ namespace UECda {
             if (checkDomMate(depth, buf, tmp, myHand, opsHand, field) == L2_WIN) return L2_WIN;
         }
         childs++;
- 
-        L2Field nextField;
-        Hand nextHand;
-        int nextPlayer;
-        int conRest = 0;
-        
-        if (!pass) {
-            if (field.isDConst()) { // 支配拘束中
-                if (!tmp.dominatesOthers()) { // 他支配でない
-                    if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.order(), field.info.isOrderSettled())) { // 残り札に支配保証or空場期待がある
-                        //DERR << tmp << ": DWorNFH_REST FAIL " << myHand << " vs " << opsHand << endl; getchar();
-                        DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -RESTLOSE" << endl;
-                        return L2_LOSE; // 拘束条件違反で負けとみなす
-                    }
-                } else {
-                    // 拘束継続
-                    conRest = 1;
-                }
-            } else {
-                // 支配保証拘束を掛ける
-                if (field.isNull() && field.isOrderSettled() && tmp.dominatesOthers()) {
-                    if (hasDWorNFH(myHand.cards - tmp.cards(), opsHand.cards, field.order(), field.info.isOrderSettled())) { // 残り札に支配保証or空場期待がある
-                        conRest = 1;
-                    }
-                }
-            }
-        }
         
         // 支配性判定
         if (!pass && (field.isLastAwake() || tmp.dominatesOthers())) {
@@ -440,24 +406,21 @@ namespace UECda {
                 tmp.setDomMe();
             }
         }
-        
+        Hand nextHand;
+        L2Field nextField;
+        int nextPlayer = procL2Field(field, &nextField, tmp);
         if (!pass) {
             makeMoveAll(myHand, &nextHand, tmp);
             DERR << " " << myHand << " -> " << nextHand;
             
-            nextPlayer = procL2Field(field, &nextField, tmp);
-            
-            if (conRest) nextField.setDConst();
             if (nextPlayer == 0) {
                 res = judge<1, 1024>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
-                res = L2_WIN + L2_LOSE - judge<1, 1024>(depth+1,buf,opsHand,nextHand,nextField);
+                res = L2_WIN + L2_LOSE - judge<1, 1024>(depth + 1, buf, opsHand, nextHand, nextField);
             }
         } else { // PASS
             DERR << " " << myHand;
             nextPlayer = procL2Field(field, &nextField, tmp);
-            
-            if (conRest) nextField.setDConst();
             if (nextPlayer == 0) {
                 res = judge<1, 1024>(depth + 1, buf, myHand, opsHand, nextField);
             } else {
@@ -495,47 +458,12 @@ namespace UECda {
         }
         // 探索
         bool unFound = false;
-        Cards dw;
-        if (field.isNull()) {
-            dw = getAllDWCards(myHand.cards, opsHand.cards, field.order(), field.info.isOrderSettled());
-        } else {
-            dw = CARDS_NULL; // 不要だがwarning回避
-        }
         for (int m = NMoves - 1; m >= 0; m--) {
             MoveInfo& tmp = buf[m];
-            if (!tmp.isL2GiveUp()) {
-                if (!tmp.isPASS()) {
-                    if (field.isNull() && tmp.dominatesAll() && !(tmp.cards() & dw)) continue;
-                }
-                int res = check(depth, buf + NMoves, tmp, myHand, opsHand, field, true);
-                if (res == L2_WIN) return m;
-                if (res == L2_DRAW) { unFound = true; continue; }
-                if (tmp.dominatesOthers()) {
-                    if (tmp.dominatesMe()) {
-                        if (tmp.containsJOKER() && !tmp.isSingleJOKER()) {
-                            // 支配共役系の枝刈り
-                            for (int mm = m - 1; mm >= 0; mm--) {
-                                if (tmp.cards() == buf[mm].cards()) {
-                                    //DERR << tmp << "-" << mv[mm] << " cut!" << endl;
-                                    buf[mm].setL2GiveUp();
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (field.isNull() && field.isOrderSettled()) {
-                        // NFPDで負けた場合、排反なDW持ちのNFPDは全て枝刈り出来る
-                        for (int mm = m - 1; mm >= 0; mm--) {
-                            if (buf[mm].dominatesOthers()) {
-                                Cards anoMvCards = buf[mm].cards();
-                                if ((dw & anoMvCards) && (!(tmp.cards() & anoMvCards))) {
-                                    buf[mm].setL2GiveUp();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            //if (tmp.isL2GiveUp()) continue;
+            int res = check(depth, buf + NMoves, tmp, myHand, opsHand, field, true);
+            if (res == L2_WIN) return m;
+            if (res == L2_DRAW) unFound = true;
         }
         if (unFound) return -2;
         else return -1;

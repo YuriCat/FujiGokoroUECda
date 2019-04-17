@@ -366,7 +366,7 @@ constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCar
 // 出力用クラス
 struct OutIntCard {
     IntCard ic;
-    constexpr OutIntCard(const IntCard& arg) :ic(arg) {}
+    constexpr OutIntCard(const IntCard& arg): ic(arg) {}
 };
 inline std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
     if (arg.ic == INTCARD_JOKER) {
@@ -750,7 +750,7 @@ union Cards {
     struct {
         unsigned long long plain_: 60;
         signed int joker_: 4;
-    } bf_;
+    };
 
     // 定数
     constexpr Cards(): c_() {}
@@ -778,12 +778,11 @@ union Cards {
     constexpr bool anyJOKER() const { return containsJOKER(c_); }
     constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
 
-    constexpr int joker() const { return countJOKER(); }
+    constexpr int joker() const { return joker_; } //containsJOKER(c_) ? 1 : 0; }
     constexpr Cards plain() const { return ::maskJOKER(c_); }
 
     int count() const { return countCards(c_); }
     constexpr int countInCompileTime() const { return countFewCards(c_); }
-    constexpr int countJOKER() const { return containsJOKER(c_) ? 1 : 0; }
     int countPlain() const { return countCards(plain()); }
 
     constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
@@ -822,8 +821,8 @@ union Cards {
         return (*this) -= c;
     }
     
-    Cards& inv(BitCards c) { return (*this) ^= c; }
-    Cards& inv() { return inv(CARDS_ALL); }
+    //Cards& inv(BitCards c) { return (*this) ^= c; }
+    //Cards& inv() { return inv(CARDS_ALL); }
     
     // pick, pop
     IntCard lowest() const {

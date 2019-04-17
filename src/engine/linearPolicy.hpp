@@ -6,7 +6,6 @@
 #include "../core/prim2.hpp"
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
-#include "../core/logic.hpp"
 #include "softmaxClassifier.hpp"
 
 namespace UECda {
@@ -238,6 +237,22 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
 
+    inline int computeDivision(MoveInfo *const mv, const Cards c) {
+        // paoon氏のbeersongのアイデアを利用
+        int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
+        const int cnt = genAllSeq(mv, c);
+        if (cnt) {
+            // 階段を使った場合の方が分割数を減らせる場合を考慮
+           MoveInfo *const new_buf = mv + cnt;
+            for (int i = 0; i < cnt; i++) {
+                Cards tmp = subtrCards(c, mv[i].cards());
+                int nret = computeDivision(new_buf, tmp) + 1;
+                ret = min(ret, nret);
+            }
+        }
+        return ret;
+    }
+
     inline double calcRankScore(Cards pqr, int jk, int ord) {
         // 階級平均点を計算
         int r = 0;
@@ -290,7 +305,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         const uint32_t oq = myHand.qty;
         const Cards curPqr = myHand.pqr;
         const FieldAddInfo& fieldInfo = field.fieldInfo;
-        const int NParty = calcMinNMelds(buf + NMoves, myCards);
+        const int NParty = computeDivision(buf + NMoves, myCards);
         
         // 元々の手札の最低、最高ランク
         const int myLR = IntCardToRank(pickIntCardLow(myCards));
@@ -413,8 +428,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // nf min party
                 {
                     constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
-                    if (bd.isNull()) FooX(base, calcMinNMelds(buf + NMoves, afterCards) - NParty)
-                    else FooX(base + 1, calcMinNMelds(buf + NMoves, afterCards) - NParty)
+                    if (bd.isNull()) FooX(base, computeDivision(buf + NMoves, afterCards) - NParty)
+                    else FooX(base + 1, computeDivision(buf + NMoves, afterCards) - NParty)
                 }
                 FASSERT(s,);
                 

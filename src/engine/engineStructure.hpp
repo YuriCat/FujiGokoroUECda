@@ -154,6 +154,7 @@ namespace UECda {
         MoveInfo move;
         Cards changeCards;
         bool pruned;
+        int nextDivision;
         
         // 方策関数出力
         double policyScore, policyProb;
@@ -240,8 +241,9 @@ namespace UECda {
 #endif
         void setCommonInfo(int num, const Field& field, const EngineSharedData& shared, int limSim) {
             actions = candidates = num;
-            for (int m = 0; m < actions; m++)
+            for (int m = 0; m < actions; m++) {
                 monteCarloAllScore += child[m].monteCarloScore;
+            }
             myPlayerNum = shared.record.myPlayerNum;
             rivalPlayerNum = -1;
             bestClass = field.getBestClass();
