@@ -779,7 +779,7 @@ union Cards {
     constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
 
     constexpr int joker() const { return joker_; } //containsJOKER(c_) ? 1 : 0; }
-    constexpr Cards plain() const { return ::maskJOKER(c_); }
+    constexpr Cards plain() const { return plain_; }
 
     int count() const { return countCards(c_); }
     constexpr int countInCompileTime() const { return countFewCards(c_); }
@@ -1552,11 +1552,8 @@ inline Move StringToMoveM(const std::string& str) {
             CERR << "illegal suit number" << endl;
             return MOVE_NONE;
         }
-        if (sn != SUITNUM_X) {
-            s |= SuitNumToSuits(sn);
-        } else { // クインタプル
-            jk = true;
-        }
+        if (sn != SUITNUM_X) s |= SuitNumToSuits(sn);
+        else jk = true; // クインタプル
         ns++;
     }
     // rank
@@ -1568,10 +1565,8 @@ inline Move StringToMoveM(const std::string& str) {
             CERR << "illegal rank" << endl;
             return MOVE_NONE;
         }
-        if (rank == RANK_NONE) {
-            rank = r;
-        }
-        ++nr;
+        if (rank == RANK_NONE) rank = r;
+        nr++;
     }
     // invalid
     if (s == SUITS_NULL) { CERR << "null suits" << endl; return MOVE_NONE; }
@@ -1579,13 +1574,9 @@ inline Move StringToMoveM(const std::string& str) {
     if (rank == RANK_NONE) { CERR << "null lowest-rank" << endl; return MOVE_NONE; }
     if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
     // seq or group?
-    if (nr > 1) { // seq
-        mv.setSeq(nr, rank, s);
-    } else if (ns == 1) { // single
-        mv.setSingle(rank, s);
-    } else { // group
-        mv.setGroup(ns, rank, s);
-    }
+    if (nr > 1) mv.setSeq(nr, rank, s);
+    else if (ns == 1) mv.setSingle(rank, s);
+    else  mv.setGroup(ns, rank, s);
     // joker
     if (jk) {
         if (!mv.isSeq()) {
