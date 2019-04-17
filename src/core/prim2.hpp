@@ -17,8 +17,6 @@ constexpr int LCT_L2MATE   = 5;
 constexpr int LCT_MPGIVEUP = 6;
 constexpr int LCT_L2GIVEUP = 7;
 
-constexpr int LCT_MINNMELDS = 8;
-
 // 場の一時状況に対するする宣言情報
 constexpr int LCT_SELFFOLLOW = 16;
 constexpr int LCT_UNRIVALED = 17;
@@ -28,11 +26,6 @@ constexpr int LCT_NPDOM = 20;
 constexpr int LCT_PDOM = 21;
 constexpr int LCT_BDOMOTHERS = 22;
 constexpr int LCT_BDOMME = 23; // <-NoChanceのこと
-
-constexpr int LCT_TMPORDSETTLED = 24;
-constexpr int LCT_PRMORDSETTLED = 25;
-
-constexpr int LCT_DCONST = 28;
 
 constexpr uint32_t FLAG_MATE   = 0x3fU;
 constexpr uint32_t FLAG_GIVEUP = 0xc0U;
@@ -46,8 +39,6 @@ constexpr int LCT64_L2MATE   = 5 + 32;
 constexpr int LCT64_MPGIVEUP = 6 + 32;
 constexpr int LCT64_L2GIVEUP = 7 + 32;
 
-constexpr int LCT64_MINNMELDS = 8 + 32;
-
 constexpr int LCT64_SELFFOLLOW = 16 + 32;
 constexpr int LCT64_UNRIVALED = 17 + 32;
 constexpr int LCT64_LASTAWAKE = 18 + 32;
@@ -57,11 +48,6 @@ constexpr int LCT64_PDOM = 21 + 32;
 constexpr int LCT64_BDOMOTHERS = 22 + 32;
 constexpr int LCT64_BDOMME = 23 + 32; // <-NoChanceのこと
 
-constexpr int LCT64_TMPORDSETTLED = 24 + 32;
-constexpr int LCT64_PRMORDSETTLED = 25 + 32;
-
-constexpr int LCT64_DCONST = 28 + 32;
-
 constexpr int LCT_MINNCARDS = 0;
 constexpr int LCT_MAXNCARDS = 4;
 constexpr int LCT_MINNCARDSAWAKE = 8;
@@ -70,17 +56,13 @@ constexpr int LCT_MAXNCARDSAWAKE = 12;
 constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
 constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
 
-constexpr uint64_t MASK64_TMPINFO = (1ULL << LCT64_TMPORDSETTLED) | (1ULL << LCT64_PRMORDSETTLED);
+constexpr uint64_t MASK64_TMPINFO = 0;
 
 class FieldAddInfo {
     
     // 着手決定のためにこの程度は調べておきたい場情報
     // 着手ごとの情報と被る場合もあるけれども、検索が面倒な場合はこちらに記録しておく
-    
-    // 8-11 MinNMelds
-    
-    //
-    
+
     // 16 セルフフォロー
     // 17 独壇場(ALLDOM)
     // 18 LastAwake
@@ -89,10 +71,6 @@ class FieldAddInfo {
     // 21 PDOM
     // 22 BDOMOTHERS
     // 23 BDOMME
-    
-    // 24 orderConsolidated
-    // 25 prmOrderConsolidated
-    // 28 支配保証/空場期待拘束中(ここに書くべきなのだろうか?)
     
     // info1
     // 0-3 MinNCards
@@ -134,15 +112,6 @@ public:
     void setBDALL() { set(LCT64_BDOMOTHERS,
                                    LCT64_BDOMME); }
     void setNoChance() { setBDM(); }
-    
-    void settlePrmOrder() { set(LCT64_TMPORDSETTLED); }
-    void settleTmpOrder() { set(LCT64_TMPORDSETTLED,
-                                         LCT64_PRMORDSETTLED); }
-    
-    void setDConst() { set(LCT64_DCONST); }
-    
-    void setMinNMelds(uint32_t n) { i_ |= uint64_t(n & 15U) << LCT64_MINNMELDS; }
-    
     void setMinNCards(uint32_t n) { i_ |= n & 15U; }
     void setMaxNCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
     void setMinNCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
@@ -172,14 +141,6 @@ public:
     bool isBDALL() const { return holds(LCT64_BDOMOTHERS,
                                                  LCT64_BDOMME); }
     uint64_t isNoChance() const { return isBDM(); }
-    
-    // 永続情報
-    uint64_t isOrderSettled() const { return test(LCT64_TMPORDSETTLED); }
-    uint64_t isPrmOrderSettled() const { return test(LCT64_PRMORDSETTLED); }
-    
-    uint64_t isDConst() const { return test(LCT64_DCONST); }
-    
-    uint32_t getMinNMelds() const { return uint32_t(i_ >> LCT64_MINNMELDS) & 15U; }
     
     uint32_t getMinNCards() const { return i_ & 15U; }
     uint32_t getMaxNCards() const { return (i_ >> 4) & 15U; }
@@ -298,9 +259,6 @@ struct MoveInfo : public Move {
     void setDomMe() { setDO(); }
     void setDomAll() { setDO(); }
 
-    // min_melds
-    void setIncMinNMelds(uint32_t dec) { Move::flags |= ((uint64_t)(dec))<<(8); }
-
     // kousoku
     void setDConst() { set(28); }
     
@@ -326,7 +284,7 @@ struct MoveInfo : public Move {
     uint64_t dominatesMe() const { return isDM(); }
     uint64_t dominatesAll() const { return isDALL(); }
     
-    uint32_t getIncMinNMelds() const { return (Move::flags >> 8) & 15; }
+    //uint32_t getIncMinNMelds() const { return (Move::flags >> 8) & 15; }
     
     uint64_t isDConst() const { return test((28)); }
 };
@@ -348,9 +306,6 @@ static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
     // 後場
     if (b.afterTmpOrder(i) != 0) oss << " -TREV";
     if (b.locksSuits(i)) oss << " -SLOCK";
-    
-    // パラメータ
-    oss << " -MNM(" << i.getIncMinNMelds() << ")";
     
     // 当座支配
     if (i.dominatesAll()) oss<< " -DALL";

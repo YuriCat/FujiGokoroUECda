@@ -17,7 +17,6 @@
 #include "value.hpp"
 
 // 諸々の計算とか判定
-#include "../core/logic.hpp" // ロジック
 #include "../core/dominance.hpp" // 支配判定
 #include "mate.hpp" // 必勝判定
 #include "lastTwo.hpp"
@@ -353,11 +352,8 @@ namespace UECda {
             field.prepareForPlay(true);
             
             // 着手追加情報を設定
-            int curMinNMelds = calcMinNMelds(searchBuffer, myCards);
             for (int i = 0; i < NMoves; i++) {
                 MoveInfo& move = mv[i];
-                
-                Cards nextCards = maskCards(myCards, move.cards());
                 // 支配性
                 if (move.qty() > fieldInfo.getMaxNCardsAwake()
                     || dominatesCards(move, opsCards, bd)) {
@@ -386,8 +382,6 @@ namespace UECda {
                         }
                     }
                 }
-                // 最小分割数の減少量
-                move.setIncMinNMelds(max(0, calcMinNMelds(searchBuffer, nextCards) - curMinNMelds + 1));
             }
             
             // 判定結果を報告
@@ -423,12 +417,7 @@ namespace UECda {
             
             // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
             double score[N_MAX_MOVES + 256];
-#ifdef RL_POLICY
-            // 強化学習する場合には学習器を裏で動かす
-            calcPlayPolicyScoreSlow<1>(score, mv, NMoves, field, shared.basePlayPolicy);
-#else
             calcPlayPolicyScoreSlow<0>(score, mv, NMoves, field, shared.basePlayPolicy);
-#endif
             root.feedPolicyScore(score, NMoves);
             
 #ifndef POLICY_ONLY
@@ -489,9 +478,15 @@ namespace UECda {
                 if (fieldInfo.isUnrivaled()) {
                     // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                     //    そうでなければパスを優先
-                    next = root.sort(next, [](const RootAction& a) { return -(int)a.move.getIncMinNMelds(); });
-                    if (root.child[0].move.getIncMinNMelds() > 0)
+                    int division = computeDivision(searchBuffer, myCards);
+                    for (int i = 0; i < NMoves; i++) {
+                        Cards nextCards = myCards - root.child[i].move.cards();
+                        root.child[i].nextDivision = computeDivision(searchBuffer, nextCards);
+                    }
+                    next = root.sort(next, [](const RootAction& a) { return a.nextDivision; });
+                    if (root.child[0].nextDivision < division) {
                         next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPASS(); });
+                    }
                 }
                 // 7. 枚数が大きいものを優先
                 next = root.sort(next, [](const RootAction& a) { return a.move.qty(); });

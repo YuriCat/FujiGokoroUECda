@@ -366,7 +366,7 @@ constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCar
 // 出力用クラス
 struct OutIntCard {
     IntCard ic;
-    constexpr OutIntCard(const IntCard& arg) :ic(arg) {}
+    constexpr OutIntCard(const IntCard& arg): ic(arg) {}
 };
 inline std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
     if (arg.ic == INTCARD_JOKER) {
@@ -750,7 +750,7 @@ union Cards {
     struct {
         unsigned long long plain_: 60;
         signed int joker_: 4;
-    } bf_;
+    };
 
     // 定数
     constexpr Cards(): c_() {}
@@ -778,12 +778,11 @@ union Cards {
     constexpr bool anyJOKER() const { return containsJOKER(c_); }
     constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
 
-    constexpr int joker() const { return countJOKER(); }
-    constexpr Cards plain() const { return ::maskJOKER(c_); }
+    constexpr int joker() const { return joker_; } //containsJOKER(c_) ? 1 : 0; }
+    constexpr Cards plain() const { return plain_; }
 
     int count() const { return countCards(c_); }
     constexpr int countInCompileTime() const { return countFewCards(c_); }
-    constexpr int countJOKER() const { return containsJOKER(c_) ? 1 : 0; }
     int countPlain() const { return countCards(plain()); }
 
     constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
@@ -822,8 +821,8 @@ union Cards {
         return (*this) -= c;
     }
     
-    Cards& inv(BitCards c) { return (*this) ^= c; }
-    Cards& inv() { return inv(CARDS_ALL); }
+    //Cards& inv(BitCards c) { return (*this) ^= c; }
+    //Cards& inv() { return inv(CARDS_ALL); }
     
     // pick, pop
     IntCard lowest() const {
@@ -1553,11 +1552,8 @@ inline Move StringToMoveM(const std::string& str) {
             CERR << "illegal suit number" << endl;
             return MOVE_NONE;
         }
-        if (sn != SUITNUM_X) {
-            s |= SuitNumToSuits(sn);
-        } else { // クインタプル
-            jk = true;
-        }
+        if (sn != SUITNUM_X) s |= SuitNumToSuits(sn);
+        else jk = true; // クインタプル
         ns++;
     }
     // rank
@@ -1569,10 +1565,8 @@ inline Move StringToMoveM(const std::string& str) {
             CERR << "illegal rank" << endl;
             return MOVE_NONE;
         }
-        if (rank == RANK_NONE) {
-            rank = r;
-        }
-        ++nr;
+        if (rank == RANK_NONE) rank = r;
+        nr++;
     }
     // invalid
     if (s == SUITS_NULL) { CERR << "null suits" << endl; return MOVE_NONE; }
@@ -1580,13 +1574,9 @@ inline Move StringToMoveM(const std::string& str) {
     if (rank == RANK_NONE) { CERR << "null lowest-rank" << endl; return MOVE_NONE; }
     if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
     // seq or group?
-    if (nr > 1) { // seq
-        mv.setSeq(nr, rank, s);
-    } else if (ns == 1) { // single
-        mv.setSingle(rank, s);
-    } else { // group
-        mv.setGroup(ns, rank, s);
-    }
+    if (nr > 1) mv.setSeq(nr, rank, s);
+    else if (ns == 1) mv.setSingle(rank, s);
+    else  mv.setGroup(ns, rank, s);
     // joker
     if (jk) {
         if (!mv.isSeq()) {

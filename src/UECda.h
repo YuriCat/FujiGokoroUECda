@@ -85,6 +85,24 @@ namespace UECda {
     // 初手プレーヤーの決め方
     // 場の流れ方
     //
+
+    constexpr bool isNoBack(const Cards mine, const Cards ops) {
+        return true; // イレブンバックはUECdaにはない
+    }
+    constexpr bool isNoBack(const Cards mine) {
+        return true; // イレブンバックはUECdaにはない
+    }
+
+    inline bool isNoRev(const Cards mine, const Cards ops) {
+        // 無革命性の証明
+        return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
+                && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
+    }
+
+    inline bool isNoRev(const Cards mine) {
+        // 無革命性の証明
+        return !groupCards(mine, 4) && !canMakeSeq(mine, 5);
+    }
     
     constexpr int getChangePartnerClass(int acl) {
         // 交換相手の階級
