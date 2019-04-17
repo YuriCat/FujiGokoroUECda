@@ -5,7 +5,7 @@
 #include "../core/record.hpp"
 #include "../engine/engineSettings.h"
 #include "../engine/linearPolicy.hpp"
-#include "../engine/policyGradient.hpp"
+#include "../extra/policyGradient.hpp"
 
 struct ThreadTools {
     MoveInfo buf[8192];

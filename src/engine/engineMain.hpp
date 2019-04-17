@@ -22,7 +22,6 @@
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
-#include "policyGradient.hpp"
 
 #ifndef POLICY_ONLY
 #include "galaxy.hpp"

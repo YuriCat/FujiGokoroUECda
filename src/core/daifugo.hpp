@@ -4,7 +4,7 @@
 #include <array>
 #include <map>
 #include <iterator>
-#include "util.hpp"
+#include "../base/util.hpp"
 
 // 大富豪における最も基本的な型の実装
 
@@ -821,9 +821,6 @@ union Cards {
         return (*this) -= c;
     }
     
-    //Cards& inv(BitCards c) { return (*this) ^= c; }
-    //Cards& inv() { return inv(CARDS_ALL); }
-    
     // pick, pop
     IntCard lowest() const {
         assert(any());
@@ -1253,29 +1250,19 @@ struct Move {
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
     void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ
-
-    void setSingle()                  { t = 1; }
-    void setGroup()                   { t = 2; }
-    void setSeq()                     { t = 3; }
-    void setQty(uint32_t qty)         { q = qty; }
-    void setRank(uint32_t rank)       { r = rank; }
-    void setSuits(uint32_t suits)     { s = suits; }
     void setJokerRank(uint32_t jr)    { jkr = jr; }
     void setJokerSuits(uint32_t js)   { jks = js; }
     void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
     // タイプを指定してまとめて処理
     void setSingle(int rank, int suits) {
-        clear();
-        setSingle(); setQty(1); setRank(rank); setSuits(suits);
+        clear(); t = 1; q = 1; r = rank; s = suits;
     }
     void setGroup(int qty, int rank, int suits) {
-        clear();
-        setGroup(); setQty(qty); setRank(rank); setSuits(suits);
+        clear(); t = 2; q = qty; r = rank; s = suits;
     }
     void setSeq(int qty, int rank, int suits) {
-        clear();
-        setSeq(); setQty(qty); setRank(rank); setSuits(suits);
+        clear(); t = 3; q = qty; r = rank; s = suits;
     }
     // IntCard型からシングル着手をセットする
     void setSingle(IntCard ic) {
@@ -1291,7 +1278,7 @@ struct Move {
     constexpr bool isQuintuple() const {
         return isGroup() && q == 5;
     }
-    constexpr uint32_t containsJOKER() const { return jks || jkr; }
+    constexpr bool containsJOKER() const { return jks || jkr; }
     
     constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }

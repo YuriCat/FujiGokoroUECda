@@ -1,53 +1,34 @@
 #pragma once
 
-namespace UECda{
+namespace UECda {
     
     constexpr int MAX_N_WORLDS = 128;
-    
     template <class wrd_t, int SIZE = (MAX_N_WORLDS / N_THREADS)>
-    struct Galaxy{
+    struct Galaxy {
         
         using world_t = wrd_t;
         
         // 幾多の世界が詰まっている入れ物のような何か
-        // スレッドごとに
-        
         int usedLimit;
         int actives;
         int nullLimit;
         world_t world[SIZE];
         
-        Galaxy()
-        {
-            clear();
-        }
+        Galaxy() { clear(); }
+        ~Galaxy() { close(); }
         
-        ~Galaxy() {
-            close();
-        }
-        
-        int size() const {return SIZE;}
+        int size() const { return SIZE; }
         
         void clear() {
-            for (int w = 0; w < SIZE; ++w) {
-                world[w].clear();
-            }
+            for (int w = 0; w < SIZE; w++) world[w].clear();
             usedLimit = SIZE;
             actives = 0;
             nullLimit = 0;
         }
         
-        void close() {
-            clear();
-        }
-        
-        void proceed(const int p, const Move mv, const Cards c, const double compRatio) {
-            
-        }
-        
-        void checkRationality() {
-            
-        }
+        void close() { clear();}
+        void proceed(const int p, const Move mv, const Cards c, const double compRatio) {}
+        void checkRationality() {   }
         
         world_t* access(const int w) {
             assert(0 <= w && w < SIZE);
@@ -89,13 +70,11 @@ namespace UECda{
             return 0;
         }
         
-        void addActives() {
-            ++actives;
-        }
+        void addActives() { actives++; }
     };
     
     template <class glxy_t, int N = N_THREADS>
-    struct GalaxyAnalyzer{
+    struct GalaxyAnalyzer {
         
        using galaxy_t = glxy_t;
        using world_t = typename glxy_t::world_t;
@@ -104,25 +83,14 @@ namespace UECda{
         galaxy_t *pgal[N];
         
         // 世界推定力パラメータ
-        double population;
-        double survivals;
-        double mean;
-        double score;
-        double variance;
+        double population, survivals;
+        double mean, score, variance;
         
-        GalaxyAnalyzer()
-        :population(0.0),
-        survivals(0.0),
-        mean(0.0),
-        score(0.0),
-        variance(0.0)
-        {}
+        GalaxyAnalyzer(): population(0.0), survivals(0.0),
+        mean(0.0), score(0.0), variance(0.0) {}
         
-        ~GalaxyAnalyzer() {
-            close();
-        }
+        ~GalaxyAnalyzer() { close(); }
         void close() {
-            
             double lsuv, lscore, lvariance, lmean, stddev, zscore;
             
             if (population > 0) {
@@ -147,7 +115,6 @@ namespace UECda{
                 stddev = 0.0;
                 zscore = 0,0;
             }
-            
             CERR << endl;
             CERR << "Galaxies : whole survival ratio - " << lsuv << std::endl;
             CERR << "Galaxies : ideal score - " << lmean << " (stddev: " << stddev << " ) real score - " << lscore << std::endl;
@@ -160,24 +127,15 @@ namespace UECda{
         }
         
         void proceed(int p, const Move& mv, const double compRatio) {
-            
             assert(compRatio > 0);
-            
             Cards c = mv.cards();
             if (anyCards(c)) {
-                
-                for (int g = 0; g < N; ++g) {
-                    
+                for (int g = 0; g < N; g++) {
                     if (pgal[g]->actives > 0) {
-                        
                         double sp = 0.0;
                         double pops = (double)pgal[g]->actives;
                         
                         int dieds = 0;
-                        //int killeds = 0;
-                        
-                        //int newW = 0;
-                        
                         for (int w = 0; w < pgal[g]->size(); ++w) {
                             world_t& tmpW = *pgal[g]->access(w);
                             if (tmpW.isActive()) {
@@ -187,27 +145,12 @@ namespace UECda{
                                     tmpW.clear();//そんな世界は存在しなかった
                                     dieds++;
                                 } else {
-                                    //世界死がおきなかった
-                                    
-                                    /*tmpW.proceed(pc,usedCards);
-                                     
-                                     if ( newNActive < w ) {
-                                     //世界を詰める
-                                     
-                                     }
-                                     
-                                     newW++;
-                                     */
                                     sp += compRatio;
                                     score++;
-                                    
                                 }
                             }
                         }
-                        
                         pgal[g]->actives -= dieds;
-                        //actives -= dieds;
-                        //cerr<<"Galaxy : "<<actives<<" worlds are still active."<<std::endl;
                         population += pops;
                         survivals += sp;
                         mean += pops * 1 / compRatio;
@@ -218,6 +161,4 @@ namespace UECda{
             }
         }
     };
-    
-    
 }

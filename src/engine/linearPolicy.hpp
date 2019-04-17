@@ -6,7 +6,7 @@
 #include "../core/prim2.hpp"
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
-#include "softmaxClassifier.hpp"
+#include "../base/softmaxClassifier.hpp"
 
 namespace UECda {
     

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/action.hpp"
-#include "mate.hpp"
+#include "../engine/mate.hpp"
 
 namespace UECda {
     namespace PolicyGradient {
@@ -23,15 +23,14 @@ namespace UECda {
                 [buf, flags, plearningSpace](const auto& field, const int from, const int to, const Cards chosenChange)->int{
                     
                     int myClass = field.classOf(from);
-                    if (myClass > Class::MIDDLE) { return 0; }
+                    if (myClass > Class::MIDDLE) return 0;
                     
                     const Hand& myHand = field.getHand(from);
                     const Hand& opsHand = field.getOpsHand(from);
                     const Cards myCards = myHand.cards;
                     
                     if (!holdsCards(myHand.cards, chosenChange)) {
-                        assert(0);
-                        return 0;
+                        assert(0); return 0;
                     }
                     
                     // generate changes
@@ -45,24 +44,12 @@ namespace UECda {
                     for (int i = 0; i < NChanges; i++) if (change[i] == chosenChange) idx = i;
                     
                     // mate check なし
-                    
                     double score[N_MAX_CHANGES + 1];
                     auto *const plearner = &plearningSpace->changeLearner(from);
                     
                     const int ph = (myClass == DAIFUGO) ? 0 : 1;
                     
                     if (idx == -1) { // unfound
-#if 0
-                        cerr << "unfound " << chosenMove << chosenMove.data() << endl;
-                        Move tmp = chosenMove;tmp.resetEffects();
-                        cerr << tmp.data() << endl;
-                        cerr << field.toDebugString();
-                        for (int m = 0;m < NMoves; ++m) {
-                            cerr << buf[m] << buf[m].bits() << " ";
-                        }
-                        cerr << endl;
-                        getchar();
-#endif
                         if (flags.test(1)) { // feed feature value
                             plearner->feedUnfoundFeatureValue(ph);
                         }
@@ -78,18 +65,6 @@ namespace UECda {
                             }
                             if (flags.test(0)) { // learn
                                 plearner->feedSupervisedActionIndex(idx, ph);
-#if 0
-                                cerr << policy.plearner_ << endl;
-                                cerr << " score_sum = " << plearner->score_sum_ << endl;
-                                for (int m = 0; m < NMoves; ++m) {
-                                    cerr << buf[m] << " " << plearner->score_.at(m) / plearner->score_sum_;
-                                    if (m == idx) { cerr << " <-"; }
-                                    cerr << endl;
-                                }
-                                cerr << plearner->toFeatureString() << endl;
-                                
-                                getchar();
-#endif
                                 plearner->updateParams();
                             }
                             if (flags.test(2)) { // test
@@ -119,72 +94,44 @@ namespace UECda {
                 //play callback
                 [buf, flags, plearningSpace](const auto& field, const Move chosenMove, const uint64_t time)->int{
                     
-                    if (field.isEndGame()) { return -1; }
+                    if (field.isEndGame()) return -1;
                     
                     const uint32_t tp = field.turn();
                     const Hand& myHand = field.getHand(tp);
                     const Hand& opsHand = field.getOpsHand(tp);
                     const Board bd = field.board;
                     
-                    if (!holdsCards(myHand.cards, chosenMove.cards())) {
-                        return -1;
-                    }
+                    if (!holdsCards(myHand.cards, chosenMove.cards())) return -1;
                     
                     // generate moves
                     const int NMoves = genMove(buf, myHand, bd);
                     assert(NMoves > 0);
                     
-                    if (NMoves == 1) { return 0; }
+                    if (NMoves == 1) return 0;
                     
                     int idx = searchMove(buf, NMoves, [chosenMove](const auto& mv)->bool{
                         return mv == chosenMove;
                     });
                     
-                    if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) {                         return 0;
-                    }
+                    if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) return 0;
                     
                     double score[N_MAX_MOVES + 1];
                     auto *const plearner = &plearningSpace->playLearner(tp);
                     
                     if (idx == -1) { // unfound
-#if 0
-                        cerr << "unfound " << chosenMove << chosenMove.data() << endl;
-                        Move tmp = chosenMove;tmp.resetEffects();
-                        cerr << tmp.data() << endl;
-                        cerr << field.toDebugString();
-                        for (int m = 0; m < NMoves; ++m) {
-                            cerr << buf[m] << buf[m].bits() << " ";
-                        }
-                        cerr << endl;
-                        getchar();
-#endif
                         if (flags.test(1)) { // feed feature value
                             plearner->feedUnfoundFeatureValue();
                         }
                         if (flags.test(2)) { // test
                             plearner->feedObjValue(idx);
                         }
-                    } else {
-                        
-                        if (!calcPlayPolicyScoreSlow<1>(score, buf, NMoves, field, *plearner)) {
-                            
+                    } else {                     
+                        if (!calcPlayPolicyScoreSlow<1>(score, buf, NMoves, field, *plearner)) {  
                             if (flags.test(1)) { // feed feature value
                                 plearner->feedFeatureValue();
                             }
                             if (flags.test(0)) { // learn
                                 plearner->feedSupervisedActionIndex(idx);
-#if 0
-                                cerr << policy.plearner_ << endl;
-                                cerr << " score_sum = " << plearner->score_sum_ << endl;
-                                for (int m = 0; m < NMoves; ++m) {
-                                    cerr << buf[m] << " " << plearner->score_.at(m) / plearner->score_sum_;
-                                    if (m == idx) { cerr << " <-"; }
-                                    cerr << endl;
-                                }
-                                cerr << plearner->toFeatureString() << endl;
-                                
-                                getchar();
-#endif
                                 plearner->updateParams();
                             }
                             if (flags.test(2)) { // test
@@ -199,28 +146,7 @@ namespace UECda {
                 );
             return 0;
         }
-        
-        template <class matchLog_t, class learningSpace_t, class threadTools_t>
-        int learnPlayParamsMatch(const matchLog_t& mLog,
-                                 const std::bitset<32> flags,
-                                 learningSpace_t *const plearningSpace,
-                                 threadTools_t *const ptools,
-                                 int *const list = nullptr,
-                                 int nlist = 0) {
-            if (list == nullptr) {
-                // 全試合で学習 or テスト
-                for (int g = 0; g < mLog.games(); ++g) {
-                    learnPlayParamsGame(mLog.game(g), flags, plearningSpace, ptools);
-                }
-            } else {
-                // リストの試合で学習 or テスト
-                for (int n = 0; n < nlist; ++n) {
-                    learnPlayParamsGame(mLog.game(list[n]), flags, plearningSpace, ptools);
-                }
-            }
-            return 0;
-        }
-        
+
         template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
         int learnParamsGame(const gameLog_t& gLog,
                             const std::bitset<32> flags,
