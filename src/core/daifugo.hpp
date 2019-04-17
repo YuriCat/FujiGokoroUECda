@@ -1160,12 +1160,20 @@ constexpr uint64_t cardsHashKeyTable[64] = {
 constexpr uint64_t IntCardToHashKey(IntCard ic) {
     return cardsHashKeyTable[ic];
 }
+constexpr uint64_t addCardKey(uint64_t a, uint64_t b) {
+    return a + b;
+}
+constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
+    return a - b;
+}
 inline uint64_t CardsToHashKey(Cards c) {
     uint64_t key = HASH_CARDS_NULL;
-    for (IntCard ic : c) key ^= IntCardToHashKey(ic); 
+    for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic)); 
     return key;
 }
-constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
+
+//constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
+uint64_t HASH_CARDS_ALL;
 
 inline uint64_t CardsCardsToHashKey(Cards c0, Cards c1) {
     return cross64(CardsToHashKey(c0), CardsToHashKey(c1));
@@ -1176,7 +1184,7 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
 
 inline void initCards() {
     // カード集合関係の初期化
-    
+    HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
     // nd計算に使うテーブル
     for (int r = 0; r < 16; r++) {
         // オーダー通常

@@ -442,7 +442,7 @@ struct Field {
         usedCards[tp] |= dc;
         remCards -= dc;
         remQty -= dq;
-        remKey ^= dkey;
+        remKey = subCardKey(remKey, dkey);
 
         // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
         for (int p = 0; p < tp; p++) {
@@ -464,7 +464,7 @@ struct Field {
         usedCards[tp] |= dc;
         remCards -= dc;
         remQty -= dq;
-        remKey ^= dkey;
+        remKey = subCardKey(remKey, dkey);
 
         hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
         
@@ -525,23 +525,17 @@ struct Field {
         }
     }
     
-    void setHand(int p, Cards ac) {
-        hand[p].setAll(ac);
+    void setHand(int p, Cards c) {
+        hand[p].setAll(c);
     }
-    void setOpsHand(int p, Cards ac) {
-        opsHand[p].setAll(ac);
+    void setOpsHand(int p, Cards c) {
+        opsHand[p].setAll(c);
     }
-    void setRemHand(Cards ac) {
-        remCards = ac;
-        remQty = countCards(ac);
-        remKey = HASH_CARDS_ALL ^ CardsToHashKey(subtrCards(CARDS_ALL, ac));
+    void setRemHand(Cards c) {
+        remCards = c;
+        remQty = c.count();
+        remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
-    void fillRemHand(Cards ac) {
-        remCards = CARDS_ALL;
-        remQty = countCards(CARDS_ALL);
-        remKey = HASH_CARDS_ALL;
-    }
-    
     bool exam() const {
         // validator
         
@@ -931,15 +925,6 @@ struct ImaginaryWorld {
     
     void proc(const int p, const Move mv, const Cards dc) {
         // 世界死がおきずに進行した
-        //uint64_t dkey = CardsToHashKey(dc);
-        //uint32_t dq = mv.qty();
-        
-        /*wField.rHand.makeMoveAll(mv,dc,dq,dkey);
-         
-         wField.hand[p].makeMove(mv,dc);
-         wField.hand[p].key^=dkey;
-         wField.opsHand[p].makeMove(mv,dc);
-         wField.opsHand[p].key^=dkey;*/
     }
     ImaginaryWorld() { clear(); }
     ~ImaginaryWorld() { clear(); }
@@ -956,7 +941,7 @@ inline void setWorld(const ImaginaryWorld& world, Field *const dst) {
             dst->hand[p].set(world.cards[p]);
             dst->hand[p].setKey(myKey);
             dst->opsHand[p].set(remCards - world.cards[p]);
-            dst->opsHand[p].setKey(remKey ^ myKey);
+            dst->opsHand[p].setKey(subCardKey(remKey, myKey));
         } else {
             // alive でないプレーヤーも手札枚数だけセットしておく
             dst->hand[p].qty = 0;

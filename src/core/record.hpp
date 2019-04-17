@@ -812,7 +812,7 @@ int iterateGameLogBeforePlay
         Cards c = field.hand[p].cards;
         field.hand[p].setAll(c);
         field.opsHand[p].set(CARDS_ALL - c);
-        field.opsHand[p].setKey(HASH_CARDS_ALL ^ field.hand[p].key);
+        field.opsHand[p].setKey(subCardKey(HASH_CARDS_ALL, field.hand[p].key));
         field.addAttractedPlayer(p);
     }
     
@@ -855,7 +855,7 @@ void setFieldAfterChange(field_t& field, const game_t& gLog,
         Cards tmp = Cards(hand[p]);
         field.hand[p].setAll(tmp);
         field.opsHand[p].set(CARDS_ALL - tmp);
-        field.opsHand[p].setKey(HASH_CARDS_ALL ^ field.hand[p].key);
+        field.opsHand[p].setKey(subCardKey(HASH_CARDS_ALL, field.hand[p].key));
         field.addAttractedPlayer(p);
     }
     field.prepareAfterChange();
@@ -977,7 +977,7 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const d
                 dst->usedCards[p] |= dc;
                 dst->remCards -= dc;
                 dst->remQty -= dq;
-                dst->remKey ^= dkey;
+                dst->remKey = subCardKey(dst->remKey, dkey);
                 // あがり処理
                 if (countCards(p) == pLog.getNCards(p)) {
                     dst->setNewClassOf(p, pLog.ps.getBestClass());
@@ -1000,7 +1000,8 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const d
         }
         Cards opsCards = dst->remCards - myCards;
         if (anyCards(opsCards)) {
-            dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty, dst->remKey ^ myKey);
+            dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty,
+                                             subCardKey(dst->remKey, myKey));
         }
         dst->board = gLog.current.bd;
         dst->ps = gLog.current.ps;

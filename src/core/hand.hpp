@@ -180,7 +180,7 @@ struct Hand {
         add(dc, dc.count());
     }
     void addAll(Cards dc, const int dq, const uint64_t dk) {
-        setAll(addCards(cards, dc), qty + dq, key ^ dk);
+        setAll(addCards(cards, dc), qty + dq, addCardKey(key, dk));
     }
     void addAll(Cards dc) {
         addAll(dc, dc.count(), CardsToHashKey(dc));
@@ -193,7 +193,7 @@ struct Hand {
         subtr(dc, dc.count());
     }
     void subtrAll(Cards dc, const int dq, const uint64_t dk) {
-        setAll(subtrCards(cards, dc), qty - dq, key ^ dk);
+        setAll(subtrCards(cards, dc), qty - dq, subCardKey(key, dk));
     }
     void subtrAll(Cards dc) {
         subtrAll(dc, dc.count(), CardsToHashKey(dc));
@@ -517,7 +517,7 @@ inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move m) {
 }
 inline void makeMoveAll(const Hand& arg, Hand *const dst, Move m, Cards dc, int dq, uint64_t dk) {
     makeMove(arg, dst, m, dc, dq);
-    dst->key = arg.key ^ dk;
+    dst->key = subCardKey(arg.key, dk);
     assert(dst->exam_key());
 }
 inline void makeMoveAll(const Hand& arg, Hand *const dst, Move m) {

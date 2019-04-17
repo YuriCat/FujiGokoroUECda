@@ -366,7 +366,7 @@ namespace UECda {
                     return L2_WIN;
                 }
                 L2Field nextField = procAndFlushL2Field(field, tmp);
-                nextHand.key = myHand.key ^ CardsToHashKey(tmp.cards());
+                nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
                 res = judge<3, 4>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
                 if (judgeMate_Easy_NF(myHand)) {
