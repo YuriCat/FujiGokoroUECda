@@ -16,10 +16,10 @@ inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
     if (b.afterSuitsLocked(m)) zone &= SuitsToCards(m.suits());
 
     if (!m.isSeq()) {
-        zone &= ORToGValidZone(b.afterTmpOrder(m), m.rank());
+        zone &= ORToGValidZone(b.nextOrder(m), m.rank());
         return !canMakeGroup(oc & zone, m.qty() - oc.joker());
     } else {
-        zone &= ORQToSCValidZone(b.afterTmpOrder(m), m.rank(), m.qty());
+        zone &= ORQToSCValidZone(b.nextOrder(m), m.rank(), m.qty());
         return !canMakeSeq(oc & zone, oc.joker(), m.qty());
     }
 }
@@ -60,7 +60,7 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
     if (!m.isSeq() && m.qty() <= oh.jk) return false;
     
     if (!m.isSeq()) {
-        int aftTmpOrd = b.afterTmpOrder(m);
+        int aftTmpOrd = b.nextOrder(m);
         if (m.qty() > 4) return true;
         if (!(m.charaPQR() & oh.nd[aftTmpOrd])) return true; // 無支配型と交差なし
         if (b.locksSuits(m)) { // スートロックの場合はまだ支配可能性あり
@@ -70,7 +70,7 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
         }
     } else {
         if (!oh.seq) return true;
-        Cards zone = ORQToSCValidZone(b.afterTmpOrder(m), m.rank(), m.qty());
+        Cards zone = ORQToSCValidZone(b.nextOrder(m), m.rank(), m.qty());
         if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
         return !canMakeSeq(oh.cards & zone, oh.jk, m.qty());
     }

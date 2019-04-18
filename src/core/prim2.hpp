@@ -304,7 +304,7 @@ static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
     if (i.isL2GiveUp()) oss << " -L2GIVEUP";
     
     // 後場
-    if (b.afterTmpOrder(i) != 0) oss << " -TREV";
+    if (b.nextOrder(i) != 0) oss << " -TREV";
     if (b.locksSuits(i)) oss << " -SLOCK";
     
     // 当座支配

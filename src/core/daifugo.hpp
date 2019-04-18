@@ -33,10 +33,6 @@ enum {
     RANK_NONE = -1
 };
 
-inline bool isEightSeqRank(int rank, int qty) {
-    return rank <= RANK_8 && RANK_8 < rank + qty;
-}
-
 // 出力
 static const std::string rankChar  = "-3456789TJQKA2+:";
 
@@ -129,9 +125,8 @@ constexpr int suitsIdx[18] = {
 inline int SuitToSuitNum(unsigned int suit) { return bsf32(suit); }
 
 // 単スート番号からスート集合への変換
-inline constexpr unsigned SuitNumToSuits(int sn0) { return (1U << sn0); }
-// 複スートの場合も
-inline int SuitsToSuitNum(int suit) { return suitsIdx[suit]; }
+constexpr unsigned SuitNumToSuits(int sn0) { return 1U << sn0; }
+constexpr int SuitsToSuitNum(int suit) { return suitsIdx[suit]; } // 複スートの場合もOK
 
 // 出力
 struct OutSuits {
@@ -1259,10 +1254,10 @@ struct Move {
         clear(); t = 1; q = 1; r = rank; s = suits;
     }
     void setGroup(int qty, int rank, int suits) {
-        clear(); t = 2; q = qty; r = rank; s = suits;
+        clear(); t = 1; q = qty; r = rank; s = suits;
     }
     void setSeq(int qty, int rank, int suits) {
-        clear(); t = 3; q = qty; r = rank; s = suits;
+        clear(); t = 2; q = qty; r = rank; s = suits;
     }
     // IntCard型からシングル着手をセットする
     void setSingle(IntCard ic) {
@@ -1270,11 +1265,10 @@ struct Move {
     }
     
     // True or False
-    constexpr bool isPASS() const { return  t == 0; }
-    constexpr uint32_t isSeq() const { return  t == 3; }
-    constexpr uint32_t isGroup() const { return  t == 2; }
-    constexpr uint32_t isSingle() const { return  t == 1; }
-    constexpr uint32_t isSingleOrGroup() const { return  t == 1 ||  t == 2; }
+    constexpr bool isPASS() const { return t == 0; }
+    constexpr bool isGroup() const { return t == 1; }
+    constexpr bool isSeq() const { return t == 2; }
+    constexpr bool isSingle() const { return isGroup() && qty() == 1; }
     constexpr bool isQuintuple() const {
         return isGroup() && q == 5;
     }
@@ -1363,46 +1357,13 @@ struct Move {
         }
     }
 
-    constexpr bool domInevitably() const {
-        if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
-        else return rank() == RANK_8;
-    }
-    constexpr bool isRev() const {
-        if (isSeq()) return qty() >= 5;
-        else return qty() >= 4;
-    }
-    constexpr bool isBack() const {
-        return false;
-    }
-    constexpr uint32_t changesPrmState() const {
-        return isRev();
-    }
-    bool exam() const {
-        // 変な値でないかチェック
-        int q = qty();
-        int r = rank();
-        uint32_t s = suits();
-        if (!isPASS()) {
-            if (q < 0) return false;
-            if (isSeq()) {
-                if (q < 3) return false;
-                if (countSuits(s) != 1) return false;
-                if (isEightSeqRank(r, 3)) {
-                    if (!domInevitably()) return false;
-                } else {
-                    if (domInevitably()) return false;
-                }
-            } else if (isSingle()) {
-                if (q != 1) return false;
-                if (countSuits(s) != 1) return false;
-            } else {
-                if (!isQuintuple()) {
-                    if (q != countSuits(s)) return false;
-                }
-            }
-        }
-        return true;
-    }
+    bool domInevitably() const;
+    bool isRev() const;
+    bool isBack() const;
+
+    bool changesPrmState() const { return isRev(); }
+
+    bool exam() const;
 
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
@@ -1661,15 +1622,15 @@ struct Board : public Move {
     // 2体情報をメンバ関数で返す関数
     // 半マスク化みたいな感じ
     constexpr bool domInevitably() const { return invalid; }
-    constexpr bool domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
+    bool domConditionally(Move m) const;
     
-    constexpr bool locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
-    constexpr bool locksRank(Move m) const { return false; } // ルールにない
+    bool locksSuits(Move m) const;
+    bool locksRank(Move m) const;
     
-    constexpr uint32_t afterPrmOrder(Move m) const {
+    int nextPrmOrder(Move m) const {
         return prmOrder() ^ bool(m.isRev());
     }
-    constexpr uint32_t afterTmpOrder(Move m) const {
+    int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
     }
     constexpr bool afterSuitsLocked(Move m) const {
