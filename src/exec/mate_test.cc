@@ -172,9 +172,14 @@ int testRecordMoveMate(const Record& record) {
             cl.start();
             visitedCards.clear();
             bool pw = checkCardsPWSlow(buffer, field.turnSeat(), move,
-                                        myHand.cards, opsHand.cards, field.board, field.fieldInfo.isFlushLead());
+                                       myHand.cards, opsHand.cards, field.board, field.fieldInfo.isFlushLead());
             checkTime[1] += cl.stop();
             checkMatrix[pw][mate] += 1;
+
+            /*if (mate && !pw) {
+                cerr << field.toDebugString() << move << endl << field.fieldInfo << endl;
+                getchar();
+            }*/
             return 0;
         },
         [&](const auto& field) {} // last callback
@@ -228,7 +233,7 @@ int testRecordMoveMate(const Record& record) {
                                             field.board, bool(field.fieldInfo.isFlushLead()));
             searchTime[1] += cl.stop();
             
-            searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
+            searchMatrix[pwIndex >= 0][mateIndex >= 0] += 1;
             
             /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
                 

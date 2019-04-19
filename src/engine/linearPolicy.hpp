@@ -500,9 +500,14 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 {
                     constexpr int base = FEA_IDX(FEA_REV_CLASS);
                     if (!bd.isRev() && mv.isRev()) {
-                        int relativeClass = field.classOf(tp);
-                        for (int r = 0; r < (int)field.classOf(tp); r++) {
-                            if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                        int relativeClass;
+                        if (field.isInitGame()) {
+                            relativeClass = (field.getNAlivePlayers() - 1) / 2;
+                        } else {
+                            relativeClass = field.classOf(tp);
+                            for (int r = 0; r < (int)field.classOf(tp); r++) {
+                                if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                            }
                         }
                         Foo(base + relativeClass)
                     }

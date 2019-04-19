@@ -344,8 +344,8 @@ public:
     template <class field_t>
     bool playByServer(Move move, Cards dc, const field_t& f) {
         // あがりの場合にtrueを返す
-        bool agari = move.qty() <= o.numCards[f.seatPlayer(o.bs.turnSeat)];
-        o.bs.play(move, agari, false);
+        bool agari = move.qty() >= o.numCards[f.seatPlayer(o.bs.turnSeat)];
+        o.bs.play(move, agari, true);
         return agari;
     }
     void initGame(int n) { o.bs.init(n); }
@@ -842,7 +842,7 @@ int iterateGameLogInGame
     // play
     for (int t = 0; t < turns; t++) {
         field.prepareForPlay();
-        const typename game_t::playLog_t& play = gr.play(t);
+        const auto& play = gr.play(t);
         int ret = playCallback(field, play.move, play.time);
         if (ret <= -2) {
             cerr << "error on play turn " << t << endl;

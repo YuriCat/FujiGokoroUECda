@@ -287,7 +287,9 @@ int main(int argc, char* argv[]) { // for UECda
             
             if (firstTurn) { // 初手の特別な処理
                 // 局面をサーバーからの情報通りに設定する
-                gameRecord.firstTurnSeat = gameRecord.seatOf(turnPlayer);
+                int fts = gameRecord.seatOf(turnPlayer);
+                gameRecord.firstTurnSeat = fts;
+                playRecord.o.bs.setFirstTurn(fts);
                 for (int p = 0; p < N_PLAYERS; p++) {
                     gameRecord.setNOrgCards(p, getNCards(recv_table, p));
                 }

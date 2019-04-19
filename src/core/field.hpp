@@ -162,7 +162,7 @@ struct Field {
     int turn() const { return seatPlayer(turnSeat()); }
     int turnSeat() const { return board.turnSeat; }
     int owner() const { return seatPlayer(ownerSeat()); }
-    int ownerSeat() const { return board.turnSeat; }
+    int ownerSeat() const { return board.ownerSeat; }
     int firstTurn() const { return common.firstTurn; }
     
     void setTurn(int p) { board.turnSeat = seatOf(p); }

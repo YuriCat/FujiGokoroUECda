@@ -1791,7 +1791,7 @@ struct BoardState : public Board {
 
     // 基本の計算
     int nextSeat(int s) const { return (s + 1) % numSeats; }
-    int numAlive() const { return numSeats - numAgari + numFall + numIllegal; }
+    int numAlive() const { return numSeats - (numAgari + numFall + numIllegal); }
     int numAwake() const { return numAlive() - numPass; }
     bool alive(int s) const { return !agari.test(s) && !fall.test(s) && !illegal.test(s); }
     bool awake(int s) const { return alive(s) && !pass.test(s); }
@@ -1823,9 +1823,9 @@ struct BoardState : public Board {
         agari.reset(); pass.reset(); fall.reset(); illegal.reset();
         turnSeat = ownerSeat = -1;
     }
-    void setOwner(int s) {
-        // オーナーの席を設定
-        ownerSeat = s;
+    void setFirstTurn(int s) {
+        // 最初の手番とオーナーの席を設定
+        turnSeat = ownerSeat = s;
     }
     void setTurn(int s) {
         // 手番の席を設定
@@ -1847,7 +1847,7 @@ struct BoardState : public Board {
         Board::flush();
         flushPlayers();
     }
-    void play(int s, Move m, bool last, bool flush) {
+    void play(int s, Move m, bool last, bool imperfect) {
         // 場を進める
         turnSeat = s;
         if (m.isPASS()) {
@@ -1860,17 +1860,17 @@ struct BoardState : public Board {
                 agari.set(s);
             }
         }
-        if (flush &&
-            (allPass() || m.domInevitably() || Board::domConditionally(m))) {
+        if (!imperfect
+            && (allPass() || m.domInevitably() || Board::domConditionally(m))) {
             Board::playAndFlush(m);
             flushPlayers();
         } else {
             Board::playExceptFlush(m, true);
-            turnSeat = nextAwake(s);
+            if (!imperfect) turnSeat = nextAwake(s);
         }
     }
-    void play(Move m, bool last = false, bool flush = true) {
-        play(turnSeat, m, last, flush);
+    void play(Move m, bool last = false, bool imperfect = false) {
+        play(turnSeat, m, last, imperfect);
     }
     bool exam() const {
         // 値のチェック
