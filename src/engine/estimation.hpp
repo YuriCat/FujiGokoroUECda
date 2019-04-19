@@ -942,7 +942,7 @@ private:
         [](const auto& field)->void{},
         // play callback
         [&playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
-        (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
+        (const auto& field, Move chosenMove, uint32_t usedTime)->int{
             const uint32_t tp = field.turn();
 
             const Cards usedCards = chosenMove.cards();

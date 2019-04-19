@@ -1403,7 +1403,8 @@ int main(int argc, char *argv[]) {
         game_count++;
         
         //fprintf(logfile,"\n");
-        if (!game_log.play(game_log.plays()-1).move.isPASS()) {
+        Move move = game_log.play(game_log.plays()-1).move;
+        if (!move.isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);

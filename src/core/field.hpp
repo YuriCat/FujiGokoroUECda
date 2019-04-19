@@ -478,7 +478,6 @@ struct Field {
     // Move型以外も対応必須?
     int proc(const int tp, const MoveInfo mv);
     int proc(const int tp, const Move mv);
-    int procSlowest(const MoveInfo mv);
     int procSlowest(const Move mv);
     
     void makeChange(int from, int to, Cards dc, int dq) {
@@ -843,9 +842,6 @@ inline int Field::procSlowest(const Move mv) {
     }
     ASSERT(exam(), cerr << toDebugString() << endl;);
     return turn();
-}
-inline int Field::procSlowest(const MoveInfo mv) {
-    return procSlowest(Move(mv));
 }
 
 // copy Field arg to dst before playout

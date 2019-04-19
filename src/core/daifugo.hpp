@@ -1220,7 +1220,7 @@ union Move16 {
     };
 };
 
-struct Move {
+struct MiniMove {
     unsigned s       : 4;
     unsigned r       : 4;
     unsigned jks     : 4;
@@ -1235,13 +1235,27 @@ struct Move {
     unsigned rl      : 1;
     unsigned reverse : 1;
     unsigned         : 3;
-    unsigned flags   :32;
 
-    uint32_t toInt() const {
-        return uint32_t(*reinterpret_cast<const uint64_t*>(this));
+    void clear() {
+        MiniMove tmp = {0};
+        *this = tmp;
     }
-    
-    void clear()                      { Move tmp = {0}; (*this) = tmp; }
+    uint32_t toInt() const {
+        return *reinterpret_cast<const uint32_t*>(this);
+    }
+    bool operator ==(const MiniMove& m) const {
+        return toInt() == m.toInt();
+    }
+};
+
+struct Move : public MiniMove {
+    uint32_t flags;
+
+    constexpr Move(): MiniMove(), flags() {}
+    constexpr Move(const MiniMove& m): MiniMove(m), flags(0) {}
+    constexpr Move(const Move& m): MiniMove(m), flags(m.flags) {}  
+
+    void clear()                      { MiniMove::clear(); flags = 0; }
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
     void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ
@@ -1263,7 +1277,7 @@ struct Move {
     void setSingle(IntCard ic) {
         setSingle(IntCardToRank(ic), IntCardToSuits(ic));
     }
-    
+
     // True or False
     constexpr bool isPASS() const { return t == 0; }
     constexpr bool isGroup() const { return t == 1; }
@@ -1364,15 +1378,11 @@ struct Move {
     bool changesPrmState() const { return isRev(); }
 
     bool exam() const;
-
-    bool operator ==(const Move& m) const {
-        return toInt() == m.toInt();
-    }
 };
 
-const Move MOVE_NULL = {0};
-const Move MOVE_PASS = {0};
-const Move MOVE_NONE = {15, 15};
+const MiniMove MOVE_NULL = {0};
+const MiniMove MOVE_PASS = {0};
+const MiniMove MOVE_NONE = {15, 15};
 
 struct MeldChar : public Move {
     MeldChar(Move m): Move(m) {}

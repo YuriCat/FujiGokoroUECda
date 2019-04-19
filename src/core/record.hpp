@@ -313,11 +313,11 @@ END:;
 #undef Foo
 
 struct PlayRecord { // 1つの着手の記録
-    Move move; unsigned time;
+    MiniMove move; unsigned time;
 
     PlayRecord(): move(), time() {}
-    PlayRecord(Move m, unsigned t): move(m), time(t) {}
-    void set(Move m, unsigned t) {
+    PlayRecord(MiniMove m, unsigned t): move(m), time(t) {}
+    void set(MiniMove m, unsigned t) {
         move = m; time = t;
     }
     std::string toString() const {

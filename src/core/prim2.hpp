@@ -230,6 +230,7 @@ inline void procUnrivaled(const FieldAddInfo& fieldInfo,
 struct MoveInfo : public Move {
 
     constexpr MoveInfo(): Move() {}
+    constexpr MoveInfo(const MiniMove& m): Move(m) {}
     constexpr MoveInfo(const Move& m): Move(m) {}
     constexpr MoveInfo(const MoveInfo& m): Move(m) {}
 
