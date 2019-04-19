@@ -12,8 +12,7 @@
 
 // TODO: pqr の算出は qr からの計算の方が高速と思ったが要検証
 
-class Hand {
-public:
+struct Hand {
     Cards cards; // 通常型
     uint32_t qty; // 総枚数
     uint32_t jk; // ジョーカー枚数
@@ -24,7 +23,7 @@ public:
     Cards sc; // 圧縮型
     Cards nd[2]; // 無支配型(通常、革命)
 
-    uint64_t hash; // ハッシュ値
+    uint64_t key; // ハッシュ値
     
     // 情報を使う早さにより、前後半(ハッシュ値だけは例外としてその他)に分ける。
     // allが付く進行はhash値も含めて更新する。
@@ -34,274 +33,65 @@ public:
     // 後半
     // sc, nd[2]
     // その他
-    // hash
+    // key
     
     // (未実装)必勝判定のとき
     // cards, qty, jk, seq, pqrを更新
     // qrは使わなさそう?
     
     constexpr operator Cards() const { return cards; }
-    bool holds(Cards ac) const {
-        return holdsCards(cards, ac);
-    }
-    bool holds(const Hand& ah) const {
-        return holdsCards(cards, ah.cards);
-    }
+    bool holds(Cards c) const { return holdsCards(cards, c); }
     constexpr bool any() const { return cards.any(); }
-    void setHash(uint64_t h) { hash = h; }
-    
-    void set(const Cards ac, const uint32_t aq) {
-        // 手札をセット
-        // ハッシュ値はsetHashにて別に設定
-        assert(aq > 0); assert(ac.count() == aq);
+    void setKey(uint64_t k) { key = k; }
 
-        cards = ac;
-        jk = ac.joker();
-        qty = aq;
-
-        Cards plain = ac.plain();
-        seq = polymRanks(plain, jk, 3);
-        qr = CardsToQR(plain);
-        pqr = QRToPQR(qr);
-        sc = PQRToSC(pqr);
-        PQRToND(pqr, jk, nd);
-
-        assert(exam());
-    }
-    void set(const Cards ac) { set(ac, countCards(ac)); }
-    
-    void set1stHalf(const Cards ac, const uint32_t aq) {
-        // 手札をセット 前半のみ
-        assert(countCards(ac) == aq);
-        
-        cards = ac;
-        jk = ac.joker();
-        qty = aq;
-        Cards plain = maskJOKER(ac);
+    void set1stHalf(Cards c, uint32_t q) {
+        assert(q > 0); assert(c.count() == q);
+        cards = c;
+        jk = c.joker();
+        qty = q;
+        BitCards plain = c.plain();
         qr = CardsToQR(plain);
         seq = polymRanks(plain, jk, 3);
         pqr = QRToPQR(qr);
-        
         assert(exam1stHalf());
     }
-    void set1stHalf(const Cards ac) { set1stHalf(ac, countCards(ac)); }
-    void setAll(const Cards ac, const uint32_t aq, const uint64_t ahash) {
-        set(ac, aq);
-        setHash(ahash);
-        assert(exam_hash());
+    void set(Cards c, uint32_t q) {
+        // ハッシュ値はsetKeyにて別に設定
+        set1stHalf(c, q);
+        sc = PQRToSC(pqr);
+        PQRToND(pqr, jk, nd);
+        assert(exam());
     }
-    void setAll(const Cards ac, const uint32_t aq) {
-        set(ac, aq);
-        setAll(ac, aq, CardsToHashKey(ac));
+    void setAll(Cards c, uint32_t q, uint64_t k) {
+        set(c, q);
+        setKey(k);
+        assert(exam_key());
     }
-    void setAll(const Cards ac) { setAll(ac, countCards(ac)); }
+    void set1stHalf(Cards c) { set1stHalf(c, c.count()); }
+    void set(Cards c) { set(c, c.count()); }
+    void setAll(Cards c) { setAll(c, c.count(), CardsToHashKey(c)); }
     void init() {
         cards = seq = CARDS_NULL;
         qr = 0ULL;
         pqr = sc = CARDS_NULL;
         qty = jk = 0;
-        hash = 0ULL;
+        key = 0ULL;
     }
-    
-    void makeMove1stHalf(const Move mv) { makeMove1stHalf(mv, mv.cards()); }
-    void makeMove1stHalf(const Move mv, const Cards dc) { makeMove1stHalf(mv, dc, mv.qty()); }
-    void makeMove1stHalf(const Move mv, const Cards dc, uint32_t dq) {
-        
-        // 更新するものは最初にチェック
-        assert(exam1stHalf());
-        assert(!mv.isPASS());
-        assert(holds(dc));
-        
-        uint32_t djk = dc.joker();
-        uint32_t r = mv.rank();
-        
-        cards -= dc; // 通常型は引けば良い
-        qty -= dq; // 枚数進行
-        jk -= djk; // ジョーカー枚数進行
-        
-        Cards plain = maskJOKER(cards);
-        seq = polymRanks(plain, jk, 3);
-        
-        if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
-            if (!mv.isSeq()) {
-                // グループ系統
-                // ジョーカーの存在により少し処理が複雑に
-                dq -= djk; // ジョーカーの分引く
-                Cards mask = RankToCards(r); // 当該ランクのマスク
-                
-                // 枚数型は当該ランクの枚数を引く
-                qr = qr.data() - (BitCards(dq) << (r << 2));
-                
-                // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
-                pqr = (((pqr & mask) >> dq) & mask) | (pqr & ~mask);
-            } else {
-                // 階段
-                Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
-                
-                Cards dqr = dc;
-                
-                Cards jkmask;
-                
-                if (djk) {
-                    jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
-                    mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                    dqr = maskJOKER(dqr);
-                }
-                dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
-                
-                // 枚数型はジョーカー以外の差分を引く
-                qr = qr.data() - dqr;
-
-                // 枚数位置型、圧縮型は当該ランクを1枚分シフト
-                // ただしグループと違って元々1枚の場合に注意
-                pqr = ((pqr & mask & PQR_234) >> 1) | (pqr & ~mask);
-            }
-        }
-        assert(exam1stHalf());
-    }
-    
-    void makeMove(const Move mv) { makeMove(mv, mv.cards()); }
-    void makeMove(const Move mv, const Cards dc) { makeMove(mv, dc, mv.qty()); }
-    void makeMove(const Move mv, const Cards dc, uint32_t dq) {
-        // 更新するものは最初にチェック
-        assert(exam());
-        assert(!mv.isPASS());
-        ASSERT(holds(dc), cerr << "Hand::makeMove : unholded making-move. " << dc << " from " << cards << endl; );
-        
-        int djk = dc.joker();
-        int r = mv.rank();
-        
-        cards -= dc; // 通常型は引けば良い
-        qty -= dq; // 枚数進行
-        jk -= djk; // ジョーカー枚数進行
-        
-        Cards plain = cards.plain();
-        seq = polymRanks(plain, jk, 3);
-
-        // 無支配型(共通処理)
-        if (djk) {
-            // ジョーカーが無くなった事で、1枚分ずれる
-            // ただしもともと同ランク4枚があった場合にはそこだけ変化しない
-            nd[0] = (nd[0] & PQR_234) >> 1;
-            nd[1] = (nd[1] & PQR_234) >> 1;
-            
-            Cards quad = pqr & PQR_4;
-            if (quad) {
-                IntCard ic0 = quad.highest();
-                nd[0] |= ORQ_NDTable[0][IntCardToRank(ic0) - 1][3];
-                IntCard ic1 = quad.lowest();
-                nd[1] |= ORQ_NDTable[1][IntCardToRank(ic1) + 1][3];
-            }
-        }
-        
-        Cards orgsc = sc;
-        
-        if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
-            if (!mv.isSeq()) {
-                
-                // ジョーカーの存在により少し処理が複雑に
-                dq -= djk; // ジョーカーの分引く
-                
-                Cards mask = RankToCards(r); // 当該ランクのマスク
-                Cards opqr = pqr & mask; // 当該ランクの元々のpqr
-                
-                // 枚数型は当該ランクの枚数を引く
-                qr = qr.data() - (BitCards(dq) << (r << 2));
-                
-                // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
-                // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
-                pqr = (((pqr & mask) >> dq) & mask) | (pqr & ~mask);
-                sc  = (((sc  & mask) >> dq) & mask) | (sc  & ~mask);
-                
-                // 無支配型
-                if (jk) { // まだジョーカーが残っている
-                    //dmask=(dmask<<1) & PQR_234;//1枚上げる
-                    // ジョーカーなしに戻す
-                    nd[0] &= PQR_234;
-                    nd[0] >>= 1;
-                    nd[1] &= PQR_234;
-                    nd[1] >>= 1;
-                }
-                Cards dmask = orgsc ^ sc; // 取り去る分のマスク
-                
-                // 通常オーダー
-                if (!(opqr & nd[0])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
-                    Cards dmask0 = dmask & ~nd[0];
-                    while (1) {
-                        dmask0 >>= 4;
-                        nd[0] ^= dmask0;
-                        dmask0 &= ~sc; // 現にあるカード集合の分はもう外れない
-                        if (!(dmask0 & CARDS_ALL)) break;
-                    }
-                }
-                // 逆転オーダー
-                if (!(opqr & nd[1])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
-                    Cards dmask1 = dmask & ~nd[1];
-                    while (1) {
-                        dmask1 <<= 4;
-                        nd[1] ^= dmask1;
-                        dmask1 &= ~sc; // 現にあるカード集合の分はもう外れない
-                        if (!(dmask1 & CARDS_ALL)) break;
-                    }
-                }
-                
-                if (jk) {
-                    nd[0] <<= 1;
-                    nd[0] |= PQR_1;
-                    nd[1] <<= 1;
-                    nd[1] &= PQR_234;
-                    nd[1] |= PQR_1;
-                }
-                
-            } else {
-                // 階段
-                Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
-                Cards dqr = dc;
-
-                if (djk) {
-                    Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
-                    mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                    dqr = maskJOKER(dqr);
-                }
-                dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
-                
-                //枚数型はジョーカー以外の差分を引く
-                qr = qr.data() - dqr;
-                // 枚数位置型、圧縮型は当該ランクを1枚分シフト
-                // ただしグループと違って元々1枚の場合に注意
-                pqr = ((pqr & mask & PQR_234) >> 1) | (pqr & ~mask);
-                sc  = ((sc  & mask & PQR_234) >> 1) | (sc  & ~mask);
-                // 差分計算で高速化可能かもしれないが、現在はその場計算
-                PQRToND(pqr, jk, nd);
-            }
-        }
-        assert(exam());
-    }
-    void makeMoveAll(Move mv, Cards dc, uint32_t dq, uint64_t dhash) {
-        makeMove(mv, dc, dq);
-        hash ^= dhash;
-        assert(exam_hash());
-    }
-    void makeMoveAll(Move mv, Cards dc, uint64_t dhash) {
-        makeMoveAll(mv, dc, mv.qty(), dhash);
-    }
-    void makeMoveAll(Move mv, Cards dc) {
-        makeMoveAll(mv, dc, CardsToHashKey(dc));
-    }
-    void makeMoveAll(Move mv) {
-        makeMoveAll(mv, mv.cards());
-    }
-    
-    void unmakeMove(const Move mv, const Cards dc, uint32_t dq) {
+    void makeMove(Move m);
+    void makeMoveAll(Move m);
+    void makeMoveAll(Move m, Cards dc, int dq, uint64_t dk);
+    void makeMove1stHalf(Move m);
+    void makeMove1stHalf(Move m, Cards dc, int dq);
+    void unmakeMove(Move m, Cards dc, uint32_t dq) {
         // カードが増えない時は入らない
         // 更新するものは最初にチェック
         assert(exam());
-        assert(!mv.isPASS());
+        assert(!m.isPASS());
         ASSERT(isExclusiveCards(cards, dc),
                cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
         
-        int djk = mv.containsJOKER();
-        int r = mv.rank();
+        int djk = dc.joker();
+        int r = m.rank();
         
         cards += dc; // 通常型は足せば良い
         qty += dq; // 枚数進行
@@ -322,7 +112,7 @@ public:
         }
 
         if (dc != CARDS_JOKER) { // ジョーカーだけ増えた場合はこれで終わり
-            if (!mv.isSeq()) {
+            if (!m.isSeq()) {
                 // ジョーカーの存在により少し処理が複雑に
                 dq -= djk; // ジョーカーの分引く
                 
@@ -362,10 +152,10 @@ public:
             } else {
                 // 階段
                 Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
-                Cards dqr = dc >> SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
+                Cards dqr = dc >> SuitToSuitNum(m.suits()); // スートの分だけずらすと枚数を表すようになる
 
                 if (djk) {
-                    Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
+                    Cards jkmask = RankToCards(m.jokerRank()); // ジョーカーがある場合のマスク
                     mask ^= jkmask; // ジョーカー部分はマスクに関係ないので外す
                     dqr &= ~jkmask;
                 }
@@ -382,57 +172,31 @@ public:
         }
         assert(exam());
     }
-    
-    void unmakeMove(Move mv) {
-        Cards dc = mv.cards();
-        unmakeMove(mv, dc);
-    }
-    void unmakeMove(Move mv, Cards dc) {
-        unmakeMove(mv, dc, mv.qty());
-    }
-    void unmakeMoveAll(Move mv) {
-        unmakeMoveAll(mv, mv.cards());
-    }
-    void unmakeMoveAll(Move mv, Cards dc) {
-        unmakeMoveAll(mv, dc, CardsToHashKey(dc));
-    }
-    void unmakeMoveAll(Move mv, Cards dc, uint64_t dhash) {
-        unmakeMove(mv, dc);
-        hash ^= dhash;
-        assert(exam_hash());
-    }
-    
     // カード集合単位(役の形をなしていない)の場合
-    void add(const Cards dc, const int dq) {
+    void add(Cards dc, const int dq) {
         set(addCards(cards, dc), qty + dq);
     }
-    void add(const Cards dc) {
-        add(dc, countCards(dc));
+    void add(Cards dc) {
+        add(dc, dc.count());
     }
-    void addAll(const Cards dc, const int dq, const uint64_t dhash) {
-        setAll(addCards(cards, dc), qty + dq, hash ^ dhash);
+    void addAll(Cards dc, const int dq, const uint64_t dk) {
+        setAll(addCards(cards, dc), qty + dq, addCardKey(key, dk));
     }
-    void addAll(const Cards dc, const int dq) {
-        addAll(dc, dq, CardsToHashKey(dc));
-    }
-    void addAll(const Cards dc) {
-        addAll(dc, countCards(dc), CardsToHashKey(dc));
+    void addAll(Cards dc) {
+        addAll(dc, dc.count(), CardsToHashKey(dc));
     }
     
-    void subtr(const Cards dc, const int dq) {
+    void subtr(Cards dc, const int dq) {
         set(subtrCards(cards, dc), qty - dq);
     }
-    void subtr(const Cards dc) {
-        subtr(dc, countCards(dc));
+    void subtr(Cards dc) {
+        subtr(dc, dc.count());
     }
-    void subtrAll(const Cards dc, const int dq, const uint64_t dhash) {
-        setAll(subtrCards(cards, dc), qty - dq, hash ^ dhash);
+    void subtrAll(Cards dc, const int dq, const uint64_t dk) {
+        setAll(subtrCards(cards, dc), qty - dq, subCardKey(key, dk));
     }
-    void subtrAll(const Cards dc, const int dq) {
-        subtrAll(dc, dq, CardsToHashKey(dc));
-    }
-    void subtrAll(const Cards dc) {
-        subtrAll(dc, countCards(dc));
+    void subtrAll(Cards dc) {
+        subtrAll(dc, dc.count(), CardsToHashKey(dc));
     }
     
     // validator
@@ -445,23 +209,23 @@ public:
         }
         return true;
     }
-    bool exam_hash() const {
-        if (hash != CardsToHashKey(cards)) {
-            cerr << "Hand : exam_hash()" << cards << " <-> ";
-            cerr << std::hex << hash << std::dec << endl;
+    bool exam_key() const {
+        if (key != CardsToHashKey(cards)) {
+            cerr << "Hand : exam_key()" << cards << " <-> ";
+            cerr << std::hex << key << std::dec << endl;
             return false;
         }
         return true;
     }
     bool exam_qty() const {
-        if (qty != count()) {
+        if (qty != cards.count()) {
             cerr << "Hand : exam_qty() " << cards << " <-> " << qty << endl;
             return false;
         }
         return true;
     }
     bool exam_jk() const {
-        if (jk != (uint32_t)countCards(cards & CARDS_JOKER)) {
+        if (jk != cards.joker()) {
             cerr << "Hand : exam_jk()" << endl;
             return false;
         }
@@ -571,7 +335,7 @@ public:
     }
     bool examAll() const {
         if (!exam()) return false;
-        if (!exam_hash()) return false;
+        if (!exam_key()) return false;
         return true;
     }
     
@@ -586,7 +350,7 @@ public:
         oss << "sc = " << CardArray(sc) << endl;
         oss << "nd[0] = " << CardArray(nd[0]) << endl;
         oss << "nd[1] = " << CardArray(nd[1]) << endl;
-        oss << std::hex << hash << std::dec << endl;
+        oss << std::hex << key << std::dec << endl;
         
         oss << "correct data : " << endl;
         Hand tmp;
@@ -599,123 +363,60 @@ public:
         oss << "sc = " << CardArray(tmp.sc) << endl;
         oss << "nd[0] = " << CardArray(tmp.nd[0]) << endl;
         oss << "nd[1] = " << CardArray(tmp.nd[1]) << endl;
-        oss << std::hex << tmp.hash << std::dec << endl;
+        oss << std::hex << tmp.key << std::dec << endl;
         
         return oss.str();
     }
-                        
-private:
-    int count() const { return countCards(cards); }
-                        
 };
 
 inline std::ostream& operator <<(std::ostream& out, const Hand& hand) { // 出力
     out << hand.cards << "(" << hand.qty << ")";
     return out;
 }
-// 別インスタンスに手札進行
-inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq) {
-    // 更新するものは最初にチェック
-    assert(arg.exam1stHalf());
-    assert(!mv.isPASS());
-    ASSERT(arg.holds(dc), cerr << arg << dc << endl; );
-    
-    uint32_t djk = containsJOKER(dc) ? 1 : 0;
-    uint32_t r = mv.rank();
-    
-    dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
-    dst->qty = arg.qty - dq; // 枚数進行
-    dst->jk = arg.jk - djk; // ジョーカー枚数進行
-    
-    Cards plain = dst->cards.plain();
-    dst->seq = polymRanks(plain, dst->jk, 3);
-    
-    if (dc != CARDS_JOKER) { // ジョーカーだけ無くなった場合はこれで終わり
-        if (!mv.isSeq()) {
-            // グループ系統
-            // ジョーカーの存在により少し処理が複雑に
-            dq -= djk; // ジョーカーの分引く
-            Cards mask = RankToCards(r); // 当該ランクのマスク
-            
-            // 枚数型は当該ランクの枚数を引く
-            dst->qr = arg.qr - (((Cards)(dq)) << (r << 2));
-            
-            // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
-            dst->pqr = (((arg.pqr & mask) >> dq) & mask) | (arg.pqr & ~mask);
-        } else {
-            // 階段
-            Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
-            Cards dqr = dc;
-            
-            if (djk) {
-                Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
-                mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
-                dqr = maskJOKER(dqr);
-            }
-            dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようにな
-            // 枚数型はジョーカー以外の差分を引く
-            dst->qr = arg.qr - dqr;
-            
-            // 枚数位置型、圧縮型は当該ランクを1枚分シフト
-            // ただしグループと違って元々1枚の場合に注意
-            dst->pqr = ((arg.pqr & mask & PQR_234) >> 1) | (arg.pqr & ~mask);
-        }
-    } else {
-        // ジョーカーだけ無くなった場合のコピー処理
-        dst->qr = arg.qr;
-        dst->pqr = arg.pqr;
-    }
-    assert(dst->exam1stHalf());
-}
 
-inline void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
-    makeMove1stHalf(arg, dst, mv, dc, mv.qty());
-}
-inline void makeMove1stHalf(const Hand& arg, Hand *const dst, const Move mv) {
-    makeMove1stHalf(arg, dst, mv, mv.cards());
-}
-
-inline void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc, uint32_t dq) {
+template <bool HALF = false>
+inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_t dq) {
     // 普通、パスやカードが0枚になるときはこの関数には入らない。
     
     // 更新するものは最初にチェック
-    assert(arg.exam());
-    assert(!mv.isPASS());
-    assert(arg.holds(dc));
+    if (HALF) assert(arg.exam1stHalf());
+    else assert(arg.exam());
+    assert(!m.isPASS());
+    assert(arg.cards.holds(dc));
     
     int djk = dc.joker();
-    int r = mv.rank();
+    int r = m.rank();
     
     dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
     dst->qty = arg.qty - dq; // 枚数進行
     dst->jk = arg.jk - djk; // ジョーカー枚数進行
     
-    Cards plain = maskJOKER(dst->cards);
+    BitCards plain = dst->cards.plain();
     dst->seq = polymRanks(plain, dst->jk, 3);
     
-    // 無支配型(共通処理)
-    dst->nd[0] = arg.nd[0];
-    dst->nd[1] = arg.nd[1];
-    
-    if (djk) {
-        // ジョーカーが無くなった事で、1枚分ずれる
-        // ただしもともと同ランク4枚があった場合にはそこだけ変化しない
-        dst->nd[0] = (dst->nd[0] & PQR_234) >> 1;
-        dst->nd[1] = (dst->nd[1] & PQR_234) >> 1;
+    if (!HALF) {
+        // 無支配型(共通処理)
+        dst->nd[0] = arg.nd[0];
+        dst->nd[1] = arg.nd[1];
         
-        Cards quad = arg.pqr & PQR_4;
-        if (quad) {
-            IntCard ic0 = quad.highest();
-            dst->nd[0] |= ORQ_NDTable[0][IntCardToRank(ic0) - 1][3];
-            IntCard ic1 = quad.lowest();
-            dst->nd[1] |= ORQ_NDTable[1][IntCardToRank(ic1) + 1][3];
+        if (djk) {
+            // ジョーカーが無くなった事で、1枚分ずれる
+            // ただしもともと同ランク4枚があった場合にはそこだけ変化しない
+            dst->nd[0] = (dst->nd[0] & PQR_234) >> 1;
+            dst->nd[1] = (dst->nd[1] & PQR_234) >> 1;
+
+            Cards quad = arg.pqr & PQR_4;
+            if (quad) {
+                IntCard ic0 = quad.highest();
+                dst->nd[0] |= ORQ_NDTable[0][IntCardToRank(ic0) - 1][3];
+                IntCard ic1 = quad.lowest();
+                dst->nd[1] |= ORQ_NDTable[1][IntCardToRank(ic1) + 1][3];
+            }
         }
     }
-    
-    Cards orgsc = arg.sc;
-    
-    if (dc != CARDS_JOKER) {
-        if (!mv.isSeq()) {
+
+    if (dc & CARDS_ALL_PLAIN) {
+        if (!m.isSeq()) {
             // ジョーカーの存在により少し処理が複雑に
             dq -= djk; // ジョーカーの分引く
             
@@ -723,102 +424,118 @@ inline void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Card
             Cards opqr = arg.pqr & mask; // 当該ランクの元々のpqr
             
             // 枚数型は当該ランクの枚数を引く
-            dst->qr = arg.qr - (((Cards)(dq)) << (r << 2));
+            dst->qr = arg.qr - (BitCards(dq) << (r << 2));
             
             // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
             // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
             dst->pqr = (((arg.pqr & mask) >> dq) & mask) | (arg.pqr & ~mask);
-            dst->sc  = (((arg.sc  & mask) >> dq) & mask) | (arg.sc  & ~mask);
-            
-            // 無支配型
-            if (dst->jk) { // まだジョーカーが残っている
-                //dmask=(dmask<<1) & PQR_234; // 1枚上げる
-                // ジョーカーなしに戻す
-                dst->nd[0] &= PQR_234;
-                dst->nd[0] >>= 1;
-                dst->nd[1] &= PQR_234;
-                dst->nd[1] >>= 1;
-            }
-            Cards dmask = orgsc ^ dst->sc; // 取り去る分のマスク
-            
-            // 通常オーダー
-            if (!(opqr & dst->nd[0])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
-                Cards dmask0 = dmask & ~dst->nd[0];
-                while (1) {
-                    dmask0 >>= 4;
-                    dst->nd[0] ^= dmask0;
-                    dmask0 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
-                    if (!(dmask0 & CARDS_ALL)) break;
+
+            if (!HALF) {
+                BitCards orgsc = arg.sc;
+                dst->sc  = (((arg.sc  & mask) >> dq) & mask) | (arg.sc  & ~mask);
+
+                // 無支配型
+                if (dst->jk) { // まだジョーカーが残っている
+                    // ジョーカーなしに戻す
+                    dst->nd[0] &= PQR_234;
+                    dst->nd[0] >>= 1;
+                    dst->nd[1] &= PQR_234;
+                    dst->nd[1] >>= 1;
+                }
+                BitCards dmask = orgsc ^ dst->sc; // 取り去る分のマスク
+
+                // 通常オーダー
+                if (!(opqr & dst->nd[0])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
+                    BitCards dmask0 = dmask & ~dst->nd[0];
+                    while (1) {
+                        dmask0 >>= 4;
+                        dst->nd[0] ^= dmask0;
+                        dmask0 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
+                        if (!(dmask0 & CARDS_ALL)) break;
+                    }
+                }
+                // 逆転オーダー
+                if (!(opqr & dst->nd[1])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
+                    BitCards dmask1 = dmask & ~dst->nd[1];
+                    while (1) {
+                        dmask1 <<= 4;
+                        dst->nd[1] ^= dmask1;
+                        dmask1 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
+                        if (!(dmask1 & CARDS_ALL)) break;
+                    }
+                }
+                if (dst->jk) {
+                    dst->nd[0] <<= 1;
+                    dst->nd[0] |= PQR_1;
+                    dst->nd[1] <<= 1;
+                    dst->nd[1] &= PQR_234;
+                    dst->nd[1] |= PQR_1;
                 }
             }
-            // 逆転オーダー
-            if (!(opqr & dst->nd[1])) { // 元々そのランクが無支配ゾーンに関係しているので更新の必要あり
-                Cards dmask1 = dmask & ~dst->nd[1];
-                while (1) {
-                    dmask1 <<= 4;
-                    dst->nd[1] ^= dmask1;
-                    dmask1 &= ~dst->sc; // 現にあるカード集合の分はもう外れない
-                    if (!(dmask1 & CARDS_ALL)) break;
-                }
-            }
-            
-            if (dst->jk) {
-                dst->nd[0] <<= 1;
-                dst->nd[0] |= PQR_1;
-                dst->nd[1] <<= 1;
-                dst->nd[1] &= PQR_234;
-                dst->nd[1] |= PQR_1;
-            }
-            
         } else {
             // 階段
             Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
             Cards dqr = dc;
 
             if (djk) {
-                Cards jkmask = RankToCards(mv.jokerRank()); // ジョーカーがある場合のマスク
+                Cards jkmask = RankToCards(m.jokerRank()); // ジョーカーがある場合のマスク
                 mask &= ~jkmask; // ジョーカー部分はマスクに関係ないので外す
                 dqr = maskJOKER(dqr);
             }
 
-            dqr >>= SuitToSuitNum(mv.suits()); // スートの分だけずらすと枚数を表すようになる
+            dqr >>= SuitToSuitNum(m.suits()); // スートの分だけずらすと枚数を表すようになる
 
             // 枚数型はジョーカー以外の差分を引く
             dst->qr = arg.qr - dqr;
             // 枚数位置型、圧縮型は当該ランクを1枚分シフト
             // ただしグループと違って元々1枚の場合に注意
             dst->pqr = ((arg.pqr & mask & PQR_234) >> 1) | (arg.pqr & ~mask);
-            dst->sc  = ((arg.sc  & mask & PQR_234) >> 1) | (arg.sc  & ~mask);
-            
-            // めんどいのでその場計算
-            PQRToND(dst->pqr, dst->jk, dst->nd);
+
+            if (!HALF) {
+                dst->sc  = ((arg.sc  & mask & PQR_234) >> 1) | (arg.sc & ~mask);
+                // めんどいのでその場計算
+                PQRToND(dst->pqr, dst->jk, dst->nd);
+            }
         }
     } else { // ジョーカーだけ無くなった場合のコピー処理
         dst->qr = arg.qr;
         dst->pqr = arg.pqr;
-        dst->sc = arg.sc;
+        if (!HALF) dst->sc = arg.sc;
     }
-    assert(dst->exam());
+    if (HALF) assert(dst->exam1stHalf());
+    else assert(dst->exam());
 }
 
-inline void makeMove(const Hand& arg, Hand *const dst, const Move mv, const Cards dc) {
-    makeMove(arg, dst, mv, dc, mv.qty());
+inline void makeMove(const Hand& arg, Hand *const dst, Move m) {
+    makeMove(arg, dst, m, m.cards(), m.qty());
 }
-inline void makeMove(const Hand& arg, Hand *const dst, const Move mv) {
-    makeMove(arg, dst, mv, mv.cards());
+inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move m, Cards dc, int dq) {
+    makeMove<true>(arg, dst, m, dc, dq);
 }
-
-inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint32_t dq, uint64_t dhash) {
-    makeMove(arg, dst, mv, dc, dq);
-    dst->hash = arg.hash ^ dhash;
-    assert(dst->exam_hash());
+inline void makeMove1stHalf(const Hand& arg, Hand *const dst, Move m) {
+    makeMove1stHalf(arg, dst, m, m.cards(), m.qty());
 }
-inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc, uint64_t dhash) {
-    makeMoveAll(arg, dst, mv, dc, mv.qty(), dhash);
+inline void makeMoveAll(const Hand& arg, Hand *const dst, Move m, Cards dc, int dq, uint64_t dk) {
+    makeMove(arg, dst, m, dc, dq);
+    dst->key = subCardKey(arg.key, dk);
+    assert(dst->exam_key());
 }
-inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv, Cards dc) {
-    makeMoveAll(arg, dst, mv, dc, CardsToHashKey(dc));
+inline void makeMoveAll(const Hand& arg, Hand *const dst, Move m) {
+    Cards dc = m.cards();
+    makeMoveAll(arg, dst, m, dc, m.qty(), CardsToHashKey(dc));
 }
-inline void makeMoveAll(const Hand& arg, Hand *const dst, Move mv) {
-    makeMoveAll(arg, dst, mv, mv.cards());
+inline void Hand::makeMove1stHalf(Move m, Cards dc, int dq) {
+    ::makeMove1stHalf(*this, this, m, dc, dq);
+}
+inline void Hand::makeMove1stHalf(Move m) {
+    ::makeMove1stHalf(*this, this, m);
+}
+inline void Hand::makeMove(Move m) {
+    ::makeMove(*this, this, m);
+}
+inline void Hand::makeMoveAll(Move m, Cards dc, int dq, uint64_t dk) {
+    ::makeMoveAll(*this, this, m, dc, dq, dk);
+}
+inline void Hand::makeMoveAll(Move m) {
+    ::makeMoveAll(*this, this, m);
 }

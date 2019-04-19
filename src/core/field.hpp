@@ -233,7 +233,7 @@ struct Field {
     
     uint32_t remQty;
     Cards remCards;
-    uint64_t remHash;
+    uint64_t remKey;
     
     // 手札
     std::array<Hand, N_PLAYERS> hand;
@@ -349,8 +349,7 @@ struct Field {
     Cards getNRemCards() const { return remQty; }
     const Hand& getHand(int p) const { return hand[p]; }
     const Hand& getOpsHand(int p) const { return opsHand[p]; }
-    
-    uint64_t getRemCardsHash() const { return remHash; }
+
     Cards getDealtCards(int p) const { return dealtCards[p]; }
     Cards getUsedCards(int p) const { return usedCards[p]; }
     Cards getSentCards(int p) const { return sentCards[p]; }
@@ -434,44 +433,44 @@ struct Field {
     uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
     uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
-    void procHand(int tp, Move mv, Cards dc, uint32_t dq) {
-        ASSERT(anyCards(dc) && mv.cards() == dc && countCards(dc) == dq,
-               cerr << mv << " " << dc << " " << dq << endl;
-               cerr << toDebugString(););
-        
-        uint64_t dhash = CardsToHashKey(dc);
+    void procHand(int tp, Move mv) {
+        int dq = mv.qty();
+        Cards dc = mv.cards();
+        uint64_t dkey = CardsToHashKey(dc);
         
         // 全体の残り手札の更新
         usedCards[tp] |= dc;
         remCards -= dc;
         remQty -= dq;
-        remHash ^= dhash;
-        
+        remKey = subCardKey(remKey, dkey);
+
         // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
         for (int p = 0; p < tp; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dhash);
+            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
         }
-        hand[tp].makeMoveAll(mv, dc, dq, dhash);
+        hand[tp].makeMoveAll(mv, dc, dq, dkey);
         for (int p = tp + 1; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dhash);
+            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
         }
     }
     
-    void procAndKillHand(int tp, Move mv, Cards dc, uint32_t dq) {
+    void procAndKillHand(int tp, Move mv) {
         // あがりのときは手札を全更新しない
-        uint64_t dhash = CardsToHashKey(dc);
+        int dq = mv.qty();
+        Cards dc = mv.cards();
+        uint64_t dkey = CardsToHashKey(dc);
         
         // 全体の残り手札の更新
         usedCards[tp] |= dc;
         remCards -= dc;
         remQty -= dq;
-        remHash ^= dhash;
-        
+        remKey = subCardKey(remKey, dkey);
+
         hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
         
         assert(!isAlive(tp)); // agari player is not alive
         for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dhash);
+            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
         }
     }
 
@@ -490,11 +489,11 @@ struct Field {
                cerr << hand[from] << " -> " << dc << endl;);
         ASSERT(!anyCards(andCards(dc, hand[to].cards)),
                cerr << dc << " -> " << hand[to] << endl;)
-        uint64_t dhash = CardsToHashKey(dc);
-        hand[from].subtrAll(dc, dq, dhash);
-        hand[to].addAll(dc, dq, dhash);
-        opsHand[from].addAll(dc, dq, dhash);
-        opsHand[to].subtrAll(dc, dq, dhash);
+        uint64_t dkey = CardsToHashKey(dc);
+        hand[from].subtrAll(dc, dq, dkey);
+        hand[to].addAll(dc, dq, dkey);
+        opsHand[from].addAll(dc, dq, dkey);
+        opsHand[to].subtrAll(dc, dq, dkey);
     }
     void makeChange(int from, int to, Cards dc) {
         makeChange(from, to, dc, countCards(dc));
@@ -518,31 +517,25 @@ struct Field {
             const int from = classPlayer(oppClass);
             const int to = classPlayer(cl);
             const Cards dc = andCards(getCards(from), getCards(to));
-            uint64_t dhash = CardsToHashKey(dc);
+            uint64_t dkey = CardsToHashKey(dc);
             int dq = N_CHANGE_CARDS(cl);
             
-            hand[from].subtrAll(dc, dq, dhash);
-            opsHand[from].addAll(dc, dq, dhash);
+            hand[from].subtrAll(dc, dq, dkey);
+            opsHand[from].addAll(dc, dq, dkey);
         }
     }
     
-    void setHand(int p, Cards ac) {
-        hand[p].setAll(ac);
+    void setHand(int p, Cards c) {
+        hand[p].setAll(c);
     }
-    void setOpsHand(int p, Cards ac) {
-        opsHand[p].setAll(ac);
+    void setOpsHand(int p, Cards c) {
+        opsHand[p].setAll(c);
     }
-    void setRemHand(Cards ac) {
-        remCards = ac;
-        remQty = countCards(ac);
-        remHash = HASH_CARDS_ALL ^ CardsToHashKey(subtrCards(CARDS_ALL, ac));
+    void setRemHand(Cards c) {
+        remCards = c;
+        remQty = c.count();
+        remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
-    void fillRemHand(Cards ac) {
-        remCards = CARDS_ALL;
-        remQty = countCards(CARDS_ALL);
-        remHash = HASH_CARDS_ALL;
-    }
-    
     bool exam() const {
         // validator
         
@@ -692,7 +685,7 @@ struct Field {
         
         remCards = CARDS_ALL;
         remQty = countCards(CARDS_ALL);
-        remHash = HASH_CARDS_ALL;
+        remKey = HASH_CARDS_ALL;
     }
     
     void prepareAfterChange() {
@@ -765,13 +758,13 @@ int Field::proc(const int tp, const MoveInfo mv) {
                     setNewClassOf(tp, getBestClass());
                     ps.setDead(tp);
                     attractedPlayers.reset(tp);
-                    procAndKillHand(tp, mv, mv.cards(), mv.qty());
+                    procAndKillHand(tp, mv);
                 } else {
-                    procHand(tp, mv, mv.cards(), mv.qty());
+                    procHand(tp, mv);
                 }
             }
         } else {
-            procHand(tp, mv, mv.cards(), mv.qty());
+            procHand(tp, mv);
         }
         
         board.proc(mv);
@@ -830,9 +823,9 @@ inline int Field::procSlowest(const Move mv) {
                 setNewClassOf(ps.searchL1Player(), getBestClass());
                 return -1;
             }
-            procAndKillHand(tp, mv, mv.cards(), mv.qty());
+            procAndKillHand(tp, mv);
         } else {
-            procHand(tp, mv, mv.cards(), mv.qty());
+            procHand(tp, mv);
         }
         
         board.proc(mv);
@@ -891,7 +884,7 @@ inline void copyField(const Field& arg, Field *const dst) {
 
     dst->remCards = arg.remCards;
     dst->remQty = arg.remQty;
-    dst->remHash = arg.remHash;
+    dst->remKey = arg.remKey;
 }
 
 /**************************仮想世界**************************/
@@ -905,14 +898,11 @@ struct ImaginaryWorld {
     
     double weight; // この世界の存在確率比
     int builtTurn; // この世界がセットされたターン
-    uint64_t hash; // 世界識別ハッシュ。着手検討中ターンにおいて世界を識別出来れば形式は問わない
+    uint64_t key; // 世界識別ハッシュ。着手検討中ターンにおいて世界を識別出来れば形式は問わない
     
     Cards cards[N_PLAYERS];
-    uint64_t hash_cards[N_PLAYERS];
-    
-    Cards getCards(int p) const { return cards[p]; }
-    uint64_t getCardsHash(int p) const { return hash_cards[p]; }
-    
+    uint64_t cardKey[N_PLAYERS];
+
     void clear() {
         flags.reset();
         weight = 1.0;
@@ -924,47 +914,34 @@ struct ImaginaryWorld {
     
     int isActive() const { return flags.test(ACTIVE); }
     
-    template <class field_t>
-    void set(const field_t& field, const Cards argCards[]) {
+    void set(const Field& field, const Cards c[]) {
         clear();
         for (int p = 0; p < N_PLAYERS; p++) {
-            cards[p] = argCards[p];
-            hash_cards[p] = CardsToHashKey(argCards[p]);
+            cards[p] = c[p];
+            cardKey[p] = CardsToHashKey(c[p]);
         }
         builtTurn = field.turnCount();
     }
     
     void proc(const int p, const Move mv, const Cards dc) {
         // 世界死がおきずに進行した
-        //uint64_t dhash = CardsToHashKey(dc);
-        //uint32_t dq = mv.qty();
-        
-        /*wField.rHand.makeMoveAll(mv,dc,dq,dhash);
-         
-         wField.hand[p].makeMove(mv,dc);
-         wField.hand[p].hash^=dhash;
-         wField.opsHand[p].makeMove(mv,dc);
-         wField.opsHand[p].hash^=dhash;*/
     }
     ImaginaryWorld() { clear(); }
     ~ImaginaryWorld() { clear(); }
 };
 
 // set estimated information
-template <class world_t>
-inline void setWorld(const world_t& world, Field *const dst) {
-    Cards remCards = dst->getRemCards();
-    uint64_t remHash = dst->getRemCardsHash();
-    
+inline void setWorld(const ImaginaryWorld& world, Field *const dst) {
+    Cards remCards = dst->remCards;
+    uint64_t remKey = dst->remKey;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (dst->isAlive(p)) {
             // only alive players
-            uint64_t myHash = world.getCardsHash(p);
-            
-            dst->hand[p].set(world.getCards(p));
-            dst->hand[p].setHash(myHash);
-            dst->opsHand[p].set(remCards - world.getCards(p));
-            dst->opsHand[p].setHash(remHash ^ myHash);
+            uint64_t myKey = world.cardKey[p];
+            dst->hand[p].set(world.cards[p]);
+            dst->hand[p].setKey(myKey);
+            dst->opsHand[p].set(remCards - world.cards[p]);
+            dst->opsHand[p].setKey(subCardKey(remKey, myKey));
         } else {
             // alive でないプレーヤーも手札枚数だけセットしておく
             dst->hand[p].qty = 0;

@@ -4,7 +4,7 @@
 #include <array>
 #include <map>
 #include <iterator>
-#include "util.hpp"
+#include "../base/util.hpp"
 
 // 大富豪における最も基本的な型の実装
 
@@ -32,10 +32,6 @@ enum {
     
     RANK_NONE = -1
 };
-
-inline bool isEightSeqRank(int rank, int qty) {
-    return rank <= RANK_8 && RANK_8 < rank + qty;
-}
 
 // 出力
 static const std::string rankChar  = "-3456789TJQKA2+:";
@@ -129,9 +125,8 @@ constexpr int suitsIdx[18] = {
 inline int SuitToSuitNum(unsigned int suit) { return bsf32(suit); }
 
 // 単スート番号からスート集合への変換
-inline constexpr unsigned SuitNumToSuits(int sn0) { return (1U << sn0); }
-// 複スートの場合も
-inline int SuitsToSuitNum(int suit) { return suitsIdx[suit]; }
+constexpr unsigned SuitNumToSuits(int sn0) { return 1U << sn0; }
+constexpr int SuitsToSuitNum(int suit) { return suitsIdx[suit]; } // 複スートの場合もOK
 
 // 出力
 struct OutSuits {
@@ -821,9 +816,6 @@ union Cards {
         return (*this) -= c;
     }
     
-    //Cards& inv(BitCards c) { return (*this) ^= c; }
-    //Cards& inv() { return inv(CARDS_ALL); }
-    
     // pick, pop
     IntCard lowest() const {
         assert(any());
@@ -1160,12 +1152,20 @@ constexpr uint64_t cardsHashKeyTable[64] = {
 constexpr uint64_t IntCardToHashKey(IntCard ic) {
     return cardsHashKeyTable[ic];
 }
+constexpr uint64_t addCardKey(uint64_t a, uint64_t b) {
+    return a + b;
+}
+constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
+    return a - b;
+}
 inline uint64_t CardsToHashKey(Cards c) {
     uint64_t key = HASH_CARDS_NULL;
-    for (IntCard ic : c) key ^= IntCardToHashKey(ic); 
+    for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic)); 
     return key;
 }
-constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
+
+//constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
+uint64_t HASH_CARDS_ALL;
 
 inline uint64_t CardsCardsToHashKey(Cards c0, Cards c1) {
     return cross64(CardsToHashKey(c0), CardsToHashKey(c1));
@@ -1176,7 +1176,7 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
 
 inline void initCards() {
     // カード集合関係の初期化
-    
+    HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
     // nd計算に使うテーブル
     for (int r = 0; r < 16; r++) {
         // オーダー通常
@@ -1245,29 +1245,19 @@ struct Move {
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
     void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ
-
-    void setSingle()                  { t = 1; }
-    void setGroup()                   { t = 2; }
-    void setSeq()                     { t = 3; }
-    void setQty(uint32_t qty)         { q = qty; }
-    void setRank(uint32_t rank)       { r = rank; }
-    void setSuits(uint32_t suits)     { s = suits; }
     void setJokerRank(uint32_t jr)    { jkr = jr; }
     void setJokerSuits(uint32_t js)   { jks = js; }
     void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
     // タイプを指定してまとめて処理
     void setSingle(int rank, int suits) {
-        clear();
-        setSingle(); setQty(1); setRank(rank); setSuits(suits);
+        clear(); t = 1; q = 1; r = rank; s = suits;
     }
     void setGroup(int qty, int rank, int suits) {
-        clear();
-        setGroup(); setQty(qty); setRank(rank); setSuits(suits);
+        clear(); t = 1; q = qty; r = rank; s = suits;
     }
     void setSeq(int qty, int rank, int suits) {
-        clear();
-        setSeq(); setQty(qty); setRank(rank); setSuits(suits);
+        clear(); t = 2; q = qty; r = rank; s = suits;
     }
     // IntCard型からシングル着手をセットする
     void setSingle(IntCard ic) {
@@ -1275,15 +1265,14 @@ struct Move {
     }
     
     // True or False
-    constexpr bool isPASS() const { return  t == 0; }
-    constexpr uint32_t isSeq() const { return  t == 3; }
-    constexpr uint32_t isGroup() const { return  t == 2; }
-    constexpr uint32_t isSingle() const { return  t == 1; }
-    constexpr uint32_t isSingleOrGroup() const { return  t == 1 ||  t == 2; }
+    constexpr bool isPASS() const { return t == 0; }
+    constexpr bool isGroup() const { return t == 1; }
+    constexpr bool isSeq() const { return t == 2; }
+    constexpr bool isSingle() const { return isGroup() && qty() == 1; }
     constexpr bool isQuintuple() const {
         return isGroup() && q == 5;
     }
-    constexpr uint32_t containsJOKER() const { return jks || jkr; }
+    constexpr bool containsJOKER() const { return jks || jkr; }
     
     constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
@@ -1368,46 +1357,13 @@ struct Move {
         }
     }
 
-    constexpr bool domInevitably() const {
-        if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
-        else return rank() == RANK_8;
-    }
-    constexpr bool isRev() const {
-        if (isSeq()) return qty() >= 5;
-        else return qty() >= 4;
-    }
-    constexpr bool isBack() const {
-        return false;
-    }
-    constexpr uint32_t changesPrmState() const {
-        return isRev();
-    }
-    bool exam() const {
-        // 変な値でないかチェック
-        int q = qty();
-        int r = rank();
-        uint32_t s = suits();
-        if (!isPASS()) {
-            if (q < 0) return false;
-            if (isSeq()) {
-                if (q < 3) return false;
-                if (countSuits(s) != 1) return false;
-                if (isEightSeqRank(r, 3)) {
-                    if (!domInevitably()) return false;
-                } else {
-                    if (domInevitably()) return false;
-                }
-            } else if (isSingle()) {
-                if (q != 1) return false;
-                if (countSuits(s) != 1) return false;
-            } else {
-                if (!isQuintuple()) {
-                    if (q != countSuits(s)) return false;
-                }
-            }
-        }
-        return true;
-    }
+    bool domInevitably() const;
+    bool isRev() const;
+    bool isBack() const;
+
+    bool changesPrmState() const { return isRev(); }
+
+    bool exam() const;
 
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
@@ -1666,15 +1622,15 @@ struct Board : public Move {
     // 2体情報をメンバ関数で返す関数
     // 半マスク化みたいな感じ
     constexpr bool domInevitably() const { return invalid; }
-    constexpr bool domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
+    bool domConditionally(Move m) const;
     
-    constexpr bool locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
-    constexpr bool locksRank(Move m) const { return false; } // ルールにない
+    bool locksSuits(Move m) const;
+    bool locksRank(Move m) const;
     
-    constexpr uint32_t afterPrmOrder(Move m) const {
+    int nextPrmOrder(Move m) const {
         return prmOrder() ^ bool(m.isRev());
     }
-    constexpr uint32_t afterTmpOrder(Move m) const {
+    int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
     }
     constexpr bool afterSuitsLocked(Move m) const {

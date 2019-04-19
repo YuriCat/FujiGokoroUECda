@@ -6,7 +6,7 @@
 #include "../core/prim2.hpp"
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
-#include "softmaxClassifier.hpp"
+#include "../base/softmaxClassifier.hpp"
 
 namespace UECda {
     
@@ -342,7 +342,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 s -= 1000; // Mateのときは低い点にする
             } else {
                 // 着手パラメータ
-                const int aftOrd = bd.afterTmpOrder(mv);
+                const int aftOrd = bd.nextOrder(mv);
                 const int q4 = min(mv.qty(), 4);
                 
                 const Cards afterCards = subtrCards(myCards, mv.cards());
@@ -590,7 +590,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // rf group break
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
-                    if (!bd.isNull() && !fieldInfo.isUnrivaled() && mv.isSingleOrGroup() && !mv.containsJOKER()) {
+                    if (!bd.isNull() && !fieldInfo.isUnrivaled() && mv.isGroup() && !mv.containsJOKER()) {
                         if (myHand.qr[mv.rank()] != mv.qty()) { // 崩して出した
                             if (mv.domInevitably()) Foo(base) // 8切り
                             else {
@@ -768,11 +768,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         constexpr int base = FEA_IDX(FEA_MODEL_NF);
                         if (mv.containsJOKER()) FooM(base + 2)
                         else if (mv.domInevitably()) FooM(base + 3)
-                        if (mv.isGroup()) FooM(base + 0)
+                        if (mv.isGroup() && mv.qty() > 1) FooM(base + 0)
                         else if (mv.isSeq()) FooM(base + 1)
                         if (mv.isRev()) FooM(base + 4)
                     } else {
-                        const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.isGroup() ? 1 : 0));
+                        const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.qty() > 1 ? 1 : 0));
                         if (!mv.isPASS()) {
                             if (mv.containsJOKER()) {
                                 if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)

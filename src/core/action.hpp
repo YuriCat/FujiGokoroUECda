@@ -772,10 +772,9 @@ inline int genNullPass(Move *const mv0) {
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
 
 inline int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b) {
-    
     assert(containsJOKER(c));
     assert(containsS3(ops));
-    assert(b.isGroup());
+    assert(b.isGroup() && b.qty() > 1);
     
     Move *mv = mv0;
     int br = b.rank();

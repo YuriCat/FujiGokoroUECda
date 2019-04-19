@@ -1,6 +1,5 @@
 #pragma once
 
-#include "util.hpp"
 #include "daifugo.hpp"
 #include "prim2.hpp"
 #include "record.hpp"

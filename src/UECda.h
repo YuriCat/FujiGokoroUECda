@@ -77,61 +77,6 @@ namespace UECda {
     constexpr int SEAT_INIT_CYCLE = 3; // 席順リセット試合数(変更の可能性あり)
     
     //const int N_GAMES; // 総試合数
-    
-    // ルールの性質
-    
-    // オーダー逆転のパターン
-    // スートロックの条件
-    // 初手プレーヤーの決め方
-    // 場の流れ方
-    //
-
-    constexpr bool isNoBack(const Cards mine, const Cards ops) {
-        return true; // イレブンバックはUECdaにはない
-    }
-    constexpr bool isNoBack(const Cards mine) {
-        return true; // イレブンバックはUECdaにはない
-    }
-
-    inline bool isNoRev(const Cards mine, const Cards ops) {
-        // 無革命性の証明
-        return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
-                && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
-    }
-
-    inline bool isNoRev(const Cards mine) {
-        // 無革命性の証明
-        return !groupCards(mine, 4) && !canMakeSeq(mine, 5);
-    }
-    
-    constexpr int getChangePartnerClass(int acl) {
-        // 交換相手の階級
-        return N_CLASSES - 1 - acl;
-    }
-    
-    constexpr int getNGamesForClassInitGame(int gn) {
-        // 試合番号から、階級初期化ゲームへの残り試合数に変換
-        return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
-    }
-    constexpr int getNGamesForSeatInitGame(int gn) {
-        // 試合番号から、席順初期化ゲームへの残り試合数に変換
-        return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
-    }
-    
-    
-    template <int N = N_PLAYERS>
-    constexpr unsigned int getNextSeat(unsigned int s) {
-        return (s + 1) % (unsigned int)cmax(N, 1);
-    }
-    template <int N>
-    constexpr unsigned int getRemovedNextSeat(unsigned int s) {
-        return s % (unsigned int)cmax(N - 1, 1);
-    }
-    template <int N = N_PLAYERS>
-    constexpr unsigned int getPreviousSeat(unsigned int s) {
-        return (s + N - 1) % (unsigned int)cmax(N, 1);
-    }
-
     // ここにルールを書いていく
 
     
@@ -296,3 +241,88 @@ namespace UECda {
 }
 
 using namespace UECda;
+
+    // ルールの性質
+    
+    // オーダー逆転のパターン
+    // スートロックの条件
+    // 初手プレーヤーの決め方
+    // 場の流れ方
+    //
+
+constexpr int SEQ_MIN_QTY = 3;
+
+bool Move::domInevitably() const {
+    if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
+    else return rank() == RANK_8;
+}
+bool Move::isRev() const { return isSeq() ? qty() >= 5 : qty() >= 4; }
+bool Move::isBack() const { return false; }
+
+bool Board::domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
+bool Board::locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
+bool Board::locksRank(Move m) const { return false; }
+
+bool Move::exam() const {
+    // 変な値でないかチェック
+    int q = qty();
+    int r = rank();
+    uint32_t s = suits();
+    if (isPASS()) {
+        if (q != 0) return false;
+    } else if (isSeq()) {
+        if (q < SEQ_MIN_QTY) return false;
+        if (countSuits(s) != 1) return false;
+    } else {
+        if (!isQuintuple()) {
+            if (q != countSuits(s)) return false;
+        }
+    }
+    return true;
+}
+
+constexpr bool isNoBack(const Cards mine, const Cards ops) {
+    return true; // イレブンバックはUECdaにはない
+}
+constexpr bool isNoBack(const Cards mine) {
+    return true; // イレブンバックはUECdaにはない
+}
+
+inline bool isNoRev(const Cards mine, const Cards ops) {
+    // 無革命性の証明
+    return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
+            && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
+}
+
+inline bool isNoRev(const Cards mine) {
+    // 無革命性の証明
+    return !groupCards(mine, 4) && !canMakeSeq(mine, 5);
+}
+
+constexpr int getChangePartnerClass(int acl) {
+    // 交換相手の階級
+    return N_CLASSES - 1 - acl;
+}
+
+constexpr int getNGamesForClassInitGame(int gn) {
+    // 試合番号から、階級初期化ゲームへの残り試合数に変換
+    return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
+}
+constexpr int getNGamesForSeatInitGame(int gn) {
+    // 試合番号から、席順初期化ゲームへの残り試合数に変換
+    return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
+}
+
+
+template <int N = N_PLAYERS>
+constexpr unsigned int getNextSeat(unsigned int s) {
+    return (s + 1) % (unsigned int)cmax(N, 1);
+}
+template <int N>
+constexpr unsigned int getRemovedNextSeat(unsigned int s) {
+    return s % (unsigned int)cmax(N - 1, 1);
+}
+template <int N = N_PLAYERS>
+constexpr unsigned int getPreviousSeat(unsigned int s) {
+    return (s + N - 1) % (unsigned int)cmax(N, 1);
+}

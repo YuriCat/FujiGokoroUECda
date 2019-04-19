@@ -22,7 +22,6 @@
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
-#include "policyGradient.hpp"
 
 #ifndef POLICY_ONLY
 #include "galaxy.hpp"
@@ -161,7 +160,7 @@ namespace UECda {
                 
                 // D3を持っている場合、自分からなので必勝チェック
                 if (containsD3(myCards)) {
-                    const Board bd = OrderToNullBoard(0); // 通常オーダーの空場
+                    const Board b = OrderToNullBoard(0); // 通常オーダーの空場
                     FieldAddInfo fieldInfo;
                     fieldInfo.init();
                     fieldInfo.setFlushLead();
@@ -171,7 +170,7 @@ namespace UECda {
                     fieldInfo.setMaxNCards(11);
                     Hand ops;
                     ops.set(subtrCards(CARDS_ALL, restCards));
-                    if (judgeHandMate(1, searchBuffer, mine, ops, bd, fieldInfo)) {
+                    if (judgeHandMate(1, searchBuffer, mine, ops, b, fieldInfo)) {
                         // 必勝
                         CERR << "CHANGE MATE!" << endl;
                         assert(holdsCards(myCards, cand[c]) && countCards(cand[c]) == change_qty);
@@ -299,23 +298,23 @@ namespace UECda {
             const Hand& opsHand = field.getOpsHand(myPlayerNum);
             const Cards myCards = myHand.cards;
             const Cards opsCards = opsHand.cards;
-            const Board bd = field.board;
-            CERR << bd << endl;
+            const Board b = field.board;
+            CERR << b << endl;
             FieldAddInfo& fieldInfo = field.fieldInfo;
             
             // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
-            if (bd.isInvalid()) return MOVE_PASS;
+            if (b.isInvalid()) return MOVE_PASS;
 
 #ifdef RARE_PLAY
             // レアプレーを行っていない場合は行う
-            if (bd.isNull() && !rare_play_flag.test(0)) { // 空場パス
+            if (b.isNull() && !rare_play_flag.test(0)) { // 空場パス
                 rare_play_flag.set(0);
                 return MOVE_PASS;
             }
 #endif
                 
             // 合法着手生成
-            int NMoves = genMove(mv, myCards, bd);
+            int NMoves = genMove(mv, myCards, b);
             if (NMoves <= 0) { // 合法着手なし
                 cerr << "No valid move." << endl;
                 return MOVE_PASS;
@@ -333,12 +332,12 @@ namespace UECda {
             
             // 合法着手生成(特別着手)
             int NSpecialMoves = 0;
-            if (bd.isNull()) {
+            if (b.isNull()) {
                 NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
             }
             if (containsJOKER(myCards) && containsS3(opsCards)) {
-                if (bd.isGroup()) {
-                    NSpecialMoves += genJokerGroup(mv + NMoves + NSpecialMoves, myCards, opsCards, bd);
+                if (b.isGroup() && b.qty() > 1) {
+                    NSpecialMoves += genJokerGroup(mv + NMoves + NSpecialMoves, myCards, opsCards, b);
                 }
             }
             NMoves += NSpecialMoves;
@@ -356,23 +355,23 @@ namespace UECda {
                 MoveInfo& move = mv[i];
                 // 支配性
                 if (move.qty() > fieldInfo.getMaxNCardsAwake()
-                    || dominatesCards(move, opsCards, bd)) {
+                    || dominatesCards(move, opsCards, b)) {
                     move.setDO(); // 他支配
                 }
                 if (move.isPASS() || move.qty() > myCards.count() - move.qty()
-                    || dominatesCards(move, myCards - move.cards(), bd)) {
+                    || dominatesCards(move, myCards - move.cards(), b)) {
                     move.setDM(); // 自己支配
                 }
                 
                 if (Settings::MateSearchOnRoot) { // 多人数必勝判定
-                    if (checkHandMate(1, searchBuffer, move, myHand, opsHand, bd, fieldInfo)) {
+                    if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b, fieldInfo)) {
                         move.setMPMate(); fieldInfo.setMPMate();
                     }
                 }
                 if (Settings::L2SearchOnRoot) {
                     if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                         L2Judge lj(400000, searchBuffer);
-                        int l2Result = (bd.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, bd, fieldInfo);
+                        int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                         if (l2Result == L2_WIN) { // 勝ち
                             DERR << "l2win!" << endl;
                             move.setL2Mate(); fieldInfo.setL2Mate();
@@ -405,9 +404,9 @@ namespace UECda {
             if (monitor) {
                 // 着手候補一覧表示
                 cerr << "My Cards : " << myCards << endl;
-                cerr << bd << " " << fieldInfo << endl;
+                cerr << b << " " << fieldInfo << endl;
                 for (int i = 0; i < NMoves; i++) {
-                    cerr << mv[i] << toInfoString(mv[i], bd) << endl;
+                    cerr << mv[i] << toInfoString(mv[i], b) << endl;
                 }
             }
             

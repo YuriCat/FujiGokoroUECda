@@ -1,11 +1,10 @@
 
 // 棋譜からオフラインでレーティングを推定
-
-#include "../include.h"
+#include "../UECda.h"
 #include "../core/record.hpp"
 #include "../engine/engineSettings.h"
 #include "../engine/engineStructure.hpp"
-#include "../engine/rating.hpp"
+#include "../extra/rating.hpp"
 
 MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs;
 
