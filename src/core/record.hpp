@@ -116,7 +116,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
     
     pmLog->init();
     
-    game_t gLog;
+    game_t gr;
     BitArray32<4, N> infoClass, infoSeat, infoNewClass;
     std::map<int, change_t> cLogMap;
     Move lastMove;
@@ -159,7 +159,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 failedGames += 1;
             }
             startedGame = pmLog->games();
-            gLog.init();
+            gr.init();
             infoClass.clear();
             infoSeat.clear();
             infoNewClass.clear();
@@ -172,12 +172,12 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             // if (!flagGame.test(0)) {}//ゲーム番号不明
             // if (!flagGame.test(0)) {}//累積スコア不明
             if (!lastMove.isPASS()) {
-                gLog.setTerminated();
+                gr.setTerminated();
             }
-            gLog.infoClass = infoClass;
-            gLog.infoSeat = infoSeat;
-            gLog.infoNewClass = infoNewClass;
-            pmLog->pushGame(gLog);
+            gr.infoClass = infoClass;
+            gr.infoSeat = infoSeat;
+            gr.infoNewClass = infoNewClass;
+            pmLog->pushGame(gr);
             startedGame = -1;
         }
         else if (cmd == "match") {
@@ -235,7 +235,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             for (int i = 0; i < N; i++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
-                gLog.setDealtCards(i, c);
+                gr.setDealtCards(i, c);
                 DERR << c << endl;
             }
             flagGame.set(4);
@@ -255,11 +255,11 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 }
             }
             if (!anyChange) {
-                gLog.setInitGame();
+                gr.setInitGame();
                 DERR << "init game." << endl;
             } else {
                 for (auto c : cLogMap) {
-                    gLog.push_change(c.second);
+                    gr.push_change(c.second);
                 }
             }
             flagGame.set(5);
@@ -268,7 +268,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             for (int i = 0; i < N; i++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo(); 
-                gLog.setOrgCards(i, c);
+                gr.setOrgCards(i, c);
                 DERR << c << endl;
             }
             flagGame.set(6);
@@ -280,7 +280,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 if (Recorder::isCommand(str)) Foo();
                 if (StringToMoveTimeM(str, &mv, &time) < 0) Foo();
                 playLog_t pLog(mv, time);
-                gLog.push_play(pLog);
+                gr.push_play(pLog);
                 lastMove = mv;
                 q.pop();
             }
@@ -327,70 +327,33 @@ struct PlayRecord { // 1つの着手の記録
     }
 };
 
+struct Observation {
+    BoardState bs;
+    char numCards[N_PLAYERS];
+};
+
 class EnginePlayRecord : public PlayRecord {
     // 思考エンジン用の着手記録
     // ルールが微妙に違っても対処できるようにこのクラスが局面の一次情報クラスとして振舞う
 public:
-    int turn() const { return turn_; }
-    int owner() const { return owner_; }
-    int firstTurn() const { return firstTurn_; }
-    int getNCards(int p) const { return infoNCards[p]; }
     void set(Move m, Cards dc, unsigned t, unsigned st) {
         PlayRecord::set(m, t);
         subjectiveTime = st;
         usedCards = dc;
     }
-    bool procByServer(Move move, Cards dc) {
-        // あがりの場合に1を返す
-        bool dead = false;
-        int tp = turn();
-        if (move.isPASS()) { // パス
-            ps.setAsleep(tp);
-        } else { // パスでない
-            bd.procExceptFlush(move);
-            infoNCards.sub(tp, countCards(dc));
-            if (getNCards(tp) <= 0) {//あがり
-                ps.setDead(tp);
-                dead = true;
-            }
-            setOwner(tp);
-        }
-        return dead;
+    template <class field_t>
+    bool playByServer(Move move, Cards dc, const field_t& f) {
+        // あがりの場合にtrueを返す
+        bool agari = move.qty() <= o.numCards[f.seatPlayer(o.bs.turnSeat)];
+        o.bs.play(move, agari, false);
+        return agari;
     }
-    void initGame() {
-        bd.init();
-        ps.init();
-        infoSpecialPlayer.clear();
-    }
-    void setTurn(int p) { turn_ = p; }
-    void setOwner(int p) { owner_ = p; }
-    void setFirstTurn(int p) { firstTurn_ = p; }
-    void setNCards(int p, int n) {
-        infoNCards.assign(p, n);
-    }
-    void flush(BitArray32<4, N_PLAYERS> infoSeat) {
-        bd.flush();
-        ps.flush();
-        flushTurnPlayer(infoSeat);
-    }
-    void flushTurnPlayer(BitArray32<4, N_PLAYERS> infoSeat) {
-        int tp = owner();
-        if (ps.isAlive(tp)) setTurn(tp);
-        else rotateTurnPlayer(tp, infoSeat);
-    }
-    void rotateTurnPlayer(int tp, BitArray32<4, N_PLAYERS> infoSeat) {
-        BitArray32<4, N_PLAYERS> infoSeatPlayer = invert(infoSeat);
-        do {
-            tp = infoSeatPlayer[getNextSeat<N_PLAYERS>(infoSeat[tp])];
-        } while (!ps.isAwake(tp));
-        setTurn(tp);
-    }
-    
-    char turn_, owner_, firstTurn_;
-    Board bd;
-    PlayersState ps;
-    BitArray32<4> infoSpecialPlayer;
-    BitArray32<4, N_PLAYERS> infoNCards;
+    void initGame(int n) { o.bs.init(n); }
+    void setTurnSeat(int s) { o.bs.turnSeat = s; }
+    void setNumCards(int p, int n) { o.numCards[p] = n; }
+    void flush() { o.bs.flush(); }
+
+    Observation o;
     Cards usedCards; // javaサーバは役表現と構成する手札表現が合わないことがある...
     uint32_t subjectiveTime;
 };
@@ -552,7 +515,7 @@ public:
         ofs << toString(g);
         return 0;
     }
-    
+    int firstTurnSeat;
     std::array<Cards, N_PLAYERS> dealtCards, orgCards;
 };
 
@@ -618,7 +581,7 @@ public:
     void reserveGames(std::size_t n) {
         game_.reserve(n);
     }
-    void initGame() {
+    void initGame(int n) {
         game_.emplace_back(game_t());
         game_t& g = latestGame();
         g.init();
@@ -632,8 +595,8 @@ public:
             score[p] += REWARD(g.newClassOf(p));
         }
     }
-    void pushGame(const game_t& gLog) {
-        game_.emplace_back(gLog);
+    void pushGame(const game_t& gr) {
+        game_.emplace_back(gr);
     }
     void init() {
         game_.clear();
@@ -767,41 +730,41 @@ using Record = MatchRecordAccessor<MatchRecordBase<GameRecord<PlayRecord>>>;
 // -4 で全マッチ終了
 
 template <class field_t, class game_t>
-void setFieldBeforeAll(field_t& field, const game_t& gLog) {
+void setFieldBeforeAll(field_t& field, const game_t& gr) {
     // 棋譜を読んでの初期設定
     field.initGame();
     field.setMoveBuffer(nullptr);
     field.setDice(nullptr);
-    if (gLog.isInitGame()) field.setInitGame();
+    if (gr.isInitGame()) field.setInitGame();
     field.infoNewClass.fill(-1);
     field.infoNewClassPlayer.fill(-1);
     for (int p = 0; p < N_PLAYERS; p++) {
-        field.setClassOf(p, gLog.classOf(p));
-        field.setSeatOf(p, gLog.seatOf(p));
-        field.setPositionOf(p, gLog.positionOf(p));
+        field.setClassOf(p, gr.classOf(p));
+        field.setSeatOf(p, gr.seatOf(p));
+        field.setPositionOf(p, gr.positionOf(p));
     }
 }
 
 template <class field_t, class game_t,
 typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t, typename lastCallback_t>
 int iterateGameLogBeforePlay
-(field_t& field, const game_t& gLog,
+(field_t& field, const game_t& gr,
  const firstCallback_t& firstCallback = [](const field_t&)->void{},
  const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
  const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const field_t&)->void{},
  bool stopBeforeChange = false) {
-    setFieldBeforeAll(field, gLog);
+    setFieldBeforeAll(field, gr);
     firstCallback(field);
     
     // deal cards
     for (int p = 0; p < N_PLAYERS; p++) {
-        Cards tmp = gLog.getDealtCards(p);
+        Cards tmp = gr.getDealtCards(p);
         field.hand[p].cards = tmp; // とりあえずcardsだけセットしておく
     }
     // present
-    for (int t = 0, tend = gLog.changes(); t < tend; t++) {
-        const typename game_t::change_t& change = gLog.change(t);
+    for (int t = 0, tend = gr.changes(); t < tend; t++) {
+        const typename game_t::change_t& change = gr.change(t);
         if (field.classOf(change.to) < HEIMIN) {
             Cards present = change.cards;
             field.hand[change.to].cards |= present;
@@ -822,8 +785,8 @@ int iterateGameLogBeforePlay
     dealtCallback(field);
     
     // change
-    for (int t = 0, tend = gLog.changes(); t < tend; t++) {
-        const typename game_t::change_t& change = gLog.change(t);
+    for (int t = 0, tend = gr.changes(); t < tend; t++) {
+        const typename game_t::change_t& change = gr.change(t);
         if (field.classOf(change.from) >= HINMIN) {
             // 献上以外
             field.hand[change.from].subtrAll(change.cards);
@@ -847,7 +810,7 @@ int iterateGameLogBeforePlay
 }
 
 template <class field_t, class game_t, class hand_t>
-void setFieldAfterChange(field_t& field, const game_t& gLog,
+void setFieldAfterChange(field_t& field, const game_t& gr,
                          const std::array<hand_t, N_PLAYERS>& hand) {
     // カード交換が終わった後から棋譜を読み始める時の初期設定
     // 全体初期化はされていると仮定する
@@ -866,20 +829,20 @@ void setFieldAfterChange(field_t& field, const game_t& gLog,
 template <class field_t, class game_t, class hand_t,
 typename firstCallback_t, typename playCallback_t>
 int iterateGameLogInGame
-(field_t& field, const game_t& gLog, int turns, const std::array<hand_t, N_PLAYERS>& hand,
+(field_t& field, const game_t& gr, int turns, const std::array<hand_t, N_PLAYERS>& hand,
  const firstCallback_t& firstCallback = [](const field_t&)->void{},
  const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
  bool initialized = false) {
     if (!initialized) {
-        setFieldBeforeAll(field, gLog);
-        setFieldAfterChange(field, gLog, hand); // 交換後まで進める
+        setFieldBeforeAll(field, gr);
+        setFieldAfterChange(field, gr, hand); // 交換後まで進める
     }
     field.prepareAfterChange();
     firstCallback(field);
     // play
     for (int t = 0; t < turns; t++) {
         field.prepareForPlay();
-        const typename game_t::playLog_t& play = gLog.play(t);
+        const typename game_t::playLog_t& play = gr.play(t);
         int ret = playCallback(field, play.move, play.time);
         if (ret <= -2) {
             cerr << "error on play turn " << t << endl;
@@ -888,7 +851,7 @@ int iterateGameLogInGame
             break;
         }
         // proceed field
-        field.procSlowest(play.move);
+        field.play(play.move);
     }
     return 0;
 }
@@ -896,15 +859,15 @@ int iterateGameLogInGame
 template <class field_t, class game_t,
 typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
 int iterateGameLogAfterChange
-(field_t& field, const game_t& gLog,
+(field_t& field, const game_t& gr,
  const firstCallback_t& firstCallback = [](const field_t&)->void{},
  const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const field_t&)->void{},
  bool initialized = false) {
-    int ret = iterateGameLogInGame(field, gLog, gLog.plays(), gLog.orgCards,
+    int ret = iterateGameLogInGame(field, gr, gr.plays(), gr.orgCards,
                                    firstCallback, playCallback, initialized);
     if (ret <= -2) return ret; // この試合もう進めない
-    for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, gLog.newClassOf(p));
+    for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, gr.newClassOf(p));
     lastCallback(field);
     return 0;
 }
@@ -914,7 +877,7 @@ template <class field_t, class game_t,
 typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t,
 typename afterChangeCallback_t, typename playCallback_t, typename lastCallback_t>
 int iterateGameLog
-(field_t& field, const game_t& gLog,
+(field_t& field, const game_t& gr,
  const firstCallback_t& firstCallback = [](const field_t&)->void{},
  const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
  const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
@@ -922,53 +885,54 @@ int iterateGameLog
  const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const field_t&)->void{}) {
     // 交換
-    int ret = iterateGameLogBeforePlay(field, gLog, firstCallback, dealtCallback, changeCallback);
+    int ret = iterateGameLogBeforePlay(field, gr, firstCallback, dealtCallback, changeCallback);
     if (ret <= -2) return ret; // この試合もう進めない
     // 役提出
-    return iterateGameLogAfterChange(field, gLog, afterChangeCallback, playCallback, lastCallback, true);
+    return iterateGameLogAfterChange(field, gr, afterChangeCallback, playCallback, lastCallback, true);
 }
 
 // 盤面情報のセット
 template <class game_t, class field_t>
-void setFieldFromLog(const game_t& gLog, field_t *const pfield, int turns) {
+void setFieldFromLog(const game_t& gr, field_t *const pfield, int turns) {
     // ルールを信頼する
     if (turns < 0) { // turns < 0 で交換中を指定する
-        iterateGameLogBeforePlay(*pfield, gLog,
+        iterateGameLogBeforePlay(*pfield, gr,
                                  [](const field_t&)->void{},
                                  [](const field_t&)->void{},
                                  [](const field_t&, const int, const int, const Cards)->int{ return 0; },
                                  [](const field_t&)->void{},
                                  true);
     } else {
-        iterateGameLogInGame(*pfield, gLog, turns, gLog.orgCards,
+        iterateGameLogInGame(*pfield, gr, turns, gr.orgCards,
                              [](const field_t&)->void{},
                              [](const field_t&, const Move, const uint64_t)->int{ return 0; });
     }
 }
 template <class game_t, class field_t>
-void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const dst) {
+void setFieldFromClientLog(const game_t& gr, int myPlayerNum, field_t *const dst) {
     // TODO: ルールを信頼しないようにする
-    setFieldBeforeAll(*dst, gLog);
+    setFieldBeforeAll(*dst, gr);
     
-    if (gLog.classOf(myPlayerNum) != HEIMIN && gLog.isInChange()) {
+    if (gr.classOf(myPlayerNum) != HEIMIN && gr.isInChange()) {
         // 自分の手札だけわかるので設定
-        Cards dealt = gLog.getDealtCards(myPlayerNum);
+        Cards dealt = gr.getDealtCards(myPlayerNum);
         dst->dealtCards[myPlayerNum] = dealt;
         for (int p = 0; p < N_PLAYERS; p++) {
-            dst->hand[p].qty = gLog.getNDealtCards(p);
+            dst->hand[p].qty = gr.getNDealtCards(p);
         }
         dst->hand[myPlayerNum].setAll(dealt);
         dst->setInChange();
     } else {
-        dst->sentCards[myPlayerNum] = gLog.getSentCards();
-        dst->recvCards[myPlayerNum] = gLog.getRecvCards();
-        dst->dealtCards[myPlayerNum] = gLog.getDealtCards(myPlayerNum);
+        dst->sentCards[myPlayerNum] = gr.getSentCards();
+        dst->recvCards[myPlayerNum] = gr.getRecvCards();
+        dst->dealtCards[myPlayerNum] = gr.getDealtCards(myPlayerNum);
         
-        for (int t = 0; t < gLog.plays(); t++) {
-            const auto& pLog = gLog.play(t);
-            int p = pLog.turn();
+        for (int t = 0; t < gr.plays(); t++) {
+            const auto& pr = gr.play(t);
+            const Observation o = pr.o;
+            int p = gr.seatPlayer(o.bs.turnSeat);
             
-            Cards dc = pLog.usedCards;
+            Cards dc = pr.usedCards;
             if (anyCards(dc)) {
                 uint32_t dq = countCards(dc);
                 uint64_t dkey = CardsToHashKey(dc);
@@ -979,20 +943,20 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const d
                 dst->remQty -= dq;
                 dst->remKey = subCardKey(dst->remKey, dkey);
                 // あがり処理
-                if (countCards(p) == pLog.getNCards(p)) {
-                    dst->setNewClassOf(p, pLog.ps.getBestClass());
+                if (countCards(p) >= o.numCards[p]) {
+                    dst->setNewClassOf(p, o.bs.bestClass());
                 }
             }
         }
         for (int p = 0; p < N_PLAYERS; p++) {
-            dst->hand[p].qty = gLog.current.getNCards(p);
+            dst->hand[p].qty = gr.current.o.numCards[p];
         }
         
-        DERR << "dc = " << gLog.getDealtCards(myPlayerNum) << endl;
-        DERR << "oc = " << gLog.getOrgCards(myPlayerNum) << endl;
+        DERR << "dc = " << gr.getDealtCards(myPlayerNum) << endl;
+        DERR << "oc = " << gr.getOrgCards(myPlayerNum) << endl;
         DERR << "uc = " << dst->usedCards[myPlayerNum] << endl;
         DERR << "rc = " << dst->remCards << endl;
-        Cards myCards = gLog.getOrgCards(myPlayerNum) - dst->usedCards[myPlayerNum];
+        Cards myCards = gr.getOrgCards(myPlayerNum) - dst->usedCards[myPlayerNum];
         uint32_t myQty = countCards(myCards);
         uint64_t myKey = CardsToHashKey(myCards);
         if (anyCards(myCards)) {
@@ -1003,12 +967,8 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const d
             dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty,
                                              subCardKey(dst->remKey, myKey));
         }
-        dst->board = gLog.current.bd;
-        dst->ps = gLog.current.ps;
-
-        dst->common.turnCount = gLog.plays();
-        dst->common.turn = gLog.current.turn();
-        dst->common.owner = gLog.current.owner();
-        dst->common.firstTurn = gLog.current.firstTurn();
+        dst->board = gr.current.o.bs;
+        dst->common.turnCount = gr.plays();
+        dst->common.firstTurn = gr.seatPlayer(gr.firstTurnSeat);
     }
 }

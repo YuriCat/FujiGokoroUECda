@@ -19,188 +19,17 @@ enum Phase {
 // common information
 struct CommonStatus {
     int turnCount;
-    int turn;
     int firstTurn;
-    int owner;
     std::bitset<16> phase;
 
     void clear() {
         turnCount = 0;
-        turn = firstTurn = owner = -1;
+        firstTurn = -1;
         phase.reset();
     }
 };
 
-
-/**************************プレーヤー状態**************************/
-
-struct PlayersState : public BitArray32<8, 4> {
-    // Boardと合わせて、場の状態を表す
-    // 0-7   Alive
-    // 8-15   NAlive
-    // 16-23  Awake
-    // 24-31 Nawake
-    using base_t = BitArray32<8, 4>;
-    using data_t = typename base_t::data_type;
-    constexpr static int N = N_PLAYERS;
-    constexpr static uint32_t BMASK = 1U; // 基準ビット
-    constexpr static uint32_t PMASK = (1 << 8) - 1; // プレーヤー全体
-    constexpr static uint32_t REALPMASK = (1 << N) - 1; // 実際にいるプレーヤー全体
-    constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
-    // set
-    void setAsleep(const int p) {
-        ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << data() << endl;); // 現在Awake
-        base_t::data_ -= (BMASK << 24) + ((BMASK << 16) << p);
-    }
-    void setDead(const int p) {
-        // プレーヤーがあがった
-        ASSERT(isAwake(p), cerr << "p = " << p <<endl;);
-        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在AliveかつAwakeの必要
-        base_t::data_ -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
-    }
-    void setDeadOnly(const int p) {
-        // プレーヤーがあがった
-        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在Aliveの必要
-        base_t::data_ -= (BMASK << 8) + ((1U << 0) << p);
-    }
-    void setAwake(const int p) {
-        assert(!isAwake(p));
-        base_t::data_ += (BMASK << 24) + ((BMASK << 16) << p);
-    }
-    void setAlive(const int p) {
-        // プレーヤー復活
-        assert(!isAwake(p)); assert(!isAlive(p));
-        base_t::data_ += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
-    }
-    
-    void setAllAsleep() {
-        base_t::data_ &= (PMASK << 0) | (NMASK << 8);
-    }
-    
-    void setNAlive(const int n) {
-        assign(1, n);
-    }
-    void setNAwake(const int n) {
-        assign(3, n);
-    }
-    // get
-    
-    constexpr data_t isAlive(int p) const { return data() & ((BMASK << 0) << p); }
-    constexpr data_t isAwake(int p) const { return data() & ((BMASK << 16) << p); }
-    constexpr bool isExcluded(int p) const { return false; } // あがり以外の除外(都落ち)
-    
-    constexpr bool isAllAsleepExcept(int p) const { // p以外全員asleep
-        return !(data() & ((PMASK << 16) ^ ((BMASK << 16) << p)));
-    }
-    
-    uint32_t searchOpsPlayer(int p) const {
-        // p以外でaliveなプレーヤーを1人挙げる
-        // pがaliveであることは保証される
-        assert(isAlive(p));
-        assert(getNAlive() >= 2);
-        return bsf32(data() ^ (BMASK << p));
-    }
-    
-    constexpr data_t getNAlive() const { return (*this)[1]; }
-    constexpr data_t getNAwake() const { return (*this)[3]; }
-    
-    uint32_t countNAlive() const { return popcnt(part(0)); }
-    uint32_t countNAwake() const { return popcnt(part(2)); }
-    
-    constexpr data_t anyAlive() const { return data() & (PMASK <<  0); }
-    constexpr data_t anyAwake() const { return data() & (PMASK << 16); }
-    
-    bool isSoloAlive() const { return part(1)  == (1U <<  8); }
-    bool isSoloAwake() const { return part(3)  == (1U << 24); }
-    
-    constexpr data_t getBestClass() const { return N - getNAlive(); } // 最高の階級 = 全員 - 残っている人数
-    constexpr data_t getWorstClass() const { return N - 1; } // 最低の階級 = 全員の最後
-    
-    uint32_t searchL1Player() const {
-        // 最後に残ったプレーヤーを探す
-        assert(popcnt32(data() & PMASK) == 1); // 1人だけ残っている
-        return bsf32(data());
-    }
-    
-    void flush() {
-        // 場が流れる
-        data_t alive = data() & ((PMASK << 0) | (NMASK << 8)); // alive情報
-        base_t::data_ = alive | (alive << 16); // awake情報をalive情報に置き換える
-    }
-    void init() {
-        base_t::data_  = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
-    }
-    
-    bool exam_alive() const {
-        if (getNAlive() <= 0 || N < getNAlive()) {
-            cerr << "PlayersState : illegal NAlive " << getNAlive() << endl;
-            return false;
-        }
-        if (getNAlive() != countNAlive()) {
-            cerr << "PlayersState : NAlive != count()" << endl;
-            return false;
-        }
-        return true;
-    }
-    bool exam_awake() const {
-        if (getNAwake() <= 0 || N < getNAwake()) {
-            cerr << "PlayersState : illegal NAwake " << getNAwake() << endl;
-            return false;
-        }
-        if (getNAwake() != countNAwake()) {
-            cerr << "PlayersState : NAwake != count()" << endl;
-            return false;
-        }
-        return true;
-    }
-    
-    //validator
-    bool exam() const {
-        //各要素
-        if (!exam_alive()) return false;
-        if (!exam_awake()) return false;
-        
-        //awakeとaliveの関係
-        if (getNAlive() < getNAwake()) {
-            cerr << "PlayersState : NAlive < NAwake" << endl;
-            return false;
-        }
-        if (!holdsBits((*this)[0], (*this)[2])) {
-            cerr << "PlayersState : !holds( alive, awake )" << endl;
-            return false;
-        }
-        return true;
-    }
-    bool examNF() const {
-        // awake情報とalive情報が同じはず
-        if (data() >> 16 != (data() & ((1U << 16) - 1))) return false;
-        return true;
-    }
-    bool examSemiNF() const {
-        return exam();
-    }
-    
-    constexpr PlayersState() : base_t() {}
-    constexpr PlayersState(const PlayersState& arg) : base_t(arg) {}
-};
-
-static std::ostream& operator <<(std::ostream& out, const PlayersState& arg) { // 出力
-    // 勝敗
-    out << "al{";
-    for (int i = 0; i < PlayersState::N; i++) {
-        if (arg.isAlive(i)) out << i;
-    }
-    out << "}";
-    out << " aw{";
-    for (int i = 0; i < PlayersState::N; i++) {
-        if (arg.isAwake(i)) out << i;
-    }	
-    out << "}";
-    return out;
-}
-
 struct Field {
-    
     int myPlayerNum; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
     MoveInfo *mv; // buffer of move
@@ -220,16 +49,15 @@ struct Field {
     FieldAddInfo fieldInfo;
     
     CommonStatus common;
-    Board board;
-    PlayersState ps;
+    BoardState board;
     
-    std::array<int8_t, N_PLAYERS> infoClass;
-    std::array<int8_t, N_PLAYERS> infoClassPlayer;
-    std::array<int8_t, N_PLAYERS> infoSeat;
-    std::array<int8_t, N_PLAYERS> infoSeatPlayer;
-    std::array<int8_t, N_PLAYERS> infoNewClass;
-    std::array<int8_t, N_PLAYERS> infoNewClassPlayer;
-    std::array<int8_t, N_PLAYERS> infoPosition;
+    std::array<int, N_PLAYERS> infoClass;
+    std::array<int, N_PLAYERS> infoClassPlayer;
+    std::array<int, N_PLAYERS> infoSeat;
+    std::array<int, N_PLAYERS> infoSeatPlayer;
+    std::array<int, N_PLAYERS> infoNewClass;
+    std::array<int, N_PLAYERS> infoNewClassPlayer;
+    std::array<int, N_PLAYERS> infoPosition;
     
     uint32_t remQty;
     Cards remCards;
@@ -290,16 +118,13 @@ struct Field {
     bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
     bool isSubjective() const { return common.phase.test(PHASE_SUBJECTIVE); }
     
-    uint32_t isAlive(const int p) const { return ps.isAlive(p); }
-    uint32_t isAwake(const int p) const { return ps.isAwake(p); }
-    uint32_t getNAwakePlayers() const { return ps.getNAwake(); }
-    uint32_t getNAlivePlayers() const { return ps.getNAlive(); }
-    
-    uint32_t searchOpsPlayer(const int p) const {
-        return ps.searchOpsPlayer(p);
-    }
-    int getBestClass() const { return ps.getBestClass(); }
-    int getWorstClass() const { return ps.getWorstClass(); }
+    bool isAlive(int p) const { return board.alive(seatOf(p)); }
+    bool isAwake(int p) const { return board.awake(seatOf(p)); }
+    int getNAwakePlayers() const { return board.numAwake(); }
+    int getNAlivePlayers() const { return board.numAlive(); }
+
+    int bestClass() const { return board.bestClass(); }
+    int worstClass() const { return board.worstClass(); }
     
     void clearSeats() {
         infoSeat.fill(-1); infoSeatPlayer.fill(-1);
@@ -334,12 +159,14 @@ struct Field {
     int seatPlayer(int s) const { return infoSeatPlayer[s]; }
     
     
-    int turn() const { return common.turn; }
-    int owner() const { return common.owner; }
+    int turn() const { return seatPlayer(turnSeat()); }
+    int turnSeat() const { return board.turnSeat; }
+    int owner() const { return seatPlayer(ownerSeat()); }
+    int ownerSeat() const { return board.turnSeat; }
     int firstTurn() const { return common.firstTurn; }
     
-    void setTurn(int p) { common.turn = p; }
-    void setOwner(int p) { common.owner = p; }
+    void setTurn(int p) { board.turnSeat = seatOf(p); }
+    void setOwner(int p) { board.ownerSeat = seatOf(p); }
     void setFirstTurn(int p) { common.firstTurn = p; }
     
     Cards getCards(int p) const { return hand[p].cards; }
@@ -384,7 +211,7 @@ struct Field {
         else rotateTurnPlayer(tp);
     }
     
-    void setPlayerAsleep(const int p) { ps.setAsleep(p); }
+    /*void setPlayerAsleep(const int p) { ps.setAsleep(p); }
     void setAllAsleep() { ps.setAllAsleep(); }
     void setPlayerDead(const int p) { ps.setDead(p); }
     void setPlayerAwake(const int p) { ps.setAwake(p); }
@@ -397,7 +224,7 @@ struct Field {
     void flush() { // 場を流す
         board.flush();
         flushState();
-    }
+    }*/
     
     uint32_t searchOpsMinNCards(int pn) const { // 自分以外の最小枚数
         uint32_t nc = N_CARDS;
@@ -433,53 +260,46 @@ struct Field {
     uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
     uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
-    void procHand(int tp, Move mv) {
-        int dq = mv.qty();
-        Cards dc = mv.cards();
+    void playHand(int tp, Move m) {
+        if (m.isPASS()) return;
+        int dq = m.qty();
+        Cards dc = m.cards();
         uint64_t dkey = CardsToHashKey(dc);
         
         // 全体の残り手札の更新
-        usedCards[tp] |= dc;
+        usedCards[tp] += dc;
         remCards -= dc;
         remQty -= dq;
         remKey = subCardKey(remKey, dkey);
 
         // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
-        for (int p = 0; p < tp; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
-        }
-        hand[tp].makeMoveAll(mv, dc, dq, dkey);
-        for (int p = tp + 1; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
-        }
-    }
-    
-    void procAndKillHand(int tp, Move mv) {
-        // あがりのときは手札を全更新しない
-        int dq = mv.qty();
-        Cards dc = mv.cards();
-        uint64_t dkey = CardsToHashKey(dc);
-        
-        // 全体の残り手札の更新
-        usedCards[tp] |= dc;
-        remCards -= dc;
-        remQty -= dq;
-        remKey = subCardKey(remKey, dkey);
-
-        hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
-        
-        assert(!isAlive(tp)); // agari player is not alive
         for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            if (p == tp) hand[p].makeMoveAll(m, dc, dq, dkey);
+            else if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
         }
     }
 
     // 局面更新
     // Move型以外も対応必須?
-    int proc(const int tp, const MoveInfo mv);
-    int proc(const int tp, const Move mv);
-    int procSlowest(const MoveInfo mv);
-    int procSlowest(const Move mv);
+    //int play(int tp, MoveInfo mv);
+    //int play(int tp, Move mv);
+    int play(Move m) {
+        assert(exam());
+        int ts = turnSeat();
+        int tp = seatPlayer(ts);
+        bool last = m.qty() >= hand[tp].qty;
+        if (last) setNewClassOf(seatPlayer(ts), bestClass());
+        board.play(m, last);
+        playHand(tp, m);
+        common.turnCount++;
+        if (last && board.gameEnd()) {
+            // 残りの1人の処理
+            setNewClassOf(seatPlayer(turnSeat()), bestClass());
+            return -1;
+        }
+        assert(exam());
+        return turn();
+    }
     
     void makeChange(int from, int to, Cards dc, int dq) {
         ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
@@ -500,7 +320,7 @@ struct Field {
     }
     void makePresents() {
         // 献上を一挙に行う
-        for (int cl = 0; cl < MIDDLE; ++cl) {
+        for (int cl = 0; cl < MIDDLE; cl++) {
             const int oppClass = getChangePartnerClass(cl);
             const int from = classPlayer(oppClass);
             const int to = classPlayer(cl);
@@ -538,14 +358,9 @@ struct Field {
     }
     bool exam() const {
         // validator
-        
-        if (!ps.exam()) {
-            cerr << "Field::exam() illegal PlayersState" << endl;
-            cerr << ps << endl; return false;
-        }
-        if (board.isNull() && !ps.examSemiNF()) {
-            cerr << "Field::exam() illegal PlayersState on NullField" << endl;
-            cerr << ps << endl; return false;
+        if (!board.exam()) {
+            cerr << "Field::exam() illegal BoardState" << endl;
+            cerr << board << endl; return false;
         }
         // 置換列
         if (!isInitGame()) {
@@ -646,7 +461,7 @@ struct Field {
             if (owner() == tp) { // セルフフォロー
                 fieldInfo.setSelfFollow();
             } else {
-                if (ps.isSoloAwake()) { // SF ではないが LA
+                if (board.numAwake() == 1) { // SF ではないが LA
                     fieldInfo.setLastAwake();
                 }
                 uint32_t fLPlayer = getFlushLeadPlayer();
@@ -666,8 +481,7 @@ struct Field {
     }
     
     void initGame() {
-        board.init();
-        ps.init();
+        board.init(N_PLAYERS);
         attractedPlayers.reset();
         infoSeat.fill(-1);
         infoSeatPlayer.fill(-1);
@@ -716,21 +530,23 @@ struct Field {
     }
     std::string toDebugString() const {
         std::ostringstream oss;
-        oss << "turn = " << turnCount() << endl;
-        oss << "player = " << turn() << endl;
+        oss << "turnCount = " << turnCount() << endl;
+        oss << "turnSeat = " << turnSeat() << endl;
+        oss << "turnPlayer = " << turn() << endl;
         oss << "class = " << infoClass << endl;
         oss << "seat = " << infoSeat << endl;
         oss << "board = " << board << endl;
-        oss << "state = " << ps << endl;
+        oss << "state = " << PlayerState(board) << endl;
         oss << "hand = " << endl;
-        for (int p = 0; p < N_PLAYERS; p++) {
+        for (int s = 0; s < N_PLAYERS; s++) {
+            int p = seatPlayer(s);
             oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
         }
         return oss.str();
     }
 };
 
-int Field::proc(const int tp, const MoveInfo mv) {
+/*int Field::play(const int tp, const MoveInfo mv) {
     // 丁寧に局面更新
     ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
     if (mv.isPASS()) {
@@ -758,16 +574,16 @@ int Field::proc(const int tp, const MoveInfo mv) {
                     setNewClassOf(tp, getBestClass());
                     ps.setDead(tp);
                     attractedPlayers.reset(tp);
-                    procAndKillHand(tp, mv);
+                    playHand(tp, mv);
                 } else {
-                    procHand(tp, mv);
+                    playHand(tp, mv);
                 }
             }
         } else {
-            procHand(tp, mv);
+            playHand(tp, mv);
         }
         
-        board.proc(mv);
+        board.play(mv);
         setOwner(tp);
         common.turnCount++;
         if (board.isNull()) { // 流れた
@@ -799,54 +615,9 @@ int Field::proc(const int tp, const MoveInfo mv) {
     ASSERT(exam(), cerr << toDebugString() << endl;);
     return turn();
 }
-inline int Field::proc(const int tp, const Move mv) {
-    return proc(tp, MoveInfo(mv));
-}
-
-inline int Field::procSlowest(const Move mv) {
-    const int tp = turn();
-    // 丁寧に局面更新
-    ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
-    if (mv.isPASS()) {
-        if (ps.isSoloAwake()) {
-            flush();
-        } else {
-            setPlayerAsleep(tp);
-            rotateTurnPlayer(tp);
-        }
-        common.turnCount++;
-    } else {
-        if (mv.qty() >= hand[tp].qty) { // agari
-            setNewClassOf(tp, getBestClass());
-            ps.setDead(tp);
-            if (ps.isSoloAlive()) {
-                setNewClassOf(ps.searchL1Player(), getBestClass());
-                return -1;
-            }
-            procAndKillHand(tp, mv);
-        } else {
-            procHand(tp, mv);
-        }
-        
-        board.proc(mv);
-        setOwner(tp);
-        common.turnCount++;
-        if (board.isNull()) { // 流れた
-            flushState();
-        } else {
-            if (ps.anyAwake()) {
-                rotateTurnPlayer(tp);
-            } else {
-                flush();
-            }
-        }
-    }
-    ASSERT(exam(), cerr << toDebugString() << endl;);
-    return turn();
-}
-inline int Field::procSlowest(const MoveInfo mv) {
-    return procSlowest(Move(mv));
-}
+inline int Field::play(const int tp, const Move mv) {
+    return play(tp, MoveInfo(mv));
+}*/
 
 // copy Field arg to dst before playout
 inline void copyField(const Field& arg, Field *const dst) {
@@ -862,7 +633,6 @@ inline void copyField(const Field& arg, Field *const dst) {
     
     // game info
     dst->board = arg.board;
-    dst->ps = arg.ps;
     
     dst->infoSeat = arg.infoSeat;
     dst->infoSeatPlayer = arg.infoSeatPlayer;
@@ -923,7 +693,7 @@ struct ImaginaryWorld {
         builtTurn = field.turnCount();
     }
     
-    void proc(const int p, const Move mv, const Cards dc) {
+    void play(const int p, const Move mv, const Cards dc) {
         // 世界死がおきずに進行した
     }
     ImaginaryWorld() { clear(); }

@@ -26,7 +26,7 @@ bool dominatesSlow(const Board b, const Cards c) {
 }
 bool dominatesSlow(const Move m, const Cards c, Board b) {
     if (m.isPASS()) return false;
-    b.proc(m);
+    b.play(m);
     if (b.isNull()) return true;
     return dominatesSlow(b, c);
 }

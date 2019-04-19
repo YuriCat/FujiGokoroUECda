@@ -427,7 +427,7 @@ namespace UECda {
                     makeMove1stHalf(myHand, &nextHand, mv);
                     if (!depth && mv.qty() > 4) {
                         Board nb = b;
-                        nb.procOrder(mv);
+                        nb.playOrder(mv);
                         // 5枚以上の階段は支配としとく
                         if (judgeHandPW_NF(nextHand, opsHand, b)
                            || judgeHandPW_NF(nextHand, opsHand, nb)) {
@@ -542,12 +542,12 @@ namespace UECda {
                 makeMove1stHalf(myHand, &nextHand, mv);
                 if (dominatesCards(mv, nextHand.cards, b)) { // 自己支配
                     mv.setDM(); // 支配フラグ付加
-                    bd.procAndFlush(mv);
+                    bd.playAndFlush(mv);
                     flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                     return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
                 } else { // セルフフォロー必勝を判定
-                    bd.proc(mv);
-                    procUnrivaled(fieldInfo, &nextFieldInfo);
+                    bd.play(mv);
+                    playUnrivaled(fieldInfo, &nextFieldInfo);
                     return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
                 }
             }
@@ -579,7 +579,7 @@ namespace UECda {
             mv.setDO(); // 支配フラグ付加
             
             Board bd = b;
-            bd.proc(mv);
+            bd.play(mv);
             Hand nextHand;
 
             makeMove1stHalf(myHand, &nextHand, mv);

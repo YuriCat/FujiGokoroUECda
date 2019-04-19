@@ -158,7 +158,7 @@ public:
         // 一時情報は初期化し、永続情報は残す
         i_ = (i_ & MASK64_TMPINFO) | 0x0000F0F0ULL;
     }
-    void procTmpInfo() {
+    void playTmpInfo() {
         i_ &= i_ & (MASK64_TMPINFO | 0xFFFFULL);
     }
     
@@ -216,10 +216,10 @@ inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
     pnext->setMaxNCards(fieldInfo.getMaxNCards());
     pnext->setFlushLead();
 }
-inline void procUnrivaled(const FieldAddInfo& fieldInfo,
+inline void playUnrivaled(const FieldAddInfo& fieldInfo,
                    FieldAddInfo *const pnext) {
     *pnext = fieldInfo;
-    pnext->procTmpInfo();
+    pnext->playTmpInfo();
     pnext->setUnrivaled();
 }
 

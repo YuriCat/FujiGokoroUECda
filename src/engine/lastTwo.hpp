@@ -67,15 +67,15 @@ namespace UECda {
         f.b = b;
         return f;
     }
-    L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
+    L2Field playAndFlushL2Field(const L2Field& cur, const Move mv) {
         L2Field f;
         f.b = cur.b;
         f.info = cur.info;
         f.info.initTmpInfo();
-        f.b.procAndFlush(mv);
+        f.b.playAndFlush(mv);
         return f;
     }
-    int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
+    int playL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
         pnext->b = cur.b;
         pnext->info = cur.info;
         pnext->info.initTmpInfo();
@@ -91,11 +91,11 @@ namespace UECda {
             } else {
                 if (mi.dominatesMe()) {
                     // 自己支配がかかるので、流れて自分から
-                    pnext->b.procAndFlush(mv);
+                    pnext->b.playAndFlush(mv);
                     DERR << " -FLUSHED" << endl;
                 } else {
                     // 流れなければSFが続く
-                    pnext->b.proc(mv);
+                    pnext->b.play(mv);
                     if (pnext->b.isNull()) { // renewed
                         DERR << " -FLUSHED" << endl;
                     } else {
@@ -108,11 +108,11 @@ namespace UECda {
         } else { // 独壇場でない
             if (cur.isNull()) {
                 if (mi.dominatesAll()) {
-                    pnext->b.procAndFlush(mv);
+                    pnext->b.playAndFlush(mv);
                     DERR << " -FLUSHED" << endl; return 0;
                 } else {
                     if (mi.dominatesOthers()) {
-                        pnext->b.proc(mv);
+                        pnext->b.play(mv);
                         if (pnext->b.isNull()) { // renewed
                             DERR << " -FLUSHED" << endl; return 0;
                         } else {
@@ -120,7 +120,7 @@ namespace UECda {
                             DERR << " -DO" << endl; return 0;
                         }
                     } else {
-                        pnext->b.proc(mv);
+                        pnext->b.play(mv);
                         if (pnext->b.isNull()) { // renewed
                             DERR << " -FLUSHED" << endl; return 0;
                         } else {
@@ -155,10 +155,10 @@ namespace UECda {
                     if (cur.isLastAwake()) {
                         if (mi.dominatesMe()) {
                             // 自己支配がかかるので、流れて自分から
-                            pnext->b.procAndFlush(mv);
+                            pnext->b.playAndFlush(mv);
                             DERR << " -FLUSHED" << endl;
                         } else {
-                            pnext->b.proc(mv);
+                            pnext->b.play(mv);
                             if (pnext->b.isNull()) { // renewed
                                 DERR << " -FLUSHED" << endl;
                             } else {
@@ -169,11 +169,11 @@ namespace UECda {
                         return 0;
                     } else {
                         if (mi.dominatesAll()) {
-                            pnext->b.procAndFlush(mv);
+                            pnext->b.playAndFlush(mv);
                             DERR << " -FLUSHED" << endl; return 0;
                         } else {
                             if (mi.dominatesOthers()) {
-                                pnext->b.proc(mv);
+                                pnext->b.play(mv);
                                 if (pnext->b.isNull()) { // renewed
                                     DERR << " -FLUSHED" << endl; return 0;
                                 } else {
@@ -181,7 +181,7 @@ namespace UECda {
                                     DERR << " -DO" << endl; return 0;
                                 }
                             } else {
-                                pnext->b.proc(mv);
+                                pnext->b.play(mv);
                                 if (pnext->b.isNull()) { // renewed
                                     DERR << " -FLUSHED" << endl; return 0;
                                 } else {
@@ -365,7 +365,7 @@ namespace UECda {
                     DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
-                L2Field nextField = procAndFlushL2Field(field, tmp);
+                L2Field nextField = playAndFlushL2Field(field, tmp);
                 nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
                 res = judge<3, 4>(depth + 1, buf, nextHand, opsHand, nextField);
             } else {
@@ -373,7 +373,7 @@ namespace UECda {
                     DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                     return L2_WIN;
                 }
-                L2Field nextField = procAndFlushL2Field(field, tmp);
+                L2Field nextField = playAndFlushL2Field(field, tmp);
                 res = judge<3, 4>(depth + 1, buf, myHand, opsHand, nextField);
             }
             if (res == L2_WIN) {
@@ -408,7 +408,7 @@ namespace UECda {
         }
         Hand nextHand;
         L2Field nextField;
-        int nextPlayer = procL2Field(field, &nextField, tmp);
+        int nextPlayer = playL2Field(field, &nextField, tmp);
         if (!pass) {
             makeMoveAll(myHand, &nextHand, tmp);
             DERR << " " << myHand << " -> " << nextHand;
@@ -420,7 +420,7 @@ namespace UECda {
             }
         } else { // PASS
             DERR << " " << myHand;
-            nextPlayer = procL2Field(field, &nextField, tmp);
+            nextPlayer = playL2Field(field, &nextField, tmp);
             if (nextPlayer == 0) {
                 res = judge<1, 1024>(depth + 1, buf, myHand, opsHand, nextField);
             } else {

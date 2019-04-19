@@ -44,7 +44,7 @@ struct SharedData {
         playRejection = changeRejection = 0;
     }
     void initGame() {
-        record.initGame();
+        record.initGame(N_PLAYERS);
     }
     template <class gameRecord_t>
     void closeGame(const gameRecord_t& g) {

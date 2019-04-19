@@ -100,7 +100,7 @@ int testRecordL2(const Record& record) {
             
             if (field.getNAlivePlayers() == 2) {
                 const int turnPlayer = field.turn();
-                const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
+                const int oppPlayer = field.seatPlayer(field.board.nextAlive());
                 const Hand& myHand = field.getHand(turnPlayer);
                 const Hand& oppHand = field.getHand(oppPlayer);
                 Board b = field.board;

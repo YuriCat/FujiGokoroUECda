@@ -66,6 +66,8 @@ assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #define ASSERT_EQ(k0, k1) ASSERT((k0) == (k1), cerr << (k0) << " <-> " << (k1) << endl;);
 #endif // NDEBUG
 
+#define claim() { std::cerr << __FILE__ << " " << __LINE__ << std::endl; return false; }
+
 // 標準ライブラリ使用
 using std::cout;
 using std::cerr;

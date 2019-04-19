@@ -41,7 +41,7 @@ namespace UECda {
             tfield.setDice(&ptools->dice);
             
             // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
-            startAllSimulation(&tfield, pshared, ptools);
+            startAllSimulation(tfield, pshared, ptools);
             
             pdst->lock.lock();
             // 相対勝ち数を加算

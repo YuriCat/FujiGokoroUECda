@@ -22,91 +22,57 @@ std::set<uint32_t> mateMoves;
 std::unordered_map<uint64_t, bool> visitedCards;
 
 template <int M = 0>
-int searchCardsPWSlow(MoveInfo *const, const int, const int,
-                      const Cards, const Cards,
-                      Board, PlayersState, bool);
+int searchCardsPWSlow(MoveInfo *const, int, int,
+                      Cards, Cards, BoardState, bool);
 
 template <int M = 0>
 bool judgeCardsPWSlow(MoveInfo *const buf,
-                      const int p,
-                      const Cards myCards, const Cards opsCards,
-                      Board bd, PlayersState ps, bool flushLead) {
-    uint64_t key = uint64_t(myCards) ^ -bd.toInt();
-    if (bd.isNull()) {
-        if (visitedCards.find(key) != visitedCards.end()) {
-            return visitedCards[key];
-        }
-        //int ans = visitedCards.read(myCards | -uint32_t(bd));
-        //if (ans >= 0) { return bool(ans); }
-    }
-    const int myMoves = genMove(buf, myCards, bd);
-    bool pw = searchCardsPWSlow<M>(buf, myMoves, p, myCards, opsCards, bd, ps, flushLead) >= 0;
-    if (bd.isNull()) {
-        visitedCards[key] = pw;
-        //visitedCards.regist(int(pw), myCards ^ -uint32_t(bd));
-    }
+                      int turn, Cards myCards, Cards opsCards,
+                      BoardState bs, bool flushLead) {
+    uint64_t key = uint64_t(myCards) ^ -bs.toInt();
+    if (bs.isNull() && visitedCards.count(key)) return visitedCards[key];
+    int moves = genMove(buf, myCards, bs);
+    bool pw = searchCardsPWSlow<M>(buf, moves, turn, myCards, opsCards, bs, flushLead) >= 0;
+    if (bs.isNull()) visitedCards[key] = pw;
     return pw;
 }
 
 template <int M = 0>
 bool checkCardsPWSlow(MoveInfo *const buf,
-                      const int p, const Move move,
-                      Cards myCards, const Cards opsCards,
-                      Board bd, PlayersState ps, bool flushLead) {
+                      int turn, Move move,
+                      Cards myCards, Cards opsCards,
+                      BoardState bs, bool flushLead) {
     // 自分以外のカード集合に対して完全勝利(PW)状態であるか合法着手生成関数を用いてチェック
-    myCards = maskCards(myCards, move.cards());
-    if (anyCards(myCards)) {
-        if (move.isPASS()) {
-            if (flushLead) {
-                if (!ps.isAllAsleepExcept(p)) {
-                    // 他のプレーヤーが出せるか確認
-                    const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
-                    if (opsMoves > 0) return false;
-                }
-                bd.flush();
-                ps.flush();
-                return judgeCardsPWSlow<M>(buf, p, myCards, opsCards, bd, ps, true);
-            } else { // 残りの人がパスして自分のターンでない
-                return false;
-            }
-        } else {
-            bd.proc(move);
-            if (!bd.isNull()) { // 流れていない
-                if (!ps.isAllAsleepExcept(p)) {
-                    // 他のプレーヤーが出せるか確認
-                    const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
-                    if (opsMoves > 0) {
-                        // ここからBNPW判定
-                        /*for (int m = 0; m < opsMoves; m++) {
-                            Move opsMove = buf[m];
-                            Board nextBd = bd;
-                            nextBd.proc(opsMove);
-                            if (nextBd.isNull())continue; // 相手に流されたらそこで終了
-                            // ここに対して自分の必勝手があるか調べる
-                            judgeCardsPWSlow(buf + opsMoves, p,
-                                             myCards, subtrCards(opsCards, opsMove.cards()),
-                                             nextBd, ps,
-                        }*/
-                        return false;
-                    }
-                    ps.setAllAsleep();
-                    ps.setAwake(p);
-                }
-                // セルフフォロー
-            } else {
-                ps.flush();
-            }
-            return judgeCardsPWSlow<M>(buf, p, myCards, opsCards, bd, ps, true);
+    myCards -= move.cards();
+    if (!anyCards(myCards)) return true;
+    if (move.isPASS()) {
+        if (!flushLead) return false; // 残りの人がパスして自分のターンでない
+        if (bs.numAwake() > 1) {
+            // 他のプレーヤーが出せるか確認
+            int moves = genFollowExceptPASS(buf, opsCards, bs);
+            if (moves > 0) return false;
         }
+        bs.flush();
+        return judgeCardsPWSlow<M>(buf, turn, myCards, opsCards, bs, true);
+    } else {
+        bs.play(move);
+        if (!bs.isNull()) { // 流れていない
+            if (bs.numAwake() > 1) {
+                // 他のプレーヤーが出せるか確認
+                int moves = genFollowExceptPASS(buf, opsCards, bs);
+                if (moves > 0) return false;
+                bs.setAwakeOnly(turn);
+            }
+            // セルフフォロー
+        }
+        return judgeCardsPWSlow<M>(buf, turn, myCards, opsCards, bs, true);
     }
-    return true;
 }
 
 template <int M>
-int searchCardsPWSlow(MoveInfo *const buf, const int moves,
-                      const int p,
-                      const Cards myCards, const Cards opsCards,
-                      Board bd, PlayersState ps, bool flushLead) {
+int searchCardsPWSlow(MoveInfo *const buf, int moves,
+                      int turn, Cards myCards, Cards opsCards,
+                      BoardState bs, bool flushLead) {
     int mateIndex = -1;
     for (int i = 0; i < moves; i++) {
         if (buf[i].qty() >= countCards(myCards)) { // final move
@@ -117,7 +83,7 @@ int searchCardsPWSlow(MoveInfo *const buf, const int moves,
     }
     if (mateIndex >= 0) return mateIndex;
     for (int i = 0; i < moves; i++) {
-        if (checkCardsPWSlow<M>(buf + moves, p, buf[i], myCards, opsCards, bd, ps, flushLead)) {
+        if (checkCardsPWSlow<M>(buf + moves, turn, buf[i], myCards, opsCards, bs, flushLead)) {
             if (M) mateIndex = i;
             else return i;
         }
@@ -143,22 +109,22 @@ int testRecordMoveMate(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.board;
-            if (!bd.isNull()) return 0;
+            Board b = field.board;
+            if (!b.isNull()) return 0;
 
             cl.start();
-            bool mate = judgeHandPW_NF(myHand, opsHand, bd);
+            bool mate = judgeHandPW_NF(myHand, opsHand, b);
             judgeTime[0] += cl.stop();
             judgeCount += 1;
             
             cl.start();
             visitedCards.clear();
-            bool pw = judgeCardsPWSlow(buffer, turnPlayer,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            bool pw = judgeCardsPWSlow(buffer, field.turnSeat(),
+                                       myHand.cards, opsHand.cards, field.board, field.fieldInfo.isFlushLead());
             judgeTime[1] += cl.stop();         
             judgeMatrix[pw][mate] += 1;
     
-            /*if (mate && !pw) {
+            /*if (!mate && pw) {
                 cerr << field.toDebugString() << endl;
                 getchar();
             }*/
@@ -190,22 +156,23 @@ int testRecordMoveMate(const Record& record) {
         [&](const auto& field) {}, // first callback
         [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
+            int turnSeat = field.turnSeat();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.board;
+            Board b = field.board;
             MoveInfo mi = MoveInfo(move);
             
-            if (dominatesHand(bd, myHand)) return 0;
+            if (dominatesHand(b, myHand)) return 0;
             
             cl.start();
-            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
+            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, b, field.fieldInfo);
             checkTime[0] += cl.stop();
             checkCount += 1;
 
             cl.start();
             visitedCards.clear();
-            bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            bool pw = checkCardsPWSlow(buffer, field.turnSeat(), move,
+                                        myHand.cards, opsHand.cards, field.board, field.fieldInfo.isFlushLead());
             checkTime[1] += cl.stop();
             checkMatrix[pw][mate] += 1;
             return 0;
@@ -239,26 +206,26 @@ int testRecordMoveMate(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.board;
+            Board b = field.board;
             
-            const int moves = genMove(buffer, myHand, bd);
+            const int moves = genMove(buffer, myHand, b);
             if (moves <= 1) return 0;
             
             cl.start();
-            int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
+            int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, b, field.fieldInfo);
             searchTime[0] += cl.stop();
             searchCount += 1;
             
             /*for (int m = 0; m < moves; m++) {
-                bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+                bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, b, 1, 1);
                 cerr << buffer[m] << " : " << check << endl;
             }*/
             
             cl.start();
             visitedCards.clear();
-            int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
+            int pwIndex = searchCardsPWSlow(buffer, moves, field.turnSeat(),
                                             myHand.cards, opsHand.cards,
-                                            bd, field.ps, bool(field.fieldInfo.isFlushLead()));
+                                            field.board, bool(field.fieldInfo.isFlushLead()));
             searchTime[1] += cl.stop();
             
             searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
@@ -266,7 +233,7 @@ int testRecordMoveMate(const Record& record) {
             /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
                 
                 for (int m = 0; m < moves; m++) {
-                    bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
+                    bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, b, 1, 1);
                     cerr << buffer[m] << " : " << check << endl;
                 }
                 
@@ -283,8 +250,8 @@ int testRecordMoveMate(const Record& record) {
                     cerr << "none";
                 }
                 cerr << endl;
-                cerr << move << " on " << bd << endl;
-                cerr << field.ps << " " << field.fieldInfo << endl;
+                cerr << move << " on " << field.board << endl;
+                cerr << field.fieldInfo << endl;
                 cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
                 cerr << field.toString();
                 getchar();
@@ -322,11 +289,10 @@ int analyzeMateDistribution(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board bd = field.board;
             mateMoves.clear();
             visitedCards.clear();
-            bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+            bool pw = judgeCardsPWSlow<1>(buffer, field.turnSeat(),
+                                        myHand.cards, opsHand.cards, field.board, field.fieldInfo.isFlushLead());
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
             return 0;
         },

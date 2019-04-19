@@ -274,10 +274,10 @@ namespace UECda {
             // 自分のプレーについての変数を更新
             ClockMicS clms;
             clms.start();
-            Move ret = playSub();
+            Move ret = playImpl();
             return ret;
         }
-        Move playSub() { // ここがプレー関数
+        Move playImpl() { // ここがプレー関数
             const auto& gameLog = shared.record.latestGame();
             
             Move playMove = MOVE_NONE;
@@ -291,7 +291,7 @@ namespace UECda {
             
             Field field;
             setFieldFromClientLog(gameLog, myPlayerNum, &field);
-            DERR << "tp = " << gameLog.current.turn() << endl;
+            DERR << "tp = " << field.turn() << endl;
             ASSERT_EQ(field.turn(), myPlayerNum);
             
             const Hand& myHand = field.getHand(myPlayerNum);
@@ -326,7 +326,7 @@ namespace UECda {
                     if (!mv[0].isPASS()) cerr << "final move. " << mv[0] << endl;
                     else cerr << "no chance. PASS" << endl;
                 }
-                if (!mv[0].isPASS())shared.setMyMate(field.getBestClass()); // 上がり
+                if (!mv[0].isPASS())shared.setMyMate(field.bestClass()); // 上がり
                 return mv[0];
             }
             
@@ -398,7 +398,7 @@ namespace UECda {
                 }
             }
             if (Settings::MateSearchOnRoot) {
-                if (fieldInfo.isMPMate()) shared.setMyMate(field.getBestClass());
+                if (fieldInfo.isMPMate()) shared.setMyMate(field.bestClass());
             }
 
             if (monitor) {

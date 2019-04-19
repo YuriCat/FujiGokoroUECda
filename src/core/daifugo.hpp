@@ -1652,7 +1652,7 @@ struct Board : public Move {
         return Move::invalid;
     }
     // 進行
-    void procOrder(Move m) {
+    void playOrder(Move m) {
         if (m.isRev()) {
             flipTmpOrder();
             flipPrmOrder();
@@ -1666,8 +1666,6 @@ struct Board : public Move {
         fixTmpOrder(ord);
     }
     void lockSuits() { Move::sl = 1; }
-    void procPASS() {} //何もしない
-
     void fixMeld (Move m) {
         Move::s = m.s;
         Move::r = m.r;
@@ -1677,33 +1675,26 @@ struct Board : public Move {
         Move::t = m.t;
     }
     
-    void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
-        if (m.isPASS()) procPASS();
-        else {
-            if (m.domInevitably() || domConditionally(m)) { // 無条件完全支配
-                if (m.isRev()) flipPrmOrder();
-                flush();
-            } else {
-                procOrder(m);
-                if (locksSuits(m)) lockSuits();
-                fixMeld(m);
-            }
-        }
+    void play(Move m) { // プレーヤー等は関係なく局面のみ進める
+        if (m.isPASS()) return;
+        if (m.domInevitably() || domConditionally(m)) playAndFlush(m); // 無条件完全支配
+        else playExceptFlush(m, true, true);
     }
     
-    void procAndFlush(Move m) {
+    void playAndFlush(Move m) {
         // 局面を更新し、強引に場を流す
         if (m.isRev()) flipPrmOrder();
         flush();
     }
-    
-    void procExceptFlush(Move m) {
+    void playExceptFlush(Move m, bool dcheck = false, bool pcheck = false) {
+        if (!pcheck && m.isPASS()) return;
         // 局面を更新するが場を流さない
-        procOrder(m);
+        playOrder(m);
         // スートロック
         if (locksSuits(m)) lockSuits();
         fixMeld(m);
-        if (m.domInevitably() || domConditionally(m)) {
+        if (!dcheck &&
+            (m.domInevitably() || domConditionally(m))) {
             invalid = 1;
         }
     }
@@ -1790,4 +1781,159 @@ inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
 // すでにハッシュ値が部分的に計算されている場合
 inline uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
     return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
+}
+
+struct BoardState : public Board {
+    short numAgari, numPass, numFall, numIllegal;
+    std::bitset<16> agari, pass, fall, illegal;
+    short turnSeat, ownerSeat;
+    int numSeats = 0;
+
+    // 基本の計算
+    int nextSeat(int s) const { return (s + 1) % numSeats; }
+    int numAlive() const { return numSeats - numAgari + numFall + numIllegal; }
+    int numAwake() const { return numAlive() - numPass; }
+    bool alive(int s) const { return !agari.test(s) && !fall.test(s) && !illegal.test(s); }
+    bool awake(int s) const { return alive(s) && !pass.test(s); }
+    bool allPass() const { return numAwake() == 0; } // 全員がパスをした
+    bool gameEnd() const { return numAlive() <= 1; } // 一人を残して全員上がった
+    int bestClass() const { return numSeats - numAlive(); }
+    int worstClass() const { return numSeats - numFall - numIllegal; }
+    int nextAwake(int s) const {
+        // プレー可能な次の席を返す
+        do {
+            s = nextSeat(s);
+        } while (!awake(s));
+        return s;
+    }
+    int nextAlive(int s) const {
+        // 残っている次の席を探す
+        do {
+            s = nextSeat(s);
+        } while (!alive(s));
+        return s; 
+    }
+    int nextAwake() const { return nextAwake(turnSeat); }
+    int nextAlive() const { return nextAlive(turnSeat); }
+    void init(int n) {
+        numSeats = n;
+        // 試合開始時の状態にする
+        Board::init();
+        numAgari = numPass = numFall = numIllegal = 0;
+        agari.reset(); pass.reset(); fall.reset(); illegal.reset();
+        turnSeat = ownerSeat = -1;
+    }
+    void setOwner(int s) {
+        // オーナーの席を設定
+        ownerSeat = s;
+    }
+    void setTurn(int s) {
+        // 手番の席を設定
+        turnSeat = s;
+    }
+    void setAwakeOnly(int s) {
+        numPass = numAlive() - 1;
+        pass.reset();
+        for (int ss = 0; ss < numSeats; ss++) if (ss != s) pass.set(ss);
+    }
+    void flushPlayers() {
+        // 場を流した際にプレーヤーの状態を新しくする
+        numPass = 0;
+        pass.reset();
+        if (alive(ownerSeat)) turnSeat = ownerSeat;
+        else turnSeat = nextAwake(ownerSeat);
+    }
+    void flush() {
+        Board::flush();
+        flushPlayers();
+    }
+    void play(int s, Move m, bool last, bool flush) {
+        // 場を進める
+        turnSeat = s;
+        if (m.isPASS()) {
+            numPass++;
+            pass.set(s);
+        } else {
+            ownerSeat = s;
+            if (last) {
+                numAgari++;
+                agari.set(s);
+            }
+        }
+        if (flush &&
+            (allPass() || m.domInevitably() || Board::domConditionally(m))) {
+            Board::playAndFlush(m);
+            flushPlayers();
+        } else {
+            Board::playExceptFlush(m, true);
+            turnSeat = nextAwake(s);
+        }
+    }
+    void play(Move m, bool last = false, bool flush = true) {
+        play(turnSeat, m, last, flush);
+    }
+    bool exam() const {
+        // 値のチェック
+        if (numSeats <= 0) {
+            cerr << "numSeats " << numSeats << endl;
+            return false;
+        }
+        if (turnSeat < 0 || numSeats <= turnSeat) {
+            cerr << "turnSeat " << turnSeat << endl;
+            return false; 
+        }
+        if (ownerSeat < 0 || numSeats <= ownerSeat) {
+            cerr << "ownerSeat " << ownerSeat << endl;
+            return false; 
+        }
+        if (numAgari != agari.count()) {
+            cerr << "agari " << numAgari << " " << agari << endl;
+            return false;
+        }
+        if (numPass != pass.count()) {
+            cerr << "pass " << numPass << " " << pass << endl;
+            return false;
+        }
+        if (numFall != fall.count()) return false;
+        if (numIllegal != illegal.count()) return false;
+        for (int s = 0; s < numSeats; s++) {
+            int cnt = 0;
+            if (agari.test(s))   cnt++;
+            if (pass.test(s))    cnt++;
+            if (fall.test(s))    cnt++;
+            if (illegal.test(s)) cnt++;
+            if (cnt >= 2) {
+                cerr << "player state must be exclusive" << endl;
+                return false;
+            }
+        }
+        if (!gameEnd() && !awake(turnSeat)) {
+            cerr << "in game but turn seat " << turnSeat << " is not awake" << endl;
+            return false;
+        }
+        if (!gameEnd() && !alive(turnSeat)) {
+            cerr << "in game but turn seat " << turnSeat << " is not alive" << endl;
+            return false;
+        }
+        return true;
+    }
+};
+
+struct PlayerState : public BoardState {
+    PlayerState(const BoardState& bs): BoardState(bs) {}
+};
+
+static std::ostream& operator <<(std::ostream& out, const PlayerState& arg) { // 出力
+    // 勝敗
+    out << "al{";
+    for (int i = 0; i < arg.numSeats; i++) {
+        if (arg.alive(i)) out << i;
+    }
+    out << "}";
+    out << " aw{";
+    for (int i = 0; i < arg.numSeats; i++) {
+        if (arg.awake(i)) out << i;
+    }	
+    out << "}";
+    return out;
 }
