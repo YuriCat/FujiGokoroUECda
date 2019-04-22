@@ -70,10 +70,6 @@ namespace UECda {
             2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
             2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
             2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
-#ifdef MODELING_PLAY
-            5,
-            12,
-#endif
         };
         static_assert(FEA_ALL == sizeof(feaNumTable) / sizeof(int), "");
         constexpr int FEA_NUM(unsigned int fea) {
