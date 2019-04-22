@@ -1235,7 +1235,18 @@ struct Move {
     unsigned rl      : 1;
     unsigned reverse : 1;
     unsigned         : 3;
-    unsigned flags   :32;
+    // ここまで32ビット
+    unsigned mate    : 1;
+    unsigned l2mate  : 1;
+    unsigned giveup  : 1;
+    unsigned domO    : 1;
+    unsigned domM    : 1;
+    unsigned nmax    : 6;
+    unsigned nmin    : 6;
+    unsigned nmaxaw  : 6;
+    unsigned nminaw  : 6;
+    unsigned         : 3;
+    // ここまで64ビット
 
     uint32_t toInt() const {
         return uint32_t(*reinterpret_cast<const uint64_t*>(this));
@@ -1593,6 +1604,38 @@ int searchMove(const move_buf_t *const buf, const int moves, const callback_t& c
         if (callback(buf[m])) return m;
     }
     return -1;
+}
+
+struct FieldStats {
+    out << "Field :";
+    if (i.isFinal()) out << " -FIN";
+    else if (i.isPW()) out << " -PW";
+    else if (i.isBNPW()) out << " -BNPW";
+    else if (i.isBRPW()) out << " -BRPW";
+    else if (i.isMPMate()) out << " -MPMATE";
+    
+    if (i.isL2Mate()) out << " -L2MATE";
+    
+    if (i.isMPGiveUp()) out << " -MPGIVEUP";
+    if (i.isL2GiveUp()) out << " -L2GIVEUP";
+    
+    if (i.isSelfFollow()) out << " -SFOL";
+    if (i.isUnrivaled()) out << " -UNRIV";
+    if (i.isLastAwake()) out << " -LA";
+    if (i.isFlushLead()) out << " -FLEAD";
+    if (i.isNonPassDom()) out << " -NPD";
+    if (i.isPassDom()) out << " -PD";
+    
+    if (i.isBDALL()) out << " -BDALL";
+    else {
+        if (i.isBDO()) out << " -BDO";
+        if (i.isBDM()) out << " -BDM";
+    }
+    return out;
+};
+
+static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 出力
+    
 }
 
 /**************************場表現**************************/

@@ -260,7 +260,7 @@ struct MoveInfo : public Move {
     void setDomAll() { setDO(); }
 
     // kousoku
-    void setDConst() { set(28); }
+    //void setDConst() { set(28); }
     
     void init() { Move::flags = 0; }
     
