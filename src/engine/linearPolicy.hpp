@@ -51,10 +51,6 @@ namespace UECda {
             FEA_SEQ_CARDS, // MC関係(階段)
             FEA_GR_MO, // MO関係(グループ)
             FEA_SEQ_MO, // MO関係(グループ)
-#ifdef MODELING_PLAY
-            FEA_MODEL_NF,
-            FEA_MODEL_RF,
-#endif
             FEA_ALL,
         };
         
@@ -500,9 +496,14 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 {
                     constexpr int base = FEA_IDX(FEA_REV_CLASS);
                     if (!bd.isRev() && mv.isRev()) {
-                        int relativeClass = field.classOf(tp);
-                        for (int r = 0; r < (int)field.classOf(tp); r++) {
-                            if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                        int relativeClass;
+                        if (field.isInitGame()) {
+                            relativeClass = (field.getNAlivePlayers() - 1) / 2;
+                        } else {
+                            relativeClass = field.classOf(tp);
+                            for (int r = 0; r < (int)field.classOf(tp); r++) {
+                                if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                            }
                         }
                         Foo(base + relativeClass)
                     }
@@ -759,29 +760,6 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     FASSERT(s,);
                 }
                 FASSERT(s,);
-                
-#ifdef MODELING_PLAY
-            MODEL:;
-                {
-                    // 相手行動傾向をモデル化する項
-                    if (field.isNull()) {
-                        constexpr int base = FEA_IDX(FEA_MODEL_NF);
-                        if (mv.containsJOKER()) FooM(base + 2)
-                        else if (mv.domInevitably()) FooM(base + 3)
-                        if (mv.isGroup() && mv.qty() > 1) FooM(base + 0)
-                        else if (mv.isSeq()) FooM(base + 1)
-                        if (mv.isRev()) FooM(base + 4)
-                    } else {
-                        const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.qty() > 1 ? 1 : 0));
-                        if (!mv.isPASS()) {
-                            if (mv.containsJOKER()) {
-                                if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
-                                else FooM(base + 2)
-                            } else if (mv.domInevitably()) FooM(base + 3)
-                        } else FooM(base + 0)
-                    }
-                }
-#endif
             }
             pol.template feedCandidateScore(m, exp(s / pol.temperature()));
             
