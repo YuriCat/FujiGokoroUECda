@@ -1602,15 +1602,10 @@ struct Board : public Move {
     
     void init() { clear(); }
     Move move() const { return Move(*this); }
-    
-    // set, fix
-    
-    void setTmpOrder(uint32_t ord) { Move::o = ord; }
-    void setPrmOrder(uint32_t ord) { Move::po = ord; }
-    
-    void fixTmpOrder(uint32_t ord) { setTmpOrder(ord); }
-    void fixPrmOrder(uint32_t ord) { setPrmOrder(ord); }
-    
+
+    void setTmpOrder(int ord) { Move::o = ord; }
+    void setPrmOrder(int ord) { Move::po = ord; }
+
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
     
@@ -1659,13 +1654,13 @@ struct Board : public Move {
     void flush() {
         int ord = Move::po;
         init();
-        fixPrmOrder(ord);
-        fixTmpOrder(ord);
+        setPrmOrder(ord);
+        setTmpOrder(ord);
     }
     void lockSuits() { Move::sl = 1; }
     void procPASS() {} //何もしない
 
-    void fixMeld (Move m) {
+    void setMeld (Move m) {
         Move::s = m.s;
         Move::r = m.r;
         Move::jks = m.jks;
@@ -1683,7 +1678,7 @@ struct Board : public Move {
             } else {
                 procOrder(m);
                 if (locksSuits(m)) lockSuits();
-                fixMeld(m);
+                setMeld(m);
             }
         }
     }
@@ -1699,7 +1694,7 @@ struct Board : public Move {
         procOrder(m);
         // スートロック
         if (locksSuits(m)) lockSuits();
-        fixMeld(m);
+        setMeld(m);
         if (m.domInevitably() || domConditionally(m)) {
             invalid = 1;
         }
