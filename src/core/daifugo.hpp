@@ -466,16 +466,14 @@ constexpr BitCards SuitsToCards(uint32_t s) {
 // ランクとスートの指定からカード集合を生成する
 // スートは集合として用いる事が出来る
 constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
-    return (BitCards)s << (r << 2);
+    return BitCards(s) << (r << 2);
 }
 
 // Cards型基本演算
 
 // 追加
 constexpr BitCards addCards(BitCards c0, BitCards c1) { return c0 | c1; }
-
 constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
-constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
 
 // 限定
 constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
@@ -665,7 +663,7 @@ inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
     switch (ord) {
         case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = subtrCards(RankRangeToCards(RANK_MIN, RANK_MAX), RankToCards(rank)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, RANK_MAX) - RankToCards(rank); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -676,8 +674,8 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     switch (ord) {
         case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = addCards(RankRangeToCards(RANK_MIN, rank - 1),
-                               RankRangeToCards(rank + qty, RANK_MAX)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, rank - 1)
+                      | RankRangeToCards(rank + qty, RANK_MAX); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -951,7 +949,6 @@ BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 // ND 無支配型(ジョーカーのビットは関係ないが、存在は加味)
 
 // PQR定数
-constexpr BitCards PQR_NULL = 0ULL;
 constexpr BitCards PQR_1    = CARDS_IMG_ALL_PLAIN & 0x1111111111111111;
 constexpr BitCards PQR_2    = CARDS_IMG_ALL_PLAIN & 0x2222222222222222;
 constexpr BitCards PQR_3    = CARDS_IMG_ALL_PLAIN & 0x4444444444444444;
@@ -999,7 +996,7 @@ inline BitCards CardsTo0R(BitCards c) {
     return CardsToFR(~c);
 }
 inline BitCards CardsToNR(BitCards c, int q) {
-    Cards nr;
+    BitCards nr;
     switch (q) {
         case 0: nr = CardsTo0R(c); break;
         case 1: nr = CardsTo1R(c); break;
