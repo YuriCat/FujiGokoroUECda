@@ -858,11 +858,7 @@ union Cards {
     std::string toString() const {
         std::ostringstream oss;
         oss << "{";
-        int cnt = 0;
-        for (IntCard ic : *this) {
-            if (cnt++ > 0) oss << " "; 
-            oss << OutIntCard(ic);
-        }
+        for (IntCard ic : *this) oss << " " << OutIntCard(ic);
         oss << " }";
         return oss.str();
     }
