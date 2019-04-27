@@ -1783,7 +1783,7 @@ struct BoardState : public Board {
     bool allPass() const { return numAwake() == 0; } // 全員がパスをした
     bool gameEnd() const { return numAlive() <= 1; } // 一人を残して全員上がった
     int bestClass() const { return numSeats - numAlive(); }
-    int worstClass() const { return numSeats - numFall - numIllegal; }
+    int worstClass() const { return numSeats - 1 - numFall - numIllegal; }
     int nextAwake(int s) const {
         // プレー可能な次の席を返す
         do {
