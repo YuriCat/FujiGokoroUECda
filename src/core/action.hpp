@@ -747,18 +747,12 @@ inline int genLegalLead(Move *const mv0, const Cards c) {
 // 通常の着手生成では無視する着手のうち、
 // クライアントの手としては検討するものを生成
 
-// ジョーカーを使わずに作る事が出来る着手を
-// ジョーカーによって出す着手
-// 8か最強ランクであり、
-// 本来そのランクが無くなるはずの着手についてのみ検討する
-
-inline int genNullPass(Move *const mv0) {
-    // 空場でのパスを生成
-    mv0->setPASS();
-    return 1;
-}
-
 inline int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b) {
+    // ジョーカーを使わずに作る事が出来る着手を
+    // ジョーカーによって出す着手
+    // 8か最強ランクであり、
+    // 本来そのランクが無くなるはずの着手についてのみ検討する
+
     assert(containsJOKER(c));
     assert(containsS3(ops));
     assert(b.isGroup() && b.qty() > 1);
