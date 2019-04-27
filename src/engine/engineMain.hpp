@@ -333,7 +333,8 @@ namespace UECda {
             // 合法着手生成(特別着手)
             int NSpecialMoves = 0;
             if (b.isNull()) {
-                NSpecialMoves += genNullPass(mv + NMoves + NSpecialMoves);
+                (mv + NMoves + NSpecialMoves)->setPASS();
+                NSpecialMoves++;
             }
             if (containsJOKER(myCards) && containsS3(opsCards)) {
                 if (b.isGroup() && b.qty() > 1) {

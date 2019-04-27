@@ -281,8 +281,8 @@ int main(int argc, char* argv[]) { // for UECda
             
             if (suitsLocked(recv_table)) playRecord.o.bs.lockSuits();
             
-            playRecord.o.bs.fixPrmOrder(getPrmOrder(recv_table));
-            playRecord.o.bs.fixTmpOrder(getTmpOrder(recv_table));
+            playRecord.o.bs.setPrmOrder(getPrmOrder(recv_table));
+            playRecord.o.bs.setTmpOrder(getTmpOrder(recv_table));
             playRecord.o.bs.turnSeat = gameRecord.seatOf(turnPlayer);
             
             if (firstTurn) { // 初手の特別な処理

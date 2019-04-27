@@ -398,7 +398,7 @@ public:
     XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
 };
 
-double dFactorial(int n) {
+static double dFactorial(int n) {
     double ans = 1;
     while (n > 1) ans *= n--;
     return ans;
@@ -885,9 +885,10 @@ struct StochasticSelector {
     score_(ascore), size_(asize), sum_(0) {}
 
     double prob(int i) const {
-        return score_[i] / sum_;
+        return sum_ == 0 ? 1.0 / size_ : score_[i] / sum_;
     }
     int select(double urand) const {
+        if (sum_ == 0) return int(urand * size_);
         double r = urand * sum_;
         int i = 0;
         for (; i < size_ - 1; i++) {
@@ -914,6 +915,7 @@ struct SoftmaxSelector : public StochasticSelector<T> {
     base_t(ascore, asize) {
         for (int i = 0; i < asize; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
+            if (std::isinf(es)) getchar();
             base_t::score_[i] = es;
             base_t::sum_ += es;
         }

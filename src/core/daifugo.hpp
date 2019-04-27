@@ -10,7 +10,7 @@
 
 /**************************オーダー**************************/
 
-inline constexpr int flipOrder(int ord) { return 1 - ord; }
+constexpr int flipOrder(int ord) { return 1 - ord; }
 
 /**************************ランク**************************/
 
@@ -93,19 +93,12 @@ inline int CharToSuitNum(char c) {
 
 /**************************スート**************************/
 
-using Suits = unsigned int;
-
 // 単スート
-enum {
-    SUIT_NULL = 0,
-    SUIT_C = 1, SUIT_D = 2, SUIT_H = 4, SUIT_S = 8,
-    SUIT_X = 16,
-    SUIT_MIN = SUIT_C,
-    SUIT_MAX = SUIT_S
-};
+enum { SUIT_X = 16 };
 
 // スート集合 (スートの和集合)
 enum {
+    
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
@@ -466,16 +459,14 @@ constexpr BitCards SuitsToCards(uint32_t s) {
 // ランクとスートの指定からカード集合を生成する
 // スートは集合として用いる事が出来る
 constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
-    return (BitCards)s << (r << 2);
+    return BitCards(s) << (r << 2);
 }
 
 // Cards型基本演算
 
 // 追加
 constexpr BitCards addCards(BitCards c0, BitCards c1) { return c0 | c1; }
-
 constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
-constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
 
 // 限定
 constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
@@ -665,7 +656,7 @@ inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
     switch (ord) {
         case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = subtrCards(RankRangeToCards(RANK_MIN, RANK_MAX), RankToCards(rank)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, RANK_MAX) - RankToCards(rank); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -676,8 +667,8 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     switch (ord) {
         case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = addCards(RankRangeToCards(RANK_MIN, rank - 1),
-                               RankRangeToCards(rank + qty, RANK_MAX)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, rank - 1)
+                      | RankRangeToCards(rank + qty, RANK_MAX); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -951,7 +942,6 @@ BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 // ND 無支配型(ジョーカーのビットは関係ないが、存在は加味)
 
 // PQR定数
-constexpr BitCards PQR_NULL = 0ULL;
 constexpr BitCards PQR_1    = CARDS_IMG_ALL_PLAIN & 0x1111111111111111;
 constexpr BitCards PQR_2    = CARDS_IMG_ALL_PLAIN & 0x2222222222222222;
 constexpr BitCards PQR_3    = CARDS_IMG_ALL_PLAIN & 0x4444444444444444;
@@ -999,7 +989,7 @@ inline BitCards CardsTo0R(BitCards c) {
     return CardsToFR(~c);
 }
 inline BitCards CardsToNR(BitCards c, int q) {
-    Cards nr;
+    BitCards nr;
     switch (q) {
         case 0: nr = CardsTo0R(c); break;
         case 1: nr = CardsTo1R(c); break;
@@ -1605,15 +1595,10 @@ struct Board : public Move {
     
     void init() { clear(); }
     Move move() const { return Move(*this); }
-    
-    // set, fix
-    
-    void setTmpOrder(uint32_t ord) { Move::o = ord; }
-    void setPrmOrder(uint32_t ord) { Move::po = ord; }
-    
-    void fixTmpOrder(uint32_t ord) { setTmpOrder(ord); }
-    void fixPrmOrder(uint32_t ord) { setPrmOrder(ord); }
-    
+
+    void setTmpOrder(int ord) { Move::o = ord; }
+    void setPrmOrder(int ord) { Move::po = ord; }
+
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
     
@@ -1662,11 +1647,11 @@ struct Board : public Move {
     void flush() {
         int ord = Move::po;
         init();
-        fixPrmOrder(ord);
-        fixTmpOrder(ord);
+        setPrmOrder(ord);
+        setTmpOrder(ord);
     }
     void lockSuits() { Move::sl = 1; }
-    void fixMeld (Move m) {
+    void setMeld (Move m) {
         Move::s = m.s;
         Move::r = m.r;
         Move::jks = m.jks;
@@ -1692,7 +1677,7 @@ struct Board : public Move {
         playOrder(m);
         // スートロック
         if (locksSuits(m)) lockSuits();
-        fixMeld(m);
+        setMeld(m);
         if (!dcheck &&
             (m.domInevitably() || domConditionally(m))) {
             invalid = 1;

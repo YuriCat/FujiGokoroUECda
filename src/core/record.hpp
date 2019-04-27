@@ -150,9 +150,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
         
         DERR << "command = " << cmd << endl;
         
-        if (cmd == "//") { // 全試合終了
-            break;
-        }
+        if (cmd == "//") break; // 全試合終了
         else if (cmd == "/*") { // game開始合図
             if (startedGame >= 0) {
                 cerr << "failed to read game " << (startedGame + failedGames) << endl;
@@ -166,8 +164,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             cLogMap.clear();
             lastMove = MOVE_PASS;
             flagGame.reset();
-        }
-        else if (cmd == "*/") { // game終了合図
+        } else if (cmd == "*/") { // game終了合図
             // ログとして必要なデータが揃っているか確認
             // if (!flagGame.test(0)) {}//ゲーム番号不明
             // if (!flagGame.test(0)) {}//累積スコア不明
@@ -179,14 +176,12 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             gr.infoNewClass = infoNewClass;
             pmLog->pushGame(gr);
             startedGame = -1;
-        }
-        else if (cmd == "match") {
+        } else if (cmd == "match") {
             const string& str = q.front();
             if (Recorder::isCommand(str)) Foo();
             q.pop();
             flagMatch.set(0);
-        }
-        else if (cmd == "player") {
+        } else if (cmd == "player") {
             for (int i = 0; i < N; i++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
@@ -195,8 +190,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 q.pop();
             }
             flagMatch.set(1);
-        }
-        else if (cmd == "game") {
+        } else if (cmd == "game") {
             const string& str = q.front();
             if (Recorder::isCommand(str)) Foo();
             char *end;
@@ -204,16 +198,14 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
             DERR << "game " << gn << endl;
             q.pop();
             flagGame.set(0);
-        }
-        else if (cmd == "score") {
+        } else if (cmd == "score") {
             for (int i = 0; i < N; i++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
                 q.pop();
             }
             flagGame.set(1);
-        }
-        else if (cmd == "class") {
+        } else if (cmd == "class") {
             for (int i = 0; i < N; i++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
@@ -221,8 +213,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 q.pop();
             }
             flagGame.set(2);
-        }
-        else if (cmd == "seat") {
+        } else if (cmd == "seat") {
             for (int i = 0; i < N; i++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
@@ -230,8 +221,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 q.pop();
             }
             flagGame.set(3);
-        }
-        else if (cmd == "dealt") {
+        } else if (cmd == "dealt") {
             for (int i = 0; i < N; i++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
@@ -239,8 +229,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 DERR << c << endl;
             }
             flagGame.set(4);
-        }
-        else if (cmd == "changed") {
+        } else if (cmd == "changed") {
             bool anyChange = false;
             BitArray32<4, N> infoClassPlayer = invert(infoClass);
             
@@ -258,13 +247,10 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 gr.setInitGame();
                 DERR << "init game." << endl;
             } else {
-                for (auto c : cLogMap) {
-                    gr.push_change(c.second);
-                }
+                for (auto c : cLogMap) gr.push_change(c.second);
             }
             flagGame.set(5);
-        }
-        else if (cmd == "original") {
+        } else if (cmd == "original") {
             for (int i = 0; i < N; i++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo(); 
@@ -272,8 +258,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 DERR << c << endl;
             }
             flagGame.set(6);
-        }
-        else if (cmd == "play") {
+        } else if (cmd == "play") {
             while (1) {
                 Move mv; uint64_t time;
                 const string& str = q.front();
@@ -285,8 +270,7 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 q.pop();
             }
             flagGame.set(7);
-        }
-        else if (cmd == "result") {
+        } else if (cmd == "result") {
             for (int i = 0; i < N; i++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
@@ -294,18 +278,12 @@ int readMatchLogFile(const std::string& fName, matchLog_t *const pmLog) {
                 q.pop();
             }
             flagGame.set(8);
-        }
-        else {
-            // いかなるコマンドでもないので読み飛ばし
-            q.pop();
-        }
+        } else q.pop(); // いかなるコマンドでもないので読み飛ばし
     NEXT:;
     }
 END:;
     
     cerr << pmLog->games() << " games were loaded." << endl;
-    
-    // これで全試合が読み込めたはず
     ifs.close();
     return 0;
 }
