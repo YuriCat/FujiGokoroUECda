@@ -29,7 +29,7 @@ inline int genChange(Cards *const pc0, const Cards myCards, const int changeQty)
 #define GEN_BASE(q, oc, op) {\
 for (IntCard ic : (oc)) {\
 int r = IntCardToRank(ic);\
-uint32_t s = IntCardToSuits(ic);\
+unsigned s = IntCardToSuits(ic);\
 mv->setSeq(q, r, s);\
 op; mv++; }}
 
@@ -136,7 +136,7 @@ int genAllPlainSeq(Move *const mv0, const Cards x) {
     for (int q = 3; anyCards(c); q++) {
         for (IntCard ic : c) {
             int rank = IntCardToRank(ic);
-            uint32_t suit = IntCardToSuits(ic);
+            unsigned suit = IntCardToSuits(ic);
             (mv++)->setSeq(q, rank, suit);
         }
         // 次の枚数を考える
@@ -151,8 +151,8 @@ inline int genAllSeq(Move *const mv, const Cards c) {
 }
 
 inline int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
-    uint32_t r = b.rank();
-    uint32_t q = b.qty();
+    int r = b.rank();
+    unsigned q = b.qty();
     assert(q >= 3);
     if (b.order() == 0) { // 通常
         if (r + (q << 1) > RANK_MAX + 1) return 0;
@@ -169,15 +169,15 @@ inline int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
     Move *mv = mv0;
     for (IntCard ic : c) {
         int r = IntCardToRank(ic);
-        uint32_t s = IntCardToSuits(ic);
+        unsigned s = IntCardToSuits(ic);
         (mv++)->setSeq(q, r, s);
     }
     return mv - mv0;
 }
 
 inline int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
-    const uint32_t r = b.rank();
-    const uint32_t qty = b.qty();
+    unsigned r = b.rank();
+    unsigned qty = b.qty();
     assert(qty >= 3);
     Cards c = plain;
     Cards rCards; // 合法カードゾーン
@@ -292,8 +292,7 @@ inline int genFollowSeq(Move *const mv, const Cards c, const Board b) {
 
 /**************************フォロー着手生成**************************/
 
-// 引数の型がHandとCardsのどちらでもOKにするためのサブルーチン
-inline Cards genNRankInGenFollowGroup(const Cards c, Cards valid, int q) {
+inline Cards genNRankInGenFollowGroup(Cards c, Cards valid, int q) {
     Cards vc = c & valid;
     return CardsToNR(vc, q);
 }
@@ -329,8 +328,7 @@ inline int genFollowSingle(Move *const mv0, const Cards myCards, const Board b) 
 #define GEN(q, s) GEN_BASE(q, s,)
 #define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
 
-inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
-    const Cards x = hand;
+inline int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
     const int br = b.rank();
     Cards valid;
     if (b.order() == 0) { // 通常
@@ -340,7 +338,7 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
     }
     Move *mv = mv0;
     if (!b.suitsLocked()) { // スートしばりなし
-        Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
+        Cards c4 = genNRankInGenFollowGroup(c, valid, 4);
         // 4枚ある箇所から各スートで生成
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
@@ -351,16 +349,16 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
             GEN(2, SUITS_DS);
             GEN(2, SUITS_HS);
         }
-        Cards c3 = genNRankInGenFollowGroup(hand, valid, 3);
-        Cards c2 = genNRankInGenFollowGroup(hand, valid, 2);
-        if (!containsJOKER(hand)) {
+        Cards c3 = genNRankInGenFollowGroup(c, valid, 3);
+        Cards c2 = genNRankInGenFollowGroup(c, valid, 2);
+        if (!containsJOKER(c)) {
             // 3枚だけの箇所を生成
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                uint32_t suits = x[r];
-                uint32_t s0 = lsb(suits);
-                uint32_t s1 = lsb(suits - s0);
-                uint32_t s2 = suits - s0 - s1;
+                unsigned suits = c[r];
+                unsigned s0 = lsb(suits);
+                unsigned s1 = lsb(suits - s0);
+                unsigned s2 = suits - s0 - s1;
                 
                 GEN(2, s0 | s1);
                 GEN(2, s1 | s2);
@@ -369,16 +367,16 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
             // 2枚だけの箇所を生成
             for (IntCard ic : c2) {
                 int r = IntCardToRank(ic);
-                GEN(2, x[r]);
+                GEN(2, c[r]);
             }
         } else {
             // ジョーカーあり
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                const uint32_t suits = x[r];
-                const uint32_t s0 = lsb(suits);
-                const uint32_t s1 = lsb(suits - s0);
-                const uint32_t s2 = suits - s0 - s1;
+                unsigned suits = c[r];
+                unsigned s0 = lsb(suits);
+                unsigned s1 = lsb(suits - s0);
+                unsigned s2 = suits - s0 - s1;
                 
                 // プレーン
                 GEN(2, s0 | s1);
@@ -386,19 +384,19 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
                 GEN(2, s2 | s0);
                 
                 // ジョーカー使用
-                const uint32_t isuits = SUITS_ALL - suits;
+                unsigned isuits = SUITS_ALL - suits;
                 GEN_J(2, s0 | isuits, isuits);
                 GEN_J(2, s1 | isuits, isuits);
                 GEN_J(2, s2 | isuits, isuits);
             }
             for (IntCard ic : c2) {
                 int r = IntCardToRank(ic);
-                const uint32_t suits = x[r];
-                const uint32_t s0 = lsb(suits);
-                const uint32_t s1 = suits - s0;
-                const uint32_t isuits = SUITS_ALL - suits;
-                const uint32_t is0 = lsb(isuits);
-                const uint32_t is1 = isuits - is0;
+                unsigned suits = c[r];
+                unsigned s0 = lsb(suits);
+                unsigned s1 = suits - s0;
+                unsigned isuits = SUITS_ALL - suits;
+                unsigned is0 = lsb(isuits);
+                unsigned is1 = isuits - is0;
                 
                 // プレーン
                 GEN(2, suits);
@@ -410,14 +408,14 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
                 GEN_J(2, s1 | is1, is1);
             }
             // 1枚だけの箇所を生成
-            Cards c1 = genNRankInGenFollowGroup(hand, valid, 1);
+            Cards c1 = genNRankInGenFollowGroup(c, valid, 1);
             for (IntCard ic : c1) {
                 int r = IntCardToRank(ic);
-                const uint32_t suits = x[r];
-                const uint32_t isuits = SUITS_ALL - suits;
-                const uint32_t is0 = lsb(isuits);
-                const uint32_t is1 = lsb(isuits - is0);
-                const uint32_t is2 = isuits - is0 - is1;
+                unsigned suits = c[r];
+                unsigned isuits = SUITS_ALL - suits;
+                unsigned is0 = lsb(isuits);
+                unsigned is1 = lsb(isuits - is0);
+                unsigned is2 = isuits - is0 - is1;
                 // ジョーカー使用
                 GEN_J(2, suits | is0, is0);
                 GEN_J(2, suits | is1, is1);
@@ -425,114 +423,107 @@ inline int genFollowDouble(Move *const mv0, const Cards hand, const Board b) {
             }
         }
     } else { // スートしばりあり
-        const Cards c = x & valid;
-        const uint32_t suits = b.suits();
-        const Cards vc = c | SuitsToCards(SUITS_ALL - suits);
+        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
         Cards c4 = CardsToFR(vc);
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
-            GEN(2, suits);
+            GEN(2, b.suits());
         }
-        if (containsJOKER(hand)) {
+        if (containsJOKER(c)) {
             // 3ビット立っている部分からジョーカーを利用して生成
             Cards c3 = CardsTo3R(vc);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                const uint32_t suit = (x >> (r << 2)) & suits;
-                GEN_J(2, suits, suits - suit);
+                unsigned suit = c[r] & b.suits();
+                GEN_J(2, b.suits(), b.suits() - suit);
             }
         }
     }
     return mv - mv0;
 }
 
-inline int genFollowTriple(Move *const mv0, const Cards hand, const Board b) {
-    const int br = b.rank();
-    const Cards x = Cards(hand);
+inline int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
     Cards valid;
     if (b.order() == 0) { // 通常
-        valid = RankRangeToCards(br + 1, RANK_MAX);
+        valid = RankRangeToCards(b.rank() + 1, RANK_MAX);
     } else { // オーダー逆転中
-        valid = RankRangeToCards(RANK_MIN, br - 1);
+        valid = RankRangeToCards(RANK_MIN, b.rank() - 1);
     }
     Move *mv = mv0;
     
     if (!b.suitsLocked()) { // スートしばりなし
-        Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
+        Cards c4 = genNRankInGenFollowGroup(c, valid, 4);
         // 4枚ある箇所から各スートで生成
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
-            for (uint32_t s = SUITS_C; s <= SUITS_S; s <<= 1) {
+            for (unsigned s = 1; s < (1 << N_SUITS); s <<= 1) {
                 GEN(3, SUITS_ALL - s);
             }
         }
-        Cards c3 = genNRankInGenFollowGroup(hand, valid, 3);
-        if (!containsJOKER(hand)) {
+        Cards c3 = genNRankInGenFollowGroup(c, valid, 3);
+        if (!containsJOKER(c)) {
             // ジョーカーなし スートロックなし
             // 3枚だけの箇所を生成
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                GEN(3, x[r]);
+                GEN(3, c[r]);
             }
         } else {
             // ジョーカーあり スートロックなし
             // 3枚だけの箇所を生成
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                const uint32_t suits = x[r];
+                unsigned suits = c[r];
                 // プレーン
                 GEN(3, suits);
                 // ジョーカー使用
-                const uint32_t isuits = SUITS_ALL - suits;
-                for (uint32_t s = SUITS_C; s <= SUITS_S; s <<= 1) {
+                unsigned isuits = SUITS_ALL - suits;
+                for (unsigned s = 1; s < (1 << N_SUITS); s <<= 1) {
                     if (s != isuits) {
-                        const uint32_t is = SUITS_ALL - s;
+                        unsigned is = SUITS_ALL - s;
                         GEN_J(3, is, isuits);
                     }
                 }
             }
             // 2枚だけの箇所を生成
-            Cards c2 = genNRankInGenFollowGroup(hand, valid, 2);
+            Cards c2 = genNRankInGenFollowGroup(c, valid, 2);
             for (IntCard ic : c2) {
                 int r = IntCardToRank(ic);
-                const uint32_t suits = x[r];
-                const uint32_t isuits = SUITS_ALL - suits;
-                const uint32_t is0 = lsb(isuits);
-                const uint32_t is1 = isuits - is0;
+                unsigned suits = c[r];
+                unsigned isuits = SUITS_ALL - suits;
+                unsigned is0 = lsb(isuits);
+                unsigned is1 = isuits - is0;
                 // ジョーカー使用
                 GEN_J(3, suits | is0, is0);
                 GEN_J(3, suits | is1, is1);
             }
         }
     } else { // スートしばりあり
-        const Cards c = Cards(hand) & valid;
-        const uint32_t suits = b.suits();
         // virtual cardを加えて4枚ある箇所から生成
-        const Cards vc = c | SuitsToCards(SUITS_ALL - suits);
+        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
         Cards c4 = CardsToFR(vc);
         // ジョーカーあり スートロックあり
         // virtual cardを加えて4枚ある箇所からプレーンで生成
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
-            GEN(3, suits);
+            GEN(3, b.suits());
         }
-        if (containsJOKER(hand)) {
+        if (containsJOKER(c)) {
             // 3枚だけの箇所をジョーカー込みで生成
             Cards c3 = CardsTo3R(vc);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
-                GEN_J(3, suits, SUITS_ALL & ~vc[r]);
+                GEN_J(3, b.suits(), SUITS_ALL & ~vc[r]);
             }
         }
     }
     return mv - mv0;
 }
 
-inline int genFollowQuadruple(Move *const mv0, const Cards hand, const Board b) {
+inline int genFollowQuadruple(Move *const mv0, const Cards c, const Board b) {
     Move *mv = mv0;
-    const Cards x = Cards(hand);
     const int br = b.rank();
     Cards valid;
     if (b.order() == 0) { // 通常
@@ -540,16 +531,16 @@ inline int genFollowQuadruple(Move *const mv0, const Cards hand, const Board b) 
     } else { // オーダー逆転中
         valid = RankRangeToCards(RANK_MIN, br - 1);
     }
-    Cards c4 = genNRankInGenFollowGroup(hand, valid, 4);
+    Cards c4 = genNRankInGenFollowGroup(c, valid, 4);
     for (IntCard ic : c4) {
         int r = IntCardToRank(ic);
         GEN(4, SUITS_CDHS);
     }
-    if (containsJOKER(hand)) {
-        Cards c3 = genNRankInGenFollowGroup(hand, valid, 3);
+    if (containsJOKER(c)) {
+        Cards c3 = genNRankInGenFollowGroup(c, valid, 3);
         for (IntCard ic : c3) {
             int r = IntCardToRank(ic);
-            GEN_J(4, SUITS_CDHS, Cards(~x)[r]);
+            GEN_J(4, SUITS_CDHS, Cards(~c)[r]);
         }
     }
     return mv - mv0;
@@ -565,8 +556,7 @@ inline int genAllSingle(Move *const mv0, Cards c) {
     return mv - mv0;
 }
 
-inline int genLead(Move *const mv0, const Cards hand) {
-    const Cards c = Cards(hand);
+inline int genLead(Move *const mv0, const Cards c) {
     bool jk = containsJOKER(c) ? true : false;
     Move *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
     Cards x;
@@ -742,8 +732,8 @@ inline int genLead(Move *const mv0, const Cards hand) {
     return mv - mv0;
 }
 
-inline int genLegalLead(Move *const mv0, const Cards hand) {
-    int cnt = genLead(mv0, hand);
+inline int genLegalLead(Move *const mv0, const Cards c) {
+    int cnt = genLead(mv0, c);
     (mv0 + cnt)->setPASS();
     return cnt + 1;
 }
@@ -768,145 +758,57 @@ inline int genNullPass(Move *const mv0) {
     return 1;
 }
 
-#define GEN_BASE(q, s, op) { mv->setGroup(q, r, s); op; mv++; }
-#define GEN_J(q, s, js) GEN_BASE(q, s, mv->setJokerSuits(js))
-
 inline int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b) {
     assert(containsJOKER(c));
     assert(containsS3(ops));
     assert(b.isGroup() && b.qty() > 1);
     
     Move *mv = mv0;
-    int br = b.rank();
-    if (b.order() == 0) { // 通常
-        c &= RankRangeToCards(br + 1, RANK_MAX);
-    } else { // オーダー逆転中
-        c &= RankRangeToCards(RANK_MIN , br - 1);
-    }
-    uint32_t s = b.suits();
-    int tmpOrd = b.order();
-    
+    if (b.order() == 0) c &= RankRangeToCards(b.rank() + 1, RANK_MAX);
+    else c &= RankRangeToCards(RANK_MIN , b.rank() - 1);
+
     for (int r = RANK_3; r <= RANK_2; r++) {
-        int q = countCards(c & RankToCards(r));
-        if (q == b.qty()) {
-            unsigned x = c[r];
-            if (r != RANK_8) {
-                // 相手が返せるかどうかチェック
-                if (tmpOrd) {
-                    if (x == 15) {
-                        if (!holdsCards(RankRangeToCards(RANK_3 , r), ops)) continue;
-                    } else {
-                        if (!holdsCards(RankRangeToCards(r, RANK_2), ops)) continue;
-                    }
-                } else {
-                    if (x == 15) {
-                        if (!holdsCards(RankRangeToCards(r, RANK_2), ops)) continue;
-                    } else {
-                        if (!holdsCards(RankRangeToCards(RANK_3, r), ops)) continue;
-                    }
-                }
+        unsigned x = c[r];
+        if (b.suitsLocked() && b.suits() != x) continue;
+        int q = countSuits(x);
+        if (q <= 1 || q != b.qty()) continue;
+        if (r != RANK_8) {
+            // 相手が返せるかどうかチェック
+            if ((b.order() ^ int(x == 15)) == 0) {
+                if (!holdsCards(RankRangeToCards(RANK_3, r), ops)) continue;
+            } else {
+                if (!holdsCards(RankRangeToCards(r, RANK_2), ops)) continue;
             }
-            
-            switch (x) {
-                case 0: break;
-                case 1: break;
-                case 2: break;
-                case 3: {
-                    if (b.suitsLocked() && s != 3) break;
-                    GEN_J(2, 3, 2);
-                    GEN_J(2, 3, 1);
-                } break;
-                case 4: break;
-                case 5: {
-                    if (b.suitsLocked() && s != 5) break;
-                    GEN_J(2, 5, 1);
-                    GEN_J(2, 5, 4);
-                } break;
-                case 6: {
-                    if (b.suitsLocked() && s != 6) break;
-                    GEN_J(2, 6, 2);
-                    GEN_J(2, 6, 4);
-                } break;
-                case 7: {
-                    if (b.suitsLocked() && s != 7) break;
-                    GEN_J(3, 7, 1);
-                    GEN_J(3, 7, 2);
-                    GEN_J(3, 7, 4);
-                } break;
-                case 8: break;
-                case 9: {
-                    if (b.suitsLocked() && s != 9) break;
-                    GEN_J(2, 9, 1);
-                    GEN_J(2, 9, 8);
-                } break;
-                case 10: {
-                    if (b.suitsLocked() && s != 10) break;
-                    GEN_J(2, 10, 2);
-                    GEN_J(2, 10, 8);
-                } break;
-                case 11: {
-                    if (b.suitsLocked() && s != 11) break;
-                    GEN_J(3, 11, 1);
-                    GEN_J(3, 11, 2);
-                    GEN_J(3, 11, 8);
-                } break;
-                case 12: {
-                    if (b.suitsLocked() && s != 12) break;
-                    GEN_J(2, 12, 4);
-                    GEN_J(2, 12, 8);
-                } break;
-                case 13: { 
-                    if (b.suitsLocked() && s != 13) break;
-                    GEN_J(3, 13, 1);
-                    GEN_J(3, 13, 4);
-                    GEN_J(3, 13, 8);
-                } break;
-                case 14: {
-                    if (b.suitsLocked() && s != 14) break;
-                    GEN_J(3, 14, 2);
-                    GEN_J(3, 14, 4);
-                    GEN_J(3, 14, 8);
-                } break;
-                case 15: {
-                    if (b.suitsLocked() && s != 15) break;
-                    GEN_J(4, 15, 1);
-                    GEN_J(4, 15, 2);
-                    GEN_J(4, 15, 4);
-                    GEN_J(4, 15, 8);
-                } break;
-                default: UNREACHABLE; break;
+        }
+        for (unsigned jks = 1; jks < (1 << N_SUITS); jks <<= 1) {
+            if (jks & x) {
+                mv->setGroup(q, r, x);
+                mv->setJokerSuits(jks);
+                mv++;
             }
         }
     }
     return mv - mv0;
 }
-#undef GEN_BASE
-#undef GEN_J
 
 inline int genGroupDebug(Move *const mv0, Cards c, Board b) {
-    Move *mv = mv0;
-    int st, ed;
     // 速度は問わず、全ての合法着手を生成
-    if (b.isNull()) {
-        st = RANK_MIN; ed = RANK_MAX;
-    } else {
-        int br = b.rank();
-        if (b.order() == 0) { // 通常
-            st = br + 1; ed = RANK_MAX;
-        } else { // オーダー逆転中
-            st = RANK_MIN; ed = br - 1;
-        }
+    Move *mv = mv0;
+    int st = RANK_MIN, ed = RANK_MAX;
+    if (!b.isNull()) {
+        if (b.order() == 0) st = b.rank() + 1;
+        else ed = b.rank() - 1;
     }
     for (int r = st; r <= ed; r++) {
-        for (uint32_t s = 1; s <= SUITS_ALL; s++) {
+        for (unsigned s = 1; s <= SUITS_ALL; s++) {
             if (b.isNull() || b.suits() == s) {
                 int q = countSuits(s);
                 if (holdsCards(c, RankSuitsToCards(r, s))) {
-                    (mv++)->setGroup(r, s, countSuits(s));
+                    (mv++)->setGroup(q, r, s);
                 } else if (containsJOKER(c)) {
-                    for (uint32_t js = SUIT_MIN; s <= SUIT_MAX; s <<= 1) {
+                    for (unsigned js = 1; s < (1 << N_SUITS); s <<= 1) {
                         if ((s & js) && holdsCards(c, RankSuitsToCards(r, s - js))) {
-                            mv->setGroup(r, s, countSuits(s));
+                            mv->setGroup(q, r, s);
                             mv->setJokerSuits(js);
                             mv++;
                         }
@@ -920,18 +822,17 @@ inline int genGroupDebug(Move *const mv0, Cards c, Board b) {
 
 inline int genFollowExceptPASS(Move *const mv, const Cards c, const Board b) {
     // 返り値は、生成した手の数
-    int ret = 0;
     if (!b.isSeq()) {
-        int ret;
+        int cnt;
         switch (b.qty()) {
-            case 0: ret = 0; break;
-            case 1: ret = genFollowSingle(mv, c, b); break;
-            case 2: ret = genFollowDouble(mv, c, b); break;
-            case 3: ret = genFollowTriple(mv, c, b); break;
-            case 4: ret = genFollowQuadruple(mv, c, b); break;
-            default: ret = 0; break;
+            case 0: cnt = 0; break;
+            case 1: cnt = genFollowSingle(mv, c, b); break;
+            case 2: cnt = genFollowDouble(mv, c, b); break;
+            case 3: cnt = genFollowTriple(mv, c, b); break;
+            case 4: cnt = genFollowQuadruple(mv, c, b); break;
+            default: cnt = 0; break;
         }
-        return ret;
+        return cnt;
     } else return genFollowSeq(mv, c, b);
 }
 

@@ -10,7 +10,7 @@
 
 /**************************オーダー**************************/
 
-inline constexpr int flipOrder(int ord) { return 1 - ord; }
+constexpr int flipOrder(int ord) { return 1 - ord; }
 
 /**************************ランク**************************/
 
@@ -93,19 +93,12 @@ inline int CharToSuitNum(char c) {
 
 /**************************スート**************************/
 
-using Suits = unsigned int;
-
 // 単スート
-enum {
-    SUIT_NULL = 0,
-    SUIT_C = 1, SUIT_D = 2, SUIT_H = 4, SUIT_S = 8,
-    SUIT_X = 16,
-    SUIT_MIN = SUIT_C,
-    SUIT_MAX = SUIT_S
-};
+enum { SUIT_X = 16 };
 
 // スート集合 (スートの和集合)
 enum {
+    
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
