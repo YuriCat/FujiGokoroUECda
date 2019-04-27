@@ -210,22 +210,7 @@ struct Field {
         if (isAlive(tp)) setTurn(tp);
         else rotateTurnPlayer(tp);
     }
-    
-    /*void setPlayerAsleep(const int p) { ps.setAsleep(p); }
-    void setAllAsleep() { ps.setAllAsleep(); }
-    void setPlayerDead(const int p) { ps.setDead(p); }
-    void setPlayerAwake(const int p) { ps.setAwake(p); }
-    void setPlayerAlive(const int p) { ps.setAlive(p); }
-    
-    void flushState() { // 場を流す ただし b はすでに流れているとき
-        ps.flush();
-        flushTurnPlayer();
-    }
-    void flush() { // 場を流す
-        board.flush();
-        flushState();
-    }*/
-    
+
     uint32_t searchOpsMinNCards(int pn) const { // 自分以外の最小枚数
         uint32_t nc = N_CARDS;
         for (int p = 0; p < N_PLAYERS; p++) {
@@ -281,8 +266,6 @@ struct Field {
 
     // 局面更新
     // Move型以外も対応必須?
-    //int play(int tp, MoveInfo mv);
-    //int play(int tp, Move mv);
     int play(Move m) {
         assert(exam());
         int ts = turnSeat();
