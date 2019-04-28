@@ -138,7 +138,7 @@ int test2Suits() {
                     }
                 }
             }
-            ++cnt[index];
+            cnt[index]++;
         }
     }
     return 0;
@@ -169,7 +169,7 @@ int testSuitsSuits() {
                     }
                 }
             }
-            ++cnt[index];
+            cnt[index]++;
         }
     }
     return 0;
