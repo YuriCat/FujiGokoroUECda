@@ -1195,13 +1195,22 @@ struct Move {
     unsigned mate    : 1;
     unsigned l2mate  : 1;
     unsigned giveup  : 1;
+    unsigned l2giveup: 1;
     unsigned domO    : 1;
     unsigned domM    : 1;
-    unsigned nmax    : 6;
-    unsigned nmin    : 6;
-    unsigned nmaxaw  : 6;
-    unsigned nminaw  : 6;
-    unsigned         : 3;
+    unsigned sf      : 1;
+    unsigned la      : 1; // 8
+    unsigned ur      : 1;
+    unsigned fl      : 1;
+    unsigned npDom   : 1;
+    unsigned pDom    : 1;
+    unsigned bDomO   : 1;
+    unsigned bDomM   : 1;
+    unsigned         : 2; // 16
+    unsigned nmax    : 4;
+    unsigned nmin    : 4;
+    unsigned nmaxaw  : 4;
+    unsigned nminaw  : 4;
     // ここまで64ビット
 
     uint32_t toInt() const {
@@ -1334,6 +1343,49 @@ struct Move {
 
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
+    }
+
+    void setMate() { mate = 1; }
+    void setL2Mate() { l2mate = 1; }
+    void seGiveUp() { giveup = 1; }
+    void setL2GiveUp() { l2giveup = 1; }
+    void setSelfFollow() { sf = ur = fl = npDom = pDom = 1; }
+    void setUnrivaled() { ur = fl = npDom = pDom = 1; }
+    void setLastAwake() { la = npDom = bDomO = 1; }
+    void setFlushLead() { fl = 1; }
+    void setNPDom() { npDom = 1; }
+    void setPassDom() { pDom = 1; }
+    void setBDO() { bDomO = 1; }
+    void setBDM() { bDomM = 1; }
+    void setBDALL() { bDomO = bDomM = 1; }
+    void setMinNCards(unsigned n) { nmin = n; }
+    void setMaxNCards(unsigned n) { nmax = n; }
+    void setMinNCardsAwake(unsigned n) { nminaw = n; }
+    void setMaxNCardsAwake(unsigned n) { nmaxaw = n; }
+
+    bool isMate() const { return mate || l2mate; }
+    bool isGiveUp() const { return giveup || l2giveup; }
+    bool isL2Mate() const {   return l2mate; }
+    bool isL2GiveUp() const { return l2giveup; }
+    bool dominatesOthers() const { return domO; }
+    bool dominatesMe() const { return domM; }
+    bool dominatesAll() const { return domO || domM; }
+    bool isSelfFollow() const { return sf; }
+    bool isUnrivaled() const { return ur; }
+    bool isLastAwake() const { return la; }
+    bool isFlushLead() const { return fl; }
+    bool isNonPassDom() const { return npDom; }
+    bool isPassDom() const { return pDom; }
+    bool isBDO() const { return bDomO; }
+    bool isBDM() const { return bDomM; }
+    bool isBDALL() const { return bDomO || bDomM; }
+    unsigned getMinNCards() const { return nmin; }
+    unsigned getMaxNCards() const { return nmax; }
+    unsigned getMinNCardsAwake() const { return nminaw; }
+    unsigned getMaxNCardsAwake() const { return nmaxaw; }
+
+    void procInfoUnrivaled() {
+
     }
 };
 
@@ -1785,3 +1837,50 @@ inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
 inline uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
     return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
 }
+
+static std::string toInfoString(Move m, Board b) {
+    std::ostringstream oss;
+    // 勝敗
+    if (m.isL2Mate()) oss << " -L2MATE";
+    else if (m.isMate()) oss << " -MATE";
+
+    if (m.isL2GiveUp()) oss << " -L2GIVEUP";
+    else if (m.isGiveUp()) oss << " -GIVEUP";
+
+    // 後場
+    if (b.nextOrder(m) != 0) oss << " -TREV";
+    if (b.locksSuits(m)) oss << " -SLOCK";
+
+    // 支配
+    if (m.dominatesAll()) oss<< " -DALL";
+    else {
+        if (m.dominatesOthers()) oss << " -DO";
+        if (m.dominatesMe()) oss << " -DM";
+    }
+    return oss.str();
+}
+
+static std::string toInfoString(Board b) {
+    std::ostringstream oss;
+    oss << "Field :";
+
+    if (b.isL2Mate()) oss << " -L2MATE";
+    else if (b.isMate()) oss << " -MATE";
+
+    if (b.isL2GiveUp()) oss << " -L2GIVEUP";
+    else if (b.isGiveUp()) oss << " -GIVEUP";
+    
+    if (b.isSelfFollow()) oss << " -SFOL";
+    if (b.isUnrivaled()) oss << " -UNRIV";
+    if (b.isLastAwake()) oss << " -LA";
+    if (b.isFlushLead()) oss << " -FLEAD";
+    if (b.isNonPassDom()) oss << " -NPD";
+    if (b.isPassDom()) oss << " -PD";
+    
+    if (b.isBDALL()) oss << " -BDALL";
+    else {
+        if (b.isBDO()) oss << " -BDO";
+        if (b.isBDM()) oss << " -BDM";
+    }
+    return oss.str();
+};

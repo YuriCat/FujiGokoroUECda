@@ -3,7 +3,6 @@
 // ランダムシミュレーション
 #include "engineSettings.h"
 #include "../core/daifugo.hpp"
-#include "../core/prim2.hpp"
 #include "../core/field.hpp"
 #include "../core/action.hpp"
 #include "engineStructure.hpp"

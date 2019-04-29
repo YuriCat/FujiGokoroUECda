@@ -2,7 +2,6 @@
 
 // ラスト2人探索
 #include "../core/daifugo.hpp"
-#include "../core/prim2.hpp"
 #include "../core/hand.hpp"
 #include "mate.hpp"
 

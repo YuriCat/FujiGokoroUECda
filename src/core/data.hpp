@@ -1,14 +1,13 @@
 #pragma once
 
 #include "daifugo.hpp"
-#include "prim2.hpp"
 #include "record.hpp"
 
 struct ThreadTools {
     // 各スレッドの持ち物
     int threadIndex; // スレッド番号
     XorShift64 dice; // サイコロ
-    MoveInfo buf[8192]; // 着手生成バッファ
+    Move buf[8192]; // 着手生成バッファ
     void init(int index) {
         memset(buf, 0, sizeof(buf));
         threadIndex = index;

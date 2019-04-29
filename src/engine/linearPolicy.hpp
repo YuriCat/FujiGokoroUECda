@@ -3,7 +3,6 @@
 // 線形方策
 
 #include "../core/daifugo.hpp"
-#include "../core/prim2.hpp"
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
 #include "../base/softmaxClassifier.hpp"

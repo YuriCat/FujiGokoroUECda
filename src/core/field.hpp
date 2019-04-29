@@ -3,7 +3,6 @@
 // 盤の情報表現
 
 #include "daifugo.hpp"
-#include "prim2.hpp"
 #include "hand.hpp"
 #include "dominance.hpp"
 
@@ -30,7 +29,6 @@ struct CommonStatus {
         phase.reset();
     }
 };
-
 
 /**************************プレーヤー状態**************************/
 
@@ -203,7 +201,7 @@ struct Field {
     
     int myPlayerNum; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
-    MoveInfo *mv; // buffer of move
+    Move *mv; // buffer of move
     XorShift64 *dice;
     
     // playout result
@@ -216,8 +214,7 @@ struct Field {
     std::bitset<32> attractedPlayers; // players we want playout-result
     int NMoves;
     int NActiveMoves;
-    MoveInfo playMove; // move chosen by player int playout
-    FieldAddInfo fieldInfo;
+    Move playMove; // move chosen by player int playout
     
     CommonStatus common;
     Board board;
@@ -270,9 +267,9 @@ struct Field {
         return ret;
     }
     
-    void setMoveBuffer(MoveInfo *const pmv) { mv = pmv; }
+    void setMoveBuffer(Move *const pmv) { mv = pmv; }
     void setDice(XorShift64 *const pdice) { dice = pdice; }
-    void setPlayMove(MoveInfo ami) { playMove = ami; }
+    void setPlayMove(Move am) { playMove = am; }
     
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
@@ -476,9 +473,7 @@ struct Field {
 
     // 局面更新
     // Move型以外も対応必須?
-    int proc(const int tp, const MoveInfo mv);
     int proc(const int tp, const Move mv);
-    int procSlowest(const MoveInfo mv);
     int procSlowest(const Move mv);
     
     void makeChange(int from, int to, Cards dc, int dq) {
@@ -730,7 +725,7 @@ struct Field {
     }
 };
 
-int Field::proc(const int tp, const MoveInfo mv) {
+int Field::proc(const int tp, const Moveo mv) {
     // 丁寧に局面更新
     ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
     if (mv.isPASS()) {
@@ -799,9 +794,6 @@ int Field::proc(const int tp, const MoveInfo mv) {
     ASSERT(exam(), cerr << toDebugString() << endl;);
     return turn();
 }
-inline int Field::proc(const int tp, const Move mv) {
-    return proc(tp, MoveInfo(mv));
-}
 
 inline int Field::procSlowest(const Move mv) {
     const int tp = turn();
@@ -843,9 +835,6 @@ inline int Field::procSlowest(const Move mv) {
     }
     ASSERT(exam(), cerr << toDebugString() << endl;);
     return turn();
-}
-inline int Field::procSlowest(const MoveInfo mv) {
-    return procSlowest(Move(mv));
 }
 
 // copy Field arg to dst before playout
