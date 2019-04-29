@@ -56,8 +56,6 @@ constexpr int LCT_MAXNCARDSAWAKE = 12;
 constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
 constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
 
-constexpr uint64_t MASK64_TMPINFO = 0;
-
 class FieldAddInfo {
     
     // 着手決定のためにこの程度は調べておきたい場情報
@@ -153,13 +151,8 @@ public:
         // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
         i_ = 0x0000F0F0ULL;
     }
-    
-    void initTmpInfo() {
-        // 一時情報は初期化し、永続情報は残す
-        i_ = (i_ & MASK64_TMPINFO) | 0x0000F0F0ULL;
-    }
     void procTmpInfo() {
-        i_ &= i_ & (MASK64_TMPINFO | 0xFFFFULL);
+        i_ &= 0xFFFFULL;
     }
     
     constexpr data_t data() const { return i_; }
@@ -209,7 +202,7 @@ static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 
 
 inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
                        FieldAddInfo *const pnext) {
-    pnext->initTmpInfo();
+    pnext->init();
     pnext->setMinNCardsAwake(fieldInfo.getMinNCards());
     pnext->setMaxNCardsAwake(fieldInfo.getMaxNCards());
     pnext->setMinNCards(fieldInfo.getMinNCards());

@@ -71,14 +71,14 @@ namespace UECda {
         L2Field f;
         f.b = cur.b;
         f.info = cur.info;
-        f.info.initTmpInfo();
+        f.info.init();
         f.b.procAndFlush(mv);
         return f;
     }
     int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
         pnext->b = cur.b;
         pnext->info = cur.info;
-        pnext->info.initTmpInfo();
+        pnext->info.init();
 #ifdef DEBUG
         pnext->p = cur.p;
 #endif
