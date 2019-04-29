@@ -236,15 +236,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
     }
 
-    inline int computeDivision(MoveInfo *const mv, const Cards c) {
+    inline int computeDivision(Move *const mbuf, const Cards c) {
         // paoon氏のbeersongのアイデアを利用
         int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
-        const int cnt = genAllSeq(mv, c);
+        const int cnt = genAllSeq(mbuf, c);
         if (cnt) {
             // 階段を使った場合の方が分割数を減らせる場合を考慮
-           MoveInfo *const new_buf = mv + cnt;
+            Move *const new_buf = mbuf + cnt;
             for (int i = 0; i < cnt; i++) {
-                Cards tmp = subtrCards(c, mv[i].cards());
+                Cards tmp = subtrCards(c, mbuf[i].cards());
                 int nret = computeDivision(new_buf, tmp) + 1;
                 ret = min(ret, nret);
             }
@@ -292,7 +292,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         // 速度不問で計算
         
         // 恒常パラメータ
-        const Board bd = field.board;
+        const Board b = field.board;
         const int tp = field.turn();
         const int turnSeat = field.seatOf(tp);
         const int owner = field.owner();
@@ -303,16 +303,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         const int NMyCards = myHand.qty;
         const uint32_t oq = myHand.qty;
         const Cards curPqr = myHand.pqr;
-        const FieldAddInfo& fieldInfo = field.fieldInfo;
         const int NParty = computeDivision(buf + NMoves, myCards);
         
         // 元々の手札の最低、最高ランク
         const int myLR = IntCardToRank(pickIntCardLow(myCards));
         const int myHR = IntCardToRank(pickIntCardHigh(myCards));
         
-        const int order = bd.order();
+        const int order = b.order();
         
-        const double nowRS = calcRankScore(curPqr, containsJOKER(myCards) ? 1 : 0, bd.order());
+        const double nowRS = calcRankScore(curPqr, containsJOKER(myCards) ? 1 : 0, b.order());
         
         // 場役主から自分が何人目か数える
         int distanceToOwner = 0;
@@ -330,21 +329,21 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         
         pol.template initCalculatingScore(NMoves);
         
-        for (int m = 0; m < NMoves; m++) {
+        for (int i = 0; i < NMoves; i++) {
             
             pol.template initCalculatingCandidateScore();
             
-            MoveInfo& mv = buf[m];
+            Move& m = buf[i];
             typename policy_t::real_t s = 0;
             
-            if (mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))) {
+            if (m.isMate() || !anyCards(subtrCards(myCards, m.cards()))) {
                 s -= 1000; // Mateのときは低い点にする
             } else {
                 // 着手パラメータ
-                const int aftOrd = bd.nextOrder(mv);
-                const int q4 = min(mv.qty(), 4);
+                const int aftOrd = b.nextOrder(m);
+                const int q4 = min(m.qty(), 4);
                 
-                const Cards afterCards = subtrCards(myCards, mv.cards());
+                const Cards afterCards = subtrCards(myCards, m.cards());
                 const Cards afterPqr = CardsToPQR(afterCards);
                 const Cards myAfterSeqCards = polymRanks<3>(afterCards);
                 
@@ -354,8 +353,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 {
                     int base = FEA_IDX(FEA_HAND_SNOWL);
                     
-                    if (!bd.isNull()) {
-                        if (fieldInfo.isUnrivaled()) base += 166 * 2;
+                    if (!b.isNull()) {
+                        if (b.isUnrivaled()) base += 166 * 2;
                         else base += 166;
                     }
                     if (afterOrder != 0) base += 83;
@@ -427,7 +426,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // nf min party
                 {
                     constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
-                    if (bd.isNull()) FooX(base, computeDivision(buf + NMoves, afterCards) - NParty)
+                    if (b.isNull()) FooX(base, computeDivision(buf + NMoves, afterCards) - NParty)
                     else FooX(base + 1, computeDivision(buf + NMoves, afterCards) - NParty)
                 }
                 FASSERT(s,);
@@ -442,16 +441,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // qty
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_QTY);
-                    if (bd.isNull()) Foo(base + q4 - 1)
+                    if (b.isNull()) Foo(base + q4 - 1)
                 }
                 FASSERT(s,);
                 
                 //same qr
                 {
                     constexpr int base = FEA_IDX(FEA_SAME_QR);
-                    if (bd.isNull() && !mv.isSeq()) {
+                    if (b.isNull() && !m.isSeq()) {
                         int sameQ = countCards(curPqr & (PQR_1 << (q4 - 1)));
-                        if (!mv.containsJOKER()) FooX(base, sameQ)
+                        if (!m.containsJOKER()) FooX(base, sameQ)
                         else {
                             FooX(base + 1, sameQ);
                             // シングルジョーカーで無い場合
@@ -464,13 +463,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // suit lock
                 {
                     constexpr int base = FEA_IDX(FEA_SUITLOCK_EFFECT);
-                    if (!mv.isPASS() && !bd.isNull()) {
-                        if (!fieldInfo.isLastAwake() && bd.locksSuits(mv)) { // LAでなく、スートロックがかかる
+                    if (!m.isPASS() && !b.isNull()) {
+                        if (!b.isLastAwake() && b.locksSuits(m)) { // LAでなく、スートロックがかかる
                             int key;
-                            if (mv.qty() > 1) key = base + 2; // 2枚以上のロックは強力
+                            if (m.qty() > 1) key = base + 2; // 2枚以上のロックは強力
                             else {
                                 // 最強のを自分が持っているか??
-                                Cards lockedSuitCards = SuitsToCards(bd.suits());
+                                Cards lockedSuitCards = SuitsToCards(b.suits());
                                 Cards mine = maskJOKER(afterCards) & lockedSuitCards;
                                 // ジョーカーをここで使っていい場合にはロックしたいので、
                                 // それは考慮に入れる
@@ -498,7 +497,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // rev(only normal order)
                 {
                     constexpr int base = FEA_IDX(FEA_REV_CLASS);
-                    if (!bd.isRev() && mv.isRev()) {
+                    if (!b.isRev() && m.isRev()) {
                         int relativeClass = field.classOf(tp);
                         for (int r = 0; r < (int)field.classOf(tp); r++) {
                             if (!field.isAlive(field.classPlayer(r))) relativeClass--;
@@ -511,7 +510,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // pass(game phase)
                 {
                     constexpr int base = FEA_IDX(FEA_PASS_PHASE);
-                    if (mv.isPASS()) {
+                    if (m.isPASS()) {
                         int key = base + ((field.getNRemCards() > 30) ? 0 : ((field.getNRemCards() > 15) ? 1 : 2));
                         Foo(key)
                     }
@@ -521,10 +520,10 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // pass(unrivaled)
                 {
                     constexpr int base = FEA_IDX(FEA_PASS_DOM);
-                    if (mv.isPASS()) {
-                        if (fieldInfo.isPassDom()) {
+                    if (m.isPASS()) {
+                        if (b.isPassDom()) {
                             Foo(base)
-                            if (!fieldInfo.isUnrivaled()) Foo(base + 1)
+                            if (!b.isUnrivaled()) Foo(base + 1)
                         }
                     }
                 }
@@ -533,14 +532,14 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // pass(owner distance)
                 {
                     constexpr int base = FEA_IDX(FEA_PASS_OWNER_DISTANCE);
-                    if (mv.isPASS() && !fieldInfo.isUnrivaled()) Foo(base + (distanceToOwner - 1));
+                    if (m.isPASS() && !b.isUnrivaled()) Foo(base + (distanceToOwner - 1));
                 }
                 FASSERT(s,);
                 
                 // pass nawake and qty
                 {
                     constexpr int base = FEA_IDX(FEA_PASS_NAWAKE_OWNER);
-                    if (mv.isPASS() && owner != tp) {
+                    if (m.isPASS() && owner != tp) {
                         if (field.isAlive(owner)) {
                             int key = base + (field.getNAwakePlayers() - 2) * 8 + min(field.getNCards(owner), 8U) - 1;
                             Foo(key)
@@ -552,8 +551,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // s3(move)
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_S3);
-                    if (bd.isSingleJOKER() && mv.isS3()) {
-                        int key = base + (fieldInfo.isPassDom() ? 1 : 0);
+                    if (b.isSingleJOKER() && m.isS3()) {
+                        int key = base + (b.isPassDom() ? 1 : 0);
                         Foo(key)
                     }
                 }
@@ -562,10 +561,10 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // joker against S3
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_JOKER_AGAINST_S3);
-                    if (mv.isSingleJOKER()) {
+                    if (m.isSingleJOKER()) {
                         int key;
                         if (containsS3(afterCards)) key = base; // 自分でS3を被せられる
-                        else if (fieldInfo.isLastAwake() || !containsCard(opsCards, CARDS_S3)) key = base + 1; // safe
+                        else if (b.isLastAwake() || !containsCard(opsCards, CARDS_S3)) key = base + 1; // safe
                         else key = base + 2; // dangerous
                         Foo(key)
                     }
@@ -575,13 +574,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // sequence
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_SEQ);
-                    if (bd.isNull()) {
-                        if (mv.isSeq()) {
+                    if (b.isNull()) {
+                        if (m.isSeq()) {
                             Foo(base)
                             FooX(base + 2, NMyCards)
                         }
                     } else {
-                        if (bd.isSeq()) Foo(base + 1)
+                        if (b.isSeq()) Foo(base + 1)
                     }
                 }
                 FASSERT(s,);
@@ -589,17 +588,17 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // rf group break
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
-                    if (!bd.isNull() && !fieldInfo.isUnrivaled() && mv.isGroup() && !mv.containsJOKER()) {
-                        if (myHand.qr[mv.rank()] != mv.qty()) { // 崩して出した
-                            if (mv.domInevitably()) Foo(base) // 8切り
+                    if (!b.isNull() && !b.isUnrivaled() && m.isGroup() && !m.containsJOKER()) {
+                        if (myHand.qr[m.rank()] != m.qty()) { // 崩して出した
+                            if (m.domInevitably()) Foo(base) // 8切り
                             else {
                                 if (aftOrd == 0) {
-                                    if (mv.rank() >= IntCardToRank(pickIntCardHigh(opsPlainCards))) {
+                                    if (m.rank() >= IntCardToRank(pickIntCardHigh(opsPlainCards))) {
                                         if (containsJOKER(opsCards)) Foo(base + 2)
                                         else Foo(base + 1)
                                     }
                                 } else {
-                                    if (mv.rank() <= IntCardToRank(pickIntCardLow(opsPlainCards))) {
+                                    if (m.rank() <= IntCardToRank(pickIntCardLow(opsPlainCards))) {
                                         if (containsJOKER(opsCards)) Foo(base + 2)
                                         else Foo(base + 1)
                                     }
@@ -612,8 +611,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 
                 // NF_Dominance Move On PassDom
                 {
-                    if (fieldInfo.isPassDom()) {
-                        if (mv.domInevitably() || dominatesHand(mv, opsHand, OrderToNullBoard(order))) {
+                    if (b.isPassDom()) {
+                        if (m.domInevitably() || dominatesHand(m, opsHand, OrderToNullBoard(order))) {
                             int key = FEA_IDX(FEA_MOVE_NFDOM_PASSDOM);
                             Foo(key)
                         }
@@ -622,8 +621,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 FASSERT(s,);
                 
                 // NF_EIGHT
-                if (bd.isNull()) {
-                    if (mv.domInevitably() && !mv.isSeq()) {
+                if (b.isNull()) {
+                    if (m.domInevitably() && !m.isSeq()) {
                         if (isNoRev(afterCards)) {
                             Cards seq = myAfterSeqCards;
                             Cards weakers = (order == 0) ?
@@ -639,11 +638,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 
                 // eight
                 {
-                    if (mv.domInevitably()) {
+                    if (m.domInevitably()) {
                         int key = FEA_IDX(FEA_MOVE_EIGHT_QTY);
-                        FooX(key, (oq - mv.qty()) * (oq - mv.qty()))
+                        FooX(key, (oq - m.qty()) * (oq - m.qty()))
                         key = FEA_IDX(FEA_MOVE_EIGHT_QTY) + 1;
-                        FooX(key, oq - mv.qty())
+                        FooX(key, oq - m.qty())
                     }
                 }
                 FASSERT(s,);
@@ -651,18 +650,18 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 // min rank
                 {
                     constexpr int base = FEA_IDX(FEA_MOVE_MIN_RANK);
-                    if (bd.order() == 0 && mv.rank() == myLR) Foo(base)
-                    else if (bd.order() != 0 && mv.rank() == myHR) Foo(base + 1)
+                    if (b.order() == 0 && m.rank() == myLR) Foo(base)
+                    else if (b.order() != 0 && m.rank() == myHR) Foo(base + 1)
                 }
                 FASSERT(s,);
 
                 // MCパターン
-                if (!mv.isPASS()) {
-                    if (!mv.isSeq()) {
+                if (!m.isPASS()) {
+                    if (!m.isSeq()) {
                         // グループ
                         constexpr int base = FEA_IDX(FEA_GR_CARDS);
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
-                        if (mv.isSingleJOKER()) {
+                        if (m.isSingleJOKER()) {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                                 uint32_t qb = afterPqr[f];
                                 if (qb) {
@@ -675,14 +674,14 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                                 uint32_t as = afterCards[f];
                                 if (as) {
-                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                                f, SSIndex[mv.suits()][as]);
+                                    int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
+                                                                f, SSIndex[m.suits()][as]);
                                     Foo(key)
                                 }
                             }
                             if (containsJOKER(afterCards)) {
-                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                            RANK_JOKER, mv.qty());
+                                int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
+                                                            RANK_JOKER, m.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key)
                             }
@@ -694,13 +693,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                             uint32_t as = afterCards[f];
                             if (as) {
-                                int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                            f, sSIndex[mv.suits()][as]);
+                                int key = base + Index::get(order, m.rank(), min(int(m.qty()) - 3, 2),
+                                                            f, sSIndex[m.suits()][as]);
                                 Foo(key)
                             }
                         }
                         if (containsJOKER(afterCards)) {
-                            int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
+                            int key = base + Index::get(order, m.rank(), min(int(m.qty()) - 3, 2),
                                                         RANK_JOKER, 0);
                             Foo(key)
                         }
@@ -708,11 +707,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     FASSERT(s,);
                     
                     // MOパターン
-                    if (!mv.isSeq()) {
+                    if (!m.isSeq()) {
                         // グループ
                         constexpr int base = FEA_IDX(FEA_GR_MO);
                         using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
-                        if (mv.isSingleJOKER()) {
+                        if (m.isSingleJOKER()) {
                             for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                                 uint32_t qb = opsHand.pqr[f];
                                 if (qb) {
@@ -725,14 +724,14 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
                                 uint32_t os = opsCards[f];
                                 if (os) {
-                                    int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                                f, SSIndex[mv.suits()][os]);
+                                    int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
+                                                                f, SSIndex[m.suits()][os]);
                                     Foo(key)
                                 }
                             }
                             if (containsJOKER(opsCards)) {
-                                int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                            RANK_JOKER, mv.qty());
+                                int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
+                                                            RANK_JOKER, m.qty());
                                 // suits - suits のパターン数より少ないのでOK
                                 Foo(key);
                             }
@@ -744,13 +743,13 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                             uint32_t os = opsCards[f];
                             if (os) {
-                                int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                            f, sSIndex[mv.suits()][os]);
+                                int key = base + Index::get(order, m.rank(), min(int(m.qty()) - 3, 2),
+                                                            f, sSIndex[m.suits()][os]);
                                 Foo(key);
                             }
                         }
                         if (containsJOKER(opsCards)) {
-                            int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
+                            int key = base + Index::get(order, m.rank(), min(int(m.qty()) - 3, 2),
                                                         RANK_JOKER, 0);
                             Foo(key);
                         }
@@ -765,26 +764,26 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     // 相手行動傾向をモデル化する項
                     if (field.isNull()) {
                         constexpr int base = FEA_IDX(FEA_MODEL_NF);
-                        if (mv.containsJOKER()) FooM(base + 2)
-                        else if (mv.domInevitably()) FooM(base + 3)
-                        if (mv.isGroup() && mv.qty() > 1) FooM(base + 0)
-                        else if (mv.isSeq()) FooM(base + 1)
-                        if (mv.isRev()) FooM(base + 4)
+                        if (m.containsJOKER()) FooM(base + 2)
+                        else if (m.domInevitably()) FooM(base + 3)
+                        if (m.isGroup() && m.qty() > 1) FooM(base + 0)
+                        else if (m.isSeq()) FooM(base + 1)
+                        if (m.isRev()) FooM(base + 4)
                     } else {
-                        const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (bd.isSeq() ? 2 : (bd.qty() > 1 ? 1 : 0));
-                        if (!mv.isPASS()) {
-                            if (mv.containsJOKER()) {
-                                if (mv.isSingleJOKER() && NMoves == 2) FooM(base + 1)
+                        const int base = FEA_IDX(FEA_MODEL_RF) + 4 * (b.isSeq() ? 2 : (b.qty() > 1 ? 1 : 0));
+                        if (!m.isPASS()) {
+                            if (m.containsJOKER()) {
+                                if (m.isSingleJOKER() && NMoves == 2) FooM(base + 1)
                                 else FooM(base + 2)
-                            } else if (mv.domInevitably()) FooM(base + 3)
+                            } else if (m.domInevitably()) FooM(base + 3)
                         } else FooM(base + 0)
                     }
                 }
 #endif
             }
-            pol.template feedCandidateScore(m, exp(s / pol.temperature()));
+            pol.template feedCandidateScore(i, exp(s / pol.temperature()));
             
-            if (!M || dst != nullptr) dst[m] = s;
+            if (!M || dst != nullptr) dst[i] = s;
         }
         pol.template finishCalculatingScore();
         

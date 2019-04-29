@@ -430,9 +430,9 @@ struct Field {
     uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
     uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
-    void procHand(int tp, Move mv) {
-        int dq = mv.qty();
-        Cards dc = mv.cards();
+    void procHand(int tp, Move m) {
+        int dq = m.qty();
+        Cards dc = m.cards();
         uint64_t dkey = CardsToHashKey(dc);
         
         // 全体の残り手札の更新
@@ -443,18 +443,18 @@ struct Field {
 
         // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
         for (int p = 0; p < tp; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
         }
-        hand[tp].makeMoveAll(mv, dc, dq, dkey);
+        hand[tp].makeMoveAll(m, dc, dq, dkey);
         for (int p = tp + 1; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
         }
     }
     
-    void procAndKillHand(int tp, Move mv) {
+    void procAndKillHand(int tp, Move m) {
         // あがりのときは手札を全更新しない
-        int dq = mv.qty();
-        Cards dc = mv.cards();
+        int dq = m.qty();
+        Cards dc = m.cards();
         uint64_t dkey = CardsToHashKey(dc);
         
         // 全体の残り手札の更新
@@ -467,14 +467,14 @@ struct Field {
         
         assert(!isAlive(tp)); // agari player is not alive
         for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
         }
     }
 
     // 局面更新
     // Move型以外も対応必須?
-    int proc(const int tp, const Move mv);
-    int procSlowest(const Move mv);
+    int proc(const int tp, const Move m);
+    int procSlowest(const Move m);
     
     void makeChange(int from, int to, Cards dc, int dq) {
         ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
@@ -627,32 +627,32 @@ struct Field {
         
         int tp = turn();
         
-        fieldInfo.init();
-        fieldInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
-        fieldInfo.setMinNCards(getOpsMinNCards(tp));
-        fieldInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
-        fieldInfo.setMaxNCards(getOpsMaxNCards(tp));
+        board.initInfo();
+        board.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
+        board.setMinNCards(getOpsMinNCards(tp));
+        board.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
+        board.setMaxNCards(getOpsMaxNCards(tp));
         
         if (isNull()) {
             if (getNAlivePlayers() == getNAwakePlayers()) { // 空場パスがない
-                fieldInfo.setFlushLead();
+                board.setFlushLead();
             }
         } else {
             if (owner() == tp) { // セルフフォロー
-                fieldInfo.setSelfFollow();
+                board.setSelfFollow();
             } else {
                 if (ps.isSoloAwake()) { // SF ではないが LA
-                    fieldInfo.setLastAwake();
+                    board.setLastAwake();
                 }
                 uint32_t fLPlayer = getFlushLeadPlayer();
                 if (fLPlayer == tp) { // 全員パスしたら自分から
-                    fieldInfo.setFlushLead();
-                    if (fieldInfo.isLastAwake()) {
+                    board.setFlushLead();
+                    if (board.isLastAwake()) {
                     } else {
                         if (dominatesHand(board, opsHand[tp])) {
                             // 場が全員を支配しているので、パスをすれば自分から
-                            fieldInfo.setBDO();
-                            fieldInfo.setPassDom(); // fl && bdo ならパス支配
+                            board.setBDO();
+                            board.setPassDom(); // fl && bdo ならパス支配
                         }
                     }
                 }
@@ -725,10 +725,10 @@ struct Field {
     }
 };
 
-int Field::proc(const int tp, const Moveo mv) {
+int Field::proc(const int tp, const Move m) {
     // 丁寧に局面更新
     ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
-    if (mv.isPASS()) {
+    if (m.isPASS()) {
         if (ps.isSoloAwake()) {
             flush();
         } else {
@@ -737,7 +737,7 @@ int Field::proc(const int tp, const Moveo mv) {
         }
         common.turnCount++;
     } else {
-        if (mv.isMate() || mv.qty() >= hand[tp].qty) { // 即上がりまたはMATE宣言のとき
+        if (m.isMate() || m.qty() >= hand[tp].qty) { // 即上がりまたはMATE宣言のとき
             if (isOnlyValue(attractedPlayers, tp)) {
                 // 結果が欲しいプレーヤーがすべて上がったので、プレイアウト終了
                 setNewClassOf(tp, getBestClass());
@@ -749,27 +749,27 @@ int Field::proc(const int tp, const Moveo mv) {
                 return -1;
             } else {
                 // 通常の上がり/MATE処理
-                if (mv.qty() >= hand[tp].qty) { // 即上がり
+                if (m.qty() >= hand[tp].qty) { // 即上がり
                     setNewClassOf(tp, getBestClass());
                     ps.setDead(tp);
                     attractedPlayers.reset(tp);
-                    procAndKillHand(tp, mv);
+                    procAndKillHand(tp, m);
                 } else {
-                    procHand(tp, mv);
+                    procHand(tp, m);
                 }
             }
         } else {
-            procHand(tp, mv);
+            procHand(tp, m);
         }
         
-        board.proc(mv);
+        board.proc(m);
         setOwner(tp);
         common.turnCount++;
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (mv.isDO()) { // 他人を支配
-                if (mv.isDM()) { // 自分も支配したので流れる
+            if (m.dominatesOthers()) { // 他人を支配
+                if (m.dominatesMe()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
@@ -795,11 +795,11 @@ int Field::proc(const int tp, const Moveo mv) {
     return turn();
 }
 
-inline int Field::procSlowest(const Move mv) {
+inline int Field::procSlowest(const Move m) {
     const int tp = turn();
     // 丁寧に局面更新
     ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
-    if (mv.isPASS()) {
+    if (m.isPASS()) {
         if (ps.isSoloAwake()) {
             flush();
         } else {
@@ -808,19 +808,19 @@ inline int Field::procSlowest(const Move mv) {
         }
         common.turnCount++;
     } else {
-        if (mv.qty() >= hand[tp].qty) { // agari
+        if (m.qty() >= hand[tp].qty) { // agari
             setNewClassOf(tp, getBestClass());
             ps.setDead(tp);
             if (ps.isSoloAlive()) {
                 setNewClassOf(ps.searchL1Player(), getBestClass());
                 return -1;
             }
-            procAndKillHand(tp, mv);
+            procAndKillHand(tp, m);
         } else {
-            procHand(tp, mv);
+            procHand(tp, m);
         }
         
-        board.proc(mv);
+        board.proc(m);
         setOwner(tp);
         common.turnCount++;
         if (board.isNull()) { // 流れた
@@ -912,7 +912,7 @@ struct ImaginaryWorld {
         builtTurn = field.turnCount();
     }
     
-    void proc(const int p, const Move mv, const Cards dc) {
+    void proc(const int p, const Move m, const Cards dc) {
         // 世界死がおきずに進行した
     }
     ImaginaryWorld() { clear(); }

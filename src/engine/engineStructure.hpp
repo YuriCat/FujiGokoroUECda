@@ -146,12 +146,12 @@ namespace UECda {
 
             SharedData::closeMatch();
         }
-    };
+    }; 
 
     /**************************ルートの手の情報**************************/
     
     struct RootAction {
-        MoveInfo move;
+        Move move;
         Cards changeCards;
         bool pruned;
         int nextDivision;
@@ -180,7 +180,7 @@ namespace UECda {
             clear();
             changeCards = cc;
         }
-        void setPlay(MoveInfo mi) {
+        void setPlay(Move mi) {
             clear();
             move = mi;
         }
@@ -266,7 +266,7 @@ namespace UECda {
             for (int m = 0; m < num; m++) child[m].setChange(a[m]);
             setCommonInfo(num, field, shared, limSim);
         }
-        void setPlay(const MoveInfo *const a, int num,
+        void setPlay(const Move *const a, int num,
                      const Field& field, const EngineSharedData& shared, int limSim = -1) {
             isChange = false;
             for (int m = 0; m < num; m++) child[m].setPlay(a[m]);

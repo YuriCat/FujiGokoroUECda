@@ -1384,8 +1384,18 @@ struct Move {
     unsigned getMinNCardsAwake() const { return nminaw; }
     unsigned getMaxNCardsAwake() const { return nmaxaw; }
 
-    void procInfoUnrivaled() {
-
+    void initTmpInfo() {
+        mate = l2mate = giveup = l2giveup = domO = domM = 0;
+        sf = ur = la  = fl = npDom = pDom = bDomO = bDomM = 0;
+    }
+    void flushInfo() {
+        initTmpInfo();
+        nminaw = nmin; nmaxaw = nmax;
+    }
+    void initInfo() {
+        initTmpInfo();
+        nmin = nminaw = 15;
+        nmax = nmaxaw = 0;
     }
 };
 
@@ -1612,38 +1622,6 @@ int searchMove(const move_buf_t *const buf, const int moves, const callback_t& c
         if (callback(buf[m])) return m;
     }
     return -1;
-}
-
-struct FieldStats {
-    out << "Field :";
-    if (i.isFinal()) out << " -FIN";
-    else if (i.isPW()) out << " -PW";
-    else if (i.isBNPW()) out << " -BNPW";
-    else if (i.isBRPW()) out << " -BRPW";
-    else if (i.isMPMate()) out << " -MPMATE";
-    
-    if (i.isL2Mate()) out << " -L2MATE";
-    
-    if (i.isMPGiveUp()) out << " -MPGIVEUP";
-    if (i.isL2GiveUp()) out << " -L2GIVEUP";
-    
-    if (i.isSelfFollow()) out << " -SFOL";
-    if (i.isUnrivaled()) out << " -UNRIV";
-    if (i.isLastAwake()) out << " -LA";
-    if (i.isFlushLead()) out << " -FLEAD";
-    if (i.isNonPassDom()) out << " -NPD";
-    if (i.isPassDom()) out << " -PD";
-    
-    if (i.isBDALL()) out << " -BDALL";
-    else {
-        if (i.isBDO()) out << " -BDO";
-        if (i.isBDM()) out << " -BDM";
-    }
-    return out;
-};
-
-static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 出力
-    
 }
 
 /**************************場表現**************************/

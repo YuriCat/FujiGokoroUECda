@@ -843,8 +843,8 @@ inline int genLegal(Move *mv, const Cards c, const Board b) {
     if (b.isNull()) return genLegalLead(mv, c);
     else return genFollow(mv, c, b);
 }
-inline std::vector<MoveInfo> genMove(const Field& field) {
-    std::vector<MoveInfo> moves(N_MAX_MOVES);
+inline std::vector<Move> genMove(const Field& field) {
+    std::vector<Move> moves(N_MAX_MOVES);
     int numMoves = genMove(moves.data(), field.hand[field.turn()], field.board);
     moves.resize(numMoves);
     return moves;
