@@ -290,8 +290,8 @@ struct Field {
     bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
     bool isSubjective() const { return common.phase.test(PHASE_SUBJECTIVE); }
     
-    uint32_t isAlive(const int p) const { return ps.isAlive(p); }
-    uint32_t isAwake(const int p) const { return ps.isAwake(p); }
+    bool isAlive(const int p) const { return ps.isAlive(p); }
+    bool isAwake(const int p) const { return ps.isAwake(p); }
     uint32_t getNAwakePlayers() const { return ps.getNAwake(); }
     uint32_t getNAlivePlayers() const { return ps.getNAlive(); }
     

@@ -74,7 +74,7 @@ BitCards PQRToSC_slow(CardArray qr) {
     CardArray ret = CARDS_NULL;
     for (int r = RANK_U; r <= RANK_O; r++) {
         if (arr[r]) {
-            uint32_t q = bsf(arr[r]) + 1;
+            unsigned q = bsf(arr[r]) + 1;
             ret.set(r, (1 << q) - 1);
         }
     }
@@ -85,19 +85,19 @@ BitCards PQRToSC_slow(CardArray qr) {
 int testSuitSuits() {
     // (Suit, Suits)関係テスト
     int cnt[16 * 16] = {0};
-    for (int sn = 0; sn < 4; ++sn) {
-        uint32_t s0 = SuitNumToSuits(sn);
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            int index = getSuitSuitsIndex(s0, s1);
+    for (int sn = 0; sn < 4; sn++) {
+        unsigned s0 = SuitNumToSuits(sn);
+        for (unsigned s1 = 0; s1 < 16; s1++) {
+            int index = sSIndex[s0][s1];
             if (index < 0 || N_PATTERNS_SUIT_SUITS <= index) {
                 cerr << "out of limit. " << index << " in " << N_PATTERNS_SUIT_SUITS;
                 cerr << " (" << s0 << ", " << s1 << ")" << endl;
                 return -1;
             }
-            for (int osn = 0; osn < 4; ++osn) {
-                uint32_t os0 = SuitNumToSuits(osn);
-                for (uint32_t os1 = 0; os1 < 16; ++os1) {
-                    int oindex = getSuitSuitsIndex(os0, os1);
+            for (int osn = 0; osn < 4; osn++) {
+                unsigned os0 = SuitNumToSuits(osn);
+                for (unsigned os1 = 0; os1 < 16; os1++) {
+                    int oindex = sSIndex[os0][os1];
                     bool equivalence = popcnt(s1) == popcnt(os1) && popcnt(s0 & s1) == popcnt(os0 & os1);
                     if (equivalence != (index == oindex)) {
                         cerr << "inconsistent pattern index. ";
@@ -107,7 +107,7 @@ int testSuitSuits() {
                     }
                 }
             }
-            ++cnt[index];
+            cnt[index]++;
         }
     }
     return 0;
@@ -116,17 +116,17 @@ int testSuitSuits() {
 int test2Suits() {
     // (Suits Suits)関係テスト
     int cnt[16 * 16] = {0};
-    for (uint32_t s0 = 0; s0 < 16; ++s0) {
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            int index = get2SuitsIndex(s0, s1);
+    for (unsigned s0 = 0; s0 < 16; s0++) {
+        for (unsigned s1 = 0; s1 < 16; s1++) {
+            int index = S2Index[s0][s1];
             if (index < 0 || N_PATTERNS_2SUITS <= index) {
                 cerr << "out of limit. " << index << " in " << N_PATTERNS_2SUITS;
                 cerr << " (" << s0 << ", " << s1 << ")" << endl;
                 return -1;
             }
-            for (uint32_t os0 = 0; os0 < 16; ++os0) {
-                for (uint32_t os1 = 0; os1 < 16; ++os1) {
-                    int oindex = get2SuitsIndex(os0, os1);
+            for (unsigned os0 = 0; os0 < 16; os0++) {
+                for (unsigned os1 = 0; os1 < 16; os1++) {
+                    int oindex = S2Index[os0][os1];
                     bool equivalence = (popcnt(s0) + popcnt(s1)) == (popcnt(os0) + popcnt(os1))
                     && abs((int)popcnt(s0) - (int)popcnt(s1)) == abs((int)popcnt(os0) - (int)popcnt(os1))
                     && popcnt(s0 & s1) == popcnt(os0 & os1);
@@ -138,7 +138,7 @@ int test2Suits() {
                     }
                 }
             }
-            ++cnt[index];
+            cnt[index]++;
         }
     }
     return 0;
@@ -147,17 +147,17 @@ int test2Suits() {
 int testSuitsSuits() {
     // (Suits, Suits)関係テスト
     int cnt[16 * 16] = {0};
-    for (uint32_t s0 = 0; s0 < 16; ++s0) {
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            int index = getSuitsSuitsIndex(s0, s1);
+    for (unsigned s0 = 0; s0 < 16; s0++) {
+        for (unsigned s1 = 0; s1 < 16; s1++) {
+            int index = SSIndex[s0][s1];
             if (index < 0 || N_PATTERNS_SUITS_SUITS <= index) {
                 cerr << "out of limit. " << index << " in " << N_PATTERNS_SUITS_SUITS;
                 cerr << " (" << s0 << ", " << s1 << ")" << endl;
                 return -1;
             }
-            for (uint32_t os0 = 0; os0 < 16; ++os0) {
-                for (uint32_t os1 = 0; os1 < 16; ++os1) {
-                    int oindex = getSuitsSuitsIndex(os0, os1);
+            for (unsigned os0 = 0; os0 < 16; os0++) {
+                for (unsigned os1 = 0; os1 < 16; os1++) {
+                    int oindex = SSIndex[os0][os1];
                     bool equivalence = popcnt(s0) == popcnt(os0)
                     && popcnt(s1) == popcnt(os1)
                     && popcnt(s0 & s1) == popcnt(os0 & os1);
@@ -169,7 +169,7 @@ int testSuitsSuits() {
                     }
                 }
             }
-            ++cnt[index];
+            cnt[index]++;
         }
     }
     return 0;
@@ -213,7 +213,7 @@ int testRankCards() {
 int testSuitCards() {
     // スート->カード集合変換テスト
     uint64_t time[2] = {0};
-    for (uint32_t s = 0; s < 16; ++s) {
+    for (unsigned s = 0; s < 16; ++s) {
         cl.start();
         Cards test = SuitsToCards(s);
         time[0] += cl.restart();

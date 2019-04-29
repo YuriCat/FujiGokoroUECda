@@ -23,7 +23,7 @@ int outputParams() {
                              + RANK_6 * (2) * (16) * N_PATTERNS_SUITS_SUITS
                              + 1 * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_A * N_PATTERNS_SUITS_SUITS
-                             + getSuitsSuitsIndex(SUITS_S, SUITS_S)
+                             + SSIndex[SUITS_S][SUITS_S]
                              ) << endl;
     
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
@@ -31,7 +31,7 @@ int outputParams() {
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(3) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + getSuitSuitsIndex(SUITS_H, SUITS_CH)
+                             + SSIndex[SUITS_H][SUITS_CH]
                              ) << endl;
     
     cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
@@ -39,7 +39,7 @@ int outputParams() {
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(4) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + getSuitSuitsIndex(SUITS_H, SUITS_C)
+                             + SSIndex[SUITS_H][SUITS_C]
                              ) << endl;
 
     //PlayPolicySpace::commentToPolicyParam(cerr, playPolicy.param_);    

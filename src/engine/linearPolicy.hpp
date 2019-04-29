@@ -677,7 +677,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                 uint32_t as = afterCards[f];
                                 if (as) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                                f, getSuitsSuitsIndex(mv.suits(), as));
+                                                                f, SSIndex[mv.suits()][as]);
                                     Foo(key)
                                 }
                             }
@@ -696,7 +696,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             uint32_t as = afterCards[f];
                             if (as) {
                                 int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                            f, getSuitSuitsIndex(mv.suits(), as));
+                                                            f, sSIndex[mv.suits()][as]);
                                 Foo(key)
                             }
                         }
@@ -727,7 +727,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                                 uint32_t os = opsCards[f];
                                 if (os) {
                                     int key = base + Index::get(order, mv.rank(), bd.locksSuits(mv) ? 1 : 0,
-                                                                f, getSuitsSuitsIndex(mv.suits(), os));
+                                                                f, SSIndex[mv.suits()][os]);
                                     Foo(key)
                                 }
                             }
@@ -746,7 +746,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             uint32_t os = opsCards[f];
                             if (os) {
                                 int key = base + Index::get(order, mv.rank(), min(int(mv.qty()) - 3, 2),
-                                                            f, getSuitSuitsIndex(mv.suits(), os));
+                                                            f, sSIndex[mv.suits()][os]);
                                 Foo(key);
                             }
                         }
@@ -959,8 +959,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     unsigned int rank = IntCardToRank(ic);
                     // プレーンカード同士の関係
                     for (int r = RANK_MIN; r <= RANK_MAX; r++) {
-                        FooX(base + Index::get(rank, r, getSuitsSuitsIndex(myCards[rank], myCards[r])), -1);
-                        Foo(base + Index::get(rank, r, getSuitsSuitsIndex(afterCards[rank], afterCards[r])));
+                        FooX(base + Index::get(rank, r, SSIndex[myCards[rank]][myCards[r]]), -1);
+                        Foo(base + Index::get(rank, r, SSIndex[afterCards[rank]][afterCards[r]]));
                     }
                     // ジョーカーとの関係
                     FooX(base + Index::get(rank, RANK_JOKER, pqr[rank]), -1);
