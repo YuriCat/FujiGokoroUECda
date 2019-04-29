@@ -259,9 +259,6 @@ struct MoveInfo : public Move {
     void setDomMe() { setDO(); }
     void setDomAll() { setDO(); }
 
-    // kousoku
-    void setDConst() { set(28); }
-    
     void init() { Move::flags = 0; }
     
     // get
@@ -283,10 +280,6 @@ struct MoveInfo : public Move {
     uint64_t dominatesOthers() const { return isDO(); }
     uint64_t dominatesMe() const { return isDM(); }
     uint64_t dominatesAll() const { return isDALL(); }
-    
-    //uint32_t getIncMinNMelds() const { return (Move::flags >> 8) & 15; }
-    
-    uint64_t isDConst() const { return test((28)); }
 };
 
 static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
