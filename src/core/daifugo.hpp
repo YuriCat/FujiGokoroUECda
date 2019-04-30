@@ -38,7 +38,7 @@ static const std::string rankChar  = "-3456789TJQKA2+:";
 
 struct OutRank {
     int r;
-    constexpr OutRank(const int& arg): r(arg) {}
+    constexpr OutRank(int arg): r(arg) {}
 };
 inline std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
     out << rankChar[arg.r];
@@ -46,7 +46,7 @@ inline std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
 }
 struct RankRange { // 連続ランク
     int r0, r1;
-    constexpr RankRange(const int& arg0, const int& arg1): r0(arg0), r1(arg1) {}
+    constexpr RankRange(int arg0, int arg1): r0(arg0), r1(arg1) {}
 };
 inline std::ostream& operator <<(std::ostream& ost, const RankRange& arg) {
     for (int r = arg.r0; r <= arg.r1; r++) ost << rankChar[r];
@@ -77,7 +77,7 @@ const std::string suitNumChar  = "CDHSX";
     
 struct OutSuitNum {
     int sn;
-    constexpr OutSuitNum(const int& arg): sn(arg) {}
+    constexpr OutSuitNum(int arg): sn(arg) {}
 };
 inline std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg) {
     ost << suitNumChar[arg.sn];
@@ -1196,6 +1196,9 @@ struct Move {
     uint32_t toInt() const {
         return uint32_t(*reinterpret_cast<const uint64_t*>(this));
     }
+    bool operator ==(const Move& m) const {
+        return toInt() == m.toInt();
+    }
     
     void clear()                      { Move tmp = {0}; (*this) = tmp; }
     void setPASS()                    { clear(); t = 0; }
@@ -1316,14 +1319,7 @@ struct Move {
     bool domInevitably() const;
     bool isRev() const;
     bool isBack() const;
-
-    bool changesPrmState() const { return isRev(); }
-
     bool exam() const;
-
-    bool operator ==(const Move& m) const {
-        return toInt() == m.toInt();
-    }
 };
 
 const Move MOVE_NULL = {0};
@@ -1365,9 +1361,7 @@ static std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出�
     return out;
 }
 
-class LogMove : public Move {
-    // ログ出力用
-public:
+struct LogMove : public Move { // ログ出力用
     LogMove(const Move& arg) : Move(arg) {}
 };
 

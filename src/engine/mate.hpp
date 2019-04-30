@@ -418,8 +418,8 @@ namespace UECda {
             // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
             if (myHand.seq) {
                 const int NMoves = genAllSeq(buf, myHand.cards);
-                for (int m = 0; m < NMoves; ++m) {
-                    const MoveInfo& mv = buf[m];
+                for (int i = 0; i < NMoves; i++) {
+                    const MoveInfo& mv = buf[i];
                     if (mv.qty() >= myHand.qty) return true; // 即上がり
                     
                     Hand nextHand;
@@ -502,23 +502,6 @@ namespace UECda {
             // 他のシングルを検討
             // 現時点のオーダーで最強の
         }
-        
-        //ここからもう計算量度外視(暫定的処置)
-        /*if ( !mv.isSeq()
-         && !mv.flipsTmpOrder()
-         ) {//階段、オーダー変更はめんどいしあまりないのでやらない
-         
-         //8切りで返される可能性があればダメ
-         if ( !dominatesCards(mv,opsHand.cards & (CARDS_8|CARDS_JOKER)) ) {
-         return false;
-         }
-         
-         //上に出せる着手を全て列挙
-         int NMoves=genMove(buf,myHand.cards,b);
-         for (int m=NMoves-1;m>=0;m--) {
-         const MoveInfo& tmp=buf[m];
-         
-         */
         return false;
     }
 
@@ -591,7 +574,7 @@ namespace UECda {
             bd.flush();
             FieldAddInfo nextFieldInfo;
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            if (judgeHandMate(mv.changesPrmState() ? depth : 0,
+            if (judgeHandMate(mv.isRev() ? depth : 0,
                               buf, nextHand, opsHand, bd, nextFieldInfo)) {
                 return true;
             }
@@ -643,11 +626,11 @@ namespace UECda {
                               const Hand& myHand, const Hand& opsHand,
                               const Board& b, const FieldAddInfo& fieldInfo) {
         // 必勝手探し
-        for (int m = NMoves - 1; m >= 0; m--) {
-            if (buf[m].qty() == myHand.qty) return m;
+        for (int i = NMoves - 1; i >= 0; i--) {
+            if (buf[i].qty() == myHand.qty) return i;
         }
-        for (int m = NMoves - 1; m >= 0; m--) {
-            if (checkHandMate(depth, buf + NMoves, buf[m], myHand, opsHand, b, fieldInfo)) return m;
+        for (int i = NMoves - 1; i >= 0; i--) {
+            if (checkHandMate(depth, buf + NMoves, buf[i], myHand, opsHand, b, fieldInfo)) return i;
         }
         return -1;
     }

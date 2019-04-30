@@ -275,9 +275,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return r / (double)cnt;
     }
     
-#define Foo(i) { s += pol.param(i); if (M) { pol.feedFeatureScore(m, (i), 1.0); }}
-#define FooX(i, x) { s += pol.param(i) * (x); FASSERT(x,); if (M) { pol.feedFeatureScore(m, (i), (x)); }}
-#define FooM(i) { s += pol.param(i); if (M) { pol.feedFeatureScore(m, (i), 1.0); }}
+#define Foo(f) { s += pol.param(f); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
+#define FooX(f, x) { s += pol.param(f) * (x); FASSERT(x,); if (M) { pol.feedFeatureScore(i, (f), (x)); }}
+#define FooM(f) { s += pol.param(f); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
     
     template <
     int M = 1, // 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存
@@ -331,11 +331,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         
         pol.template initCalculatingScore(NMoves);
         
-        for (int m = 0; m < NMoves; m++) {
+        for (int i = 0; i < NMoves; i++) {
             
             pol.template initCalculatingCandidateScore();
             
-            MoveInfo& mv = buf[m];
+            MoveInfo& mv = buf[i];
             typename policy_t::real_t s = 0;
             
             if (mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))) {
@@ -783,9 +783,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 }
 #endif
             }
-            pol.template feedCandidateScore(m, exp(s / pol.temperature()));
+            pol.template feedCandidateScore(i, exp(s / pol.temperature()));
             
-            if (!M || dst != nullptr) dst[m] = s;
+            if (!M || dst != nullptr) dst[i] = s;
         }
         pol.template finishCalculatingScore();
         
@@ -823,13 +823,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         //typename policy_t::real_t *baseAddress = pol.param_ + FEA_IDX(FEA_CHANGE_CC) + ;
         
         
-        for (int m = 0; m < NChanges; m++) {
+        for (int i = 0; i < NChanges; i++) {
             
             pol.template initCalculatingCandidateScore();
             
             typename policy_t::real_t s = 0;
-            int i;
-            const Cards changeCards = change[m];
+            const Cards changeCards = change[i];
             const Cards changePlainCards = maskJOKER(changeCards);
             const Cards afterCards = maskCards(myCards, changeCards);
             const Cards afterPlainCards = maskJOKER(afterCards);
@@ -852,8 +851,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             seq3.mask(extractRanks<3>(seq5));
                             tmp.mask(extractRanks<5>(seq5));
                             for (IntCard ic : seq5) {
-                                i = base + IntCardToRank(ic) - RANK_3;
-                                Foo(i);
+                                int f = base + IntCardToRank(ic) - RANK_3;
+                                Foo(f);
                                 seq5.mask(extractRanks<5>(IntCardToCards(ic)));
                             }
                         }
@@ -861,16 +860,16 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                             tmp.mask(extractRanks<4>(seq4));
                             seq3.mask(extractRanks<2>(seq4));
                             for (IntCard ic : seq4) {
-                                i = base + 9 + IntCardToRank(ic) - RANK_3;
-                                Foo(i);
+                                int f = base + 9 + IntCardToRank(ic) - RANK_3;
+                                Foo(f);
                             }
                         }
                     }
                     if (seq3) {
                         tmp.mask(extractRanks<3>(seq3));
                         for (IntCard ic : seq3) {
-                            i = base + 19 + IntCardToRank(ic) - RANK_3;
-                            Foo(i);
+                            int f = base + 19 + IntCardToRank(ic) - RANK_3;
+                            Foo(f);
                             if (!seq3) break;
                         }
                     }
@@ -880,8 +879,8 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                     base += 30 - 4;
                     tmp = CardsToPQR(tmp); // 枚数位置型に変換
                     for (IntCard ic : tmp) {
-                        i = base + ic; // 枚数位置型なのでそのままインデックスになる
-                        Foo(i);
+                        int f = base + ic; // 枚数位置型なのでそのままインデックスになる
+                        Foo(f);
                         if (!tmp) break;
                     }
                 }
@@ -890,8 +889,7 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             { // D3 BONUS
                 constexpr int base = FEA_IDX(FEA_CHANGE_HAND_D3);
                 if (containsCard(afterCards, CARDS_D3)) {
-                    i = base;
-                    Foo(i);
+                    Foo(base);
                 }
             }
             
@@ -899,15 +897,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 constexpr int base = FEA_IDX(FEA_CHANGE_HAND_JOKER_S3);
                 if (containsCard(afterCards, CARDS_S3)) {
                     if (containsCard(afterCards, CARDS_JOKER)) { // mine
-                        i = base;
-                        Foo(i);
+                        Foo(base);
                     } else { // ops
-                        i = base + 1;
-                        Foo(i);
+                        Foo(base + 1);
                     }
                 } else if (containsCard(afterCards, CARDS_JOKER)) {
-                    i = base + 2;
-                    Foo(i);
+                    Foo(base + 2);
                 }
             }
             
@@ -970,12 +965,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             
             double exps = exp(s / pol.temperature());
             
-            pol.template feedCandidateScore(m, exps);
+            pol.template feedCandidateScore(i, exps);
             
             if (M) {
-                if (dst != nullptr) dst[m + 1] = dst[m] + exps;
+                if (dst != nullptr) dst[i + 1] = dst[i] + exps;
             } else {
-                dst[m + 1] = dst[m] + exps;
+                dst[i + 1] = dst[i] + exps;
             }
         }
         return 0;
