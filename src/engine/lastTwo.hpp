@@ -31,9 +31,9 @@ namespace UECda {
         bool isNull() const { return b.isNull(); }
         int order() const { return b.order(); }
         
-        uint64_t isLastAwake() const { return info.isLastAwake(); }
-        uint64_t isFlushLead() const { return info.isFlushLead(); }
-        uint64_t isUnrivaled() const { return info.isUnrivaled(); }
+        bool isLastAwake() const { return info.isLastAwake(); }
+        bool isFlushLead() const { return info.isFlushLead(); }
+        bool isUnrivaled() const { return info.isUnrivaled(); }
         
         void setSelfFollow() { info.setSelfFollow(); }
         void setLastAwake() { info.setLastAwake(); }
