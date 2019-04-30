@@ -32,8 +32,6 @@ struct SubjectivePlayouterField : public PlayouterField {
     PlayouterField(objField), myPlayerNum(ap) {}
 };
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-
 using namespace UECda;
 
 Clock cl;
@@ -200,15 +198,7 @@ int testEstimationWithModeling(const logs_t& mLog) {
 }
 
 int main(int argc, char* argv[]) {
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
     std::vector<std::string> logFileNames;
-    
     threadTools.dice.srand((unsigned int)time(NULL));
     
     for (int c = 1; c < argc; ++c) {

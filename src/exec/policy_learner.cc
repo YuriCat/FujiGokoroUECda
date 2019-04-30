@@ -14,9 +14,6 @@ struct ThreadTools {
 
 using namespace std;
 
-string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-
-
 enum {
     MODE_FLAG_TEST = 1,
     MODE_FLAG_CHANGE = 2,
@@ -326,15 +323,7 @@ int main(int argc, char* argv[]) { // For UECda
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    
-    // ファイルパスの取得
-    {
-        ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
-    
+
     vector<string> logFileNames;
     string outDirName = "";
     

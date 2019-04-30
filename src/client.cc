@@ -10,7 +10,6 @@
 #include "connection.h"
 #include "UECda.h"
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 // クライアント
 #ifdef HUMAN_MODE
 #elif RANDOM_MODE
@@ -35,16 +34,7 @@ int main(int argc, char* argv[]) { // for UECda
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    
-    // ファイルパスの取得
-    {
-        std::ifstream ifs("./blauweregen_config.txt");
-        if (!ifs) cerr << "main() : failed to open config file." << endl;
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
-    
+
     // 全試合前の初期化
     auto& record = engine.record;
     auto& shared = engine.shared;

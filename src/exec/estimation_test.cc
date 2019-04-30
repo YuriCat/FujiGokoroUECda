@@ -1,43 +1,11 @@
-/*
- esimation_test.cc
- Katsuki Ohto
- */
-
 // オンラインでの相手手札推定のテスト
 
 #include "../include.h"
-#include "../structure/log/minLog.hpp"
-#include "../generator/changeGenerator.hpp"
-#include "../generator/moveGenerator.hpp"
-#include "../fuji/montecarlo/playout.h"
-#include "../fuji/policy/changePolicy.hpp"
-#include "../fuji/policy/playPolicy.hpp"
-
-#include "../fuji/model/playerModel.hpp"
-#include "../fuji/model/playerBias.hpp"
 
 struct ThreadTools{
     MoveInfo buffer[8192];
     XorShift64 dice;
 };
-
-struct SubjectivePlayouterField : public PlayouterField{
-    // シミュレーション用局面情報の主観化
-    int myPlayerNum;
-    
-    int getMyPlayerNum() const noexcept{ return myPlayerNum; }
-    Cards getMyCards() const { return getCards(getMyPlayerNum()); }
-    const Hand& myHand() const { return getHand(getMyPlayerNum()); }
-    Cards getOpsCards() const { return getOpsCards(getMyPlayerNum()); }
-    const Hand& getOpsHand() const { return getOpsHand(getMyPlayerNum()); }
-    Cards getSentCards() const { return getSentCards(getMyPlayerNum()); }
-    Cards getRecvCards() const { return getRecvCards(getRecvCards()); }
-    
-    SubjectivePlayouterField(const PlayouterField& objField, consy int ap):
-    PlayouterField(objField), myPlayerNum(ap) {}
-};
-
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
 
@@ -214,15 +182,7 @@ int testEstimationWithModeling(const logs_t& mLog) {
 }
 
 int main(int argc, char* argv[]) {
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
     std::vector<std::string> logFileNames;
-    
     threadTools.dice.srand((unsigned int)time(NULL));
     
     for (int c = 1; c < argc; ++c) {

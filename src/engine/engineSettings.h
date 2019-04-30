@@ -62,4 +62,19 @@ namespace UECda {
         MATCH_CONST double playerBiasPriorSize = 100;//1000;
         MATCH_CONST double playerBiasCoef = 1;//0.65;
     }
+
+    std::string DIRECTORY_PARAMS_IN = "";
+    std::string DIRECTORY_PARAMS_OUT = "";
+    std::string DIRECTORY_LOGS = "";
+
+    struct ConfigReader {
+        ConfigReader(std::string cfile) {
+            std::ifstream ifs(cfile);
+            if (!ifs) std::cerr << "failed to open config file." << std::endl;
+            if (ifs) ifs >> DIRECTORY_PARAMS_IN;
+            if (ifs) ifs >> DIRECTORY_PARAMS_OUT;
+            if (ifs) ifs >> DIRECTORY_LOGS;
+        }
+    };
+    ConfigReader configReader("lilovyy_config.txt");
 }

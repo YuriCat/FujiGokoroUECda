@@ -5,9 +5,8 @@
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
+#include "../engine/engineSettings.h"
 #include "../engine/linearPolicy.hpp"
-
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
 
 using namespace UECda;
 
@@ -259,13 +258,7 @@ int testSelector(const MatchRecord& mrecord) {
 }
 
 int main(int argc, char* argv[]) {
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
+
     std::vector<std::string> logFileNames;
     
     for (int c = 1; c < argc; ++c) {
