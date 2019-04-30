@@ -44,7 +44,6 @@ namespace UECda {
         
         // 毎回報酬テーブルから持ってこなくてもいいようにこの試合の報酬を置いておくテーブル
         uint16_t gameReward[N_CLASSES];
-        uint16_t daifugoSeatGameReward[N_PLAYERS][N_CLASSES];
         
         // 基本方策
         ChangePolicy<policy_value_t> baseChangePolicy;
@@ -241,8 +240,8 @@ namespace UECda {
 #endif
         void setCommonInfo(int num, const Field& field, const EngineSharedData& shared, int limSim) {
             actions = candidates = num;
-            for (int m = 0; m < actions; m++) {
-                monteCarloAllScore += child[m].monteCarloScore;
+            for (int i = 0; i < actions; i++) {
+                monteCarloAllScore += child[i].monteCarloScore;
             }
             myPlayerNum = shared.record.myPlayerNum;
             rivalPlayerNum = -1;
@@ -263,13 +262,13 @@ namespace UECda {
         void setChange(const Cards *const a, int num,
                        const Field& field, const EngineSharedData& shared, int limSim = -1) {
             isChange = true;
-            for (int m = 0; m < num; m++) child[m].setChange(a[m]);
+            for (int i = 0; i < num; i++) child[i].setChange(a[i]);
             setCommonInfo(num, field, shared, limSim);
         }
         void setPlay(const MoveInfo *const a, int num,
                      const Field& field, const EngineSharedData& shared, int limSim = -1) {
             isChange = false;
-            for (int m = 0; m < num; m++) child[m].setPlay(a[m]);
+            for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
             setCommonInfo(num, field, shared, limSim);
         }
         
@@ -282,22 +281,23 @@ namespace UECda {
             // 方策関数の出力をモンテカルロ結果の事前分布として加算
             // 0 ~ 1 の値にする
             double maxScore = -DBL_MAX, minScore = DBL_MAX;
-            for (int m = 0; m < candidates; m++) {
-                maxScore = max(maxScore, child[m].policyScore + 0.000001);
-                minScore = min(minScore, child[m].policyScore);
+            for (int i = 0; i < candidates; i++) {
+                maxScore = max(maxScore, child[i].policyScore + 0.000001);
+                minScore = min(minScore, child[i].policyScore);
             }
             // 初期値として加算
             double n = 0;
-            if (isChange)
+            if (isChange) {
                 n = Settings::rootChangePriorCoef * pow(double(candidates - 1), Settings::rootChangePriorExponent);
-            else
+            } else {
                 n = Settings::rootPlayPriorCoef * pow(double(candidates - 1), Settings::rootPlayPriorExponent);
-            for (int m = 0; m < candidates; m++) {
-                double r = (child[m].policyScore - minScore) / (maxScore - minScore);
-                child[m].monteCarloScore += BetaDistribution(r, 1 - r) * n;
             }
-            for (int m = 0; m < candidates; m++) {
-                monteCarloAllScore += child[m].monteCarloScore;
+            for (int i = 0; i < candidates; i++) {
+                double r = (child[i].policyScore - minScore) / (maxScore - minScore);
+                child[i].monteCarloScore += BetaDistribution(r, 1 - r) * n;
+            }
+            for (int i = 0; i < candidates; i++) {
+                monteCarloAllScore += child[i].monteCarloScore;
             }
         }
         
@@ -398,8 +398,9 @@ namespace UECda {
                                     return callback(a) > callback(b);
                                 });
             // 最高評価なものの個数を返す
-            for (int m = 0; m < num; m++)
-                if (callback(child[m]) < callback(child[0])) return m;
+            for (int i = 0; i < num; i++) {
+                if (callback(child[i]) < callback(child[0])) return i;
+            }
             return num;
         }
         template <class callback_t>
@@ -410,8 +411,9 @@ namespace UECda {
                                     return (callback(a) ? 1 : 0) > (callback(b) ? 1 : 0);
                                 });
             // 最高評価なものの個数を返す
-            for (int m = 0; m < num; m++)
-                if ((callback(child[m]) ? 1 : 0) < (callback(child[0]) ? 1 : 0)) return m;
+            for (int i = 0; i < num; i++) {
+                if ((callback(child[i]) ? 1 : 0) < (callback(child[0]) ? 1 : 0)) return i;
+            }
             return num;
         }
         
@@ -421,44 +423,44 @@ namespace UECda {
             // 先にソートしておく必要あり
             oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
             oss << allSimulations << " trials." << endl;
-            for (int m = 0; m < min(actions, num); m++) {
-                const int rg = (int)(child[m].mean() * rewardGap);
+            for (int i = 0; i < min(actions, num); i++) {
+                const int rg = (int)(child[i].mean() * rewardGap);
                 const int rew = rg + worstReward;
-                const int nrg = (int)(child[m].naive_mean() * rewardGap);
+                const int nrg = (int)(child[i].naive_mean() * rewardGap);
                 const int nrew = nrg + worstReward;
-                double sem = sqrt(child[m].mean_var());
+                double sem = sqrt(child[i].mean_var());
                 const int rewZone[2] = {rew - (int)(sem * rewardGap), rew + (int)(sem * rewardGap)};
                 
-                if (m == 0) oss << "\033[1m";
-                oss << m << " ";
+                if (i == 0) oss << "\033[1m";
+                oss << i << " ";
                 
-                if (isChange) oss << child[m].changeCards;
-                else oss << child[m].move;
+                if (isChange) oss << child[i].changeCards;
+                else oss << child[i].move;
                 
                 oss << " : ";
                 
-                if (child[m].simulations > 0) {
+                if (child[i].simulations > 0) {
                     // まず総合評価点を表示
                     oss << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
                     oss << "{mc: " << nrg << "} ";
 #ifdef DEFEAT_RIVAL_MC
                     if (rivalPlayerNum >= 0) {
                         // 自分とライバルの評価点を表示
-                        oss << child[m].myScore;
-                        oss << " [mine = " << (worstReward + (int)(child[m].myScore.mean() * (double)rewardGap)) << "] ";
-                        oss << child[m].rivalScore;
-                        oss << " [rival's = ~" << (bestReward - (int)(child[m].rivalScore.mean() * (double)rewardGap)) << "] ";
+                        oss << child[i].myScore;
+                        oss << " [mine = " << (worstReward + (int)(child[i].myScore.mean() * (double)rewardGap)) << "] ";
+                        oss << child[i].rivalScore;
+                        oss << " [rival's = ~" << (bestReward - (int)(child[i].rivalScore.mean() * (double)rewardGap)) << "] ";
                     }
 #endif
                 }
-                oss << "prob = " << child[m].policyProb; // 方策関数の確率出力
-                oss << " (pol = " << child[m].policyScore << ") "; // 方策関数のスコア
-                if (child[m].simulations > 0) {
-                    oss << "t = " << child[m].turnSum / (double)child[m].simulations << " "; // 統計量
+                oss << "prob = " << child[i].policyProb; // 方策関数の確率出力
+                oss << " (pol = " << child[i].policyScore << ") "; // 方策関数のスコア
+                if (child[i].simulations > 0) {
+                    oss << "t = " << child[i].turnSum / (double)child[i].simulations << " "; // 統計量
                 }
-                oss << child[m].simulations << " trials." << endl;
+                oss << child[i].simulations << " trials." << endl;
                 
-                if (m == 0)oss << "\033[0m";
+                if (i == 0) oss << "\033[0m";
             }
             return oss.str();
         }

@@ -89,10 +89,9 @@ namespace UECda {
             // 公式には未定だが、多くの場合100試合だろうから100試合としておく
             const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
             const int gamesForSIG = getNGamesForSeatInitGame(record.getLatestGameNum());
-            for (int cl = 0; cl < N_PLAYERS; ++cl)
+            for (int cl = 0; cl < N_PLAYERS; cl++) {
                 shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
-            for (int rs = 0; rs < N_PLAYERS; ++rs) for (int cl = 0; cl < N_PLAYERS; ++cl)
-                shared.daifugoSeatGameReward[rs][cl] = int(daifugoSeatReward(gamesForCIG, gamesForSIG, rs, cl) * 100);
+            }
             
             // 置換表初期化
 #ifdef USE_L2BOOK
