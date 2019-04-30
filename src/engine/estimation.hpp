@@ -394,7 +394,7 @@ private:
     bool inChange;
     bool initGame;
     bool failed;
-    uint32_t failures;
+    unsigned failures;
     
     // 採択棄却法時の棄却回数限度
     static constexpr int MAX_REJECTION = 800;
@@ -407,8 +407,8 @@ private:
     
     // 進行得点関連
     int turnCount;
-    static constexpr uint32_t HARATE_MAX = 32;
-    uint32_t HARate;
+    static constexpr unsigned HARATE_MAX = 32;
+    unsigned HARate;
     
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;
@@ -472,18 +472,6 @@ private:
 
         bool success = false;
         int trials = 0;
-        /*Cards R[N] = {0};
-
-        if (myClass < MIDDLE) {
-            // 富豪以上の場合
-            Cards 
-
-        } else if (myClass > MIDDLE) {
-            // 貧民以下の場合
-
-        } else {
-            // 平民の場合
-        }*/
 
         switch (myClass) {
             case DAIFUGO:
@@ -793,12 +781,12 @@ private:
         std::vector<double> tmpProb;
         const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
         const int NMyDC = countCards(myDealtCards);
-        
+
         // 相手の献上後の所持カードで判明しているもの
         const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
         // 相手の献上後の所持カードの上界より高い札のみ献上でもらっている可能性がある
         const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(pickHigh(partnerDealtCards, 1)) : CARDS_ALL;
-        
+
         if (T > 0) {
             Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
             int index = 0;
@@ -827,7 +815,7 @@ private:
             double sum = 0;
             for (int i = 0; i < index; i++) sum += tmpProb[i];
             for (int i = 0; i < index; i++) tmpProb[i] *= index / sum;
-            
+
             std::queue<int> small, large;
             for (int i = 0; i < index; i++) {
                 if (tmpProb[i] < 1) small.push(i);
@@ -858,16 +846,16 @@ private:
             candidatesInWA = index;
         }
     }
-    
+
     void dealPart_AbsSbjInfo() {
         // 自分以外の未使用カード
         distCards = maskCards(remCards, myCards);
-        
+
         // 自分
         detCards[myClass] |= myCards;
         NDeal[myClass] = 0;
         NDet[myClass] = NOrg[myClass];
-        
+
         // 初手がすでに済んでいる場合、初手プレーヤーにD3
         if (!inChange
             && turnCount > 0
@@ -893,19 +881,19 @@ private:
                 }
             }
         }
-        
+
         // 結局配る枚数
         NDistCards = countCards(distCards);
         ASSERT(NDistCards == std::accumulate(NDeal.begin(), NDeal.begin() + N, 0),
                cerr << NDistCards << " " << NDeal << " " << std::accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
-        
+
         // 初手がすでに済んでいる段階では、自分と、自分以外で全てのカードが明らかになっていないプレーヤーは着手を検討する必要がある
         if (!inChange && turnCount > 0) {
             // HA設定
-            uint32_t NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
+            unsigned NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
             // 1 -> ... -> max -> ... -> 1 と台形に変化
             HARate = (NOppUsedCards > 0) ? min({ HARATE_MAX, (HARATE_MAX - 1) * NOppUsedCards / 4 + 1, (HARATE_MAX - 1) * NDistCards / 16 + 1 }) : 1;
-            
+
             playFlag.reset();
             for (int p = 0; p < N; p++) {
                 if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
@@ -918,15 +906,14 @@ private:
             << " Det:" << NDet[p] << " Deal:" << NDeal[p] << " " << detCards[p] << endl;
         }
     }
- 
+
     double calcPlayLikelihood(Cards *const c, const EngineSharedData& shared, EngineThreadTools *const ptools) const {
-        
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
         // 計算時間解析は、各プレーについて検討
-        
+
         // 時間解析するかどうか
         const int by_time = shared.estimating_by_time;
-        
+
         // 対数尤度
         double playLH = 0;
         std::array<Cards, N> orgCards;
@@ -943,55 +930,48 @@ private:
         // play callback
         [&playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
         (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
-            const uint32_t tp = field.turn();
-
+            const int tp = field.turn();
             const Cards usedCards = chosenMove.cards();
-            const Board board = field.board;
+            const Board b = field.board;
             const Cards myCards = field.getCards(tp);
             const Hand& myHand = field.getHand(tp);
             const Hand& opsHand = field.getOpsHand(tp);
             
             if (!holdsCards(myCards, usedCards)) return -1; // 終了(エラー?)
-            if (tmpPlayFlag.test(tp)) {
-                // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-            
-                // 場の情報をまとめる
-                const int NMoves = genMove(mv, myHand, board);
-                assert(NMoves > 0);
-                
-                if (NMoves > 1) {
-                    for (int m = 0; m < NMoves; m++) {
-                        bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, board, field.fieldInfo);
-                        if (mate) mv[m].setMPMate();
-                    }
+            // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
+            if (!tmpPlayFlag.test(tp)) return 0;
+
+            const int NMoves = genMove(mv, myHand, b);
+            if (NMoves <= 1) return 0;
+
+            // 場の情報をまとめる
+            for (int i = 0; i < NMoves; i++) {
+                bool mate = checkHandMate(0, mv + NMoves, mv[i], myHand, opsHand, b, field.fieldInfo);
+                if (mate) mv[i].setMPMate();
+            }
+
+            // フェーズ(空場0、通常場1、パス支配場2)
+            const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
+            // プレー尤度計算
+            int chosenIdx = searchMove(mv, NMoves, [chosenMove](const auto& tmp)->bool{
+                return tmp == chosenMove;
+            });
+
+            if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
+                playLH += log(1 / (double)(NMoves + 1));
+            } else {
+                std::array<double, N_MAX_MOVES> score;
+                calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
+                // Mateの手のスコアを設定
+                double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
+                for (int i = 0; i < NMoves; i++) {
+                    if (mv[i].isMate()) score[i] = maxScore + 4;
                 }
-                
-                // フェーズ(空場0、通常場1、パス支配場2)
-                const int ph = board.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
-                // プレー尤度計算
-                if (NMoves > 1) {
-                    // search move
-                    int chosenIdx = searchMove(mv, NMoves, [chosenMove](const auto& tmp)->bool{
-                        return tmp == chosenMove;
-                    });
-                    
-                    if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
-                        playLH += log(1 / (double)(NMoves + 1));
-                    } else {
-                        std::array<double, N_MAX_MOVES> score;
-                        calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
-                        // Mateの手のスコアを設定
-                        double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
-                        for (int i = 0; i < NMoves; i++) {
-                            if (mv[i].isMate()) score[i] = maxScore + 4;
-                        }
-                        SoftmaxSelector<double> selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
-                        if (selector.sum_ != 0) {
-                            playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
-                        } else { // 等確率とする
-                            playLH += log(1 / (double)NMoves);
-                        }
-                    }
+                SoftmaxSelector<double> selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
+                if (selector.sum_ != 0) {
+                    playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
+                } else { // 等確率とする
+                    playLH += log(1 / (double)NMoves);
                 }
             }
             return 0;

@@ -105,16 +105,15 @@ namespace UECda {
             
         }
         
-        Cards change(uint32_t change_qty) { // 交換関数
+        Cards change(unsigned changeQty) { // 交換関数
             const auto& gameLog = record.latestGame();
             const int myPlayerNum = record.myPlayerNum;
             
-            assert(change_qty == 1U || change_qty == 2U);
+            assert(changeQty <= 2);
             
             RootInfo root;
             Cards changeCards = CARDS_NULL;
             const Cards myCards = gameLog.getDealtCards(myPlayerNum);
-
             if (monitor) cerr << "My Cards : " << myCards << endl;
             
 #ifdef RARE_PLAY
@@ -129,37 +128,28 @@ namespace UECda {
             }
 #endif
             // 手札レベルで枝刈りする場合
-#ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
-            Cards tmp = Heuristics::pruneCards(myCards, change_qty);
-#else
             Cards tmp = myCards;
+#ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
+            tmp = Heuristics::pruneCards(myCards, changeQty);    
 #endif
             
-            if (countCards(tmp) == change_qty) return tmp;
-            
+            if (countCards(tmp) == changeQty) return tmp;
+
             // 合法交換候補生成
-            Cards cand[N_MAX_CHANGES]; // 最大候補数
-            
-            int NCands = genChange(cand, tmp, change_qty);
-            
-            if (NCands == 1) {
-                assert(holdsCards(myCards, cand[0]) && countCards(cand[0]) == change_qty);
-                return cand[0];
+            Cards cand[N_MAX_CHANGES];
+            int NCands = genChange(cand, tmp, changeQty);
+            for (int i = 0; i < NCands; i++) {
+                assert(cand[i].count() == changeQty && myCards.holds(chand[i]));
             }
+            if (NCands == 1) return cand[0];
             
             // 必勝チェック&枝刈り
-            for (int c = 0; c < NCands;) {
-                
-                assert(holdsCards(myCards, cand[c]));
-                
+            for (int i = 0; i < NCands; i++) {
                 // 交換後の自分のカード
-                Cards restCards = subtrCards(myCards, cand[c]);
-                
-                Hand mine;
-                mine.set(restCards);
-                
+                Cards restCards = subtrCards(myCards, cand[i]);
+
                 // D3を持っている場合、自分からなので必勝チェック
-                if (containsD3(myCards)) {
+                if (containsD3(restCards)) {
                     const Board b = OrderToNullBoard(0); // 通常オーダーの空場
                     FieldAddInfo fieldInfo;
                     fieldInfo.init();
@@ -168,34 +158,25 @@ namespace UECda {
                     fieldInfo.setMinNCards(10);
                     fieldInfo.setMaxNCardsAwake(11);
                     fieldInfo.setMaxNCards(11);
-                    Hand ops;
+                    Hand mine, ops;
+                    mine.set(restCards);
                     ops.set(subtrCards(CARDS_ALL, restCards));
                     if (judgeHandMate(1, searchBuffer, mine, ops, b, fieldInfo)) {
-                        // 必勝
                         CERR << "CHANGE MATE!" << endl;
-                        assert(holdsCards(myCards, cand[c]) && countCards(cand[c]) == change_qty);
-                        return cand[c];
+                        return cand[i]; // 必勝
                     }
                 }
-                
+            }
 #ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
+            for (int i = 0; i < NCands; i++) {
+                Cards restCards = subtrCards(myCards, cand[i]);
                 // 残り札に革命が無い場合,Aもダメ
                 if (isNoRev(restCards)) {
-                    if (andCards(cand[c], CARDS_A)) {
-                        std::swap(cand[c], cand[--NCands]);
-                        goto TO_NEXT;
-                    }
+                    if (cand[i] & CARDS_A) std::swap(cand[i], cand[--NCands]);
                 }
-                
-            TO_NEXT:
-                if (NCands == 1) {
-                    assert(holdsCards(myCards, cand[0]) && countCards(cand[0]) == change_qty);
-                    return cand[0];
-                }
-#endif
-                ++c;
+                if (NCands == 1) return cand[0];
             }
-            
+#endif
             // ルートノード設定
             Field field;
             setFieldFromClientLog(gameLog, myPlayerNum, &field);
@@ -204,8 +185,8 @@ namespace UECda {
             
             // 方策関数による評価
             double escore[N_MAX_CHANGES + 1], score[N_MAX_CHANGES];
-            calcChangePolicyScoreSlow(escore, cand, NCands, myCards, change_qty, field,
-                                        shared.baseChangePolicy);
+            calcChangePolicyScoreSlow(escore, cand, NCands, myCards, changeQty, field,
+                                      shared.baseChangePolicy);
             // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
             for (int i = 0; i < NCands; i++) {
                 score[i] = log(max(escore[i + 1] - escore[i], 0.000001)) * Settings::temperatureChange;
