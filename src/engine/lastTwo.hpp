@@ -29,9 +29,9 @@ namespace UECda {
         bool isNull() const { return b.isNull(); }
         int order() const { return b.order(); }
         
-        uint64_t isLastAwake() const { return b.isLastAwake(); }
-        uint64_t isFlushLead() const { return b.isFlushLead(); }
-        uint64_t isUnrivaled() const { return b.isUnrivaled(); }
+        bool isLastAwake() const { return b.isLastAwake(); }
+        bool isFlushLead() const { return b.isFlushLead(); }
+        bool isUnrivaled() const { return b.isUnrivaled(); }
         
         void setSelfFollow() { b.setSelfFollow(); }
         void setLastAwake() { b.setLastAwake(); }
@@ -69,6 +69,7 @@ namespace UECda {
         f.b = cur.b;
         f.b.procAndFlush(mv);
         f.b.initInfo();
+        //cerr << f.b.nmin << " " << f.b.nminaw << " " << f.b.nmax << " " << f.b.nmaxaw << endl;
         return f;
     }
     int procL2Field(const L2Field& cur, L2Field *const pnext, const Move m) {
@@ -193,14 +194,12 @@ namespace UECda {
     }
     
     class L2Judge {
-        
         // L2判定人
         // 単純な構造でデータを受け取り、
         
         // judge...局面L2判定を返す
         // check...着手L2判定を返す
         // search...与えられた着手集合に勝利着手があればインデックス、なければ-1を返す
-        
     private:
         const int NODE_LIMIT;
         
@@ -216,7 +215,6 @@ namespace UECda {
         
         L2Judge(int nl, Move *const mb):
         NODE_LIMIT(nl), buf(mb) { init(); }
-        ~L2Judge() {}
 
         // 再帰版
         template <int S_LEVEL, int E_LEVEL>

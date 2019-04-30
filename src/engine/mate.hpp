@@ -8,16 +8,12 @@
 #include "../core/dominance.hpp"
 
 namespace UECda {
-    
     // 他のプレーヤー達がいかなる行動信念を持っていたとしても
     // 自分のあがりを阻止出来ない事の判定
     
     // judge...用件の判定さえ出来れば良い
     // check...ある着手について用件の判定を行う
     // search...用件を満たす着手を探す
-    
-    // 詰みにも色々な場合があるだろうが、
-    // 多くは以下のうちのどれかである
     
     // 完全勝利(PW)...他のプレーヤーに一度も選択機会を与えずに上がる
     // N手完全勝利(BNPW)...相手にN区間の着手決定機会があるが最終的にPWになることがわかっている
@@ -478,7 +474,7 @@ namespace UECda {
                 Move sj; sj.setSingleJOKER();
                 nmh.makeMove1stHalf(sj, CARDS_JOKER, 1);
                 Board nb = b;
-                nb.flush(); nb.flushInfo();
+                nb.flush(true);
                 nb.setMinNCards(aw - m.qty());
                 nb.setMinNCardsAwake(aw - m.qty());
                 if (judgeHandMate(depth, mbuf, nmh, oh, nb)) return true;
@@ -520,7 +516,7 @@ namespace UECda {
             m.setDO(); // 支配フラグ付加
             if (m.isPASS()) {
                 Board nb = b;
-                nb.flush(); nb.flushInfo();
+                nb.flush(true);
                 return judgeHandMate(depth, mbuf, mh, oh, nb);
             } else {
                 if (m.qty() >= mh.qty) return true; // あがり
@@ -529,7 +525,7 @@ namespace UECda {
                 makeMove1stHalf(mh, &nmh, m);
                 if (dominatesCards(m, nmh.cards, b)) { // 自己支配
                     m.setDM(); // 支配フラグ付加
-                    nb.procAndFlush(m); nb.flushInfo();
+                    nb.procAndFlush(m, true);
                     return judgeHandMate(depth, mbuf, nmh, oh, nb);
                 } else { // セルフフォロー必勝を判定
                     nb.proc(m);
@@ -547,7 +543,7 @@ namespace UECda {
             // パス支配の場合, 流れてからの必勝を判定
             m.setDO(); // 支配フラグ付加
             Board nb = b;
-            nb.flush(); nb.flushInfo();
+            nb.flush(true);
             return judgeHandMate(depth, mbuf, mh, oh, nb);
         }
         // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
@@ -564,7 +560,7 @@ namespace UECda {
             // セルフフォロー
             // 自分の出した役を流してからの必勝チェック
             // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
-            nb.flush(); nb.flushInfo();
+            nb.flush(true);
             if (judgeHandMate(m.isRev() ? depth : 0, mbuf, nmh, oh, nb)) return true;
             // 自分の出したジョーカーをS3で返してからの必勝チェック
             if (m.isSingleJOKER() && containsS3(nmh.cards)) {
@@ -573,35 +569,34 @@ namespace UECda {
                 return judgeHandMate(0, mbuf, nmh, oh, nb);
             }
         } else { // 支配しない
-            if (depth) {
-                // S3分岐必勝を検討
-                // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
-                // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
-                if (m.isSingle() // シングルのみ
-                    && b.getMinNCardsAwake() > 1 // 相手に即上がりされない
-                    && containsS3(mh.cards) // 残り手札にS3がある
-                    && !m.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
-                    Cards zone = ORToGValidZone(b.order(), m.rank());
-                    if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
-                    if (!(zone & oh.cards)) { // ジョーカー以外は出せない
-                        Hand nmh;
-                        makeMove1stHalf(mh, &nmh, m);
-                        if (judgeHandPW_NF(nmh, oh, b)) { // 流れた場合
-                            Move s3; s3.setSingle(INTCARD_S3);
-                            nmh.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
-                            if (judgeHandPW_NF(nmh, oh, b)) { // S3で返した場合
-                                // 両方で勝ったので必勝
-                                DERR << "BRPW(S3)!!!" << endl;
-                                return true;
-                            }
+            if (depth <= 0) return false;
+            // S3分岐必勝を検討
+            // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
+            // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
+            if (m.isSingle() // シングルのみ
+                && b.getMinNCardsAwake() > 1 // 相手に即上がりされない
+                && containsS3(mh.cards) // 残り手札にS3がある
+                && !m.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
+                Cards zone = ORToGValidZone(b.order(), m.rank());
+                if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
+                if (!(zone & oh.cards)) { // ジョーカー以外は出せない
+                    Hand nmh;
+                    makeMove1stHalf(mh, &nmh, m);
+                    if (judgeHandPW_NF(nmh, oh, b)) { // 流れた場合
+                        Move s3; s3.setSingle(INTCARD_S3);
+                        nmh.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
+                        if (judgeHandPW_NF(nmh, oh, b)) { // S3で返した場合
+                            // 両方で勝ったので必勝
+                            DERR << "BRPW(S3)!!!" << endl;
+                            return true;
                         }
                     }
                 }
-                // BNPWを検討
-                if (checkHandBNPW(depth - 1, mbuf, m, mh, oh, b)) {
-                    DERR << "BNPW - " << m << " ( " << b.getMinNCardsAwake() << " ) " << endl;
-                    return true;
-                }
+            }
+            // BNPWを検討
+            if (checkHandBNPW(depth - 1, mbuf, m, mh, oh, b)) {
+                DERR << "BNPW - " << m << " ( " << b.getMinNCardsAwake() << " ) " << endl;
+                return true;
             }
         }
         return false;

@@ -1391,14 +1391,10 @@ struct Move {
         mate = l2mate = giveup = l2giveup = domO = domM = 0;
         sf = ur = la  = fl = npDom = pDom = bDomO = bDomM = 0;
     }
-    void flushInfo() {
-        initTmpInfo();
-        nminaw = nmin; nmaxaw = nmax;
-    }
     void initInfo() {
         initTmpInfo();
-        nmin = nminaw = 15;
-        nmax = nmaxaw = 0;
+        nmin = nminaw = 0;
+        nmax = nmaxaw = 15;
     }
 };
 
@@ -1686,11 +1682,19 @@ struct Board : public Move {
         }
         if (m.isBack()) flipTmpOrder();
     }
-    void flush() {
+    void flush(bool info = false) {
+        unsigned nmi, nma;
+        if (info) {
+            nmi = nmin, nma = nmax;
+        }
         int ord = Move::po;
         init();
         setPrmOrder(ord);
         setTmpOrder(ord);
+        if (info) {
+            nminaw = nmi; nmaxaw = nma;
+            nmin = nmi; nmax = nma;
+        }
     }
     void lockSuits() { Move::sl = 1; }
     void procPASS() {} //何もしない
@@ -1718,10 +1722,10 @@ struct Board : public Move {
         }
     }
     
-    void procAndFlush(Move m) {
+    void procAndFlush(Move m, bool info = false) {
         // 局面を更新し、強引に場を流す
         if (m.isRev()) flipPrmOrder();
-        flush();
+        flush(info);
     }
     
     void procExceptFlush(Move m) {
