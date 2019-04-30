@@ -274,9 +274,9 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
         return r / (double)cnt;
     }
     
-#define Foo(i) { s += pol.param(i); if (M) { pol.feedFeatureScore(m, (i), 1.0); }}
-#define FooX(i, x) { s += pol.param(i) * (x); FASSERT(x,); if (M) { pol.feedFeatureScore(m, (i), (x)); }}
-#define FooM(i) { s += pol.param(i); if (M) { pol.feedFeatureScore(m, (i), 1.0); }}
+#define Foo(f) { s += pol.param(f); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
+#define FooX(f, x) { s += pol.param(f) * (x); FASSERT(x,); if (M) { pol.feedFeatureScore(i, (f), (x)); }}
+#define FooM(f) { s += pol.param(f); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
     
     template <
     int M = 1, // 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存

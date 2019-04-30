@@ -1349,6 +1349,9 @@ struct Move {
     void setL2Mate() { l2mate = 1; }
     void seGiveUp() { giveup = 1; }
     void setL2GiveUp() { l2giveup = 1; }
+    void setDO() { domO = 1; }
+    void setDM() { domM = 1; }
+    void setDAll() { domO = domM = 1; }
     void setSelfFollow() { sf = ur = fl = npDom = pDom = 1; }
     void setUnrivaled() { ur = fl = npDom = pDom = 1; }
     void setLastAwake() { la = npDom = bDomO = 1; }

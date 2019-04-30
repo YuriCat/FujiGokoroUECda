@@ -151,7 +151,7 @@ int testSelector(const MatchRecord& mrecord) {
         (field, mrecord.game(i),
         [](const auto& field)->void{}, // first callback
         [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
-            MoveInfo play[N_MAX_MOVES];
+            Move play[N_MAX_MOVES];
             double score[N_MAX_MOVES];
             
             const int turnPlayer = field.turn();
@@ -159,7 +159,7 @@ int testSelector(const MatchRecord& mrecord) {
             
             calcPlayPolicyScoreSlow<0>(score, play, moves, field, playPolicy);
             
-            int recordIndex = searchMove(play, moves, MoveInfo(pl));
+            int recordIndex = searchMove(play, moves, Move(pl));
             
             // ここから条件を少しずつ変更
             for (int i = 0; i < 7; i++) {

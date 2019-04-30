@@ -159,11 +159,11 @@ namespace UECda {
             if (proot->isChange) {
                 copyField(pf, &f);
                 setWorld(*pWorld, &f);
-                startChangeSimulation(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
+                startChangeSimulation(f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
             } else {
                 copyField(pf, &f);
                 setWorld(*pWorld, &f);
-                startRootSimulation(&f, child[tryingIndex].move, pshared, ptools);
+                startRootSimulation(f, child[tryingIndex].move, pshared, ptools);
             }
             
             proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)

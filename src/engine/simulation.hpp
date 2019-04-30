@@ -11,43 +11,43 @@
 #include "lastTwo.hpp"
 
 namespace UECda {
-    int startRootSimulation(Field *const pfield,
+    int startRootSimulation(Field& f,
                             EngineSharedData *const pshared,
                             EngineThreadTools *const ptools) {
         double progress = 1;
-        pfield->initForPlayout();
+        f.initForPlayout();
         while (1) {
-            DERR << pfield->toString();
-            DERR << "turn : " << pfield->turn() << endl;
-            uint32_t tp = pfield->turn();
+            DERR << f.toString();
+            DERR << "turn : " << f.turn() << endl;
+            uint32_t tp = f.turn();
 
-            pfield->prepareForPlay();
+            f.prepareForPlay();
 
-            if (Settings::L2SearchInSimulation && pfield->isL2Situation()) { // L2
+            if (Settings::L2SearchInSimulation && f.isL2Situation()) { // L2
 #ifdef SEARCH_LEAF_L2
                 const uint32_t blackPlayer = tp;
-                const uint32_t whitePlayer = pfield->ps.searchOpsPlayer(blackPlayer);
+                const uint32_t whitePlayer = f.ps.searchOpsPlayer(blackPlayer);
 
-                ASSERT(pfield->isAlive(blackPlayer) && pfield->isAlive(whitePlayer),);
+                ASSERT(f.isAlive(blackPlayer) && f.isAlive(whitePlayer),);
 
-                L2Judge l2(65536, pfield->mv);
-                int l2Result = l2.start_judge(pfield->hand[blackPlayer], pfield->hand[whitePlayer], pfield->board, pfield->fieldInfo);
+                L2Judge l2(65536, f.mv);
+                int l2Result = l2.start_judge(f.hand[blackPlayer], f.hand[whitePlayer], f.board);
 
                 if (l2Result == L2_WIN) {
-                    pfield->setNewClassOf(blackPlayer, pfield->getWorstClass() - 1);
-                    pfield->setNewClassOf(whitePlayer, pfield->getWorstClass());
+                    f.setNewClassOf(blackPlayer, f.getWorstClass() - 1);
+                    f.setNewClassOf(whitePlayer, f.getWorstClass());
                     goto GAME_END;
                 } else if (l2Result == L2_LOSE) {
-                    pfield->setNewClassOf(whitePlayer, pfield->getWorstClass() - 1);
-                    pfield->setNewClassOf(blackPlayer, pfield->getWorstClass());
+                    f.setNewClassOf(whitePlayer, f.getWorstClass() - 1);
+                    f.setNewClassOf(blackPlayer, f.getWorstClass());
                     goto GAME_END;
                 }
 #endif // SEARCH_LEAF_L2
             }
             // 合法着手生成
-            pfield->NMoves = pfield->NActiveMoves = genMove(pfield->mv, pfield->hand[tp].cards, pfield->board);
-            if (pfield->NMoves == 1) {
-                pfield->setPlayMove(pfield->mv[0]);
+            f.NMoves = f.NActiveMoves = genMove(f.mv, f.hand[tp].cards, f.board);
+            if (f.NMoves == 1) {
+                f.setPlayMove(f.mv[0]);
             } else {
                 // search mate-move
                 int idxMate = -1;
@@ -55,9 +55,9 @@ namespace UECda {
                 if (Settings::MateSearchInSimulation) {
                     int mateIndex[N_MAX_MOVES];
                     int mates = 0;
-                    for (int m = 0; m < pfield->NActiveMoves; m++) {
-                        bool mate = checkHandMate(0, pfield->mv + pfield->NActiveMoves, pfield->mv[m],
-                                                    pfield->hand[tp], pfield->opsHand[tp], pfield->board, pfield->fieldInfo);
+                    for (int m = 0; m < f.NActiveMoves; m++) {
+                        bool mate = checkHandMate(0, f.mv + f.NActiveMoves, f.mv[m],
+                                                  f.hand[tp], f.opsHand[tp], f.board);
                         if (mate) mateIndex[mates++] = m;
                     }
                     // 探索順バイアス回避のために必勝全部の中からランダムに選ぶ
@@ -66,95 +66,94 @@ namespace UECda {
                 }
 #endif // SEARCH_LEAF_MATE
                 if (idxMate != -1) { // mate
-                    pfield->setPlayMove(pfield->mv[idxMate]);
-                    pfield->playMove.setMPMate();
-                    pfield->fieldInfo.setMPMate();
+                    f.setPlayMove(f.mv[idxMate]);
+                    f.playMove.setMate();
+                    f.board.setMate();
                 } else {
-                    if (pfield->NActiveMoves <= 1) {
-                        pfield->setPlayMove(pfield->mv[0]);
+                    if (f.NActiveMoves <= 1) {
+                        f.setPlayMove(f.mv[0]);
                     } else {
                         double score[N_MAX_MOVES + 1];
 
                         // 行動評価関数を計算
-                        calcPlayPolicyScoreSlow(score, *pfield, pshared->basePlayPolicy, 0);
+                        calcPlayPolicyScoreSlow(score, f, pshared->basePlayPolicy, 0);
 
                         // 行動評価関数からの着手の選び方は複数パターン用意して実験できるようにする
-                        BiasedSoftmaxSelector<double> selector(score, pfield->NActiveMoves,
+                        BiasedSoftmaxSelector<double> selector(score, f.NActiveMoves,
                                                                Settings::simulationTemperaturePlay,
                                                                Settings::simulationAmplifyCoef,
                                                                Settings::simulationAmplifyExponent);
                         int idx = selector.select(ptools->dice.drand());
-                        pfield->setPlayMove(pfield->mv[idx]);
+                        f.setPlayMove(f.mv[idx]);
                     }
                 }
             }
-            DERR << tp << " : " << pfield->playMove << " (" << pfield->hand[tp].qty << ")" << endl;
-            DERR << pfield->playMove << " " << pfield->ps << endl;
+            DERR << tp << " : " << f.playMove << " (" << f.hand[tp].qty << ")" << endl;
+            DERR << f.playMove << " " << f.ps << endl;
             
             // 盤面更新
-            int nextTurnPlayer = pfield->proc(tp, pfield->playMove);
+            int nextTurnPlayer = f.proc(tp, f.playMove);
             
             if (nextTurnPlayer == -1) goto GAME_END;
             progress *= 0.95;
         }
     GAME_END:
         for (int p = 0; p < N_PLAYERS; p++) {
-            pfield->infoReward.assign(p, pshared->gameReward[pfield->newClassOf(p)]);
+            f.infoReward.assign(p, pshared->gameReward[f.newClassOf(p)]);
         }
         return 0;
     }
 
-    int startRootSimulation(Field *const pfield,
-                            MoveInfo mv,
+    int startRootSimulation(Field& f, Move mv,
                             EngineSharedData *const pshared,
                             EngineThreadTools *const ptools) {
-        DERR << pfield->toString();
-        DERR << "turn : " << pfield->turn() << endl;
-        if (pfield->procSlowest(mv) == -1) return 0;
-        return startRootSimulation(pfield, pshared, ptools);
+        DERR << f.toString();
+        DERR << "turn : " << f.turn() << endl;
+        if (f.procSlowest(mv) == -1) return 0;
+        return startRootSimulation(f, pshared, ptools);
     }
 
-    int startChangeSimulation(Field *const pfield,
-                                int p, Cards c,
-                                EngineSharedData *const pshared,
-                                EngineThreadTools *const ptools) {
+    int startChangeSimulation(Field& f,
+                              int p, Cards c,
+                              EngineSharedData *const pshared,
+                              EngineThreadTools *const ptools) {
         
-        int changePartner = pfield->classPlayer(getChangePartnerClass(pfield->classOf(p)));
+        int changePartner = f.classPlayer(getChangePartnerClass(f.classOf(p)));
         
-        pfield->makeChange(p, changePartner, c);
-        pfield->prepareAfterChange();
+        f.makeChange(p, changePartner, c);
+        f.prepareAfterChange();
         
-        DERR << pfield->toString();
-        DERR << "turn : " << pfield->turn() << endl;
+        DERR << f.toString();
+        DERR << "turn : " << f.turn() << endl;
 
-        return startRootSimulation(pfield, pshared, ptools);
+        return startRootSimulation(f, pshared, ptools);
     }
 
-    int startAllSimulation(Field *const pfield,
-                            EngineSharedData *const pshared,
-                            EngineThreadTools *const ptools) {
-        //cerr << pfield->toString();
+    int startAllSimulation(Field& f,
+                           EngineSharedData *const pshared,
+                           EngineThreadTools *const ptools) {
+        //cerr << f.toString();
         // 試合全部行う
-        if (!pfield->isInitGame()) {
+        if (!f.isInitGame()) {
             // 献上
-            pfield->removePresentedCards(); // 代わりにこちらの操作を行う
+            f.removePresentedCards(); // 代わりにこちらの操作を行う
             // 交換
             Cards change[N_MAX_CHANGES];
             for (int cl = 0; cl < MIDDLE; ++cl) {
-                const int from = pfield->classPlayer(cl);
-                const int to = pfield->classPlayer(getChangePartnerClass(cl));
-                const int changes = genChange(change, pfield->getCards(from), N_CHANGE_CARDS(cl));
+                const int from = f.classPlayer(cl);
+                const int to = f.classPlayer(getChangePartnerClass(cl));
+                const int changes = genChange(change, f.getCards(from), N_CHANGE_CARDS(cl));
                 
                 unsigned int index = changeWithPolicy(change, changes,
-                                                pfield->getCards(from), N_CHANGE_CARDS(cl),
-                                                *pfield, pshared->baseChangePolicy, &ptools->dice);
+                                                f.getCards(from), N_CHANGE_CARDS(cl),
+                                                f, pshared->baseChangePolicy, &ptools->dice);
                 ASSERT(index < changes, cerr << index << " in " << changes << endl;)
-                pfield->makeChange(from, to, change[index], N_CHANGE_CARDS(cl));
+                f.makeChange(from, to, change[index], N_CHANGE_CARDS(cl));
             }
         }
-        pfield->prepareAfterChange();
-        DERR << pfield->toString();
-        //cerr << pfield->toString();
-        return startRootSimulation(pfield, pshared, ptools);
+        f.prepareAfterChange();
+        DERR << f.toString();
+        //cerr << f.toString();
+        return startRootSimulation(f, pshared, ptools);
     }
 }

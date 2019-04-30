@@ -931,7 +931,7 @@ private:
         double playLH = 0;
         std::array<Cards, N> orgCards;
         auto tmpPlayFlag = playFlag;
-        MoveInfo *const mv = ptools->buf;
+        Move *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
         
         Field field;
@@ -946,7 +946,7 @@ private:
             const uint32_t tp = field.turn();
 
             const Cards usedCards = chosenMove.cards();
-            const Board board = field.board;
+            const Board b = field.board;
             const Cards myCards = field.getCards(tp);
             const Hand& myHand = field.getHand(tp);
             const Hand& opsHand = field.getOpsHand(tp);
@@ -956,18 +956,18 @@ private:
                 // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
             
                 // 場の情報をまとめる
-                const int NMoves = genMove(mv, myHand, board);
+                const int NMoves = genMove(mv, myHand, b);
                 assert(NMoves > 0);
                 
                 if (NMoves > 1) {
-                    for (int m = 0; m < NMoves; m++) {
-                        bool mate = checkHandMate(0, mv + NMoves, mv[m], myHand, opsHand, board, field.fieldInfo);
-                        if (mate) mv[m].setMPMate();
+                    for (int i = 0; i < NMoves; i++) {
+                        bool mate = checkHandMate(0, mv + NMoves, mv[i], myHand, opsHand, b);
+                        if (mate) mv[i].setMate();
                     }
                 }
                 
                 // フェーズ(空場0、通常場1、パス支配場2)
-                const int ph = board.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
+                const int ph = b.isNull() ? 0 : (b.isPassDom() ? 2 : 1);
                 // プレー尤度計算
                 if (NMoves > 1) {
                     // search move

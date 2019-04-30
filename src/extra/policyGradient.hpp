@@ -13,7 +13,7 @@ namespace UECda {
                                   learningSpace_t *const plearningSpace,
                                   threadTools_t *const ptools) {
             
-            MoveInfo *const buf = ptools->buf;
+            Move *const buf = ptools->buf;
             Field field;
             iterateGameLogBeforePlay
             (field, gLog,
@@ -85,7 +85,7 @@ namespace UECda {
                                 learningSpace_t *const plearningSpace,
                                 threadTools_t *const ptools) {
             
-            MoveInfo *const buf = ptools->buf;
+            Move *const buf = ptools->buf;
             Field field;
             iterateGameLogAfterChange
             (field, gLog,
@@ -113,7 +113,7 @@ namespace UECda {
                         return mv == chosenMove;
                     });
                     
-                    if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd, field.fieldInfo) >= 0) return 0;
+                    if (searchHandMate(0, buf, NMoves, myHand, opsHand, bd) >= 0) return 0;
                     
                     double score[N_MAX_MOVES + 1];
                     auto *const plearner = &plearningSpace->playLearner(tp);

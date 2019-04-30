@@ -23,20 +23,19 @@ namespace UECda {
     // L2局面表現
     struct L2Field {
         Board b;
-        FieldAddInfo info;
 #ifdef DEBUG
         int p; // プレーヤー確認用
 #endif
         bool isNull() const { return b.isNull(); }
         int order() const { return b.order(); }
         
-        uint64_t isLastAwake() const { return info.isLastAwake(); }
-        uint64_t isFlushLead() const { return info.isFlushLead(); }
-        uint64_t isUnrivaled() const { return info.isUnrivaled(); }
+        uint64_t isLastAwake() const { return b.isLastAwake(); }
+        uint64_t isFlushLead() const { return b.isFlushLead(); }
+        uint64_t isUnrivaled() const { return b.isUnrivaled(); }
         
-        void setSelfFollow() { info.setSelfFollow(); }
-        void setLastAwake() { info.setLastAwake(); }
-        void setFlushLead() { info.setFlushLead(); }
+        void setSelfFollow() { b.setSelfFollow(); }
+        void setLastAwake() { b.setLastAwake(); }
+        void setFlushLead() { b.setFlushLead(); }
         
         int turn() const {
 #ifdef DEBUG
@@ -52,7 +51,7 @@ namespace UECda {
 #endif
         }
         
-        constexpr L2Field(): b(), info()
+        constexpr L2Field(): b()
 #ifdef DEBUG
         , p(0)
 #endif
@@ -60,35 +59,32 @@ namespace UECda {
         
     };
     // L2局面表現へのチェンジ
-    L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
+    L2Field convL2Field(const Board& b) {
         L2Field f;
-        f.info = info;
         f.b = b;
         return f;
     }
     L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
         L2Field f;
         f.b = cur.b;
-        f.info = cur.info;
-        f.info.initTmpInfo();
         f.b.procAndFlush(mv);
+        f.b.initInfo();
         return f;
     }
-    int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
+    int procL2Field(const L2Field& cur, L2Field *const pnext, const Move m) {
         pnext->b = cur.b;
-        pnext->info = cur.info;
-        pnext->info.initTmpInfo();
+        pnext->b.initInfo();
 #ifdef DEBUG
         pnext->p = cur.p;
 #endif
-        const Move mv = mi;
+        const Move mv = m;
         
         if (cur.isUnrivaled()) { // 独壇場
             if (mv.isPASS()) { // pass
                 pnext->b.flush();
                 DERR << " -FLUSHED" << endl;
             } else {
-                if (mi.dominatesMe()) {
+                if (m.dominatesMe()) {
                     // 自己支配がかかるので、流れて自分から
                     pnext->b.procAndFlush(mv);
                     DERR << " -FLUSHED" << endl;
@@ -106,11 +102,11 @@ namespace UECda {
             return 0;
         } else { // 独壇場でない
             if (cur.isNull()) {
-                if (mi.dominatesAll()) {
+                if (m.dominatesAll()) {
                     pnext->b.procAndFlush(mv);
                     DERR << " -FLUSHED" << endl; return 0;
                 } else {
-                    if (mi.dominatesOthers()) {
+                    if (m.dominatesOthers()) {
                         pnext->b.proc(mv);
                         if (pnext->b.isNull()) { // renewed
                             DERR << " -FLUSHED" << endl; return 0;
@@ -152,7 +148,7 @@ namespace UECda {
                     }
                 } else { // not pass
                     if (cur.isLastAwake()) {
-                        if (mi.dominatesMe()) {
+                        if (m.dominatesMe()) {
                             // 自己支配がかかるので、流れて自分から
                             pnext->b.procAndFlush(mv);
                             DERR << " -FLUSHED" << endl;
@@ -167,11 +163,11 @@ namespace UECda {
                         }
                         return 0;
                     } else {
-                        if (mi.dominatesAll()) {
+                        if (m.dominatesAll()) {
                             pnext->b.procAndFlush(mv);
                             DERR << " -FLUSHED" << endl; return 0;
                         } else {
-                            if (mi.dominatesOthers()) {
+                            if (m.dominatesOthers()) {
                                 pnext->b.proc(mv);
                                 if (pnext->b.isNull()) { // renewed
                                     DERR << " -FLUSHED" << endl; return 0;
@@ -208,7 +204,7 @@ namespace UECda {
     private:
         const int NODE_LIMIT;
         
-        MoveInfo *const buf;
+        Move *const buf;
         
         // 統計情報
         int nodes, childs, failed;
@@ -218,23 +214,23 @@ namespace UECda {
             nodes = childs = failed = 0;
         }
         
-        L2Judge(int nl,MoveInfo *const argMI):
-        NODE_LIMIT(nl), buf(argMI) { init(); }
+        L2Judge(int nl, Move *const mb):
+        NODE_LIMIT(nl), buf(mb) { init(); }
         ~L2Judge() {}
 
         // 再帰版
         template <int S_LEVEL, int E_LEVEL>
-        int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
-        int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
-        int checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
-        int search(const int depth, MoveInfo *const buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+        int judge(const int depth, Move *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+        int check(const int depth, Move *const buf, Move& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
+        int checkDomMate(const int depth, Move *const buf, Move& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+        int search(const int depth, Move *const buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
         
-        int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);
-        int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);
+        int start_judge(const Hand& myHand, const Hand& opsHand, const Board b);
+        int start_check(const Move mi, const Hand& myHand, const Hand& opsHand, const Board b);
     };
     
     template <int S_LEVEL, int E_LEVEL>
-    int L2Judge::judge(const int depth, MoveInfo *const buf,
+    int L2Judge::judge(const int depth, Move *const buf,
                        const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         // 判定を返す
         int res;
@@ -344,13 +340,13 @@ namespace UECda {
         return L2_DRAW;
     }
 
-    int L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
+    int L2Judge::checkDomMate(const int depth, Move *const buf, Move& tmp,
                               const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         if (field.isUnrivaled()
-            || tmp.isDO()
+            || tmp.dominatesOthers()
             || dominatesCards(tmp, opsHand.cards, field.b)) { // 他支配チェック
 
-            tmp.setDomOthers();
+            tmp.setDO();
             if (myHand.qty - tmp.qty() <= 1) {
                 DERR << string(2 * depth, ' ') << "<" << field.turn() << ">" << tmp << " -EMATEWIN" << endl;
                 return L2_WIN;
@@ -383,7 +379,7 @@ namespace UECda {
         return L2_DRAW;
     }
 
-    int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
+    int L2Judge::check(const int depth, Move *const buf, Move& tmp,
                        const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
         
         bool pass = tmp.isPASS();
@@ -401,9 +397,7 @@ namespace UECda {
         
         // 支配性判定
         if (!pass && (field.isLastAwake() || tmp.dominatesOthers())) {
-            if (dominatesCards(tmp, myHand.cards, field.b)) {
-                tmp.setDomMe();
-            }
+            if (dominatesCards(tmp, myHand.cards, field.b)) tmp.setDM();
         }
         Hand nextHand;
         L2Field nextField;
@@ -438,49 +432,48 @@ namespace UECda {
         return res;
     }
 
-    int L2Judge::search(const int depth, MoveInfo *const buf, const int NMoves,
+    int L2Judge::search(const int depth, Move *const buf, const int NMoves,
                         const Hand& myHand, const Hand& opsHand, const L2Field& field) {
         
         // 反復深化をするのでなければ終了レベルは常に最大で呼ばれると思われる
         
         // 勝利手があればインデックス(>=0)、結果不明なら-2、負け確定なら-1を返す
         // 1手詰み
-        //for (int m = NMoves - 1; m >= 0; m--) {
-        //    if (buf[m].qty() >= myHand.qty) {
-        //        DERR << string(2 * depth, ' ') << tmp << " -FIN" << endl; return m;
+        //for (int i = NMoves - 1; i >= 0; i--) {
+        //    if (buf[i].qty() >= myHand.qty) {
+        //        DERR << string(2 * depth, ' ') << tmp << " -FIN" << endl; return i;
         //    }
         //}
         // 支配からの簡単詰み
-        for (int m = NMoves - 1; m >= 0; m--) {
-            int res = checkDomMate(depth, buf + NMoves, buf[m], myHand, opsHand, field);
-            if (res == L2_WIN) return m;
+        for (int i = NMoves - 1; i >= 0; i--) {
+            int res = checkDomMate(depth, buf + NMoves, buf[i], myHand, opsHand, field);
+            if (res == L2_WIN) return i;
         }
         // 探索
         bool unFound = false;
-        for (int m = NMoves - 1; m >= 0; m--) {
-            MoveInfo& tmp = buf[m];
+        for (int i = NMoves - 1; i >= 0; i--) {
             //if (tmp.isL2GiveUp()) continue;
-            int res = check(depth, buf + NMoves, tmp, myHand, opsHand, field, true);
-            if (res == L2_WIN) return m;
+            int res = check(depth, buf + NMoves, buf[i], myHand, opsHand, field, true);
+            if (res == L2_WIN) return i;
             if (res == L2_DRAW) unFound = true;
         }
         if (unFound) return -2;
         else return -1;
     }
     
-    int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
+    int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b) {
         assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
         init();
-        L2Field field = convL2Field(b, info); // L2型へのチェンジ
+        L2Field field = convL2Field(b); // L2型へのチェンジ
         int res = judge<1, 1024>(0, buf, myHand, opsHand, field);
         return res;
     }
     
-    int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
+    int L2Judge::start_check(const Move m, const Hand& myHand, const Hand& opsHand, const Board b) {
         assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
         init();
-        L2Field field = convL2Field(b, info); // L2型へのチェンジ
-        MoveInfo tmp = mi;
+        L2Field field = convL2Field(b); // L2型へのチェンジ
+        Move tmp = m;
         int res = check(0, buf, tmp, myHand, opsHand, field);
         DERR << "L2Check ";
         switch (res) {

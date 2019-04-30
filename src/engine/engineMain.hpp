@@ -36,7 +36,7 @@ namespace UECda {
         // 0番スレッドのサイコロをメインサイコロとして使う
         decltype(threadTools[0].dice)& dice = threadTools[0].dice;
         // 先読み用バッファはスレッド0のもの
-        MoveInfo *const searchBuffer = threadTools[0].buf;
+        Move *const searchBuffer = threadTools[0].buf;
         
     public:
         EngineSharedData shared;
@@ -160,17 +160,16 @@ namespace UECda {
                 
                 // D3を持っている場合、自分からなので必勝チェック
                 if (containsD3(myCards)) {
-                    const Board b = OrderToNullBoard(0); // 通常オーダーの空場
-                    FieldAddInfo fieldInfo;
-                    fieldInfo.init();
-                    fieldInfo.setFlushLead();
-                    fieldInfo.setMinNCardsAwake(10);
-                    fieldInfo.setMinNCards(10);
-                    fieldInfo.setMaxNCardsAwake(11);
-                    fieldInfo.setMaxNCards(11);
+                    Board b = OrderToNullBoard(0); // 通常オーダーの空場
+                    b.initInfo();
+                    b.setFlushLead();
+                    b.setMinNCardsAwake(10);
+                    b.setMinNCards(10);
+                    b.setMaxNCardsAwake(11);
+                    b.setMaxNCards(11);
                     Hand ops;
                     ops.set(subtrCards(CARDS_ALL, restCards));
-                    if (judgeHandMate(1, searchBuffer, mine, ops, b, fieldInfo)) {
+                    if (judgeHandMate(1, searchBuffer, mine, ops, b)) {
                         // 必勝
                         CERR << "CHANGE MATE!" << endl;
                         assert(holdsCards(myCards, cand[c]) && countCards(cand[c]) == change_qty);
@@ -285,7 +284,7 @@ namespace UECda {
             RootInfo root;
             
             // ルート合法手生成バッファ
-            MoveInfo mv[N_MAX_MOVES + 256];
+            Move mv[N_MAX_MOVES + 256];
             
             const int myPlayerNum = record.myPlayerNum;
             
@@ -298,9 +297,8 @@ namespace UECda {
             const Hand& opsHand = field.getOpsHand(myPlayerNum);
             const Cards myCards = myHand.cards;
             const Cards opsCards = opsHand.cards;
-            const Board b = field.board;
+            Board b = field.board;
             CERR << b << endl;
-            FieldAddInfo& fieldInfo = field.fieldInfo;
             
             // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
             if (b.isInvalid()) return MOVE_PASS;
@@ -353,9 +351,9 @@ namespace UECda {
             
             // 着手追加情報を設定
             for (int i = 0; i < NMoves; i++) {
-                MoveInfo& move = mv[i];
+                Move& move = mv[i];
                 // 支配性
-                if (move.qty() > fieldInfo.getMaxNCardsAwake()
+                if (move.qty() > b.getMaxNCardsAwake()
                     || dominatesCards(move, opsCards, b)) {
                     move.setDO(); // 他支配
                 }
@@ -365,18 +363,18 @@ namespace UECda {
                 }
                 
                 if (Settings::MateSearchOnRoot) { // 多人数必勝判定
-                    if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b, fieldInfo)) {
-                        move.setMPMate(); fieldInfo.setMPMate();
+                    if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b)) {
+                        move.setMate(); b.setMate();
                     }
                 }
                 if (Settings::L2SearchOnRoot) {
                     if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
                         L2Judge lj(400000, searchBuffer);
-                        int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
+                        int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b);
                         if (l2Result == L2_WIN) { // 勝ち
                             DERR << "l2win!" << endl;
-                            move.setL2Mate(); fieldInfo.setL2Mate();
-                            DERR << fieldInfo << endl;
+                            move.setL2Mate(); b.setL2Mate();
+                            DERR << toInfoString(b) << endl;
                         } else if (l2Result == L2_LOSE) {
                             move.setL2GiveUp();
                         }
@@ -389,23 +387,23 @@ namespace UECda {
                 if (field.getNAlivePlayers() == 2) {
                     // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
                     // ただしL2探索を行う場合のみ
-                    CERR << fieldInfo << endl;
-                    if (fieldInfo.isL2Mate()) {
+                    CERR << toInfoString(b) << endl;
+                    if (b.isL2Mate()) {
                         shared.setMyL2Mate();
                     } else {
-                        fieldInfo.setL2GiveUp();
+                        b.setL2GiveUp();
                         shared.setMyL2GiveUp();
                     }
                 }
             }
             if (Settings::MateSearchOnRoot) {
-                if (fieldInfo.isMPMate()) shared.setMyMate(field.getBestClass());
+                if (b.isMate() && !b.isL2Mate()) shared.setMyMate(field.getBestClass());
             }
 
             if (monitor) {
                 // 着手候補一覧表示
                 cerr << "My Cards : " << myCards << endl;
-                cerr << b << " " << fieldInfo << endl;
+                cerr << b << " " << toInfoString(b) << endl;
                 for (int i = 0; i < NMoves; i++) {
                     cerr << mv[i] << toInfoString(mv[i], b) << endl;
                 }
@@ -422,7 +420,7 @@ namespace UECda {
             
 #ifndef POLICY_ONLY
             // モンテカルロ法による評価(結果確定のとき以外)
-            if (!fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
+            if (!b.isMate() && !b.isGiveUp()) {
                 for (int th = 0; th < N_THREADS; th++) {
                     threadTools[th].gal.clear();
                 }
@@ -447,17 +445,17 @@ namespace UECda {
             root.sort();
             
             // 以下必勝を判定したときのみ
-            if (fieldInfo.isMate()) {
+            if (b.isMate()) {
                 int next = root.candidates;
                 // 1. 必勝判定で勝ちのものに限定
                 next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMate(); });
                 assert(next > 0);
                 // 2. 即上がり
-                next = root.binary_sort(next, [](const RootAction& a) { return a.move.isFinal(); });
+                next = root.binary_sort(next, [&myHand](const RootAction& a) { return a.move.qty() >= myHand.qty; });
                 // 3. 完全勝利
-                next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
+                //next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
                 // 4. 多人数判定による勝ち
-                next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMPMate(); });
+                next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMate() && !a.move.isL2Mate(); });
 #ifdef DEFEAT_RIVAL_MATE
                 if (next > 1 && !isNoRev(myCards)) {
                     // 5. ライバルに不利になるように革命を起こすかどうか
@@ -475,7 +473,7 @@ namespace UECda {
                 }
 #endif
                 // 必勝時の出し方の見た目をよくする
-                if (fieldInfo.isUnrivaled()) {
+                if (b.isUnrivaled()) {
                     // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                     //    そうでなければパスを優先
                     int division = computeDivision(searchBuffer, myCards);
@@ -493,7 +491,7 @@ namespace UECda {
                 // 8. 即切り役を優先
                 next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
                 // 9. 自分を支配していないものを優先
-                next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
+                next = root.binary_sort(next, [](const RootAction& a) { return !a.move.dominatesMe(); });
                 
                 playMove = root.child[0].move; // 必勝手から選ぶ
             }
