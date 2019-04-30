@@ -9,7 +9,7 @@
 
 using namespace UECda;
 
-MoveInfo buffer[8192];
+Move buffer[8192];
 Clock cl;
 std::mt19937 mt;
 
@@ -22,12 +22,12 @@ std::set<uint32_t> mateMoves;
 std::unordered_map<uint64_t, bool> visitedCards;
 
 template <int M = 0>
-int searchCardsPWSlow(MoveInfo *const, const int, const int,
+int searchCardsPWSlow(Move *const, const int, const int,
                       const Cards, const Cards,
                       Board, PlayersState, bool);
 
 template <int M = 0>
-bool judgeCardsPWSlow(MoveInfo *const buf,
+bool judgeCardsPWSlow(Move *const buf,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
@@ -49,7 +49,7 @@ bool judgeCardsPWSlow(MoveInfo *const buf,
 }
 
 template <int M = 0>
-bool checkCardsPWSlow(MoveInfo *const buf,
+bool checkCardsPWSlow(Move *const buf,
                       const int p, const Move move,
                       Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
@@ -103,7 +103,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
 }
 
 template <int M>
-int searchCardsPWSlow(MoveInfo *const buf, const int moves,
+int searchCardsPWSlow(Move *const buf, const int moves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board bd, PlayersState ps, bool flushLead) {
@@ -154,7 +154,7 @@ int testRecordMoveMate(const Record& record) {
             cl.start();
             visitedCards.clear();
             bool pw = judgeCardsPWSlow(buffer, turnPlayer,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+                                        myHand.cards, opsHand.cards, bd, field.ps, field.board.isFlushLead());
             judgeTime[1] += cl.stop();         
             judgeMatrix[pw][mate] += 1;
     
@@ -193,19 +193,19 @@ int testRecordMoveMate(const Record& record) {
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
             Board bd = field.board;
-            MoveInfo mi = MoveInfo(move);
+            Move mi = Move(move);
             
             if (dominatesHand(bd, myHand)) return 0;
             
             cl.start();
-            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
+            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd);
             checkTime[0] += cl.stop();
             checkCount += 1;
 
             cl.start();
             visitedCards.clear();
             bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+                                        myHand.cards, opsHand.cards, bd, field.ps, bd.isFlushLead());
             checkTime[1] += cl.stop();
             checkMatrix[pw][mate] += 1;
             return 0;
@@ -245,7 +245,7 @@ int testRecordMoveMate(const Record& record) {
             if (moves <= 1) return 0;
             
             cl.start();
-            int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd, field.fieldInfo);
+            int mateIndex = searchHandMate(1, buffer, moves, myHand, opsHand, bd);
             searchTime[0] += cl.stop();
             searchCount += 1;
             
@@ -258,7 +258,7 @@ int testRecordMoveMate(const Record& record) {
             visitedCards.clear();
             int pwIndex = searchCardsPWSlow(buffer, moves, turnPlayer,
                                             myHand.cards, opsHand.cards,
-                                            bd, field.ps, bool(field.fieldInfo.isFlushLead()));
+                                            bd, field.ps, bd.isFlushLead());
             searchTime[1] += cl.stop();
             
             searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
@@ -284,7 +284,7 @@ int testRecordMoveMate(const Record& record) {
                 }
                 cerr << endl;
                 cerr << move << " on " << bd << endl;
-                cerr << field.ps << " " << field.fieldInfo << endl;
+                cerr << field.ps << " " << toInfoString(field.board) << endl;
                 cerr << Out2CardTables(myHand.getCards(), opsHand.getCards()) << endl;
                 cerr << field.toString();
                 getchar();
@@ -326,7 +326,7 @@ int analyzeMateDistribution(const Record& record) {
             mateMoves.clear();
             visitedCards.clear();
             bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+                                        myHand.cards, opsHand.cards, bd, field.ps, bd.isFlushLead());
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
             return 0;
         },

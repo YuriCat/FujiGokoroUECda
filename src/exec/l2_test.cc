@@ -9,7 +9,7 @@
 
 using namespace UECda;
 
-MoveInfo buffer[8192];
+Move buffer[8192];
 Clock cl;
 std::mt19937 mt;
 
@@ -50,12 +50,10 @@ int outputMateJudgeResult() {
         myHand.setAll(myCards);
         oppHand.setAll(oppCards);
         Board bd = OrderToNullBoard(0);
-        FieldAddInfo fieldInfo;
-        fieldInfo.init();
-        fieldInfo.setFlushLead();
+        bd.setFlushLead();
         
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, bd);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
         
         genMove(buffer, myCards, bd);
@@ -66,12 +64,10 @@ int outputMateJudgeResult() {
         myHand.setAll(oppCards);
         oppHand.setAll(myCards);
         Board bd = OrderToNullBoard(0);
-        FieldAddInfo fieldInfo;
-        fieldInfo.init();
-        fieldInfo.setFlushLead();
+        bd.setFlushLead();
         
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, bd);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
     }
     
@@ -107,7 +103,7 @@ int testRecordL2(const Record& record) {
                 
                 cl.start();
                 L2Judge judge(65536, buffer);
-                judgeResult = judge.start_judge(myHand, oppHand, b, field.fieldInfo);
+                judgeResult = judge.start_judge(myHand, oppHand, b);
                 judgeTime[0] += cl.stop();
                 judgeCount += 1;
                 
@@ -115,8 +111,8 @@ int testRecordL2(const Record& record) {
                 
                 /*if (mate != pw) {
                 cerr << "judge " << mate << " <-> " << " answer " << pw << endl;
-                cerr << move << " on " << bd << endl;
-                cerr << field.ps << " " << field.fieldInfo << endl;
+                cerr << move << " on " << b << endl;
+                cerr << field.ps << " " << toInfoString(b) << endl;
                 cerr << Out2CardTables(myHand.cards, opsHand.cards);
                 cerr << endl;
                 getchar();

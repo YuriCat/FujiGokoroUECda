@@ -9,7 +9,7 @@
 
 using namespace UECda;
 
-MoveInfo buffer[8192];
+Move buffer[8192];
 Clock cl;
 std::mt19937 mt;
 

@@ -8,7 +8,7 @@
 #include "../extra/policyGradient.hpp"
 
 struct ThreadTools {
-    MoveInfo buf[8192];
+    Move buf[8192];
     XorShift64 dice;
 };
 
