@@ -64,12 +64,11 @@ namespace UECda {
         f.b = b;
         return f;
     }
-    L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
+    L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
         L2Field f;
         f.b = cur.b;
-        f.b.procAndFlush(mv);
+        f.b.procAndFlush(m);
         f.b.initInfo();
-        //cerr << f.b.nmin << " " << f.b.nminaw << " " << f.b.nmax << " " << f.b.nmaxaw << endl;
         return f;
     }
     int procL2Field(const L2Field& cur, L2Field *const pnext, const Move m) {
@@ -78,20 +77,18 @@ namespace UECda {
 #ifdef DEBUG
         pnext->p = cur.p;
 #endif
-        const Move mv = m;
-        
         if (cur.isUnrivaled()) { // 独壇場
-            if (mv.isPASS()) { // pass
+            if (m.isPASS()) { // pass
                 pnext->b.flush();
                 DERR << " -FLUSHED" << endl;
             } else {
                 if (m.dominatesMe()) {
                     // 自己支配がかかるので、流れて自分から
-                    pnext->b.procAndFlush(mv);
+                    pnext->b.procAndFlush(m);
                     DERR << " -FLUSHED" << endl;
                 } else {
                     // 流れなければSFが続く
-                    pnext->b.proc(mv);
+                    pnext->b.proc(m);
                     if (pnext->b.isNull()) { // renewed
                         DERR << " -FLUSHED" << endl;
                     } else {
@@ -101,89 +98,89 @@ namespace UECda {
                 }
             }
             return 0;
-        } else { // 独壇場でない
-            if (cur.isNull()) {
-                if (m.dominatesAll()) {
-                    pnext->b.procAndFlush(mv);
-                    DERR << " -FLUSHED" << endl; return 0;
-                } else {
-                    if (m.dominatesOthers()) {
-                        pnext->b.proc(mv);
-                        if (pnext->b.isNull()) { // renewed
-                            DERR << " -FLUSHED" << endl; return 0;
-                        } else {
-                            pnext->setSelfFollow();
-                            DERR << " -DO" << endl; return 0;
-                        }
+        }
+        // 独壇場でない場合
+        if (cur.isNull()) {
+            if (m.dominatesAll()) {
+                pnext->b.procAndFlush(m);
+                DERR << " -FLUSHED" << endl; return 0;
+            } else {
+                if (m.dominatesOthers()) {
+                    pnext->b.proc(m);
+                    if (pnext->b.isNull()) { // renewed
+                        DERR << " -FLUSHED" << endl; return 0;
                     } else {
-                        pnext->b.proc(mv);
-                        if (pnext->b.isNull()) { // renewed
-                            DERR << " -FLUSHED" << endl; return 0;
-                        } else {
-                            pnext->flipTurnPlayer();
-                            DERR << endl; return 1;
-                        }
+                        pnext->setSelfFollow();
+                        DERR << " -DO" << endl; return 0;
+                    }
+                } else {
+                    pnext->b.proc(m);
+                    if (pnext->b.isNull()) { // renewed
+                        DERR << " -FLUSHED" << endl; return 0;
+                    } else {
+                        pnext->flipTurnPlayer();
+                        DERR << endl; return 1;
                     }
                 }
-            } else { // 通常場
-                if (mv.isPASS()) { // pass
-                    if (cur.isLastAwake()) {
-                        pnext->b.flush();
-                        DERR << " -FLUSHED";
-                        if (cur.isFlushLead()) {
-                            DERR << "(LA & FL)" << endl;
-                            return 0; // 探索中にここには来ないはずだが、入り口で来るかも
-                        } else {
-                            pnext->flipTurnPlayer();
-                            DERR << endl;
-                            return 1;
-                        }
+            }
+        } else { // 通常場
+            if (m.isPASS()) { // pass
+                if (cur.isLastAwake()) {
+                    pnext->b.flush();
+                    DERR << " -FLUSHED";
+                    if (cur.isFlushLead()) {
+                        DERR << "(LA & FL)" << endl;
+                        return 0; // 探索中にここには来ないはずだが、入り口で来るかも
                     } else {
-                        pnext->setLastAwake();
-                        if (!cur.isFlushLead()) {
-                            pnext->setFlushLead();
-                        }
                         pnext->flipTurnPlayer();
-                        DERR << " FIRST PASS" << endl;
+                        DERR << endl;
                         return 1;
                     }
-                } else { // not pass
-                    if (cur.isLastAwake()) {
-                        if (m.dominatesMe()) {
-                            // 自己支配がかかるので、流れて自分から
-                            pnext->b.procAndFlush(mv);
+                } else {
+                    pnext->setLastAwake();
+                    if (!cur.isFlushLead()) {
+                        pnext->setFlushLead();
+                    }
+                    pnext->flipTurnPlayer();
+                    DERR << " FIRST PASS" << endl;
+                    return 1;
+                }
+            } else { // not pass
+                if (cur.isLastAwake()) {
+                    if (m.dominatesMe()) {
+                        // 自己支配がかかるので、流れて自分から
+                        pnext->b.procAndFlush(m);
+                        DERR << " -FLUSHED" << endl;
+                    } else {
+                        pnext->b.proc(m);
+                        if (pnext->b.isNull()) { // renewed
                             DERR << " -FLUSHED" << endl;
                         } else {
-                            pnext->b.proc(mv);
+                            pnext->setSelfFollow();
+                            DERR << endl;
+                        }
+                    }
+                    return 0;
+                } else {
+                    if (m.dominatesAll()) {
+                        pnext->b.procAndFlush(m);
+                        DERR << " -FLUSHED" << endl; return 0;
+                    } else {
+                        if (m.dominatesOthers()) {
+                            pnext->b.proc(m);
                             if (pnext->b.isNull()) { // renewed
-                                DERR << " -FLUSHED" << endl;
+                                DERR << " -FLUSHED" << endl; return 0;
                             } else {
                                 pnext->setSelfFollow();
-                                DERR << endl;
+                                DERR << " -DO" << endl; return 0;
                             }
-                        }
-                        return 0;
-                    } else {
-                        if (m.dominatesAll()) {
-                            pnext->b.procAndFlush(mv);
-                            DERR << " -FLUSHED" << endl; return 0;
                         } else {
-                            if (m.dominatesOthers()) {
-                                pnext->b.proc(mv);
-                                if (pnext->b.isNull()) { // renewed
-                                    DERR << " -FLUSHED" << endl; return 0;
-                                } else {
-                                    pnext->setSelfFollow();
-                                    DERR << " -DO" << endl; return 0;
-                                }
+                            pnext->b.proc(m);
+                            if (pnext->b.isNull()) { // renewed
+                                DERR << " -FLUSHED" << endl; return 0;
                             } else {
-                                pnext->b.proc(mv);
-                                if (pnext->b.isNull()) { // renewed
-                                    DERR << " -FLUSHED" << endl; return 0;
-                                } else {
-                                    pnext->flipTurnPlayer();
-                                    DERR << endl; return 1;
-                                }
+                                pnext->flipTurnPlayer();
+                                DERR << endl; return 1;
                             }
                         }
                     }

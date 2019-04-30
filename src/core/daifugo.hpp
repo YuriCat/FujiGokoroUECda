@@ -1372,7 +1372,7 @@ struct Move {
     bool isL2GiveUp() const { return l2giveup; }
     bool dominatesOthers() const { return domO; }
     bool dominatesMe() const { return domM; }
-    bool dominatesAll() const { return domO || domM; }
+    bool dominatesAll() const { return domO && domM; }
     bool isSelfFollow() const { return sf; }
     bool isUnrivaled() const { return ur; }
     bool isLastAwake() const { return la; }
@@ -1381,7 +1381,7 @@ struct Move {
     bool isPassDom() const { return pDom; }
     bool isBDO() const { return bDomO; }
     bool isBDM() const { return bDomM; }
-    bool isBDALL() const { return bDomO || bDomM; }
+    bool isBDALL() const { return bDomO && bDomM; }
     unsigned getMinNCards() const { return nmin; }
     unsigned getMaxNCards() const { return nmax; }
     unsigned getMinNCardsAwake() const { return nminaw; }
