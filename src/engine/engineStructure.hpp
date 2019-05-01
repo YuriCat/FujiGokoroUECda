@@ -185,9 +185,11 @@ namespace UECda {
             changeCards = CARDS_NULL;
             simulations = 0;
             turnSum = 0;
-            for (int p = 0; p < N_PLAYERS; ++p)
-                for (int cl = 0; cl < N_CLASSES; ++cl)
+            for (int p = 0; p < N_PLAYERS; p++) {
+                for (int cl = 0; cl < N_CLASSES; cl++) {
                     classDistribution[p][cl] = 0;
+                }
+            }
             monteCarloScore.set(1, 1);
             naiveScore.set(0, 0);
             myScore.set(1, 1);
