@@ -79,10 +79,6 @@ constexpr int N_REWARD_CALCULATED_GAMES = 32;
 //#define DEFEAT_RIVAL_MC // MCにて
 #define DEFEAT_RIVAL_MATE // 必勝着手がある場合
 
-// レアプレー(有効である可能性は低いが、見せプレーとして行うプレー)
-// オンにして自己対戦するとバグが発見出来るかも
-//#define RARE_PLAY
-
 // 方策の計算設定
 using policy_value_t = float;
 //using policy_value_t = double;

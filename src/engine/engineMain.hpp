@@ -111,18 +111,7 @@ namespace UECda {
             Cards changeCards = CARDS_NULL;
             const Cards myCards = gameLog.getDealtCards(myPlayerNum);
             if (monitor) cerr << "My Cards : " << myCards << endl;
-            
-#ifdef RARE_PLAY
-            // レアプレーを行っていない場合は行う
-            if (!shared.rare_play_flag.test(8)
-                && containsJOKER(myCards)
-                && change_qty == 1) {
-                // ジョーカー捨て
-                // 2枚交換のとき1枚のみ確定するのは面倒なので、1枚交換の時のみにする
-                shared.rare_play_flag.set(8);
-                return CARDS_JOKER;
-            }
-#endif
+
             // 手札レベルで枝刈りする場合
             Cards tmp = myCards;
 #ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
@@ -281,14 +270,6 @@ namespace UECda {
             
             // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
             if (b.isInvalid()) return MOVE_PASS;
-
-#ifdef RARE_PLAY
-            // レアプレーを行っていない場合は行う
-            if (b.isNull() && !rare_play_flag.test(0)) { // 空場パス
-                rare_play_flag.set(0);
-                return MOVE_PASS;
-            }
-#endif
                 
             // 合法着手生成
             int NMoves = genMove(mv, myCards, b);
