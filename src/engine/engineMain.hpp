@@ -60,14 +60,7 @@ namespace UECda {
             for (int th = 0; th < N_THREADS; th++) {
                 threadTools[th].init(th);
             }
-                
-#ifndef POLICY_ONLY
-            // 世界プール監視員を設定
-            for (int th = 0; th < N_THREADS; th++) {
-                shared.ga.set(th, &threadTools[th].gal);
-            }
-#endif
-            
+
             auto& playPolicy = shared.basePlayPolicy;
             auto& changePolicy = shared.baseChangePolicy;
             

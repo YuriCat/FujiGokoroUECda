@@ -49,10 +49,6 @@ namespace UECda {
         ChangePolicy<policy_value_t> baseChangePolicy;
         PlayPolicy<policy_value_t> basePlayPolicy;
 
-#ifndef POLICY_ONLY
-        using galaxy_t = EngineThreadTools::galaxy_t;
-        GalaxyAnalyzer<galaxy_t, N_THREADS> ga;
-#endif
         // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
         int mateClass; // 初めてMATEと判定した階級の宣言
         int L2Class; // L2において判定した階級の宣言

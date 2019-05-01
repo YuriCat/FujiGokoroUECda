@@ -44,6 +44,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
             //cerr << field.toDebugString() << endl;
             // この手の前までの情報から手札推定を行う
             RandomDealer<decltype(grecord)> estimator(grecord, field, field.turn());
+            // 一致度計測
             ImaginaryWorld world;
             for (int j = 0; j < 8; j++) {
                 cl.start();
@@ -57,6 +58,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                     all += field.hand[p].qty;
                 }
             }
+            // 多様性計測
             if (field.turnCount() == tc) {
                 ecnt++;
                 ImaginaryWorld worlds[256];
