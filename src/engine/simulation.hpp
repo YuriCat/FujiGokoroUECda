@@ -63,7 +63,7 @@ namespace UECda {
                     }
                     // 探索順バイアス回避のために必勝全部の中からランダムに選ぶ
                     if (mates == 1) idxMate = mateIndex[0];
-                    else if (mates > 1) idxMate = mateIndex[ptools->dice.rand() % mates];
+                    else if (mates > 1) idxMate = mateIndex[ptools->dice() % mates];
                 }
 #endif // SEARCH_LEAF_MATE
                 if (idxMate != -1) { // mate
@@ -84,7 +84,7 @@ namespace UECda {
                                                                Settings::simulationTemperaturePlay,
                                                                Settings::simulationAmplifyCoef,
                                                                Settings::simulationAmplifyExponent);
-                        int idx = selector.select(ptools->dice.drand());
+                        int idx = selector.select(ptools->dice.random());
                         pfield->setPlayMove(pfield->mv[idx]);
                     }
                 }
@@ -146,9 +146,9 @@ namespace UECda {
                 const int to = pfield->classPlayer(getChangePartnerClass(cl));
                 const int changes = genChange(change, pfield->getCards(from), N_CHANGE_CARDS(cl));
                 
-                unsigned int index = changeWithPolicy(change, changes,
-                                                pfield->getCards(from), N_CHANGE_CARDS(cl),
-                                                *pfield, pshared->baseChangePolicy, &ptools->dice);
+                int index = changeWithPolicy(change, changes,
+                                             pfield->getCards(from), N_CHANGE_CARDS(cl),
+                                             *pfield, pshared->baseChangePolicy, ptools->dice);
                 ASSERT(index < changes, cerr << index << " in " << changes << endl;)
                 pfield->makeChange(from, to, change[index], N_CHANGE_CARDS(cl));
             }

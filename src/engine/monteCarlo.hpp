@@ -17,7 +17,7 @@ namespace UECda {
         const auto& a = root.child;
         if (actions == 2) {
             // 2つの時は同数(分布サイズ単位)に割り振る
-            if (a[0].size() == a[1].size()) return dice.rand() % 2;
+            if (a[0].size() == a[1].size()) return dice() % 2;
             else return a[0].size() < a[1].size() ? 0 : 1;
         } else {
             // UCB-root アルゴリズム
@@ -29,7 +29,7 @@ namespace UECda {
                 if (a[i].simulations < 4) {
                     // 最低プレイアウト数をこなしていないものは、大きな値にする
                     // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                    score = (double)((1U << 16) - (a[i].simulations << 8) + (dice.rand() % (1U << 6)));
+                    score = (double)((1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6)));
                 } else {
                     score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
                 }
@@ -144,8 +144,7 @@ namespace UECda {
             // この時点で世界が決まっていない場合はランダムに選ぶ
             if (pWorld == nullptr) {
                 if (threadNWorlds > 0) {
-                    //pWorld=gal->pickRand( threadMaxNWorlds*threadId, threadNWorlds, &dice );
-                    pWorld = gal.pickRand(0, threadNWorlds, &dice);
+                    pWorld = gal.pickRand(0, threadNWorlds, dice);
                     if (pWorld == nullptr) goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
                 } else goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
             }
@@ -194,8 +193,8 @@ namespace UECda {
                     double tmpScore[256];
                     for (int m = 0; m < candidates; m++) {
                         const Dist& tmpD = d[m];
-                        NormalDistribution norm(tmpD.mean, tmpD.sem);
-                        double tmpDBL = norm.rand(&dice);
+                        std::normal_distribution<double> nd(tmpD.mean, tmpD.sem);
+                        double tmpDBL = nd(dice);
                         tmpScore[m] = tmpDBL;
                         if (tmpDBL > tmpBest) tmpBest = tmpDBL;
                     }

@@ -45,10 +45,9 @@ namespace UECda {
         
         void setRandomSeed(uint64_t s) {
             // 乱数系列を初期化
-            XorShift64 tdice;
-            tdice.srand(s);
+            XorShift64 tdice(s);
             for (int th = 0; th < N_THREADS; th++) {
-                threadTools[th].dice.srand(tdice.rand() * (th + 111));
+                threadTools[th].dice.srand(tdice() * (th + 111));
             }
         }
         
@@ -224,7 +223,7 @@ namespace UECda {
                                                        Settings::simulationAmplifyCoef,
                                                        Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                changeCards = cand[selector.select(dice.drand())];
+                changeCards = cand[selector.select(dice.random())];
             }
 #endif
             if (changeCards == CARDS_NULL) {
@@ -325,7 +324,7 @@ namespace UECda {
             
             // 着手多様性確保のため着手をランダムシャッフル
             for (int i = NMoves; i > 1; --i) {
-                std::swap(mv[dice.rand() % i], mv[i - 1]);
+                std::swap(mv[dice() % i], mv[i - 1]);
             }
             
             // 場の情報をまとめる
@@ -486,7 +485,7 @@ namespace UECda {
                                                        Settings::simulationAmplifyCoef,
                                                        Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                playMove = mv[selector.select(dice.drand())];
+                playMove = mv[selector.select(dice.random())];
             }
 #endif
             if (playMove == MOVE_NONE) {

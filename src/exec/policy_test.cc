@@ -71,7 +71,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
                 
                 Clock clock;
                 clock.start();
-                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, field, changePolicy, &dice);
+                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, field, changePolicy, dice);
                 time[from][cl] += clock.stop();
                 
                 Cards p = change[index];
@@ -117,7 +117,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
             
             Clock clock;
             clock.start();
-            int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, &dice);
+            int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, dice);
             time[turn] += clock.stop();
             Move p = moves[index];
             

@@ -1009,11 +1009,11 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
     }
     
     template <int STOCK = 0, class move_t, class policy_t, class dice_t>
-    int playWithPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t *const pdice,
+    int playWithPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t& dice,
                        double *const pentropy = nullptr) {
         double score[N_MAX_MOVES + 1];
         double sum = calcPlayPolicyExpScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
-        double r = pdice->drand() * sum;
+        double r = dice.random() * sum;
         double entropy = 0;
         if (sum > 0) {
             for (int m = 0; m < NMoves; m++) {
@@ -1032,15 +1032,15 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
 
     template <class cards_t, class policy_t, class dice_t>
     int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                         const Field& field, const policy_t& pol, dice_t *const pdice) {
+                         const Field& field, const policy_t& pol, dice_t& dice) {
         std::array<double, N_MAX_CHANGES + 1> score;
         calcChangePolicyScoreSlow<0>(score.data(), buf, NChanges, myCards, NChangeCards, field, pol);
-        double r = pdice->drand() * score[NChanges];
+        double r = dice.random() * score[NChanges];
         return std::upper_bound(score.begin(), score.begin() + NChanges, r) - score.begin() - 1;
     }
     template <class policy_t, class dice_t>
     int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
-                             const Field& field, const policy_t& pol, dice_t *const pdice) {
+                             const Field& field, const policy_t& pol, dice_t& dice) {
         double score[N_MAX_CHANGES + 1];
         calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
         int bestIndex[N_MAX_CHANGES];
@@ -1058,10 +1058,10 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             }
         }
         if (NBestMoves <= 1) return bestIndex[0];
-        else return bestIndex[pdice->rand() % NBestMoves];
+        else return bestIndex[dice() % NBestMoves];
     }
     template <int STOCK = 0, class move_t, class policy_t, class dice_t>
-    int playWithBestPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t *const pdice) {
+    int playWithBestPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t& dice) {
         double score[N_MAX_MOVES + 1];
         calcPlayPolicyScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
         int bestIndex[N_MAX_MOVES];
@@ -1079,6 +1079,6 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
             }
         }
         if (NBestMoves <= 1) return bestIndex[0];
-        else return bestIndex[pdice->rand() % NBestMoves];
+        else return bestIndex[dice() % NBestMoves];
     }
 }

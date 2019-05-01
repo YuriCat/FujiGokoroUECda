@@ -145,7 +145,7 @@ private:
 
 template <typename T>
 constexpr bool holdsBits(T a, T b) {
-    return ((~a) & b) == T(0);
+    return (~a & b) == T(0);
 }
 template <typename T>
 constexpr bool isExclusive(T a, T b) {
@@ -209,7 +209,7 @@ constexpr static T allLowerBits(T v) { // 最下位ビットより下位のビ�
     return ~v & (v - T(1));
 }
 template <typename T> inline T allHigherBits(T a) {
-    return ~((1U << bsr32(a)) - 1U);
+    return ~((1U << bsr(a)) - 1U);
 }
 template <> inline std::uint64_t allHigherBits(std::uint64_t a) {
     return ~((1ULL << bsr64(a)) - 1ULL);
@@ -258,10 +258,10 @@ inline T fill_bits_impl(T a, int n) {
 }
 
 template <class dice64_t>
-inline uint64_t pick1Bit64(uint64_t arg, dice64_t *const dice) {
+inline uint64_t pick1Bit64(uint64_t arg, dice64_t& dice) {
     uint64_t tmp;
     while (1) {
-        tmp = arg & dice->rand();
+        tmp = arg & dice();
         if (tmp) {
             if (tmp & (tmp - 1ULL)) arg = tmp; // 2つ以上
             else break;
@@ -271,7 +271,7 @@ inline uint64_t pick1Bit64(uint64_t arg, dice64_t *const dice) {
 }
 
 template <class dice64_t>
-static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t *const pdice) {
+static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
     assert((int)popcnt(arg) == N0 + N1);
@@ -280,13 +280,13 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t *const pdice)
 
     if (N0 < N1) {
         if (N0 == 0) return res;
-        if (N0 == 1) return pick1Bit64(arg, pdice);
+        if (N0 == 1) return pick1Bit64(arg, dice);
     } else {
         if (N1 == 0) return arg;
-        if (N1 == 1) return arg - pick1Bit64(arg, pdice);
+        if (N1 == 1) return arg - pick1Bit64(arg, dice);
     }
     while (1) {
-        uint64_t dist = arg & pdice->rand();
+        uint64_t dist = arg & dice();
         int NDist = popcnt(dist);
         
         // まずは一致チェック
@@ -339,14 +339,14 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t *const pdice)
 
 template <class dice64_t>
 static void dist2_64(uint64_t *goal0, uint64_t *goal1,
-                     uint64_t arg, int N0, int N1, dice64_t *const dice) {
+                     uint64_t arg, int N0, int N1, dice64_t& dice) {
     assert((int)popcnt64(arg) == N0 + N1);
     uint64_t tmp = pickNBits64(arg, N0, N1, dice);
     *goal0 |= tmp;
     *goal1 |= (arg - tmp);
 }
 template <int N, typename T, class dice64_t>
-static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t *const dice) {
+static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t& dice) {
     if (N <= 1) dst[0] = arg;
     else if (N == 2) dist2_64(dst, dst + 1, arg, argNum[0], argNum[1], dice);
     else {
@@ -372,14 +372,14 @@ class XorShift64 {
 private:
     uint64_t x, y, z, t;
 public:
-    uint64_t rand() {
+    uint64_t operator ()() {
         uint64_t tmp = x ^ (x << 11);
         x = y; y = z; z = t;
         t = (t ^ (t >> 19)) ^ (tmp ^ (tmp >> 8));
         return t;
     }
-    double drand() {
-        return rand() / double(0xFFFFFFFFFFFFFFFFULL);
+    double random() {
+        return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
     }
     void srand(uint64_t s) {
         // seedが0だとまずい
@@ -389,8 +389,8 @@ public:
         z = (y << 8) | ((y & 0xff00000000000000ULL) >> 56);
         t = (z << 8) | ((z & 0xff00000000000000ULL) >> 56);
     }
-    constexpr static uint64_t min() { return 0ULL; }
-    constexpr static uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
+    static constexpr uint64_t min() { return 0ULL; }
+    static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
     constexpr XorShift64(): x(), y(), z(), t() {}
     XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
@@ -410,7 +410,9 @@ static double dCombination(int n, int r) {
     if (n >= r) return dPermutation(n, r) / dFactorial(r);
     else return 0;
 }
-constexpr int ipow(int m, int n) { return n <= 0 ? 1 : (m * ipow(m, n - 1)); }
+constexpr int ipow(int m, int n) {
+    return n <= 0 ? 1 : (m * ipow(m, n - 1));
+}
 static double sigmoid(double x, double alpha = 1) {
     return 1 / (1 + std::exp(-x / alpha));
 }
@@ -424,93 +426,9 @@ static double log_beta(double x, double y) {
     return lgamma(x) + lgamma(y) - lgamma(x + y);
 }
 
-struct ExponentialDistribution {
-  double lambda;
-
-  ExponentialDistribution(double l): lambda(l) {}
-
-  double random(double urand) const { return -std::log(urand) / lambda; }
-  template<class dice_t>
-  double random(dice_t *const pdice) const { return random(pdice->random()); }
-
-  double relative_dens(double x) const { return std::exp(-lambda * x); }
-  double dens(double x) const { return lambda * relative_dens(x); }
-  double dist(double x) const { return 1 - std::exp(-lambda * x); }
-  double mean() const { return 1 / lambda; }
-  double med() const { return std::log(2) / lambda; }
-  double var() const { return 1 / (lambda * lambda); }
-  double std() const { return 1 / lambda; }
-  double ent() const { return 1 - std::log(lambda); }
-
-  static double mod() { return 0; }
-  static double skew() { return 2; }
-  static double kur() { return 6; }
-};
-
-struct GammaDistribution {
-  double k, theta;
-
-  GammaDistribution(): k(), theta() {}
-  GammaDistribution(double ak, double atheta = 1): k(ak), theta(atheta) {};
-
-  GammaDistribution& set(double ak, double atheta = 1) {
-    k = ak; theta = atheta;
-    return *this;
-  }
-
-  template <class dice_t>
-  double rand(dice_t *const pdice) const {
-    double x, y, z;
-    double u, v, w, b, c, e;
-    if (k < 1) {
-      ExponentialDistribution ex(1);
-      e = ex.random(pdice);
-      do {
-        x = std::pow(pdice->drand(), 1 / k);
-        y = std::pow(pdice->drand(), 1 / (1 - k));
-      } while (x + y > 1);
-      return (e * x / (x + y)) * theta;
-    } else {
-      b = k - 1;
-      c = 3 * k - 0.75;
-      while (true) {
-        u = pdice->drand();
-        v = pdice->drand();
-        w = u * (1 - u);
-        y = std::sqrt(c / w) * (u - 0.5);
-        x = b + y;
-        if (x >= 0) {
-          z = 64 * w * w * w * v * v;
-          if (z <= 1 - (2 * y * y) / x) {
-            return x * theta;
-          } else {
-            if (std::log(z) < 2 * (b * std::log(x / b) - y)) {
-              return x * theta;
-            }
-          }
-        }
-      }
-      return x * theta;
-    }
-  }
-
-  double ralative_dens(double x) const { return std::pow(x, k - 1) * std::exp(-x / theta); }
-  double dens(double x) const { return ralative_dens(x) / tgamma(k) / std::pow(theta, k); }
-  double mean() const { return k * theta; }
-  double mod() const { return (k - 1) * theta; }
-  double var() const { return k * theta * theta; }
-  double std() const { return std::sqrt(k) * theta; }
-};
-
-struct BetaDistribution{
+struct BetaDistribution {
     double a, b;
-    
-    template<class dice_t>
-    double rand(dice_t *const pdice)const{
-        double r1 = GammaDistribution(a).rand(pdice);
-        double r2 = GammaDistribution(b).rand(pdice);
-        return r1 / (r1 + r2);
-    }
+
     constexpr double size() const { return a + b; }
     constexpr double mean() const { return a / (a + b); }
     constexpr double rate() const { return a / b; }
@@ -633,85 +551,8 @@ inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistrib
 inline BetaDistribution operator*(const BetaDistribution& lhs, const double m)noexcept{
     return BetaDistribution(lhs.a * m, lhs.b * m);
 }
-inline BetaDistribution operator*(const double m, const BetaDistribution& rhs)noexcept{
-    return BetaDistribution(rhs.a * m, rhs.b * m);
-}
-
 static std::ostream& operator<<(std::ostream& out, const BetaDistribution& b){
     out << b.toString();
-    return out;
-}
-
-struct NormalDistribution {
-    double mu, sigma;
-    
-    template<class dice_t>
-    double rand(dice_t *const pdice)const{
-        // Box-Muller
-        double r1 = pdice->drand();
-        double r2 = pdice->drand();
-        double z1 = std::sqrt(-2.0 * std::log(r1)) * std::cos(2.0 * M_PI * r2);
-        return z1 * sigma + mu;
-    }
-    template<class dice_t>
-    void rand(double *const pa, double *const pb, dice_t *const pdice)const{
-        // 2つ同時に発生させる
-        double r1 = pdice->drand();
-        double r2 = pdice->drand();
-        
-        double z1 = std::sqrt(-2.0 * std::log(r1)) * std::cos(2.0 * M_PI * r2);
-        double z2 = std::sqrt(-2.0 * std::log(r1)) * std::sin(2.0 * M_PI * r2);
-        *pa = z1 * sigma + mu;
-        *pb = z2 * sigma + mu;
-    }
-    
-    double relative_dens(double x)const{
-        return std::exp(-(x - mu) * (x - mu) / (2 * sigma * sigma));
-    }
-    double dens(double x)const{
-        return relative_dens(x) / sigma * (1 / std::sqrt(2 * M_PI));
-    }
-    double dist(double x)const{
-        return (1 + std::erf((x - mu) / sigma * (1 / std::sqrt(2)))) / 2;
-    }
-    
-    double ent()const{
-        return sigma * std::sqrt(2 * M_PI * std::exp(1));
-    }
-    constexpr double mean()const noexcept{ return mu; }
-    constexpr double var()const noexcept{ return sigma * sigma; }
-    constexpr double std()const noexcept{ return sigma; }
-    constexpr double med()const noexcept{ return mu; }
-    constexpr double mod()const noexcept{ return mu; }
-    
-    NormalDistribution& operator*=(const double m) {
-        sigma *= m;
-        return *this;
-    }
-    NormalDistribution& operator/=(const double m) {
-        sigma /= m;
-        return *this;
-    }
-    
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "N(" << mu << ", " << sigma << ")";
-        return oss.str();
-    }
-    
-    constexpr NormalDistribution(): mu(),sigma() {}
-    constexpr NormalDistribution(double argMu, double argSigma)
-    :mu(argMu), sigma(argSigma){}
-    
-    NormalDistribution& set(double argMu, double argSigma) {
-        mu = argMu;
-        sigma = argSigma;
-        return *this;
-    }
-};
-
-static std::ostream& operator<<(std::ostream& out, const NormalDistribution& n){
-    out << n.toString();
     return out;
 }
 
