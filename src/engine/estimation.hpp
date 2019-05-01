@@ -80,22 +80,13 @@ namespace Deal {
 
 // 拘束条件分割
 template <int N_REST, class dice64_t>
-int dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
-                    const uint64_t arg, int N0, int N1,
-                    const uint64_t rest0, const uint64_t rest1, dice64_t *const pdice) {
-    
+bool dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
+                  const uint64_t arg, int N0, int N1,
+                  const uint64_t rest0, const uint64_t rest1, dice64_t *const pdice) {   
     // 0が交換上手側、1が下手側
-    // カードのビットが高い順、低い順のどちらに並んでいるかが重要
-    
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
-    
-    DERR << "all(" << popcnt64(all) << ")" << all << endl;
-    DERR << "goal (" << N0 << "," << N1 << ")" << endl;
-    DERR << "div(" << popcnt64(arg) << ")" << arg << endl;
-    DERR << "rest0(" << popcnt64(rest0) << ")" << rest0 << endl;
-    DERR << "rest1(" << popcnt64(rest1) << ")" << rest1 << endl;
-    
+
     // まず確定ビットを探す
     if (rest0) {
         uint64_t low = highestNBits(all, N1 + N_REST);
@@ -105,20 +96,21 @@ int dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const go
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
-    
     assert((int)popcnt64(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, pdice);
+
     // 献上
     uint64_t highNRest = highestNBits(tmp1, N_REST);
     tmp0 |= highNRest; tmp1 -= highNRest;
-    
-    if (!holdsBits(tmp0, rest0) || (!holdsBits(tmp1, rest1 & ~highNRest))) return 0;
-    
+
+    if (!holdsBits(tmp0, rest0)
+        || !holdsBits(tmp1, rest1 & ~highNRest)) return false;
+
     *goal0 |=tmp0;
     *goal1 |= tmp1;
     *rest = tmp0 & rest1;
-    
-    return 1;
+
+    return true;
 }
 
 template <class gameRecord_t>
@@ -141,7 +133,7 @@ public:
             case DealType::RANDOM: // 残りカードを完全ランダム分配
                 dealAllRand(c, &ptools->dice); break;
             case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
-                dealWithAbsSbjInfo(c, &ptools->dice); break;
+                dealWithSubjectiveInfo(c, &ptools->dice); break;
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
                 dealWithBias(c, &ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
@@ -170,9 +162,9 @@ public:
         }
         checkDeal(dst);
     }
-    
+
     template <class dice64_t>
-    void dealWithAbsSbjInfo(Cards *const dst, dice64_t *const pdice) const {
+    void dealWithSubjectiveInfo(Cards *const dst, dice64_t *const pdice) const {
         // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
         BitCards tmp[N] = {0};
         dist64<N>(tmp, distCards, NDeal.data(), pdice);
@@ -181,11 +173,11 @@ public:
         }
         checkDeal(dst);
     }
-    
+
     template <class dice64_t>
     void dealWithBias(Cards *const dst, dice64_t *const pdice) const {
         //　逆関数法でバイアスを掛けて分配
-        if (initGame) return dealWithAbsSbjInfo(dst, pdice);
+        if (initGame) return dealWithSubjectiveInfo(dst, pdice);
 
         std::array<Cards, N> tmp = detCards;
         int tmpNDeal[N];
@@ -206,7 +198,7 @@ public:
             tmp[r].insert(ic);
             tmpNDeal[r]--;
         }
-        
+ 
         for (int r = 0; r < N; r++) {
             dst[infoClassPlayer[r]] = remCards & tmp[r];
         }
@@ -326,7 +318,7 @@ public:
         NDeal = NOwn;
 
         // すでに分かっている情報から確実な部分を分配
-        dealPart_AbsSbjInfo();
+        prepareSubjectiveInfo();
         
         // 各メソッドの使用可、不可を設定
         if (okForRejection()) { // 採択棄却法使用OK
@@ -421,7 +413,7 @@ private:
         // 採択棄却法のカード交換パート
         auto *const pdice = &ptools->dice;
         if (initGame) {
-            dealWithAbsSbjInfo(dst, pdice);
+            dealWithSubjectiveInfo(dst, pdice);
             return true;
         }
 
@@ -688,7 +680,7 @@ private:
         threadTools_t *const ptools) {
         // 尤度計算
         // 主観的情報で明らかな矛盾のない配り方
-        dealWithAbsSbjInfo(dst, &ptools->dice);
+        dealWithSubjectiveInfo(dst, &ptools->dice);
         Field field;
         
         double logLHSum = 0, logLHOK = 0;
@@ -706,7 +698,7 @@ private:
         }
         
         return 0;
-        }*/
+    }*/
     
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
@@ -797,7 +789,7 @@ private:
         }
     }
 
-    void dealPart_AbsSbjInfo() {
+    void prepareSubjectiveInfo() {
         // 自分以外の未使用カード
         distCards = maskCards(remCards, myCards);
 
