@@ -45,10 +45,8 @@ namespace UECda {
         
         void setRandomSeed(uint64_t s) {
             // 乱数系列を初期化
-            XorShift64 tdice;
-            tdice.srand(s);
             for (int th = 0; th < N_THREADS; th++) {
-                threadTools[th].dice.srand(tdice.rand() * (th + 111));
+                threadTools[th].dice.srand(s + th);
             }
         }
         
@@ -88,7 +86,6 @@ namespace UECda {
             // ランク初期化まで残り何試合か
             // 公式には未定だが、多くの場合100試合だろうから100試合としておく
             const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
-            const int gamesForSIG = getNGamesForSeatInitGame(record.getLatestGameNum());
             for (int cl = 0; cl < N_PLAYERS; cl++) {
                 shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
             }
@@ -138,7 +135,7 @@ namespace UECda {
             Cards cand[N_MAX_CHANGES];
             int NCands = genChange(cand, tmp, changeQty);
             for (int i = 0; i < NCands; i++) {
-                assert(cand[i].count() == changeQty && myCards.holds(chand[i]));
+                assert(cand[i].count() == changeQty && myCards.holds(cand[i]));
             }
             if (NCands == 1) return cand[0];
             
@@ -233,7 +230,7 @@ namespace UECda {
             }
             
         DECIDED_CHANGE:
-            assert(countCards(changeCards) == change_qty);
+            assert(countCards(changeCards) == changeQty);
             assert(holdsCards(myCards, changeCards));
             if (monitor) {
                 cerr << root.toString();

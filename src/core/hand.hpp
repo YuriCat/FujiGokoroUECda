@@ -45,7 +45,7 @@ struct Hand {
     void setKey(uint64_t k) { key = k; }
 
     void set1stHalf(Cards c, uint32_t q) {
-        assert(q > 0); assert(c.count() == q);
+        assert(c.count() == q);
         cards = c;
         jk = c.joker();
         qty = q;

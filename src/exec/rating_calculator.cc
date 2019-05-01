@@ -11,8 +11,6 @@ MinMatchLogAccessor<MinMatchLog<MinGameLog<MinPlayLog>>, 8192> mLogs;
 EngineSharedData shared;
 EngineThreadTools threadTools[N_THREADS];
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-
 using namespace UECda;
 
 struct RatingSurvey {
@@ -48,7 +46,7 @@ struct RatingSurvey {
         return oss.str();
     }
     
-    RatingSurvey():games(0) {}
+    RatingSurvey(): games(0) {}
 };
 
 template <class gameLog_t, class matchLog_t>
@@ -246,13 +244,7 @@ int calcRating(logs_t& mLogs, const int games, const int simulations, const doub
 }
 
 int main(int argc, char* argv[]) {
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
+
     std::vector<std::string> logFileNames;
     int simulations = 3000; // 予測勝率計算のためのシミュレーション回数
     double coef = 16.0; // レート変動係数
@@ -261,25 +253,25 @@ int main(int argc, char* argv[]) {
     bool absolute = false;
     int games = -1;
     
-    for (int c = 1; c < argc; ++c) {
+    for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-l")) { // log path
+        } else if (!strcmp(argv[c], "-l")) { // log path
             logFileNames.push_back(std::string(argv[c + 1]));
-        }else if (!strcmp(argv[c], "-ld")) { // log directory
+        } else if (!strcmp(argv[c], "-ld")) { // log directory
             logFileNames = std::move(getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat"));
-        }else if (!strcmp(argv[c], "-c")) { // coefficient
+        } else if (!strcmp(argv[c], "-c")) { // coefficient
             coef = atof(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-s")) { // num of simulations
+        } else if (!strcmp(argv[c], "-s")) { // num of simulations
             simulations = atoi(argv[c + 1]);
-        }else if (!strcmp(argv[c], "-inv")) { // rate to score
+        } else if (!strcmp(argv[c], "-inv")) { // rate to score
             for (int cc = c + 1; cc < argc; ++cc) {
-                if (!strcmp(argv[cc], "-f")) { break; } // finish command
+                if (!strcmp(argv[cc], "-f")) break; // finish command
                 rates.push_back(atof(argv[cc]));
             }
-        }else if (!strcmp(argv[c], "-a")) { // absolute mode
+        } else if (!strcmp(argv[c], "-a")) { // absolute mode
             absolute = true;
-        }else if (!strcmp(argv[c], "-g")) { // num of used games
+        } else if (!strcmp(argv[c], "-g")) { // num of used games
             games = atoi(argv[c + 1]);
         }
     }
@@ -293,12 +285,12 @@ int main(int argc, char* argv[]) {
     shared.basePlayPolicy.setTemperature(Settings::simulationTemperaturePlay);
     shared.baseChangePolicy.setTemperature(Settings::simulationTemperatureChange);
     // スレッドごとのデータ初期化
-    for (int th = 0; th < N_THREADS; ++th) {
+    for (int th = 0; th < N_THREADS; th++) {
         threadTools[th].init(th);
     }
     XorShift64 tdice;
     tdice.srand((unsigned int)time(NULL));
-    for (int th = 0; th < N_THREADS; ++th) {
+    for (int th = 0; th < N_THREADS; th++) {
         threadTools[th].dice.srand(tdice.rand() * (th + 111));
     }
     

@@ -445,32 +445,11 @@ struct Field {
         remKey = subCardKey(remKey, dkey);
 
         // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
-        for (int p = 0; p < tp; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
-        }
-        hand[tp].makeMoveAll(mv, dc, dq, dkey);
-        for (int p = tp + 1; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
-        }
-    }
-    
-    void procAndKillHand(int tp, Move mv) {
-        // あがりのときは手札を全更新しない
-        int dq = mv.qty();
-        Cards dc = mv.cards();
-        uint64_t dkey = CardsToHashKey(dc);
-        
-        // 全体の残り手札の更新
-        usedCards[tp] |= dc;
-        remCards -= dc;
-        remQty -= dq;
-        remKey = subCardKey(remKey, dkey);
-
-        hand[tp].qty = 0; // qty だけ 0 にしておくことで上がりを表現
-        
-        assert(!isAlive(tp)); // agari player is not alive
         for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            if (p == tp) {
+                if (dq >= hand[tp].qty) hand[p].setAll(CARDS_NULL, 0, 0);
+                else hand[p].makeMoveAll(mv, dc, dq, dkey);
+            } else if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
         }
     }
 
@@ -481,7 +460,7 @@ struct Field {
     int procSlowest(const MoveInfo mv);
     int procSlowest(const Move mv);
     
-    void makeChange(int from, int to, Cards dc, int dq) {
+    void makeChange(int from, int to, Cards dc) {
         ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
         ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
         ASSERT(examCards(dc), cerr << dc << endl;);
@@ -489,24 +468,23 @@ struct Field {
                cerr << hand[from] << " -> " << dc << endl;);
         ASSERT(!anyCards(andCards(dc, hand[to].cards)),
                cerr << dc << " -> " << hand[to] << endl;)
+        int dq = dc.count();
         uint64_t dkey = CardsToHashKey(dc);
         hand[from].subtrAll(dc, dq, dkey);
         hand[to].addAll(dc, dq, dkey);
         opsHand[from].addAll(dc, dq, dkey);
         opsHand[to].subtrAll(dc, dq, dkey);
-    }
-    void makeChange(int from, int to, Cards dc) {
-        makeChange(from, to, dc, countCards(dc));
+        sentCards[from] = dc;
+        recvCards[to] = dc;
     }
     void makePresents() {
         // 献上を一挙に行う
-        for (int cl = 0; cl < MIDDLE; ++cl) {
+        for (int cl = 0; cl < MIDDLE; cl++) {
             const int oppClass = getChangePartnerClass(cl);
             const int from = classPlayer(oppClass);
             const int to = classPlayer(cl);
             const Cards presentCards = pickHigh(getCards(from), N_CHANGE_CARDS(cl));
-            
-            makeChange(from, to, presentCards, N_CHANGE_CARDS(cl));
+            makeChange(from, to, presentCards);
         }
     }
     void removePresentedCards() {
@@ -758,15 +736,10 @@ int Field::proc(const int tp, const MoveInfo mv) {
                     setNewClassOf(tp, getBestClass());
                     ps.setDead(tp);
                     attractedPlayers.reset(tp);
-                    procAndKillHand(tp, mv);
-                } else {
-                    procHand(tp, mv);
                 }
             }
-        } else {
-            procHand(tp, mv);
         }
-        
+        procHand(tp, mv);
         board.proc(mv);
         setOwner(tp);
         common.turnCount++;
@@ -823,11 +796,8 @@ inline int Field::procSlowest(const Move mv) {
                 setNewClassOf(ps.searchL1Player(), getBestClass());
                 return -1;
             }
-            procAndKillHand(tp, mv);
-        } else {
-            procHand(tp, mv);
         }
-        
+        procHand(tp, mv);
         board.proc(mv);
         setOwner(tp);
         common.turnCount++;
@@ -914,13 +884,13 @@ struct ImaginaryWorld {
     
     int isActive() const { return flags.test(ACTIVE); }
     
-    void set(const Field& field, const Cards c[]) {
+    void set(int turnCount, const Cards c[]) {
         clear();
         for (int p = 0; p < N_PLAYERS; p++) {
             cards[p] = c[p];
             cardKey[p] = CardsToHashKey(c[p]);
         }
-        builtTurn = field.turnCount();
+        builtTurn = turnCount;
     }
     
     void proc(const int p, const Move mv, const Cards dc) {

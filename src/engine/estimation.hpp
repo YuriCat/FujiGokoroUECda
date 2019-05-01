@@ -121,19 +121,20 @@ int dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const go
     return 1;
 }
 
-template <int N>
+template <class gameRecord_t>
 class RandomDealer {
     // ランダムに手札配置を作る
-    // Nは全員の人数
     // 基本的に連続分配を想定しているので、異なるプレーヤーが互いに分配するような状況ではインスタンスを複数作るべき
-    // 他のメソッドに比べ、異なるルールにも比較的対応している部分もあるが、その分メモリ効率が悪い
+    static constexpr int N = N_PLAYERS;
 public:
-    RandomDealer() {}
-    ~RandomDealer() {}
+    RandomDealer(const gameRecord_t& gr, const Field& f, int turn):
+    record(gr) {
+        turnCount = f.turnCount();
+        set(f, turn);
+    }
     
-    template <class field_t, class world_t, class sharedData_t, class threadTools_t>
-    int create(world_t *const dst, DealType type, const field_t& field,
-                const sharedData_t& shared, threadTools_t *const ptools) {
+    int create(ImaginaryWorld *const dst, DealType type,
+               const EngineSharedData& shared, EngineThreadTools *const ptools) {
         Cards c[N_PLAYERS];
         // レベル指定からカード分配
         switch (type) {
@@ -147,7 +148,7 @@ public:
                 dealWithRejection(c, shared, ptools); break;
             default: UNREACHABLE; break;
         }
-        dst->set(field, c);
+        dst->set(turnCount, c);
         return 0;
     }
     
@@ -155,9 +156,7 @@ public:
     void dealAllRand(Cards *const dst, dice64_t *const pdice) const {
         // 完全ランダム分配
         // 自分の分だけは実際のものにする
-        DERR << "START DEAL-RAND" << endl << distCards << endl;
         BitCards tmp[N] = {0};
-        tmp[myClass] = myCards;
         Cards dCards = maskCards(remCards, myCards);
         auto tmpNOwn = NOwn;
         tmpNOwn[myClass] = 0;
@@ -165,32 +164,29 @@ public:
                cerr << "tmpNOwn = " << tmpNOwn << endl;
                cerr << "distributedCards = " << dCards << "(" << countCards(dCards) << ")" << endl;);
         dist64<N>(tmp, dCards, tmpNOwn.data(), pdice);
+        tmp[myClass] = myCards;
         for (int r = 0; r < N; r++) {
             dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
         }
         checkDeal(dst);
-        DERR << "END DEAL-RAND" << endl;
     }
     
     template <class dice64_t>
     void dealWithAbsSbjInfo(Cards *const dst, dice64_t *const pdice) const {
         // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
-        DERR << "START DEAL-ABSSBJ" << endl << distCards << endl;
         BitCards tmp[N] = {0};
         dist64<N>(tmp, distCards, NDeal.data(), pdice);
         for (int r = 0; r < N; r++) {
             dst[infoClassPlayer[r]] = remCards & (detCards[r] | tmp[r]);
         }
         checkDeal(dst);
-        DERR << "END DEAL-ABSSBJ" << endl;
     }
     
     template <class dice64_t>
     void dealWithBias(Cards *const dst, dice64_t *const pdice) const {
         //　逆関数法でバイアスを掛けて分配
         if (initGame) return dealWithAbsSbjInfo(dst, pdice);
-        DERR << "START DEAL-BIAS" << endl << distCards << endl;
-        
+
         std::array<Cards, N> tmp = detCards;
         int tmpNDeal[N];
         for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
@@ -215,66 +211,36 @@ public:
             dst[infoClassPlayer[r]] = remCards & tmp[r];
         }
         checkDeal(dst);
-        DERR << "EAND DEAL-BIAS" << endl << distCards << endl;
     }
     
-    void dealWithRejection(Cards *const dst, const EngineSharedData& shared,
+    void dealWithRejection(Cards *const dst,
+                           const EngineSharedData& shared,
                            EngineThreadTools *const ptools) {
         // 採択棄却法メイン
         // 設定されたレートの分、カード配置を作成し、手札親和度最大のものを選ぶ
-        assert(HARate >= 1 && HARate < 64);
-
-        if (HARate <= 1) {
-            // 交換効果のみ検討
-            if (dealWithRejection_ChangePart(dst, shared, ptools) != 0) {
-                // 失敗報告。ただし、カードの分配自体は出来ているので問題ない。
-                // 失敗の回数が一定値を超えた場合には逆関数法に移行
-                if (++failures > 1) failed = true;
+        Cards deal[BUCKET_MAX][N]; // カード配置候補
+        int bestDeal = 0;
+        for (int i = 0; i < buckets; i++) {
+            if (failed) {
+                dealWithBias(deal[i], &ptools->dice);
+            } else {
+                bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+                // 失敗の回数が一定値を超えた以降は逆関数法に移行
+                if (!ok && ++failures > 1) failed = true;
             }
-        } else {
-            // 進行得点を調べる
-            
-            Cards cand[HARATE_MAX][N]; // カード配置候補
-            int bestCand = 0;
-            double bestLHS = -9999;
-            double candLHS[HARATE_MAX];
-            
-            DERR << "START DEAL-REJEC" << endl << distCards << endl;
-            
-            for (uint32_t t = 0; t < HARate; t++) {
-                if (dealWithRejection_ChangePart(cand[t], shared, ptools) != 0) {
-                    // 失敗報告。ただし、カードの分配自体は出来ているので問題ない
-                    ++failures;
-                    if (failures > 1) {
-                        // 失敗の回数が一定値を超えたので、以降は逆関数法に移行
-                        failed = true;
-                    }
-                }
-                // 配ってみた手札の尤度を計算する
-                double lhs = calcPlayLikelihood(cand[t], shared, ptools);
-                if (lhs > bestLHS) {
-                    bestLHS = lhs;
-                    bestCand = t;
-                }
-                candLHS[t] = lhs;
-            }
-            
-            //ランダムに選んでどうか
-            SoftmaxSelector<double> selector(candLHS, HARate, 0.3);
-            bestCand = selector.select(ptools->dice.drand());
-            
-            for (int p = 0; p < N; p++) dst[p] = cand[bestCand][p];
-            for (int p = 0; p < N; p++) {
-                DERR << "r:" << infoClass[p] << " ";
-                DERR << dst[p] << endl;
-            }
-            DERR << bestLHS << endl;
         }
-        for (int r = 0; r < N; r++) {
-            assert(countCards(dst[infoClassPlayer[r]]) == NOwn[r]);
+        if (buckets > 1) {
+            double lhs[BUCKET_MAX];
+            for (int i = 0; i < buckets; i++) {
+                lhs[i] = calcPlayLikelihood(deal[i], record, shared, ptools);
+            }
+            SoftmaxSelector<double> selector(lhs, buckets, 0.15);
+            bestDeal = selector.select(ptools->dice.drand());
         }
+        for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+        checkDeal(dst);
     }
-    
+
     void init() {
         failures = 0;
         
@@ -288,13 +254,14 @@ public:
         failed = false;
     }
     
-    template <class field_t>
-    void set(const field_t& field, int playerNum) {
+    void set(const Field& field, int playerNum) {
         init();
         myNum = playerNum;
         
         myCards = field.getCards(myNum);
-        myDealtCards = field.getDealtCards(myNum);
+        // サーバー視点の場合はdealtとrecvが分かれて入っていて、
+        // プレーヤー視点ではdealtに全て入っているので足す処理にする
+        myDealtCards = field.getDealtCards(myNum) + field.getRecvCards(myNum);
         remCards = field.getRemCards();
         
         inChange = field.isInChange();
@@ -357,20 +324,20 @@ public:
         }
         
         NDeal = NOwn;
-        
-        // サブ情報
-        turnCount = field.turnCount();
-        
+
         // すでに分かっている情報から確実な部分を分配
         dealPart_AbsSbjInfo();
         
         // 各メソッドの使用可、不可を設定
-        if (checkCompWithRejection()) { // 採択棄却法使用OK
+        if (okForRejection()) { // 採択棄却法使用OK
             if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
         } else failed = true;
     }
     
 private:
+    // 棋譜
+    const gameRecord_t& record;
+    int turnCount;
     
     // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
@@ -380,13 +347,13 @@ private:
     std::array<int8_t, N> NOrg; // 初期配布カード数
     std::array<int8_t, N> infoClassPlayer;
     std::array<int8_t, N> infoClass;
-    uint32_t NDistCards;
+    unsigned NDistCards;
     Cards remCards; // まだ使用されていないカード
     Cards distCards; // まだ特定されていないカード
-    
+
     int myNum, myClass;
     int myChangePartner, firstTurnClass;
-    
+
     Cards myCards;
     Cards myDealtCards; // 配布時
     Cards recvCards, sentCards;
@@ -406,9 +373,8 @@ private:
     Cards distCardsOverInWA[16];
     
     // 進行得点関連
-    int turnCount;
-    static constexpr unsigned HARATE_MAX = 32;
-    unsigned HARate;
+    static constexpr int BUCKET_MAX = 32;
+    int buckets;
     
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;
@@ -418,56 +384,45 @@ private:
         for (int p = 0; p < N; p++) DERR << dst[p] << endl;
         for (int r = 0; r < N; r++) {
             ASSERT(countCards(dst[infoClassPlayer[r]]) == NOwn[r],
-                    cerr << "class = " << r << " NOwn = "<< NOwn[r];
-                    cerr << " cards = " << dst[infoClassPlayer[r]] << endl;);
+                   cerr << "class = " << r << " NOwn = " << (int)NOwn[r];
+                   cerr << " cards = " << dst[infoClassPlayer[r]] << endl;);
         }
     }
     
-    int checkCompWithRejection() const {
+    bool okForRejection() const {
         // 採択棄却法使用可能性
         // 数値は経験的に決定している
-        int comp = 1;
-        if (!initGame) {
-            switch (myClass) {
-                case DAIFUGO:
-                    if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) comp = 0;
-                    break;
-                case FUGO:
-                    if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) comp = 0;
-                    break;
-                case HEIMIN:
-                    if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 7 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) comp = 0;
-                    break;
-                case HINMIN:
-                    if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 3 || NDet[DAIHINMIN] >= 5) comp = 0;
-                    break;
-                case DAIHINMIN:
-                    if (NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5) comp = 0;
-                    break;
-                default: UNREACHABLE; break;
-            }
+        if (initGame) return true;
+        switch (myClass) {
+            case DAIFUGO:
+                if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
+                break;
+            case FUGO:
+                if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
+                break;
+            case HEIMIN:
+                if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 7
+                    || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
+                break;
+            case HINMIN:
+                if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 3 || NDet[DAIHINMIN] >= 5) return false;
+                break;
+            case DAIHINMIN:
+                if (NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5) return false;
+                break;
+            default: UNREACHABLE; break;
         }
-        return comp;
+        return true;
     }
-    
-    template <class sharedData_t, class threadTools_t>
-    int dealWithRejection_ChangePart(Cards *const dst,
-                                        const sharedData_t& shared,
-                                        threadTools_t *const ptools) const {
+
+    bool dealWithChangeRejection(Cards *const dst,
+                                 const EngineSharedData& shared,
+                                 EngineThreadTools *const ptools) const {
         // 採択棄却法のカード交換パート
         auto *const pdice = &ptools->dice;
-        
         if (initGame) {
-            // 初期化ゲームではとりあえずランダム
-            BitCards tmp[N] = {0};
-            dist64<N>(tmp, distCards, NDeal.data(), pdice);
-            for (auto p = 0; p < N; p++) dst[p] = remCards & (detCards[p] | tmp[p]);
-            return 0;
-        }
-        if (failed) {
-            // 計算量が多くなるので逆関数法にする
-            dealWithBias(dst, pdice);
-            return 0;
+            dealWithAbsSbjInfo(dst, pdice);
+            return true;
         }
 
         bool success = false;
@@ -521,7 +476,6 @@ private:
                     dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
                     dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
                     dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                    checkDeal(dst);
                 }
             }
             break;
@@ -570,7 +524,6 @@ private:
                     dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
                     dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
                     dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                    checkDeal(dst);
                 }
             }
             break;
@@ -614,7 +567,6 @@ private:
                     dst[infoClassPlayer[FUGO     ]] = R1 & remCards;
                     dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
                     dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                    checkDeal(dst);
                 }
             }
             break;
@@ -663,7 +615,6 @@ private:
                     dst[infoClassPlayer[FUGO     ]] = R1 & remCards;
                     dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
                     dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                    checkDeal(dst);
                 }
             }
             break;
@@ -712,7 +663,6 @@ private:
                     dst[infoClassPlayer[FUGO   ]] = R1 & remCards;
                     dst[infoClassPlayer[HEIMIN ]] = R2 & remCards;
                     dst[infoClassPlayer[HINMIN ]] = R3 & remCards;
-                    checkDeal(dst);
                 }
             }
             break;
@@ -722,15 +672,15 @@ private:
             /*for (int c = 0; c < N; c++) {
                 dst[infoClassPlayer[c]] = R[c] & remCards;
             }
-            dst[myNum] = myCards;
-            checkDeal(dst);*/
+            dst[myNum] = myCards;*/
+            checkDeal(dst);
         } else {
             DERR << "DEAL_REJEC FAILED..." << endl;
             // 失敗の場合は逆関数法に変更
             dealWithBias(dst, pdice);
-            return -1;
+            return false;
         }
-        return 0;
+        return true;
     }
     
     /*template <class sharedData_t, class threadTools_t>
@@ -892,43 +842,39 @@ private:
             // HA設定
             unsigned NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
             // 1 -> ... -> max -> ... -> 1 と台形に変化
-            HARate = (NOppUsedCards > 0) ? min({ HARATE_MAX, (HARATE_MAX - 1) * NOppUsedCards / 4 + 1, (HARATE_MAX - 1) * NDistCards / 16 + 1 }) : 1;
+            int line1 = (BUCKET_MAX - 1) * NOppUsedCards / 4 + 1;
+            int line2 = BUCKET_MAX;
+            int line3 = (BUCKET_MAX - 1) * NDistCards / 16 + 1;
+            buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
 
             playFlag.reset();
             for (int p = 0; p < N; p++) {
                 if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
             }
         } else {
-            HARate = 1;
+            buckets = 1;
         }
         for (int p = 0; p < N; p++) {
             DERR << "r:" << p << " p:" << infoClassPlayer[p] << " Org:" << NOrg[p] << " Own:" << NOwn[p]
             << " Det:" << NDet[p] << " Deal:" << NDeal[p] << " " << detCards[p] << endl;
         }
     }
-
-    double calcPlayLikelihood(Cards *const c, const EngineSharedData& shared, EngineThreadTools *const ptools) const {
+    double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
+                              const EngineSharedData& shared, EngineThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
-        // 計算時間解析は、各プレーについて検討
 
-        // 時間解析するかどうか
-        const int by_time = shared.estimating_by_time;
-
-        // 対数尤度
-        double playLH = 0;
+        double playLH = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         auto tmpPlayFlag = playFlag;
         MoveInfo *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
-        
         Field field;
-        const auto& gLog = shared.record.latestGame();
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
         // after change callback
         [](const auto& field)->void{},
         // play callback
-        [&playLH, &orgCards, mv, tmpPlayFlag, by_time, &shared]
+        [this, &playLH, &orgCards, mv, tmpPlayFlag, &shared]
         (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
             const int tp = field.turn();
             const Cards usedCards = chosenMove.cards();
@@ -936,11 +882,10 @@ private:
             const Cards myCards = field.getCards(tp);
             const Hand& myHand = field.getHand(tp);
             const Hand& opsHand = field.getOpsHand(tp);
-            
+            if (field.turnCount() >= turnCount) return 0; // 決めたところまで読み終えた(オフラインでの判定用)
             if (!holdsCards(myCards, usedCards)) return -1; // 終了(エラー?)
             // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
             if (!tmpPlayFlag.test(tp)) return 0;
-
             const int NMoves = genMove(mv, myHand, b);
             if (NMoves <= 1) return 0;
 
@@ -958,7 +903,7 @@ private:
             });
 
             if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
-                playLH += log(1 / (double)(NMoves + 1));
+                playLH += log(0.1 / (double)(NMoves + 1));
             } else {
                 std::array<double, N_MAX_MOVES> score;
                 calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
@@ -968,11 +913,7 @@ private:
                     if (mv[i].isMate()) score[i] = maxScore + 4;
                 }
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::simulationTemperaturePlay);
-                if (selector.sum_ != 0) {
-                    playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
-                } else { // 等確率とする
-                    playLH += log(1 / (double)NMoves);
-                }
+                playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
             }
             return 0;
         });

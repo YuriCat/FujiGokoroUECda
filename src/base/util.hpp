@@ -996,6 +996,22 @@ std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     ost << "}";
     return ost;
 }
+template <std::size_t N>
+std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
+    ost << "{";
+    for (int i = 0; i < (int)N - 1; i++) ost << (int)a[i] << ", ";
+    if (a.size() > 0) ost << (int)a[N - 1];
+    ost << "}";
+    return ost;
+}
+template <std::size_t N>
+std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
+    ost << "{";
+    for (int i = 0; i < (int)N - 1; i++) ost << (unsigned int)a[i] << ", ";
+    if (a.size() > 0) ost << (unsigned int)a[N - 1];
+    ost << "}";
+    return ost;
+}
 template <class T>
 std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
     ost << "{";

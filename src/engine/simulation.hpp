@@ -141,21 +141,20 @@ namespace UECda {
             pfield->removePresentedCards(); // 代わりにこちらの操作を行う
             // 交換
             Cards change[N_MAX_CHANGES];
-            for (int cl = 0; cl < MIDDLE; ++cl) {
+            for (int cl = 0; cl < MIDDLE; cl++) {
                 const int from = pfield->classPlayer(cl);
                 const int to = pfield->classPlayer(getChangePartnerClass(cl));
                 const int changes = genChange(change, pfield->getCards(from), N_CHANGE_CARDS(cl));
                 
-                unsigned int index = changeWithPolicy(change, changes,
-                                                pfield->getCards(from), N_CHANGE_CARDS(cl),
-                                                *pfield, pshared->baseChangePolicy, &ptools->dice);
+                int index = changeWithPolicy(change, changes,
+                                             pfield->getCards(from), N_CHANGE_CARDS(cl),
+                                             *pfield, pshared->baseChangePolicy, &ptools->dice);
                 ASSERT(index < changes, cerr << index << " in " << changes << endl;)
-                pfield->makeChange(from, to, change[index], N_CHANGE_CARDS(cl));
+                pfield->makeChange(from, to, change[index]);
             }
         }
         pfield->prepareAfterChange();
         DERR << pfield->toString();
-        //cerr << pfield->toString();
         return startRootSimulation(pfield, pshared, ptools);
     }
 }

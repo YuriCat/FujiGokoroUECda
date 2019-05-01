@@ -197,12 +197,12 @@ for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { 
                 out << "1PQR or SEQ" << endl;
                 int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
                 out << "  SEQ" << endl;
-                for (int i = 0; i < 11; ++i) { os(base + i); }out << endl;
-                for (int i = 0; i < 10; ++i) { os(base + 11 + i); }out << endl;
-                for (int i = 0; i < 9; ++i) { os(base + 21 + i); }out << endl;
+                for (int i = 0; i < 11; i++) { os(base + i); } out << endl;
+                for (int i = 0; i < 10; i++) { os(base + 11 + i); } out << endl;
+                for (int i = 0; i < 9; i++) { os(base + 21 + i); } out << endl;
                 out << "  GROUP" << endl;
-                for (int i = 0; i < 13; ++i) {
-                    for (int j = 0; j < 4; ++j) { os(base + 30 + 4 * i + j); }out << endl;
+                for (int i = 0; i < 13; i++) {
+                    for (int j = 0; j < 4; j++) { os(base + 30 + 4 * i + j); } out << endl;
                 }
             }
 

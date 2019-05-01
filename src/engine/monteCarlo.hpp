@@ -68,8 +68,7 @@ namespace UECda {
         const int threadMaxNWorlds = gal.size(); // 当スレッドに与えられている世界作成スペースの数
 
         // 世界生成のためのクラスを初期化
-        RandomDealer<N_PLAYERS> estimator;
-        estimator.set(*pfield, myPlayerNum);
+        RandomDealer<EngineGameRecord> estimator(pshared->record.latestGame(), *pfield, myPlayerNum);
 
         Field pf = *pfield;
         pf.attractedPlayers.set(myPlayerNum);
@@ -125,8 +124,7 @@ namespace UECda {
                         // 世界作成スペースが見つかった
                         simuTime += clock.restart();
                         // 世界作成
-                        estimator.create(pWorld, Settings::monteCarloDealType,
-                                            *pfield, *pshared, ptools);
+                        estimator.create(pWorld, Settings::monteCarloDealType, *pshared, ptools);
                         estTime += clock.restart();
                         
                         if (gal.regist(pWorld) != 0) { // 登録失敗

@@ -98,7 +98,7 @@ constexpr double TEMPERATURE_CHANGE = 1;//DBL_MAX;
 constexpr double TEMPERATURE_PLAY = 0;//DBL_MAX;
 
 // シミュレーション中の選び方のアルゴリズム
-enum Selector{
+enum Selector {
     NAIVE,
     THRESHOLD,
     POLY_BIASED,
@@ -106,7 +106,7 @@ enum Selector{
 };
 
 // 相手の手札の配り方のアルゴリズム
-enum DealType{
+enum DealType {
     RANDOM,
     SBJINFO,
     BIAS,

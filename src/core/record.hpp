@@ -461,7 +461,7 @@ public:
         orgCards.fill(CARDS_NULL);
     }
     
-    bool isSubjective() { return false; }
+    static constexpr bool isSubjective() { return false; }
     
     Cards getDealtCards(int p) const { return dealtCards[p]; }
     void setDealtCards(int p, Cards c) { dealtCards[p] = c; }
@@ -802,11 +802,7 @@ int iterateGameLogBeforePlay
     // change
     for (int t = 0, tend = gLog.changes(); t < tend; t++) {
         const typename game_t::change_t& change = gLog.change(t);
-        if (field.classOf(change.from) >= HINMIN) {
-            // 献上以外
-            field.hand[change.from].subtrAll(change.cards);
-            field.opsHand[change.from].addAll(change.cards);
-        } else {
+        if (field.classOf(change.from) < HEIMIN) {
             int ret = changeCallback(field, change.from, change.to, change.cards);
             if (ret <= -2) {
                 cerr << "error on change "
@@ -815,18 +811,17 @@ int iterateGameLogBeforePlay
             } else if (ret == -1) {
                 break;
             }
-            // proceed field
-            field.makeChange(change.from, change.to, change.cards);
         }
+        field.makeChange(change.from, change.to, change.cards);
     }
     field.resetInChange();
     lastCallback(field);
     return 0;
 }
 
-template <class field_t, class game_t, class hand_t>
+template <class field_t, class game_t>
 void setFieldAfterChange(field_t& field, const game_t& gLog,
-                         const std::array<hand_t, N_PLAYERS>& hand) {
+                         const std::array<Cards, N_PLAYERS>& hand) {
     // カード交換が終わった後から棋譜を読み始める時の初期設定
     // 全体初期化はされていると仮定する
     for (int p = 0; p < N_PLAYERS; p++) {
@@ -841,15 +836,25 @@ void setFieldAfterChange(field_t& field, const game_t& gLog,
 
 // 試合中のプレーヤーがこれまでの試合(交換後)を振り返る場合
 // 相手手札がわからないのでhandとして外部から与える
-template <class field_t, class game_t, class hand_t,
+template <class field_t, class game_t,
 typename firstCallback_t, typename playCallback_t>
 int iterateGameLogInGame
-(field_t& field, const game_t& gLog, int turns, const std::array<hand_t, N_PLAYERS>& hand,
+(field_t& field, const game_t& gLog, int turns, const std::array<Cards, N_PLAYERS>& hand,
  const firstCallback_t& firstCallback = [](const field_t&)->void{},
  const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
  bool initialized = false) {
     if (!initialized) {
         setFieldBeforeAll(field, gLog);
+        if (!gLog.isSubjective()) {
+            for (int p = 0; p < N_PLAYERS; p++) {
+                field.dealtCards[p] = gLog.dealtCards[p];
+            }
+            for (int c = 0; c < gLog.changes(); c++) {
+                const auto& ch = gLog.change(c);
+                field.sentCards[ch.from] = ch.cards;
+                field.recvCards[ch.to] = ch.cards;
+            }
+        }
         setFieldAfterChange(field, gLog, hand); // 交換後まで進める
     }
     field.prepareAfterChange();

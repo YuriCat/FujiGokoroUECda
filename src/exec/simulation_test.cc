@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> logFileNames;
     threadTools.dice.srand((unsigned int)time(NULL));
     
-    for (int c = 1; c < argc; ++c) {
+    for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
             DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
         }else if (!strcmp(argv[c], "-l")) { // log path

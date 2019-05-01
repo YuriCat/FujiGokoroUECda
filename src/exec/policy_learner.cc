@@ -328,13 +328,13 @@ int main(int argc, char* argv[]) { // For UECda
     string outDirName = "";
     
     int mode = MODE_FLAG_CHANGE | MODE_FLAG_PLAY | MODE_FLAG_SHUFFLE;
-    for (int c = 1; c < argc; ++c) {
+    for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-t")) {
             mode |= MODE_FLAG_TEST;
         } else if (!strcmp(argv[c], "-c")) {
-            mode &= (~MODE_FLAG_PLAY);
+            mode &= ~MODE_FLAG_PLAY;
         } else if (!strcmp(argv[c], "-p")) {
-            mode &= (~MODE_FLAG_CHANGE);
+            mode &= ~MODE_FLAG_CHANGE;
         } else if (!strcmp(argv[c], "-i")) {
             LearningSettings::iterations = atoi(argv[c + 1]);
         } else if (!strcmp(argv[c], "-l")) {
@@ -345,7 +345,7 @@ int main(int argc, char* argv[]) { // For UECda
         } else if (!strcmp(argv[c], "-o")) {
             outDirName = string(argv[c + 1]);
         } else if (!strcmp(argv[c], "-f")) {
-            mode &= (~MODE_FLAG_SHUFFLE);
+            mode &= ~MODE_FLAG_SHUFFLE;
         } else if (!strcmp(argv[c], "-ar")) {
             LearningSettings::attenuationRate = atof(argv[c + 1]);
         } else if (!strcmp(argv[c], "-lr")) {

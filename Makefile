@@ -44,7 +44,7 @@ directories  ?= $(output_dir)
 # 4. Public Targets
 #
 default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation client policy_learner l2_test policy_test dominance_test cards_test movegen_test policy_client mate_test server
+	$(MAKE) TARGET=$@ preparation client estimation_test policy_learner l2_test policy_test dominance_test cards_test movegen_test policy_client mate_test server
 
 match:
 	$(MAKE) TARGET=$@ preparation client policy_client
@@ -91,17 +91,11 @@ mate_test :
 l2_test :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)l2_test $(exec_dir)/l2_test.cc $(LIBRARIES)
 
-maxn_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)maxn_test $(exec_dir)/maxn_test.cc $(LIBRARIES)
-
 policy_test :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_test $(exec_dir)/policy_test.cc $(LIBRARIES)
 
-modeling_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)modeling_test $(exec_dir)/modeling_test.cc $(LIBRARIES)
-
-estimator_learner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)estimator_learner $(exec_dir)/estimator_learner.cc $(LIBRARIES)
+estimation_test :
+	$(CXX) $(CXXFLAGS) -o $(output_dir)estimation_test $(exec_dir)/estimation_test.cc $(LIBRARIES)
 
 client :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES)
