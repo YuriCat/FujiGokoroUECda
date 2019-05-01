@@ -144,15 +144,11 @@ namespace UECda {
                 if (threadNWorlds > 0) {
                     //pWorld=gal->pickRand( threadMaxNWorlds*threadId, threadNWorlds, &dice );
                     pWorld = gal.pickRand(0, threadNWorlds, &dice);
-                    if (pWorld == nullptr) goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
-                } else goto THREAD_EXIT; // どうしようもないのでスレッド強制終了
+                    if (pWorld == nullptr) return; // どうしようもないのでスレッド強制終了
+                } else return; // どうしようもないのでスレッド強制終了
             }
-            
-            // 世界確定
-            DOUT << "SAMPLE WORLD..." << (pWorld - gal.world) << endl;
-            
-            // ここでプレイアウト実行
-            // alphaカットはしない
+
+            // シミュレーション実行
             Field f;
             if (proot->isChange) {
                 copyField(pf, &f);
@@ -165,7 +161,7 @@ namespace UECda {
             }
             
             proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)
-            if (proot->exitFlag) goto THREAD_EXIT;
+            if (proot->exitFlag) return;
             
             simuTime += clock.restart();
             
@@ -205,12 +201,11 @@ namespace UECda {
                 for (int m = 0; m < candidates; m++) {
                     if (d[m].reg > line) {
                         proot->exitFlag = 1;
-                        goto THREAD_EXIT;
+                        return;
                     }
                 }
             }
 #endif // FIXED_N_PLAYOUTS
         }
-    THREAD_EXIT:;//終了
     }
 }
