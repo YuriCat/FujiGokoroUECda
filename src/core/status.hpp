@@ -42,7 +42,7 @@ void broadcastBGame(const matchLog_t& mLog) { // 1ゲーム開始前実況
                 break;
         }
         cerr << " place)";
-        if (pNum == mLog.getMyPlayerNum()) { cerr << " <- Me"; }
+        if (pNum == mLog.getMyPlayerNum()) cerr << " <- Me";
         cerr << endl;
     }
 }
@@ -55,11 +55,8 @@ void broadcastPlayerState(const matchLog_t& mLog) { // プレーヤー状態実�
         cerr << "[Seat " << s << "] : Player " << pNum;
         cerr << "  Class " << gLog.classOf(pNum);
         if (ps.isAlive(pNum)) {
-            if (ps.isAwake(pNum)) {
-                cerr << "          ";
-            } else {
-                cerr << "  ASLEEP  ";
-            }
+            if (ps.isAwake(pNum)) cerr << "          ";
+            else cerr << "  ASLEEP  ";
         } else if (ps.isExcluded(pNum)) {
             cerr << " EXCLUDED ";
         } else {
@@ -105,11 +102,8 @@ void broadcastPlay(uint32_t p, Move move) const { // プレー実況
     if (qty <= 0) {
         cerr << " passed away...  Class " << newClassOf(p);
     } else {
-        if (qty == 1) {
-            cerr << " 1 card";
-        } else {
-            cerr << " " << qty << " cards";
-        }
+        if (qty == 1) cerr << " 1 card";
+        else cerr << " " << qty << " cards";
         cerr << " still remains.";
     }
     cerr << endl;
@@ -121,9 +115,5 @@ void broadcastMyChange(Cards cards) const { // 自分のプレー決定実況
 
 void broadcastMyPlay(Move move) const { // 自分のプレー決定実況
     cerr << "My decided move : ";
-    cerr << move;
-    //決定手が決まっている場合はそれも表示
-    for (int m = nextMoves.size() - 1; m >= 0; --m)
-        cerr << " -> " << nextMoves.getData(m);
-    cerr << endl;
+    cerr << move << endl;
 }
