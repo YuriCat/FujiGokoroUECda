@@ -234,7 +234,7 @@ public:
             for (int i = 0; i < buckets; i++) {
                 lhs[i] = calcPlayLikelihood(deal[i], record, shared, ptools);
             }
-            SoftmaxSelector<double> selector(lhs, buckets, 0.15);
+            SoftmaxSelector<double> selector(lhs, buckets, 0.3);
             bestDeal = selector.select(ptools->dice.drand());
         }
         for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
