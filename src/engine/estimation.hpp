@@ -149,16 +149,12 @@ public:
         // 完全ランダム分配
         // 自分の分だけは実際のものにする
         BitCards tmp[N] = {0};
-        Cards dCards = maskCards(remCards, myCards);
         auto tmpNOwn = NOwn;
         tmpNOwn[myClass] = 0;
-        ASSERT(std::accumulate(tmpNOwn.begin(), tmpNOwn.begin() + N, 0) == countCards(dCards),
-               cerr << "tmpNOwn = " << tmpNOwn << endl;
-               cerr << "distributedCards = " << dCards << "(" << countCards(dCards) << ")" << endl;);
-        dist64<N>(tmp, dCards, tmpNOwn.data(), dice);
+        dist64<N>(tmp, remCards - myCards, tmpNOwn.data(), dice);
         tmp[myClass] = myCards;
         for (int p = 0; p < N; p++) {
-            dst[p] = andCards(remCards, tmp[infoClass[p]]);
+            dst[p] = tmp[infoClass[p]];
         }
         checkDeal(dst, false);
     }
@@ -167,9 +163,9 @@ public:
     void dealWithSubjectiveInfo(Cards *const dst, dice64_t&dice) const {
         // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
         BitCards tmp[N] = {0};
-        dist64<N>(tmp, distCards, NDeal.data(), dice);
-        for (int r = 0; r < N; r++) {
-            dst[infoClassPlayer[r]] = remCards & (detCards[r] | tmp[r]);
+        dist64<N>(tmp, dealCards, NDeal.data(), dice);
+        for (int cl = 0; cl < N; cl++) {
+            dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl] - usedCards[cl];
         }
         checkDeal(dst);
     }
@@ -182,7 +178,7 @@ public:
         std::array<Cards, N> tmp = detCards;
         int tmpNDeal[N];
         for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
-        Cards fromCards = distCards;
+        Cards fromCards = dealCards;
         while (fromCards) {
             IntCard ic = fromCards.popHighest();
 
@@ -200,15 +196,15 @@ public:
             tmpNDeal[r]--;
         }
  
-        for (int r = 0; r < N; r++) {
-            dst[infoClassPlayer[r]] = remCards & tmp[r];
+        for (int cl = 0; cl < N; cl++) {
+            dst[infoClassPlayer[cl]] = tmp[cl] - usedCards[cl];
         }
         checkDeal(dst);
     }
     
     void dealWithRejection(Cards *const dst,
-                           const EngineSharedData& shared,
-                           EngineThreadTools *const ptools) {
+                           const SharedData& shared,
+                           ThreadTools *const ptools) {
         // 採択棄却法メイン
         Cards deal[BUCKET_MAX][N]; // カード配置候補
         int bestDeal = 0;
@@ -237,6 +233,7 @@ public:
     void set(const Field& field, int playerNum) {
         // 最初に繰り返し使う情報をセット
         detCards.fill(CARDS_NULL);
+        usedCards.fill(CARDS_NULL);
         NOwn.fill(0);
         NOrg.fill(0);
         NDet.fill(0);
@@ -270,7 +267,8 @@ public:
             NOwn[cl] = NDeal[cl] = own;
             NOrg[cl] = org;
             NDet[cl] = org - own;
-            detCards[cl] += field.getUsedCards(p); // 既に使用されたカードは確定
+            usedCards[cl] = field.getUsedCards(p);
+            detCards[cl] += usedCards[cl]; // 既に使用されたカードは確定
         }
 
         myNum = playerNum;
@@ -305,16 +303,17 @@ private:
     int turnCount;
     
     // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
-    std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
     std::array<int8_t, N> NOwn;  // 持っているカード数
     std::array<int8_t, N> NDet;  // 特定＋使用カード数
     std::array<int8_t, N> NDeal; // 配布カード数
     std::array<int8_t, N> NOrg;  // 初期配布カード数
     std::array<int8_t, N> infoClassPlayer;
     std::array<int8_t, N> infoClass;
-    unsigned NDistCards;
+    unsigned NdealCards;
     Cards remCards;  // まだ使用されていないカード
-    Cards distCards; // まだ特定されていないカード
+    Cards dealCards; // まだ特定されていないカード
+    std::array<Cards, N> usedCards; // 使用済みカード
+    std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
     int myNum, myClass;
     int myChangePartner, firstTurnClass;
@@ -334,8 +333,8 @@ private:
     // 自分が上位のときに献上された最小の札の確率
     int candidatesInWA;
     double thresholdInWA[16];
-    Cards distCardsUnderInWA[16];
-    Cards distCardsOverInWA[16];
+    Cards dealCardsUnderInWA[16];
+    Cards dealCardsOverInWA[16];
     
     // 進行得点関連
     static constexpr int BUCKET_MAX = 32;
@@ -420,10 +419,10 @@ private:
                     int ptClass = getChangePartnerClass(myClass);
                     R[ptClass] = detCards[ptClass] + recvCards;
                     BitCards remained = CARDS_NULL;
-                    int numDealOthers = NDistCards - NDeal[ptClass];
+                    int numDealOthers = NdealCards - NDeal[ptClass];
                     int numChangeMine = N_CHANGE_CARDS(myClass);
                     if (NDeal[ptClass]) {
-                        dist2_64(&remained, &R[ptClass], distCards, numDealOthers, NDeal[ptClass], dice);
+                        dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
                         // 交換相手の交換が実際に沿うか検証
                         Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
                         if (!holdsCards(detCards[myClass], cc)) continue; // 矛盾
@@ -432,7 +431,7 @@ private:
                 }
 
                 // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-                BitCards remained = distCards & ~R[ptClass];
+                BitCards remained = dealCards & ~R[ptClass];
                 int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
                 int otherPoor = getChangePartnerClass(otherRich);
                 int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
@@ -466,7 +465,7 @@ private:
 
                 // 1. カードを大富豪-大貧民系と富豪-貧民系に分ける
                 BitCards remained[2] = {0};
-                dist2_64(&remained[0], &remained[1], distCards, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
+                dist2_64(&remained[0], &remained[1], dealCards, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
 
                 // 2. それぞれの系で交換を起こしてみて矛盾が無いか調べる
                 bool ok = true;
@@ -493,7 +492,9 @@ private:
         }
 
         if (success) {
-            for (int p = 0; p < N; p++) dst[p] = R[infoClass[p]] & remCards;
+            for (int cl = 0; cl < N; cl++) {
+                dst[infoClassPlayer[cl]] = R[cl] - usedCards[cl];
+            }
             dst[myNum] = myCards;
             checkDeal(dst);
         } else {
@@ -545,8 +546,8 @@ private:
         double v = urand * candidatesInWA;
         int k = (int)v;
         double u = 1 + k - v;
-        if (u < thresholdInWA[k]) return distCardsUnderInWA[k];
-        else return distCardsOverInWA[k];
+        if (u < thresholdInWA[k]) return dealCardsUnderInWA[k];
+        else return dealCardsOverInWA[k];
     }
     
     void setWeightInWA() {
@@ -566,7 +567,7 @@ private:
                 const IntCard ic = tmp.popLowest();
                 // ic が献上によって得られたカードの下界だった場合のパターン数を計算
                 const Cards c = IntCardToCards(ic);
-                const Cards lowerDist = pickLower(c) & distCards;
+                const Cards lowerDist = pickLower(c) & dealCards;
                 const int lowerDists = countCards(lowerDist);
                 double combinations;
                 if (lowerDists < T) { // 配布不可能
@@ -579,7 +580,7 @@ private:
                     }
                 }
                 tmpProb.push_back(combinations);
-                distCardsUnderInWA[index] = distCards & pickLower(IntCardToCards(ic));
+                dealCardsUnderInWA[index] = dealCards & pickLower(IntCardToCards(ic));
                 index += 1;
             }
             ASSERT(index > 0,);
@@ -600,7 +601,7 @@ private:
                 large.pop();
                 
                 thresholdInWA[l] = tmpProb[l];
-                distCardsOverInWA[l] = distCardsUnderInWA[g];
+                dealCardsOverInWA[l] = dealCardsUnderInWA[g];
                 tmpProb[g] += -1.0 + tmpProb[l];
                 if (tmpProb[g] < 1) small.push(g);
                 else large.push(g);
@@ -621,7 +622,7 @@ private:
 
     void prepareSubjectiveInfo() {
         // 自分以外の未使用カード
-        distCards = maskCards(remCards, myCards);
+        dealCards = remCards - myCards;
 
         // 自分
         detCards[myClass] |= myCards;
@@ -631,9 +632,9 @@ private:
         // 初手がすでに済んでいる場合、初手プレーヤーにD3
         if (!inChange
             && turnCount > 0
-            && distCards.contains(INTCARD_D3)) {
+            && dealCards.contains(INTCARD_D3)) {
             detCards[firstTurnClass] |= CARDS_D3;
-            distCards -= CARDS_D3;
+            dealCards -= CARDS_D3;
             NDeal[firstTurnClass] -= 1;
             NDet[firstTurnClass] += 1;
         }
@@ -641,12 +642,12 @@ private:
             if (myClass < MIDDLE) { // 自分が上位のとき
                 // 交換であげたカードのうちまだ確定扱いでないもの
                 if (!inChange) { // 交換時はまだ不明
-                    Cards sCards = distCards & sentCards;
+                    Cards sCards = dealCards & sentCards;
                     if (sCards) {
                         int nc = countCards(sCards);
                         int myChangePartnerClass = getChangePartnerClass(myClass);
                         detCards[myChangePartnerClass] |= sCards;
-                        distCards -= sCards;
+                        dealCards -= sCards;
                         NDeal[myChangePartnerClass] -= nc;
                         NDet[myChangePartnerClass] += nc;
                     }
@@ -655,17 +656,17 @@ private:
         }
 
         // 結局配る枚数
-        NDistCards = countCards(distCards);
-        ASSERT(NDistCards == std::accumulate(NDeal.begin(), NDeal.begin() + N, 0),
-               cerr << NDistCards << " " << NDeal << " " << std::accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
+        NdealCards = countCards(dealCards);
+        ASSERT(NdealCards == std::accumulate(NDeal.begin(), NDeal.begin() + N, 0),
+               cerr << NdealCards << " " << NDeal << " " << std::accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
 
         if (!inChange && turnCount > 0) {
             // 他人が使用したカード枚数から採択棄却の際の候補数を設定
-            unsigned NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]])));
+            unsigned NOppUsedCards = Cards(CARDS_ALL - remCards - usedCards[myClass]).count();
             // 1 -> ... -> max -> ... -> 1 と台形に変化
             int line1 = (BUCKET_MAX - 1) * NOppUsedCards / 4 + 1;
             int line2 = BUCKET_MAX;
-            int line3 = (BUCKET_MAX - 1) * NDistCards / 16 + 1;
+            int line3 = (BUCKET_MAX - 1) * NdealCards / 16 + 1;
             buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
             // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
             playFlag.reset();
