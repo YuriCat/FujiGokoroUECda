@@ -12,7 +12,7 @@
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace Deal {
-    constexpr uint64_t CPTable_afterChange[INTCARD_MAX + 1][5] =
+    constexpr uint64_t AfterChangeWeight[INTCARD_MAX + 1][5] =
     {
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -79,17 +79,18 @@ namespace Deal {
 }
 
 // 拘束条件分割
-template <int N_REST, class dice64_t>
-bool dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
+template <class dice64_t>
+bool dist2Rest_64(int numRest,
+                  uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
                   const uint64_t arg, int N0, int N1,
-                  const uint64_t rest0, const uint64_t rest1, dice64_t *const pdice) {   
+                  const uint64_t rest0, const uint64_t rest1, dice64_t& dice) {   
     // 0が交換上手側、1が下手側
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
 
     // まず確定ビットを探す
     if (rest0) {
-        uint64_t low = highestNBits(all, N1 + N_REST);
+        uint64_t low = highestNBits(all, N1 + numRest);
         uint64_t set0 = rest0 & ~low;
         if (set0) {
             int NSet0 = popcnt64(set0);
@@ -97,17 +98,16 @@ bool dist2Rest_64(uint64_t *const rest, uint64_t *const goal0, uint64_t *const g
         }
     }
     assert((int)popcnt64(all) == N0 + N1);
-    dist2_64(&tmp0, &tmp1, all, N0, N1, pdice);
-
+    dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
-    uint64_t highNRest = highestNBits(tmp1, N_REST);
+    uint64_t highNRest = highestNBits(tmp1, numRest);
     tmp0 |= highNRest; tmp1 -= highNRest;
 
     if (!holdsBits(tmp0, rest0)
         || !holdsBits(tmp1, rest1 & ~highNRest)) return false;
 
-    *goal0 |=tmp0;
-    *goal1 |= tmp1;
+    *goal0 = tmp0;
+    *goal1 = tmp1;
     *rest = tmp0 & rest1;
 
     return true;
@@ -131,11 +131,11 @@ public:
         // レベル指定からカード分配
         switch (type) {
             case DealType::RANDOM: // 残りカードを完全ランダム分配
-                dealAllRand(c, &ptools->dice); break;
+                dealAllRand(c, ptools->dice); break;
             case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
-                dealWithSubjectiveInfo(c, &ptools->dice); break;
+                dealWithSubjectiveInfo(c, ptools->dice); break;
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
-                dealWithBias(c, &ptools->dice); break;
+                dealWithBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
                 dealWithRejection(c, shared, ptools); break;
             default: UNREACHABLE; break;
@@ -145,7 +145,7 @@ public:
     }
     
     template <class dice64_t>
-    void dealAllRand(Cards *const dst, dice64_t *const pdice) const {
+    void dealAllRand(Cards *const dst, dice64_t& dice) const {
         // 完全ランダム分配
         // 自分の分だけは実際のものにする
         BitCards tmp[N] = {0};
@@ -155,19 +155,19 @@ public:
         ASSERT(std::accumulate(tmpNOwn.begin(), tmpNOwn.begin() + N, 0) == countCards(dCards),
                cerr << "tmpNOwn = " << tmpNOwn << endl;
                cerr << "distributedCards = " << dCards << "(" << countCards(dCards) << ")" << endl;);
-        dist64<N>(tmp, dCards, tmpNOwn.data(), pdice);
+        dist64<N>(tmp, dCards, tmpNOwn.data(), dice);
         tmp[myClass] = myCards;
-        for (int r = 0; r < N; r++) {
-            dst[infoClassPlayer[r]] = andCards(remCards, tmp[r]);
+        for (int p = 0; p < N; p++) {
+            dst[p] = andCards(remCards, tmp[infoClass[p]]);
         }
-        checkDeal(dst);
+        checkDeal(dst, false);
     }
 
     template <class dice64_t>
-    void dealWithSubjectiveInfo(Cards *const dst, dice64_t *const pdice) const {
+    void dealWithSubjectiveInfo(Cards *const dst, dice64_t&dice) const {
         // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
         BitCards tmp[N] = {0};
-        dist64<N>(tmp, distCards, NDeal.data(), pdice);
+        dist64<N>(tmp, distCards, NDeal.data(), dice);
         for (int r = 0; r < N; r++) {
             dst[infoClassPlayer[r]] = remCards & (detCards[r] | tmp[r]);
         }
@@ -175,9 +175,9 @@ public:
     }
 
     template <class dice64_t>
-    void dealWithBias(Cards *const dst, dice64_t *const pdice) const {
+    void dealWithBias(Cards *const dst, dice64_t& dice) const {
         //　逆関数法でバイアスを掛けて分配
-        if (initGame) return dealWithSubjectiveInfo(dst, pdice);
+        if (initGame) return dealWithSubjectiveInfo(dst, dice);
 
         std::array<Cards, N> tmp = detCards;
         int tmpNDeal[N];
@@ -185,16 +185,17 @@ public:
         Cards fromCards = distCards;
         while (fromCards) {
             IntCard ic = fromCards.popHighest();
-            
-            uint64_t weightSum[N];
-            weightSum[0] = tmpNDeal[0] * Deal::CPTable_afterChange[ic][0];
-            for (int r = 1; r < N; r++) {
-                weightSum[r] = weightSum[r - 1] + tmpNDeal[r] * Deal::CPTable_afterChange[ic][r];
+
+            uint64_t weightSum[N + 1];
+            weightSum[0] = 0;
+            for (int r = 0; r < N; r++) {
+                weightSum[r + 1] = weightSum[r] + tmpNDeal[r] * Deal::AfterChangeWeight[ic][r];
             }
-            assert(weightSum[N - 1] > 0);
-            uint32_t ran = pdice->rand() % weightSum[N - 1];
+            assert(weightSum[N] > 0);
+            uint64_t ran = dice() % weightSum[N];
+
             int r;
-            for (r = 0; r < N; r++) if (weightSum[r] > ran) break;
+            for (r = 0; r < N; r++) if (weightSum[r + 1] > ran) break;
             tmp[r].insert(ic);
             tmpNDeal[r]--;
         }
@@ -209,33 +210,32 @@ public:
                            const EngineSharedData& shared,
                            EngineThreadTools *const ptools) {
         // 採択棄却法メイン
-        // 設定されたレートの分、カード配置を作成し、手札親和度最大のものを選ぶ
         Cards deal[BUCKET_MAX][N]; // カード配置候補
         int bestDeal = 0;
         for (int i = 0; i < buckets; i++) {
             if (failed) {
-                dealWithBias(deal[i], &ptools->dice);
+                dealWithBias(deal[i], ptools->dice);
             } else {
                 bool ok = dealWithChangeRejection(deal[i], shared, ptools);
                 // 失敗の回数が一定値を超えた以降は逆関数法に移行
                 if (!ok && ++failures > 1) failed = true;
             }
         }
+        // 役提出の尤度を計算してし使用する手札配置を決定
         if (buckets > 1) {
             double lhs[BUCKET_MAX];
             for (int i = 0; i < buckets; i++) {
                 lhs[i] = calcPlayLikelihood(deal[i], record, shared, ptools);
             }
             SoftmaxSelector<double> selector(lhs, buckets, 0.3);
-            bestDeal = selector.select(ptools->dice.drand());
+            bestDeal = selector.select(ptools->dice.random());
         }
         for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
         checkDeal(dst);
     }
 
-    void init() {
-        failures = 0;
-        
+    void set(const Field& field, int playerNum) {
+        // 最初に繰り返し使う情報をセット
         detCards.fill(CARDS_NULL);
         NOwn.fill(0);
         NOrg.fill(0);
@@ -243,83 +243,56 @@ public:
         NDeal.fill(0);
         infoClassPlayer.fill(-1);
         infoClass.fill(-1);
+        failures = 0;
         failed = false;
-    }
-    
-    void set(const Field& field, int playerNum) {
-        init();
+
+        initGame = field.isInitGame();
+        inChange = field.isInChange();
+
+        // 交換ありの場合には配列のインデックスは階級を基本とする
+        // 交換がない場合にはプレーヤー番号で代用する
+        for (int p = 0; p < N; p++) {
+            int cl = initGame ? p : field.classOf(p);
+
+            infoClassPlayer[cl] = p;
+            infoClass[p] = cl;
+
+            int org = field.getNCards(p) + field.getUsedCards(p).count();
+            int own = field.getNCards(p);
+
+            if (inChange && cl == getChangePartnerClass(myClass)) {
+                // 交換中なら自分の交換相手のカードの枚数は引いておく
+                int nch = N_CHANGE_CARDS(cl);
+                org -= nch;
+                own -= nch;
+            }
+
+            NOwn[cl] = NDeal[cl] = own;
+            NOrg[cl] = org;
+            NDet[cl] = org - own;
+            detCards[cl] += field.getUsedCards(p); // 既に使用されたカードは確定
+        }
+
         myNum = playerNum;
-        
         myCards = field.getCards(myNum);
+        // 交換無し時の階級の代用込みでの設定
+        myClass = infoClass[myNum];
+        firstTurnClass = infoClass[field.firstTurn()];
+
         // サーバー視点の場合はdealtとrecvが分かれて入っていて、
         // プレーヤー視点ではdealtに全て入っているので足す処理にする
         myDealtCards = field.getDealtCards(myNum) + field.getRecvCards(myNum);
         remCards = field.getRemCards();
-        
-        inChange = field.isInChange();
-        initGame = field.isInitGame();
-        
-        if (initGame) {
-            myClass = myNum; // このときだけ、ランクの情報がプレーヤー番号そのまま
-            for (int p = 0; p < N; p++) {
-                infoClassPlayer[p] = p;
-                infoClass[p] = p;
-                
-                int org = field.getNCards(p) + countCards(field.getUsedCards(p));
-                int own = field.getNCards(p);
-                
-                // 交換が無いので枚数調整無し
-                NOwn[p] = own;
-                NOrg[p] = org;
-                NDet[p] = org - own;
-                detCards[p] |= field.getUsedCards(p); // 既に使用されたカードは確定
-            }
-            firstTurnClass = field.firstTurn();
-        } else {
-            myClass = field.classOf(myNum);
-            
-            for (int p = 0; p < N; p++) {
-                int r = field.classOf(p);
-                
-                infoClassPlayer[r] = p;
-                infoClass[p] = r;
-                
-                uint32_t org = field.getNCards(p) + countCards(field.getUsedCards(p));
-                uint32_t own = field.getNCards(p);
-                
-                // 交換中は枚数調整
-                if (inChange) {
-                    if (p == myNum) {
-                        // 自分の枚数を増やす
-                        uint32_t nch = N_CHANGE_CARDS(r);
-                    } else if (r == getChangePartnerClass(myClass)) { // 自分の交換相手のカードの枚数は引いておく
-                        uint32_t nch = N_CHANGE_CARDS(r);
-                        org -= nch;
-                        own -= nch;
-                    }
-                }
-                
-                NOwn[r] = own;
-                NOrg[r] = org;
-                NDet[r] = org - own;
-                detCards[r] |= field.getUsedCards(p); // 既に使用されたカードは確定
-            }
-            // 交換中でなく、カード交換に関与した場合
-            if (!inChange && myClass != MIDDLE) {
-                sentCards = field.getSentCards(myNum);
-                recvCards = field.getRecvCards(myNum);
-                
-                assert((int)countCards(sentCards) == N_CHANGE_CARDS(myClass));
-                if (myClass > MIDDLE) assert((int)countCards(recvCards) == N_CHANGE_CARDS(myClass));
-            }
-            firstTurnClass = field.classOf(field.firstTurn());
+
+        // 交換中でなく、カード交換に関与した場合に動いたカードを設定
+        if (!initGame && !inChange && myClass != MIDDLE) {
+            sentCards = field.getSentCards(myNum);
+            recvCards = field.getRecvCards(myNum);
         }
-        
-        NDeal = NOwn;
 
         // すでに分かっている情報から確実な部分を分配
         prepareSubjectiveInfo();
-        
+
         // 各メソッドの使用可、不可を設定
         if (okForRejection()) { // 採択棄却法使用OK
             if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
@@ -333,14 +306,14 @@ private:
     
     // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
-    std::array<int8_t, N> NOwn; // 持っているカード数
-    std::array<int8_t, N> NDet; // 特定＋使用カード数
+    std::array<int8_t, N> NOwn;  // 持っているカード数
+    std::array<int8_t, N> NDet;  // 特定＋使用カード数
     std::array<int8_t, N> NDeal; // 配布カード数
-    std::array<int8_t, N> NOrg; // 初期配布カード数
+    std::array<int8_t, N> NOrg;  // 初期配布カード数
     std::array<int8_t, N> infoClassPlayer;
     std::array<int8_t, N> infoClass;
     unsigned NDistCards;
-    Cards remCards; // まだ使用されていないカード
+    Cards remCards;  // まだ使用されていないカード
     Cards distCards; // まだ特定されていないカード
 
     int myNum, myClass;
@@ -372,12 +345,21 @@ private:
     std::bitset<N_PLAYERS> playFlag;
     
     // inner function
-    void checkDeal(Cards *const dst) const {
+    void checkDeal(Cards *const dst, bool sbj = true) const {
         for (int p = 0; p < N; p++) DERR << dst[p] << endl;
         for (int r = 0; r < N; r++) {
             ASSERT(countCards(dst[infoClassPlayer[r]]) == NOwn[r],
                    cerr << "class = " << r << " NOwn = " << (int)NOwn[r];
                    cerr << " cards = " << dst[infoClassPlayer[r]] << endl;);
+        }
+        if (sbj) {
+            // 主観で確定した情報には従うとき
+            for (int p = 0; p < N; p++) {
+                for (int pp = 0; pp < N; pp++) {
+                    if (p == pp) continue;
+                    assert(isExclusiveCards(dst[p], detCards[infoClass[pp]]));
+                }
+            }
         }
     }
     
@@ -411,265 +393,113 @@ private:
                                  const EngineSharedData& shared,
                                  EngineThreadTools *const ptools) const {
         // 採択棄却法のカード交換パート
-        auto *const pdice = &ptools->dice;
+        auto& dice = ptools->dice;
         if (initGame) {
-            dealWithSubjectiveInfo(dst, pdice);
+            dealWithSubjectiveInfo(dst, dice);
             return true;
         }
 
         bool success = false;
         int trials = 0;
 
-        switch (myClass) {
-            case DAIFUGO:
-            {
-                BitCards R1_R3, R1, R2, R3, R4, R1_R3Rest;
+        BitCards R[N] = {0};
+        if (myClass != HEIMIN) {
+            // 交換に関与しているとき
 
-                while (trials++ <= MAX_REJECTION) {
-                    // セットされたウェイトに従って大貧民に分配
-                    R4 = detCards[DAIHINMIN];
-                    if (NDeal[DAIHINMIN]) {
-                        // Walker's Alias methodで献上下界を決めてランダム分配
-                        Cards tmpDist = selectInWA(pdice->drand());
-                        ASSERT(countCards(tmpDist) >= NDeal[DAIHINMIN],
-                               cerr << tmpDist << " -> " << NDeal[DAIHINMIN] << endl;);
-                        R4 |= pickNBits64(tmpDist, NDeal[DAIHINMIN], countCards(tmpDist) - NDeal[DAIHINMIN], pdice);
+            while (trials++ <= MAX_REJECTION) {
+                int ptClass = getChangePartnerClass(myClass);
+                if (myClass < MIDDLE) {
+                    // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
+                    R[ptClass] = detCards[ptClass];
+                    if (NDeal[ptClass]) {
+                        Cards tmpDist = selectInWA(dice.random());
+                        R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], countCards(tmpDist) - NDeal[ptClass], dice);
                     }
-                    
-                    assert(countCards(R4 & remCards) == NOwn[DAIHINMIN]);
-                    
-                    // カードを富豪-貧民系と平民に分ける
-                    assert(countCards(distCards & ~R4) == NDeal[FUGO] + NDeal[HINMIN] + NDeal[HEIMIN]);
-                    
-                    R2 = detCards[HEIMIN];
-                    if (NDeal[HEIMIN]) {
-                        R1_R3 = CARDS_NULL;
-                        dist2_64(&R1_R3, &R2, distCards & ~R4, NDeal[1] + NDeal[3], NDeal[2], pdice);
-                    } else {
-                        R1_R3 = distCards & ~R4;
+                } else {
+                    // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
+                    int ptClass = getChangePartnerClass(myClass);
+                    R[ptClass] = detCards[ptClass] + recvCards;
+                    BitCards remained = CARDS_NULL;
+                    int numDealOthers = NDistCards - NDeal[ptClass];
+                    int numChangeMine = N_CHANGE_CARDS(myClass);
+                    if (NDeal[ptClass]) {
+                        dist2_64(&remained, &R[ptClass], distCards, numDealOthers, NDeal[ptClass], dice);
+                        // 交換相手の交換が実際に沿うか検証
+                        Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
+                        if (!holdsCards(detCards[myClass], cc)) continue; // 矛盾
+                        R[ptClass] -= cc;
                     }
-                    
-                    assert(countCards(R1_R3 | detCards[1] | detCards[3]) == NOrg[1] + NOrg[3]);
-                    
-                    // 富豪-貧民系
-                    R1 = CARDS_NULL;
-                    R3 = CARDS_NULL;
-                    if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                    Cards c = change(infoClassPlayer[FUGO], R1, 1, shared, ptools);
-                    if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue;
-                    R1 -= c;
-                    R3 |= c;
-                    success = true;
-                    break;
                 }
-                if (success) {
-                    dst[myNum] = myCards;
-                    dst[infoClassPlayer[FUGO     ]] = R1 & remCards;
-                    dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
-                    dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
-                    dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                }
-            }
-            break;
-            case FUGO:
-            {
-                BitCards R0_R4, R0, R2, R3, R4, R0_R4Rest;
 
-                while (trials++ <= MAX_REJECTION) {
-                    // セットされたウェイトに従って貧民に分配
-                    R3 = detCards[HINMIN];
-                    if (NDeal[HINMIN]) {
-                        // Walker's Alias methodで献上下界を決めてランダム分配
-                        Cards tmpDist = selectInWA(pdice->drand());
-                        ASSERT(countCards(tmpDist) >= NDeal[HINMIN],
-                                cerr << tmpDist << " -> " << NDeal[HINMIN] << endl;);
-                        R3 |= pickNBits64(tmpDist, NDeal[HINMIN], countCards(tmpDist) - NDeal[HINMIN], pdice);
-                    }
-                    assert(countCards(R3 & remCards) == NOwn[HINMIN]);
-                    
-                    // カードを大富豪-大貧民系と平民に分ける
-                    assert(countCards(distCards & ~R3) == NDeal[DAIFUGO] + NDeal[DAIHINMIN] + NDeal[HEIMIN]);
-                    
-                    R2 = detCards[HEIMIN];
-                    if (NDeal[HEIMIN]) {
-                        R0_R4 = CARDS_NULL;
-                        dist2_64(&R0_R4, &R2, distCards & ~R3, NDeal[DAIFUGO] + NDeal[DAIHINMIN], NDeal[HEIMIN], pdice);
-                    } else {
-                        R0_R4 = distCards & ~R3;
-                    }
-                    
-                    assert(countCards(R0_R4 | detCards[DAIFUGO] | detCards[DAIHINMIN]) == NOrg[DAIFUGO] + NOrg[DAIHINMIN]);
-                    
-                    // 大富豪-大貧民系
-                    R0 = CARDS_NULL; R4 = CARDS_NULL;
-                    if (!dist2Rest_64<2>(&R0_R4Rest, &R0, &R4, R0_R4, NOrg[0], NOrg[4], detCards[0], detCards[4], pdice)) continue;
-                    Cards c = change(infoClassPlayer[DAIFUGO], R0, 2, shared, ptools);
-                    if (!holdsCards(c, R0_R4Rest) || (c & detCards[DAIFUGO])) continue;
-                    R0 -= c;
-                    R4 |= c;
-                    success = true;
-                    break;
+                // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
+                BitCards remained = distCards & ~R[ptClass];
+                int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
+                int otherPoor = getChangePartnerClass(otherRich);
+                int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
+                BitCards otherPair = CARDS_NULL;
+                R[HEIMIN] = detCards[HEIMIN];
+                if (NDeal[HEIMIN]) {
+                    dist2_64(&otherPair, &R[HEIMIN], remained, numDealOtherPair, NDeal[HEIMIN], dice);
+                } else {
+                    otherPair = remained;
                 }
-                if (success) {
-                    dst[myNum] = myCards;
-                    dst[infoClassPlayer[DAIFUGO  ]] = R0 & remCards;
-                    dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
-                    dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
-                    dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                }
-            }
-            break;
-            case HEIMIN:
-            {
-                BitCards R0_R4, R1_R3, R0, R1, R3, R4, R0_R4Rest, R1_R3Rest;
 
-                while (trials++ <= MAX_REJECTION) {
-                    // カードを大富豪-大貧民系と富豪-貧民系に分ける
-                    R0_R4 = CARDS_NULL; R1_R3 = CARDS_NULL;
-                    dist2_64(&R0_R4, &R1_R3, distCards, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], pdice);
-                    
-                    // 富豪-貧民系
-                    R1 = CARDS_NULL;R3 = CARDS_NULL;
-                    if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                    Cards c = change(infoClassPlayer[FUGO], R1, 1, shared, ptools);
-                    if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue;
-                    R1 -= c;
-                    R3 |= c;
-                    
-                    assert(countCards(R1 & remCards) == NOwn[FUGO  ]);
-                    assert(countCards(R3 & remCards) == NOwn[HINMIN]);
-                    
-                    // 大富豪-大貧民系
-                    R0 = CARDS_NULL; R4 = CARDS_NULL;
-                    if (!dist2Rest_64<2>(&R0_R4Rest, &R0, &R4, R0_R4, NOrg[0], NOrg[4], detCards[0], detCards[4], pdice)) continue;
-                    c = change(infoClassPlayer[DAIFUGO], R0, 2, shared, ptools);
-                    if (!holdsCards(c, R0_R4Rest) || (c & detCards[DAIFUGO])) continue;
-                    R0 -= c;
-                    R4 |= c;
-                    
-                    assert(countCards(R0 & remCards) == NOwn[DAIFUGO  ]);
-                    assert(countCards(R4 & remCards) == NOwn[DAIHINMIN]);
-                    
-                    success = true;
-                    break;
-                }
-                if (success) {
-                    dst[myNum] = myCards;
-                    dst[infoClassPlayer[DAIFUGO  ]] = R0 & remCards;
-                    dst[infoClassPlayer[FUGO     ]] = R1 & remCards;
-                    dst[infoClassPlayer[HINMIN   ]] = R3 & remCards;
-                    dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                }
+                // 3. 自分が関与した以外の交換系の配布
+                int numChangeOtherPair = N_CHANGE_CARDS(otherRich);
+                BitCards restricted;
+                if (!dist2Rest_64(numChangeOtherPair, &restricted,
+                                  &R[otherRich], &R[otherPoor], otherPair,
+                                  NOrg[otherRich], NOrg[otherPoor],
+                                  detCards[otherRich], detCards[otherPoor], dice)) continue;
+                Cards cc = change(infoClassPlayer[otherRich], R[otherRich], numChangeOtherPair, shared, ptools);
+                // 交換と既知の情報との矛盾をチェック
+                if (!holdsCards(cc, restricted) || (cc & detCards[otherRich])) continue;
+                R[otherRich] -= cc;
+                R[otherPoor] += cc;
+                success = true;
+                break;
             }
-            break;
-            case HINMIN:
-            {
-                BitCards R0_R2_R4, R0_R4, R0, R1, R2, R4, R0_R4Rest;
+        } else {
+            // 交換無関与のとき
+            BitCards R0_R4, R1_R3, R0_R4Rest, R1_R3Rest;
+            while (trials++ <= MAX_REJECTION) {
 
-                while (trials++ <= MAX_REJECTION) {
-                    // カードを大富豪-大貧民系と富豪と平民に分ける
-                    R1 = detCards[FUGO] | recvCards;
-                    if (NDeal[FUGO]) {
-                        R0_R2_R4 = CARDS_NULL;
-                        dist2_64(&R0_R2_R4, &R1, distCards, NDeal[0] + NDeal[2] + NDeal[4], NDeal[1], pdice);
-                        // 富豪の交換が実際に沿うか検証
-                        Cards c = change(infoClassPlayer[FUGO], R1, 1, shared, ptools);
-                        if (!holdsCards(detCards[3], c)) continue; // 矛盾
-                        R1 -= c;
-                    } else {
-                        R0_R2_R4 = distCards;
+                // 1. カードを大富豪-大貧民系と富豪-貧民系に分ける
+                BitCards remained[2] = {0};
+                dist2_64(&remained[0], &remained[1], distCards, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
+
+                // 2. それぞれの系で交換を起こしてみて矛盾が無いか調べる
+                bool ok = true;
+                for (int cl = FUGO; cl >= 0; cl--) {
+                    int rich = cl, poor = getChangePartnerClass(cl);
+                    int numChange = N_CHANGE_CARDS(rich);
+                    BitCards restricted;
+                    if (!dist2Rest_64(numChange, &restricted, &R[rich], &R[poor], remained[cl],
+                                      NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
+                        ok = false; break;
                     }
-                    
-                    assert(countCards(R1 & remCards) == NOwn[FUGO]);
-                    
-                    R2 = detCards[HEIMIN];
-                    if (NDeal[HEIMIN]) {
-                        R0_R4 = CARDS_NULL;
-                        dist2_64(&R0_R4, &R2, R0_R2_R4, NDeal[DAIFUGO] + NDeal[DAIHINMIN], NDeal[HEIMIN], pdice);
-                    } else {
-                        R0_R4 = R0_R2_R4;
+                    Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
+                    if (!holdsCards(cc, restricted) || (cc & detCards[rich])) {
+                        ok = false; break;
                     }
-                    
-                    // 大富豪-大貧民系
-                    R0 = CARDS_NULL; R4 = CARDS_NULL;
-                    if (!dist2Rest_64<2>(&R0_R4Rest, &R0, &R4, R0_R4, NOrg[0], NOrg[4], detCards[0], detCards[4], pdice)) continue;
-                    Cards c = change(infoClassPlayer[DAIFUGO], R0, 2, shared, ptools);
-                    if (!holdsCards(c, R0_R4Rest) || (c & detCards[DAIFUGO])) continue; // 矛盾
-                    R0 -= c;
-                    R4 |= c;
-                    success = true;
-                    break;
+                    R[rich] -= cc;
+                    R[poor] += cc;
                 }
-                
-                if (success) {
-                    dst[myNum] = myCards;
-                    dst[infoClassPlayer[DAIFUGO  ]] = R0 & remCards;
-                    dst[infoClassPlayer[FUGO     ]] = R1 & remCards;
-                    dst[infoClassPlayer[HEIMIN   ]] = R2 & remCards;
-                    dst[infoClassPlayer[DAIHINMIN]] = R4 & remCards;
-                }
+                if (!ok) continue;
+
+                success = true;
+                break;
             }
-            break;
-            case DAIHINMIN:
-            {
-                BitCards R1_R2_R3, R1_R3, R0, R1, R2, R3, R1_R3Rest;
-                
-                while (trials++ <= MAX_REJECTION) {
-                    // カードを富豪-貧民系と大富豪と平民に分ける
-                    R0 = detCards[DAIFUGO] | recvCards;
-                    if (NDeal[DAIFUGO]) {
-                        R1_R2_R3 = CARDS_NULL;
-                        dist2_64(&R1_R2_R3, &R0, distCards, NDeal[1] + NDeal[2] + NDeal[3], NDeal[0], pdice);
-                        // 大富豪の交換が実際に沿うか検証
-                        Cards c = change(infoClassPlayer[DAIFUGO], R0, 2, shared, ptools);
-                        if (!holdsCards(detCards[DAIHINMIN], c)) continue; // 矛盾
-                        R0 -= c;
-                    } else {
-                        R1_R2_R3 = distCards;
-                    }
-                    
-                    assert(countCards(R0 & remCards) == NOwn[DAIFUGO]);
-                    
-                    R2 = detCards[HEIMIN];
-                    if (NDeal[HEIMIN]) {
-                        R1_R3 = CARDS_NULL;
-                        dist2_64(&R1_R3, &R2, R1_R2_R3, NDeal[FUGO] + NDeal[HINMIN], NDeal[HEIMIN], pdice);
-                    } else {
-                        R1_R3 = R1_R2_R3;
-                    }
-                    
-                    // 富豪-貧民系
-                    R1 = CARDS_NULL; R3 = CARDS_NULL;
-                    if (!dist2Rest_64<1>(&R1_R3Rest, &R1, &R3, R1_R3, NOrg[1], NOrg[3], detCards[1], detCards[3], pdice)) continue;
-                    Cards c = change(infoClassPlayer[FUGO], R1, 1, shared, ptools);
-                    if (!holdsCards(c, R1_R3Rest) || (c & detCards[FUGO])) continue; // 矛盾
-                    R1 -= c;
-                    R3 |= c;
-                    success = true;
-                    break;
-                }
-                
-                if (success) {
-                    dst[myNum] = myCards;
-                    dst[infoClassPlayer[DAIFUGO]] = R0 & remCards;
-                    dst[infoClassPlayer[FUGO   ]] = R1 & remCards;
-                    dst[infoClassPlayer[HEIMIN ]] = R2 & remCards;
-                    dst[infoClassPlayer[HINMIN ]] = R3 & remCards;
-                }
-            }
-            break;
-            default: UNREACHABLE; break; // 階級がおかしい
         }
+
         if (success) {
-            /*for (int c = 0; c < N; c++) {
-                dst[infoClassPlayer[c]] = R[c] & remCards;
-            }
-            dst[myNum] = myCards;*/
+            for (int p = 0; p < N; p++) dst[p] = R[infoClass[p]] & remCards;
+            dst[myNum] = myCards;
             checkDeal(dst);
         } else {
             DERR << "DEAL_REJEC FAILED..." << endl;
             // 失敗の場合は逆関数法に変更
-            dealWithBias(dst, pdice);
+            dealWithBias(dst, dice);
             return false;
         }
         return true;
@@ -680,7 +510,7 @@ private:
         threadTools_t *const ptools) {
         // 尤度計算
         // 主観的情報で明らかな矛盾のない配り方
-        dealWithSubjectiveInfo(dst, &ptools->dice);
+        dealWithSubjectiveInfo(dst, ptools->dice);
         Field field;
         
         double logLHSum = 0, logLHOK = 0;
@@ -707,7 +537,7 @@ private:
         int NCands = genChange(cand, cards, qty);
         Field field;
         // 交換方策によって交換してみる
-        int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, &ptools->dice);
+        int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, ptools->dice);
         return cand[index];
     }
     
@@ -829,16 +659,15 @@ private:
         ASSERT(NDistCards == std::accumulate(NDeal.begin(), NDeal.begin() + N, 0),
                cerr << NDistCards << " " << NDeal << " " << std::accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
 
-        // 初手がすでに済んでいる段階では、自分と、自分以外で全てのカードが明らかになっていないプレーヤーは着手を検討する必要がある
         if (!inChange && turnCount > 0) {
-            // HA設定
-            unsigned NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]]))); // 他人が使用したカード枚数
+            // 他人が使用したカード枚数から採択棄却の際の候補数を設定
+            unsigned NOppUsedCards = countCards(maskCards(CARDS_ALL, addCards(remCards, detCards[infoClass[myNum]])));
             // 1 -> ... -> max -> ... -> 1 と台形に変化
             int line1 = (BUCKET_MAX - 1) * NOppUsedCards / 4 + 1;
             int line2 = BUCKET_MAX;
             int line3 = (BUCKET_MAX - 1) * NDistCards / 16 + 1;
             buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
-
+            // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
             playFlag.reset();
             for (int p = 0; p < N; p++) {
                 if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
@@ -847,17 +676,17 @@ private:
             buckets = 1;
         }
         for (int p = 0; p < N; p++) {
-            DERR << "r:" << p << " p:" << infoClassPlayer[p] << " Org:" << NOrg[p] << " Own:" << NOwn[p]
-            << " Det:" << NDet[p] << " Deal:" << NDeal[p] << " " << detCards[p] << endl;
+            DERR << "cl:" << p << " p:" << (int)infoClassPlayer[p] << " Org:" << (int)NOrg[p] << " Own:" << (int)NOwn[p]
+            << " Det:" << (int)NDet[p] << " Deal:" << (int)NDeal[p] << " " << detCards[p] << endl;
         }
     }
+
     double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
                               const EngineSharedData& shared, EngineThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
 
         double playLH = 0; // 対数尤度
         std::array<Cards, N> orgCards;
-        auto tmpPlayFlag = playFlag;
         MoveInfo *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
         Field field;
@@ -866,32 +695,31 @@ private:
         // after change callback
         [](const auto& field)->void{},
         // play callback
-        [this, &playLH, &orgCards, mv, tmpPlayFlag, &shared]
-        (const auto& field, const auto& chosenMove, uint32_t usedTime)->int{
+        [this, &playLH, &orgCards, mv, &shared]
+        (const auto& field, const Move chosen, uint32_t usedTime)->int{
             const int tp = field.turn();
-            const Cards usedCards = chosenMove.cards();
             const Board b = field.board;
             const Cards myCards = field.getCards(tp);
-            const Hand& myHand = field.getHand(tp);
-            const Hand& opsHand = field.getOpsHand(tp);
-            if (field.turnCount() >= turnCount) return 0; // 決めたところまで読み終えた(オフラインでの判定用)
-            if (!holdsCards(myCards, usedCards)) return -1; // 終了(エラー?)
+
+            if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
+            if (!holdsCards(myCards, chosen.cards())) return -1; // 終了(エラー)
             // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-            if (!tmpPlayFlag.test(tp)) return 0;
-            const int NMoves = genMove(mv, myHand, b);
+            if (!playFlag.test(tp)) return 0;
+            const int NMoves = genMove(mv, myCards, b);
             if (NMoves <= 1) return 0;
 
             // 場の情報をまとめる
             for (int i = 0; i < NMoves; i++) {
-                bool mate = checkHandMate(0, mv + NMoves, mv[i], myHand, opsHand, b, field.fieldInfo);
+                bool mate = checkHandMate(0, mv + NMoves, mv[i], field.hand[tp],
+                                          field.opsHand[tp], b, field.fieldInfo);
                 if (mate) mv[i].setMPMate();
             }
 
             // フェーズ(空場0、通常場1、パス支配場2)
             const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
             // プレー尤度計算
-            int chosenIdx = searchMove(mv, NMoves, [chosenMove](const auto& tmp)->bool{
-                return tmp == chosenMove;
+            int chosenIdx = searchMove(mv, NMoves, [chosen](const auto& tmp)->bool{
+                return tmp == chosen;
             });
 
             if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された

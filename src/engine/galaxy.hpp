@@ -48,9 +48,9 @@ namespace UECda {
         }
         
         template <class dice_t>
-        world_t* pickRand(const int line, const int limit, dice_t *const dice) {
+        world_t* pickRand(const int line, const int limit, dice_t& dice) {
             // activeである世界のどれかにランダムアクセスする
-            int w = line + (dice->rand() % limit);
+            int w = line + (dice() % limit);
             
             if (0 <= w && w < SIZE && world[w].isActive()) {
                 return &world[w];

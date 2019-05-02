@@ -36,7 +36,7 @@ public:
             CERR << i << " : " << candidate[i] << endl;
         }
         if (numCandidates == 1) return candidate[0];
-        else return candidate[dice.rand() % numCandidates];
+        else return candidate[dice() % numCandidates];
     }
     
     virtual Move play() {
@@ -50,7 +50,7 @@ public:
         if (NMoves == 1 && buf[0].isPASS()) {
             mv = buf[0];
         } else {
-            mv = buf[dice.rand() % NMoves];
+            mv = buf[dice() % NMoves];
         }
         CERR << mv << " by " << field.getMyCards() << endl;
         return mv;
@@ -58,7 +58,7 @@ public:
     ~RandomEngine() { closeMatch(); }
 };
 private:
-    XorShift64 dice;
+    std::mt19937 dice;
 };
 
 class HumanClient {

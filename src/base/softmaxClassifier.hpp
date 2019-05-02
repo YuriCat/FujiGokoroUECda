@@ -134,10 +134,10 @@ public:
         memmove(param_, ap, sizeof(param_));
     }
     template<class dice_t>
-    void setRandomParam(double mean, double sigma, dice_t *const pdice){
-        NormalDistribution norm(mean, sigma);
+    void setRandomParam(double mean, double sigma, dice_t& dice){
+        std::normal_distribution<real_t> nd(mean, sigma);
         for(int i = 0; i < N_STAGES_ * N_PARAMS_; ++i){
-            param_[i] = norm.rand(pdice);
+            param_[i] = nd(dice);
         }
     }
     

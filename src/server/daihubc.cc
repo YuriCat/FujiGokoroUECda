@@ -323,13 +323,13 @@ int main(int argc, char *argv[]) {
         shared.basePlayPolicy.fin(DIR_IN + "play_policy_param.dat");
         shared.baseChangePolicy.fin(DIR_IN + "change_policy_param.dat");
         // スレッドごとのデータ初期化
-        for (int th = 0; th < N_THREADS; ++th) {
+        for (int th = 0; th < N_THREADS; th++) {
             threadTools[th].init(th);
         }
         XorShift64 tdice;
         tdice.srand((unsigned int)time(NULL));
-        for (int th = 0; th < N_THREADS; ++th) {
-            threadTools[th].dice.srand(tdice.rand() * (th + 111));
+        for (int th = 0; th < N_THREADS; th++) {
+            threadTools[th].dice.srand(tdice() * (th + 111));
         }
     }
     

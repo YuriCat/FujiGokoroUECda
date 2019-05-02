@@ -203,7 +203,7 @@ namespace UECda {
                                                        Settings::simulationAmplifyCoef,
                                                        Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                changeCards = cand[selector.select(dice.drand())];
+                changeCards = cand[selector.select(dice.random())];
             }
 #endif
             if (changeCards == CARDS_NULL) {
@@ -296,7 +296,7 @@ namespace UECda {
             
             // 着手多様性確保のため着手をランダムシャッフル
             for (int i = NMoves; i > 1; --i) {
-                std::swap(mv[dice.rand() % i], mv[i - 1]);
+                std::swap(mv[dice() % i], mv[i - 1]);
             }
             
             // 場の情報をまとめる
@@ -457,7 +457,7 @@ namespace UECda {
                                                        Settings::simulationAmplifyCoef,
                                                        Settings::simulationAmplifyExponent);
                 // rootは着手をソートしているので元の着手生成バッファから選ぶ
-                playMove = mv[selector.select(dice.drand())];
+                playMove = mv[selector.select(dice.random())];
             }
 #endif
             if (playMove == MOVE_NONE) {

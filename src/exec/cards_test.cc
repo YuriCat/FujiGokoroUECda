@@ -377,8 +377,8 @@ int main(int argc, char* argv[]) {
     XorShift64 dice((unsigned int)time(NULL));
     
     for (int i = 0; i < 50000; ++i) {
-        int n = dice.rand() % N_MAX_OWNED_CARDS_CHANGE;
-        sample.push_back(pickNBits64(CARDS_ALL, n, N_CARDS - n, &dice));
+        int n = dice() % N_MAX_OWNED_CARDS_CHANGE;
+        sample.push_back(pickNBits64(CARDS_ALL, n, N_CARDS - n, dice));
     }
     
     if (testSuitSuits()) {
