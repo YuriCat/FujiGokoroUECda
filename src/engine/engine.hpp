@@ -266,7 +266,10 @@ public:
                 if (!mv[0].isPASS()) cerr << "final move. " << mv[0] << endl;
                 else cerr << "no chance. PASS" << endl;
             }
-            if (!mv[0].isPASS()) shared.setMyMate(field.getBestClass()); // 上がり
+            if (!mv[0].isPASS()) {
+                shared.setMyMate(field.getBestClass()); // 上がり
+                shared.setMyL2Result(1);
+            }
             return mv[0];
         }
         
@@ -285,6 +288,7 @@ public:
         field.prepareForPlay(true);
         
         // 着手追加情報を設定
+        bool l2failure = false;
         for (int i = 0; i < NMoves; i++) {
             MoveInfo& move = mv[i];
             // 支配性
@@ -304,7 +308,11 @@ public:
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
-                    L2Judge lj(400000, searchBuffer);
+#ifndef POLICY_ONLY
+                    L2Judge lj(200000, searchBuffer);
+#else
+                    L2Judge lj(2000000, searchBuffer);
+#endif
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                     if (l2Result == L2_WIN) { // 勝ち
                         DERR << "l2win!" << endl;
@@ -312,6 +320,8 @@ public:
                         DERR << fieldInfo << endl;
                     } else if (l2Result == L2_LOSE) {
                         move.setL2GiveUp();
+                    } else {
+                        l2failure = true;
                     }
                 }
             }
@@ -320,14 +330,15 @@ public:
         // 判定結果を報告
         if (Settings::L2SearchOnRoot) {
             if (field.getNAlivePlayers() == 2) {
-                // L2の際、結果不明を考えなければ、MATEが立っていれば勝ち、立っていなければ負けのはず
-                // ただしL2探索を行う場合のみ
-                CERR << fieldInfo << endl;
+                // L2探索の結果MATEが立っていれば勝ち
+                // 立っていなければ判定失敗か負け
                 if (fieldInfo.isL2Mate()) {
-                    shared.setMyL2Mate();
+                    shared.setMyL2Result(1);
+                } else if (l2failure) {
+                    shared.setMyL2Result(-3);
                 } else {
                     fieldInfo.setL2GiveUp();
-                    shared.setMyL2GiveUp();
+                    shared.setMyL2Result(-1);
                 }
             }
         }

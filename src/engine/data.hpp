@@ -125,31 +125,27 @@ struct SharedData : public BaseSharedData {
 
     // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
     int mateClass; // 初めてMATEと判定した階級の宣言
-    int L2Class; // L2において判定した階級の宣言
+    int L2Result; // L2における判定結果
     
     // クライアントの個人的スタッツ
-    std::array<std::array<uint32_t, 3>, 2> myL2Result; // (勝利宣言, 無宣言, 敗戦宣言) × (勝利, 敗戦)
-    std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> myMateResult; // MATEの宣言結果
+    // (勝利, 敗戦) x (勝利宣言, 判定失敗, 敗戦宣言, 無宣言)
+    std::array<std::array<long long, 5>, 2> myL2Result;
+    // MATEの宣言結果
+    std::array<std::array<long long, N_PLAYERS>, N_PLAYERS> myMateResult;
     
     void setMyMate(int bestClass) { // 詰み宣言
         if (mateClass == -1) mateClass = bestClass;
     }
-    void setMyL2Mate() { // L2詰み宣言
-        if (L2Class == -1) L2Class = N_PLAYERS - 2;
+    void setMyL2Result(int result) { // L2詰み宣言
+        if (L2Result == -2) L2Result = result;
     }
-    void setMyL2GiveUp() { // L2敗北宣言
-        if (L2Class == -1) L2Class = N_PLAYERS - 1;
-    }
-    
     void feedResult(int realClass) {
         // ラスト2人
         if (realClass >= N_PLAYERS - 2) {
-            int index = (L2Class == -1) ? 1 : (L2Class == N_PLAYERS - 1 ? 2 : 0);
-            if (L2Class != -1) {
-                if (L2Class > realClass) CERR << "L2 Lucky!" << endl;
-                if (L2Class < realClass) CERR << "L2 Miss!" << endl;
-            }
-            myL2Result[realClass - (N_PLAYERS - 2)][index] += 1;
+            bool realWin = realClass == N_PLAYERS - 2;
+            if (realWin && L2Result == -1) CERR << "L2 Lucky!" << endl;
+            if (!realWin && L2Result == 1) CERR << "L2 Miss!" << endl;
+            myL2Result[realClass - (N_PLAYERS - 2)][1 - L2Result] += 1;
         }
         // MATE宣言あり
         if (mateClass != -1) {
@@ -169,7 +165,8 @@ struct SharedData : public BaseSharedData {
     }
     void initGame() {
         base_t::initGame();
-        mateClass = L2Class = -1;
+        mateClass = -1;
+        L2Result = -2;
     }
     
     void closeGame() {

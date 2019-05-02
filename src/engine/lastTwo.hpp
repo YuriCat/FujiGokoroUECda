@@ -13,7 +13,7 @@ namespace L2 {
     TwoValueBook<(1 << 18)> book;
 }
 
-enum {
+enum L2Result {
     L2_NONE = -1,
     L2_WIN = 0,
     L2_DRAW = 1,
