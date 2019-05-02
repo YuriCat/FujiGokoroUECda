@@ -260,7 +260,7 @@ public:
             int org = field.getNCards(p) + field.getUsedCards(p).count();
             int own = field.getNCards(p);
 
-            if (inChange && cl == getChangePartnerClass(myClass)) {
+            if (inChange && cl == getChangePartnerClass(field.classOf(playerNum))) {
                 // 交換中なら自分の交換相手のカードの枚数は引いておく
                 int nch = N_CHANGE_CARDS(cl);
                 org -= nch;
