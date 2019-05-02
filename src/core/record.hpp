@@ -300,7 +300,7 @@ struct PlayRecord { // 1つの着手の記録
     }
     std::string toString() const {
         std::ostringstream oss;
-        oss << LogMove(move) << "[" << time << "]";
+        oss << toRecordString(move) << "[" << time << "]";
         return oss.str();
     }
 };

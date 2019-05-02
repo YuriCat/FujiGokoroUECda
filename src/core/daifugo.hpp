@@ -1361,11 +1361,7 @@ static std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出�
     return out;
 }
 
-struct LogMove : public Move { // ログ出力用
-    LogMove(const Move& arg) : Move(arg) {}
-};
-
-static std::string toRecordString(LogMove m) {
+static std::string toRecordString(Move m) {
     std::ostringstream oss;
     if (m.isPASS()) {
         oss << "P";
