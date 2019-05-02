@@ -48,7 +48,7 @@
 
 #include "../UECda.h"
 #include "../engine/engineSettings.h"
-#include "../engine/engineStructure.hpp"
+#include "../engine/data.hpp"
 #include "../extra/rating.hpp"
 
 using namespace UECda;
@@ -63,8 +63,8 @@ std::string record_file = "";
 
 MatchRecord match_log;
 GameRecord<PlayRecord> game_log;
-EngineSharedData shared;
-EngineThreadTools threadTools[N_THREADS];
+SharedData shared;
+ThreadTools threadTools[N_THREADS];
 
 void outputLog() {
     // 棋譜書き出し
@@ -319,7 +319,6 @@ int main(int argc, char *argv[]) {
     
     if (rating) {
         // レート計算のためシミュレーションに使用するデータを準備
-        shared.setMyPlayerNum(-1);
         shared.basePlayPolicy.fin(DIR_IN + "play_policy_param.dat");
         shared.baseChangePolicy.fin(DIR_IN + "change_policy_param.dat");
         // スレッドごとのデータ初期化
@@ -1362,7 +1361,7 @@ int main(int argc, char *argv[]) {
         
         // レーティング計算
         if (rating) {
-            std::array<double, N_PLAYERS> dist = UECda::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
+            std::array<double, N_PLAYERS> dist = calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
             for (int p = 0; p < N_PLAYERS; ++p) {
                 playerRate[p] += dist[p];
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;

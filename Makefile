@@ -36,7 +36,7 @@ endif
 sources      ?= $(shell ls -R src/*.cc)
 sources_dir  ?= src/
 engine_dir   ?= src/engine/
-exec_dir     ?= src/exec/
+ptest_dir    ?= src/performance/
 objects      ?=
 directories  ?= $(output_dir)
 
@@ -68,34 +68,34 @@ preparation $(directories):
 	mkdir -p $(directories)
 
 record_analyzer :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)record_analyzer $(exec_dir)/record_analyzer.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)record_analyzer $(ptest_dir)/record_analyzer.cc $(LIBRARIES)
 
 rating_calculator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)rating_calculator $(exec_dir)/rating_calculator.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)rating_calculator $(ptest_dir)/rating_calculator.cc $(LIBRARIES)
 
 value_generator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)value_generator $(exec_dir)/value_generator.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)value_generator $(ptest_dir)/value_generator.cc $(LIBRARIES)
 
 cards_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)cards_test $(exec_dir)/cards_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)cards_test $(ptest_dir)/cards_test.cc $(LIBRARIES)
 
 movegen_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)movegen_test $(exec_dir)/movegen_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)movegen_test $(ptest_dir)/movegen_test.cc $(LIBRARIES)
 
 dominance_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)dominance_test $(exec_dir)/dominance_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)dominance_test $(ptest_dir)/dominance_test.cc $(LIBRARIES)
 
 mate_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)mate_test $(exec_dir)/mate_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)mate_test $(ptest_dir)/mate_test.cc $(LIBRARIES)
 
 l2_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)l2_test $(exec_dir)/l2_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)l2_test $(ptest_dir)/l2_test.cc $(LIBRARIES)
 
 policy_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_test $(exec_dir)/policy_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_test $(ptest_dir)/policy_test.cc $(LIBRARIES)
 
 estimation_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)estimation_test $(exec_dir)/estimation_test.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)estimation_test $(ptest_dir)/estimation_test.cc $(LIBRARIES)
 
 client :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES)
@@ -110,7 +110,7 @@ server :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)server $(sources_dir)server/daihubc.cc $(sources_dir)server/mt19937ar.c $(LIBRARIES)
 
 policy_learner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_learner $(exec_dir)policy_learner.cc $(LIBRARIES)
+	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_learner $(ptest_dir)policy_learner.cc $(LIBRARIES)
 
 random_client :
 	$(CXX) $(CXXFLAGS) -o $(output_dir)random_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DRANDOM_MODE

@@ -7,14 +7,14 @@
 #include "../core/field.hpp"
 #include "../engine/engineSettings.h"
 #include "../engine/linearPolicy.hpp"
-#include "../engine/engineStructure.hpp"
+#include "../engine/data.hpp"
 #include "../engine/estimation.hpp"
 
 using namespace UECda;
 using namespace std;
 
-EngineSharedData shared;
-EngineThreadTools tools;
+SharedData shared;
+ThreadTools tools;
 Clock cl;
 
 void testEstimationRate(const MatchRecord& mrecord, DealType type) {

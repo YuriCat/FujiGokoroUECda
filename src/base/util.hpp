@@ -372,6 +372,7 @@ class XorShift64 {
 private:
     uint64_t x, y, z, t;
 public:
+    using result_type = uint64_t;
     uint64_t operator ()() {
         uint64_t tmp = x ^ (x << 11);
         x = y; y = z; z = t;
