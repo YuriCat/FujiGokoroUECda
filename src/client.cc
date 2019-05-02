@@ -14,7 +14,7 @@
 #ifdef HUMAN_MODE
 #elif RANDOM_MODE
 #else
-#include "engine/engineMain.hpp"
+#include "engine/engine.hpp"
 #endif
 WisteriaEngine engine;
 
