@@ -64,9 +64,9 @@ static void MonteCarloThread
     RandomDealer<EngineGameRecord> estimator(pshared->record.latestGame(), *pfield, myPlayerNum);
 
     Field pf = *pfield;
-    pf.attractedPlayers.set(myPlayerNum);
-    pf.dice = &ptools->dice;
-    pf.mv = ptools->buf;
+    pf.myPlayerNum = -1; // 客観視点に変更
+    pf.addAttractedPlayer(myPlayerNum);
+    pf.setMoveBuffer(ptools->buf);
     
     if (proot->rivalPlayerNum >= 0) {
         pf.attractedPlayers.set(proot->rivalPlayerNum);
@@ -142,14 +142,12 @@ static void MonteCarloThread
 
         // シミュレーション実行
         Field f;
+        copyField(pf, &f);
+        setWorld(*pWorld, &f);
         if (proot->isChange) {
-            copyField(pf, &f);
-            setWorld(*pWorld, &f);
-            startChangeSimulation(&f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
+            startChangeSimulation(f, myPlayerNum, child[tryingIndex].changeCards, pshared, ptools);
         } else {
-            copyField(pf, &f);
-            setWorld(*pWorld, &f);
-            startRootSimulation(&f, child[tryingIndex].move, pshared, ptools);
+            startPlaySimulation(f, child[tryingIndex].move, pshared, ptools);
         }
         
         proot->feedSimulationResult(tryingIndex, f, pshared); // 結果をセット(排他制御は関数内で)

@@ -235,16 +235,16 @@ int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
     return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
 }
 
-inline int computeDivision(MoveInfo *const mv, const Cards c) {
+inline int computeDivision(MoveInfo *const mbuf, const Cards c) {
     // paoon氏のbeersongのアイデアを利用
     int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
-    const int cnt = genAllSeq(mv, c);
+    const int cnt = genAllSeq(mbuf, c);
     if (cnt) {
         // 階段を使った場合の方が分割数を減らせる場合を考慮
-       MoveInfo *const new_buf = mv + cnt;
+        MoveInfo *const newbuf = mbuf + cnt;
         for (int i = 0; i < cnt; i++) {
-            Cards tmp = subtrCards(c, mv[i].cards());
-            int nret = computeDivision(new_buf, tmp) + 1;
+            Cards tmp = subtrCards(c, mbuf[i].cards());
+            int nret = computeDivision(newbuf, tmp) + 1;
             ret = min(ret, nret);
         }
     }

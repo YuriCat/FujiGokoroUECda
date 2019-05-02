@@ -13,7 +13,6 @@ enum Phase {
     PHASE_IN_CHANGE,
     PHASE_IN_PLAY,
     PHASE_INIT_GAME,
-    PHASE_SUBJECTIVE,
 };
 
 // common information
@@ -30,7 +29,6 @@ struct CommonStatus {
         phase.reset();
     }
 };
-
 
 /**************************プレーヤー状態**************************/
 
@@ -201,15 +199,12 @@ static std::ostream& operator <<(std::ostream& out, const PlayersState& arg) { /
 
 struct Field {
     
-    int myPlayerNum; // 主観的局面表現として使用する宣言を兼ねる
+    int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
-    MoveInfo *mv; // buffer of move
-    XorShift64 *dice;
+    MoveInfo *mv = nullptr; // buffer of move
     
     // playout result
     BitArray64<11, N_PLAYERS> infoReward; // rewards
-    uint32_t domFlags;
-    uint32_t NNullFields;
     std::bitset<32> flags;
     
     // information for playout
@@ -223,12 +218,9 @@ struct Field {
     Board board;
     PlayersState ps;
     
-    std::array<int8_t, N_PLAYERS> infoClass;
-    std::array<int8_t, N_PLAYERS> infoClassPlayer;
-    std::array<int8_t, N_PLAYERS> infoSeat;
-    std::array<int8_t, N_PLAYERS> infoSeatPlayer;
-    std::array<int8_t, N_PLAYERS> infoNewClass;
-    std::array<int8_t, N_PLAYERS> infoNewClassPlayer;
+    std::array<int8_t, N_PLAYERS> infoClass, infoClassPlayer;
+    std::array<int8_t, N_PLAYERS> infoSeat, infoSeatPlayer;
+    std::array<int8_t, N_PLAYERS> infoNewClass, infoNewClassPlayer;
     std::array<int8_t, N_PLAYERS> infoPosition;
     
     uint32_t remQty;
@@ -236,12 +228,10 @@ struct Field {
     uint64_t remKey;
     
     // 手札
-    std::array<Hand, N_PLAYERS> hand;
-    std::array<Hand, N_PLAYERS> opsHand;
+    std::array<Hand, N_PLAYERS> hand, opsHand;
     // 手札情報
     std::array<Cards, N_PLAYERS> usedCards;
-    std::array<Cards, N_PLAYERS> sentCards;
-    std::array<Cards, N_PLAYERS> recvCards;
+    std::array<Cards, N_PLAYERS> sentCards, recvCards;
     std::array<Cards, N_PLAYERS> dealtCards;
     
     bool isL2Situation() const { return getNAlivePlayers() == 2; }
@@ -271,9 +261,7 @@ struct Field {
     }
     
     void setMoveBuffer(MoveInfo *const pmv) { mv = pmv; }
-    void setDice(XorShift64 *const pdice) { dice = pdice; }
     void setPlayMove(MoveInfo ami) { playMove = ami; }
-    
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
@@ -281,14 +269,13 @@ struct Field {
     
     void setInitGame() { common.phase.set(PHASE_INIT_GAME); }
     void setInChange() { common.phase.set(PHASE_IN_CHANGE); }
-    void setSubjective() { common.phase.set(PHASE_SUBJECTIVE); }
 
     void resetInitGame() { common.phase.reset(PHASE_INIT_GAME); }
     void resetInChange() { common.phase.reset(PHASE_IN_CHANGE); }
     
     bool isInitGame() const { return common.phase.test(PHASE_INIT_GAME); }
     bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
-    bool isSubjective() const { return common.phase.test(PHASE_SUBJECTIVE); }
+    bool isSubjective() const { return myPlayerNum >= 0; }
     
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
@@ -332,7 +319,6 @@ struct Field {
     int classPlayer(int c) const { return infoClassPlayer[c]; }
     int newClassPlayer(int c) const { return infoNewClassPlayer[c]; }
     int seatPlayer(int s) const { return infoSeatPlayer[s]; }
-    
     
     int turn() const { return common.turn; }
     int owner() const { return common.owner; }
@@ -822,13 +808,10 @@ inline int Field::procSlowest(const MoveInfo mv) {
 inline void copyField(const Field& arg, Field *const dst) {
     // playout result
     dst->infoReward = 0ULL;
-    dst->domFlags = 0;
-    dst->NNullFields = 0;
-    
+
     // playout info
     dst->attractedPlayers = arg.attractedPlayers;
     dst->mv = arg.mv;
-    dst->dice = arg.dice;
     
     // game info
     dst->board = arg.board;

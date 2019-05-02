@@ -23,9 +23,7 @@ struct ThreadTools {
         memset(buf, 0, sizeof(buf));
         gal.clear();
     }
-    void close() {
-        ThreadTools::close();
-    }
+    void close() {}
 };
 
 struct BaseSharedData {

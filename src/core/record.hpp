@@ -744,12 +744,11 @@ using Record = MatchRecordAccessor<MatchRecordBase<GameRecord<PlayRecord>>>;
 // -3 で1マッチ(連続対戦)終了
 // -4 で全マッチ終了
 
-template <class field_t, class game_t>
-void setFieldBeforeAll(field_t& field, const game_t& gLog) {
+template <class game_t>
+void setFieldBeforeAll(Field& field, const game_t& gLog) {
     // 棋譜を読んでの初期設定
     field.initGame();
     field.setMoveBuffer(nullptr);
-    field.setDice(nullptr);
     if (gLog.isInitGame()) field.setInitGame();
     field.infoNewClass.fill(-1);
     field.infoNewClassPlayer.fill(-1);
@@ -760,14 +759,14 @@ void setFieldBeforeAll(field_t& field, const game_t& gLog) {
     }
 }
 
-template <class field_t, class game_t,
+template <class game_t,
 typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t, typename lastCallback_t>
 int iterateGameLogBeforePlay
-(field_t& field, const game_t& gLog,
- const firstCallback_t& firstCallback = [](const field_t&)->void{},
- const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
- const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const field_t&)->void{},
+(Field& field, const game_t& gLog,
+ const firstCallback_t& firstCallback = [](const Field&)->void{},
+ const dealtCallback_t& dealtCallback = [](const Field&)->void{},
+ const changeCallback_t& changeCallback = [](const Field&, const int, const int, const Cards)->int{ return 0; },
+ const lastCallback_t& lastCallback = [](const Field&)->void{},
  bool stopBeforeChange = false) {
     setFieldBeforeAll(field, gLog);
     firstCallback(field);
@@ -819,8 +818,8 @@ int iterateGameLogBeforePlay
     return 0;
 }
 
-template <class field_t, class game_t>
-void setFieldAfterChange(field_t& field, const game_t& gLog,
+template <class game_t>
+void setFieldAfterChange(Field& field, const game_t& gLog,
                          const std::array<Cards, N_PLAYERS>& hand) {
     // カード交換が終わった後から棋譜を読み始める時の初期設定
     // 全体初期化はされていると仮定する
@@ -836,13 +835,14 @@ void setFieldAfterChange(field_t& field, const game_t& gLog,
 
 // 試合中のプレーヤーがこれまでの試合(交換後)を振り返る場合
 // 相手手札がわからないのでhandとして外部から与える
-template <class field_t, class game_t,
+template <class game_t,
 typename firstCallback_t, typename playCallback_t>
 int iterateGameLogInGame
-(field_t& field, const game_t& gLog, int turns, const std::array<Cards, N_PLAYERS>& hand,
- const firstCallback_t& firstCallback = [](const field_t&)->void{},
- const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
+(Field& field, const game_t& gLog, int turns, const std::array<Cards, N_PLAYERS>& hand,
+ const firstCallback_t& firstCallback = [](const Field&)->void{},
+ const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
  bool initialized = false) {
+    field.myPlayerNum = -1;
     if (!initialized) {
         setFieldBeforeAll(field, gLog);
         if (!gLog.isSubjective()) {
@@ -876,13 +876,13 @@ int iterateGameLogInGame
     return 0;
 }
 
-template <class field_t, class game_t,
+template <class game_t,
 typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
 int iterateGameLogAfterChange
-(field_t& field, const game_t& gLog,
- const firstCallback_t& firstCallback = [](const field_t&)->void{},
- const playCallback_t& playCallback = [](const field_t&, const Move, const uint64_t)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const field_t&)->void{},
+(Field& field, const game_t& gLog,
+ const firstCallback_t& firstCallback = [](const Field&)->void{},
+ const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
+ const lastCallback_t& lastCallback = [](const Field&)->void{},
  bool initialized = false) {
     int ret = iterateGameLogInGame(field, gLog, gLog.plays(), gLog.orgCards,
                                    firstCallback, playCallback, initialized);
@@ -893,17 +893,17 @@ int iterateGameLogAfterChange
 }
 
 // 1試合全体
-template <class field_t, class game_t,
+template <class game_t,
 typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t,
 typename afterChangeCallback_t, typename playCallback_t, typename lastCallback_t>
 int iterateGameLog
-(field_t& field, const game_t& gLog,
- const firstCallback_t& firstCallback = [](const field_t&)->void{},
- const dealtCallback_t& dealtCallback = [](const field_t&)->void{},
- const changeCallback_t& changeCallback = [](const field_t&, const int, const int, const Cards)->int{ return 0; },
- const afterChangeCallback_t& afterChangeCallback = [](const field_t&)->void{},
- const playCallback_t& playCallback = [](const field_t&, const Move&, const uint64_t)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const field_t&)->void{}) {
+(Field& field, const game_t& gLog,
+ const firstCallback_t& firstCallback = [](const Field&)->void{},
+ const dealtCallback_t& dealtCallback = [](const Field&)->void{},
+ const changeCallback_t& changeCallback = [](const Field&, const int, const int, const Cards)->int{ return 0; },
+ const afterChangeCallback_t& afterChangeCallback = [](const Field&)->void{},
+ const playCallback_t& playCallback = [](const Field&, const Move&, const uint64_t)->int{ return 0; },
+ const lastCallback_t& lastCallback = [](const Field&)->void{}) {
     // 交換
     int ret = iterateGameLogBeforePlay(field, gLog, firstCallback, dealtCallback, changeCallback);
     if (ret <= -2) return ret; // この試合もう進めない
@@ -912,27 +912,27 @@ int iterateGameLog
 }
 
 // 盤面情報のセット
-template <class game_t, class field_t>
-void setFieldFromLog(const game_t& gLog, field_t *const pfield, int turns) {
+template <class game_t>
+void setFieldFromLog(const game_t& gLog, Field *const pfield, int turns) {
     // ルールを信頼する
     if (turns < 0) { // turns < 0 で交換中を指定する
         iterateGameLogBeforePlay(*pfield, gLog,
-                                 [](const field_t&)->void{},
-                                 [](const field_t&)->void{},
-                                 [](const field_t&, const int, const int, const Cards)->int{ return 0; },
-                                 [](const field_t&)->void{},
+                                 [](const Field&)->void{},
+                                 [](const Field&)->void{},
+                                 [](const Field&, const int, const int, const Cards)->int{ return 0; },
+                                 [](const Field&)->void{},
                                  true);
     } else {
         iterateGameLogInGame(*pfield, gLog, turns, gLog.orgCards,
-                             [](const field_t&)->void{},
-                             [](const field_t&, const Move, const uint64_t)->int{ return 0; });
+                             [](const Field&)->void{},
+                             [](const Field&, const Move, const uint64_t)->int{ return 0; });
     }
 }
-template <class game_t, class field_t>
-void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, field_t *const dst) {
+template <class game_t>
+void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, Field *const dst) {
     // TODO: ルールを信頼しないようにする
     setFieldBeforeAll(*dst, gLog);
-    
+    dst->myPlayerNum = myPlayerNum;
     if (gLog.classOf(myPlayerNum) != HEIMIN && gLog.isInChange()) {
         // 自分の手札だけわかるので設定
         Cards dealt = gLog.getDealtCards(myPlayerNum);
