@@ -42,9 +42,8 @@ static int selectBandit(const RootInfo& root, dice_t& dice) {
 
 static void MonteCarloThread
 (const int threadId, RootInfo *const proot,
-const Field *const pfield,
-EngineSharedData *const pshared,
-EngineThreadTools *const ptools) {
+ const Field *const pfield, SharedData *const pshared,
+ ThreadTools *const ptools) {
     
     auto& dice = ptools->dice;
     auto& gal = ptools->gal;
