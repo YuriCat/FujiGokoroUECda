@@ -595,7 +595,7 @@ private:
             int g = large.front();
             small.pop();
             large.pop();
-            
+
             thresholdInWA[l] = probs[l];
             dealCardsOverInWA[l] = dealCardsUnderInWA[g];
             probs[g] += probs[l] - 1;
