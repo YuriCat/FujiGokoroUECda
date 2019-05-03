@@ -3,8 +3,6 @@
 // 思考用の構造体
 #include "../core/record.hpp"
 #include "../core/field.hpp"
-
-#include "galaxy.hpp"
 #include "linearPolicy.hpp"
 
 // Field以外のデータ構造
@@ -17,11 +15,9 @@ struct ThreadTools {
     int threadIndex; // スレッド番号
     XorShift64 dice; // サイコロ
     MoveInfo buf[8192]; // 着手生成バッファ
-    Galaxy<ImaginaryWorld> gal;
     void init(int index) {
         threadIndex = index;
         memset(buf, 0, sizeof(buf));
-        gal.clear();
     }
     void close() {}
 };
