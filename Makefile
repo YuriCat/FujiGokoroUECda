@@ -1,5 +1,5 @@
 CXX      = g++
-CXXFLAGS = -march=native -g -MMD -MP 
+CXXFLAGS = -std=c++14 -march=native -MMD -MP 
 LDFLAGS  = 
 LIBS     = 
 INCLUDE  =
