@@ -308,7 +308,7 @@ public:
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
-#ifndef POLICY_ONLY
+#ifdef POLICY_ONLY
                     L2Judge lj(200000, searchBuffer);
 #else
                     L2Judge lj(2000000, searchBuffer);
