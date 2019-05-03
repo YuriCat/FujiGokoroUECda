@@ -1,7 +1,7 @@
 CXX      = g++
 CXXFLAGS = -std=c++14 -march=native -MMD -MP 
-LDFLAGS  = 
-LIBS     = 
+LDFLAGS  = -pthread
+LIBS     =
 INCLUDE  =
 SRC_DIR  = ./src
 BLD_DIR  = ./out
