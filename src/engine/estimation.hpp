@@ -710,9 +710,6 @@ private:
                                           field.opsHand[tp], b, field.fieldInfo);
                 if (mate) mv[i].setMPMate();
             }
-
-            // フェーズ(空場0、通常場1、パス支配場2)
-            const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
             // プレー尤度計算
             int chosenIdx = searchMove(mv, NMoves, [chosen](const auto& tmp)->bool{
                 return tmp == chosen;
