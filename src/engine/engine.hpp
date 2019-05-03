@@ -14,10 +14,7 @@
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
-
-#ifndef POLICY_ONLY
 #include "monteCarlo.hpp"
-#endif
 
 class WisteriaEngine {
 private:
@@ -63,21 +60,29 @@ public:
     void initGame() {
         // 汎用変数の設定
         shared.initGame();
-#ifndef POLICY_ONLY
         // 報酬設定
         // ランク初期化まで残り何試合か
         // 公式には未定だが、多くの場合100試合だろうから100試合としておく
         const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
         for (int cl = 0; cl < N_PLAYERS; cl++) {
             shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
-        }
-#endif            
+        }         
         // 置換表初期化
 #ifdef USE_L2BOOK
         L2::book.init();
 #endif
     }
-    
+    void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
+        if (numThreads > 1) {
+            std::vector<std::thread> threads;
+            for (int i = 0; i < numThreads; i++) {
+                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared, &threadTools[i]));
+            }
+            for (auto& t : threads) t.join();
+        } else {
+            MonteCarloThread(0, 1, &root, &field, &shared, &threadTools[0]);
+        }
+    }
     Cards change(unsigned changeQty) { // 交換関数
         const auto& gr = record.latestGame();
         const int myPlayerNum = record.myPlayerNum;
@@ -157,16 +162,7 @@ public:
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
-            // モンテカルロ開始
-            if (Settings::NChangeThreads > 1) {
-                std::vector<std::thread> thr;
-                for (int ith = 0; ith < Settings::NChangeThreads; ith++) {
-                    thr.emplace_back(std::thread(&MonteCarloThread, ith, &root, &field, &shared, &threadTools[ith]));
-                }
-                for (auto& th : thr) th.join();
-            } else {
-                MonteCarloThread(0, &root, &field, &shared, &threadTools[0]);
-            }
+            startMonteCarlo(root, field, Settings::NChangeThreads);
         }
 #endif // POLICY_ONLY
         root.sort();
@@ -357,16 +353,7 @@ public:
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
-            // モンテカルロ開始
-            if (Settings::NPlayThreads > 1) {
-                std::vector<std::thread> thr;
-                for (int ith = 0; ith < Settings::NPlayThreads; ith++) {
-                    thr.emplace_back(std::thread(&MonteCarloThread, ith, &root, &field, &shared, &threadTools[ith]));
-                }
-                for (auto& th : thr) th.join();
-            } else {
-                MonteCarloThread(0, &root, &field, &shared, &threadTools[0]);
-            }
+            startMonteCarlo(root, field, Settings::NPlayThreads);
         }
 #endif
         // 着手決定のための情報が揃ったので着手を決定する

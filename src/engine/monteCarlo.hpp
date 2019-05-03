@@ -79,8 +79,8 @@ static bool finishCheck(const RootInfo& root, double simuTime, dice_t& dice) {
 }
 
 static void MonteCarloThread
-(const int threadId, RootInfo *const proot,
- const Field *const pfield, SharedData *const pshared,
+(const int threadId, const int numThreads,
+ RootInfo *const proot, const Field *const pfield, SharedData *const pshared,
  ThreadTools *const ptools) {
     const int myPlayerNum = proot->myPlayerNum;
     auto& dice = ptools->dice;
@@ -117,7 +117,7 @@ static void MonteCarloThread
         if (numSimulations[action] < numWorlds) {
             // まだ全ての世界でこの着手を検討していない
             world = numSimulations[action];
-        } else if (numWorlds < (int)worlds.size()) {
+        } else if (numWorlds < (int)(worlds.size() / numThreads)) {
             // 新しい世界を作成
             simuTime += clock.restart();
             estimator.create(&worlds[numWorlds], Settings::monteCarloDealType, *pshared, ptools);
