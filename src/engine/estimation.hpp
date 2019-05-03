@@ -551,8 +551,9 @@ private:
     }
     
     void setWeightInWA() {
-        std::vector<double> tmpProb;
+        std::vector<double> probs;
         const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
+        if (T == 0) return; // どうしようもない
         const int NMyDC = countCards(myDealtCards);
 
         // 相手の献上後の所持カードで判明しているもの
@@ -560,64 +561,58 @@ private:
         // 相手の献上後の所持カードの上界より高い札のみ献上でもらっている可能性がある
         const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(pickHigh(partnerDealtCards, 1)) : CARDS_ALL;
 
-        if (T > 0) {
-            Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
-            int index = 0;
-            while (tmp) {
-                const IntCard ic = tmp.popLowest();
-                // ic が献上によって得られたカードの下界だった場合のパターン数を計算
-                const Cards c = IntCardToCards(ic);
-                const Cards lowerDist = pickLower(c) & dealCards;
-                const int lowerDists = countCards(lowerDist);
-                double combinations;
-                if (lowerDists < T) { // 配布不可能
-                    continue;
-                } else {
-                    combinations = dCombination(lowerDists, T);
-                    if (N_CHANGE_CARDS(myClass) > 1) {
-                        // 下界が確定したときの他の献上札のパターン数をかける
-                        combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
-                    }
-                }
-                tmpProb.push_back(combinations);
-                dealCardsUnderInWA[index] = dealCards & pickLower(IntCardToCards(ic));
-                index += 1;
-            }
-            ASSERT(index > 0,);
-            // WA mathod 用の配列に入れる
-            double sum = 0;
-            for (int i = 0; i < index; i++) sum += tmpProb[i];
-            for (int i = 0; i < index; i++) tmpProb[i] *= index / sum;
+        Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
+        while (tmp) {
+            const IntCard ic = tmp.popLowest();
+            // ic が献上によって得られたカードの下界だった場合のパターン数を計算
+            const Cards c = IntCardToCards(ic);
+            const Cards lowerDist = pickLower(c) & dealCards;
+            const int lowerDists = countCards(lowerDist);
 
-            std::queue<int> small, large;
-            for (int i = 0; i < index; i++) {
-                if (tmpProb[i] < 1) small.push(i);
-                else large.push(i);
+            if (lowerDists < T) continue; // 配布不可能
+
+            double combinations = dCombination(lowerDists, T);
+            if (N_CHANGE_CARDS(myClass) > 1) {
+                // 下界が確定したときの他の献上札のパターン数をかける
+                combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
             }
-            while (small.size() > 0 && large.size() > 0) {
-                int l = small.front();
-                int g = large.front();
-                small.pop();
-                large.pop();
-                
-                thresholdInWA[l] = tmpProb[l];
-                dealCardsOverInWA[l] = dealCardsUnderInWA[g];
-                tmpProb[g] += -1.0 + tmpProb[l];
-                if (tmpProb[g] < 1) small.push(g);
-                else large.push(g);
-            }
-            while (large.size() > 0) {
-                int g = large.front();
-                large.pop();
-                thresholdInWA[g] = 1;
-            }
-            while (small.size() > 0) {
-                int l = small.front();
-                small.pop();
-                thresholdInWA[l] = 1;
-            }
-            candidatesInWA = index;
+            dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+            probs.push_back(combinations);
         }
+        ASSERT(index > 0,);
+        // WA mathod 用の配列に入れる
+        double sum = 0;
+        for (double prob : probs) sum += prob;
+        for (double& prob : probs) prob *= probs.size() / sum;
+
+        std::queue<int> small, large;
+        for (int i = 0; i < (int)probs.size(); i++) {
+            if (probs[i] < 1) small.push(i);
+            else large.push(i);
+        }
+        while (small.size() > 0 && large.size() > 0) {
+            int l = small.front();
+            int g = large.front();
+            small.pop();
+            large.pop();
+            
+            thresholdInWA[l] = probs[l];
+            dealCardsOverInWA[l] = dealCardsUnderInWA[g];
+            probs[g] += probs[l] - 1;
+            if (probs[g] < 1) small.push(g);
+            else large.push(g);
+        }
+        while (large.size() > 0) {
+            int g = large.front();
+            large.pop();
+            thresholdInWA[g] = 1;
+        }
+        while (small.size() > 0) {
+            int l = small.front();
+            small.pop();
+            thresholdInWA[l] = 1;
+        }
+        candidatesInWA = probs.size();
     }
 
     void prepareSubjectiveInfo() {
