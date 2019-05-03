@@ -579,7 +579,7 @@ private:
             dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
             probs.push_back(combinations);
         }
-        ASSERT(index > 0,);
+        assert(probs.size() > 0);
         // WA mathod 用の配列に入れる
         double sum = 0;
         for (double prob : probs) sum += prob;
