@@ -6,27 +6,18 @@
 #define _ENGINE_FUJI_
 
 #include <thread>
-
-// 思考部ヘッダ
 #include "engineSettings.h"
 #include "data.hpp"
-
-// クライアント部分空間
-
-// 報酬系トップダウンパラメータ
 #include "value.hpp"
-
-// 諸々の計算とか判定
-#include "../core/dominance.hpp" // 支配判定
-#include "mate.hpp" // 必勝判定
+#include "../core/dominance.hpp"
+#include "mate.hpp"
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
 
 #ifndef POLICY_ONLY
-#include "galaxy.hpp"
 #include "monteCarlo.hpp"
-#endif // ！POLICY_ONLY
+#endif
 
 class WisteriaEngine {
 private:
@@ -163,10 +154,6 @@ public:
 #ifndef POLICY_ONLY
         // モンテカルロ法による評価
         if (changeCards == CARDS_NULL) {
-            // 世界プールを整理する
-            for (int th = 0; th < N_THREADS; th++) {
-                threadTools[th].gal.clear();
-            }
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
@@ -367,9 +354,6 @@ public:
 #ifndef POLICY_ONLY
         // モンテカルロ法による評価(結果確定のとき以外)
         if (!fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
-            for (int th = 0; th < N_THREADS; th++) {
-                threadTools[th].gal.clear();
-            }
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
