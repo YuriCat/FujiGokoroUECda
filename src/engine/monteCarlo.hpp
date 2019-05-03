@@ -117,7 +117,7 @@ static void MonteCarloThread
         if (numSimulations[action] < numWorlds) {
             // まだ全ての世界でこの着手を検討していない
             world = numSimulations[action];
-        } else if (numWorlds < (int)(worlds.size() / numThreads)) {
+        } else if (numThreads * numWorlds + threadId < (int)worlds.size()) {
             // 新しい世界を作成
             simuTime += clock.restart();
             estimator.create(&worlds[numWorlds], Settings::monteCarloDealType, *pshared, ptools);
