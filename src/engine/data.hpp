@@ -5,6 +5,14 @@
 #include "../core/field.hpp"
 #include "linearPolicy.hpp"
 
+namespace Settings {
+    const double rootPlayPriorCoef = 4;
+    const double rootPlayPriorExponent = 0.6;
+    
+    const double rootChangePriorCoef = 4;
+    const double rootChangePriorExponent = 0.6;
+}
+
 // Field以外のデータ構造
 // Fieldは基本盤面情報+盤面を進めたり戻したりするときに値が変化するもの
 // それ以外の重目のデータ構造は SharedData

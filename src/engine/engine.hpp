@@ -6,7 +6,7 @@
 #define _ENGINE_FUJI_
 
 #include <thread>
-#include "engineSettings.h"
+#include "../settings.h"
 #include "data.hpp"
 #include "value.hpp"
 #include "../core/dominance.hpp"
@@ -15,6 +15,11 @@
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
 #include "monteCarlo.hpp"
+
+namespace Settings {
+    const bool L2SearchOnRoot = true;
+    const bool MateSearchOnRoot = true;
+}
 
 class WisteriaEngine {
 private:
@@ -152,7 +157,7 @@ public:
                                   shared.baseChangePolicy);
         // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
         for (int i = 0; i < NCands; i++) {
-            score[i] = log(max(escore[i + 1] - escore[i], 0.000001)) * Settings::temperatureChange;
+            score[i] = log(max(escore[i + 1] - escore[i], 0.000001));
         }
         root.feedPolicyScore(score, NCands);
         
@@ -162,7 +167,7 @@ public:
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
-            startMonteCarlo(root, field, Settings::NChangeThreads);
+            startMonteCarlo(root, field, Settings::numChangeThreads);
         }
 #endif // POLICY_ONLY
         root.sort();
@@ -353,7 +358,7 @@ public:
 #ifdef USE_POLICY_TO_ROOT
             root.addPolicyScoreToMonteCarloScore();
 #endif
-            startMonteCarlo(root, field, Settings::NPlayThreads);
+            startMonteCarlo(root, field, Settings::numPlayThreads);
         }
 #endif
         // 着手決定のための情報が揃ったので着手を決定する

@@ -1,7 +1,7 @@
 #pragma once
 
 // 盤の情報表現
-
+#include "../UECda.h"
 #include "daifugo.hpp"
 #include "prim2.hpp"
 #include "hand.hpp"
@@ -694,7 +694,7 @@ struct Field {
     }
 };
 
-int Field::proc(const int tp, const MoveInfo mv) {
+inline int Field::proc(const int tp, const MoveInfo mv) {
     // 丁寧に局面更新
     ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
     if (mv.isPASS()) {

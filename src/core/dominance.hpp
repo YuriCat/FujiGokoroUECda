@@ -26,7 +26,7 @@ inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
 
 // 引数として場を取った場合
 // パスの時は場を更新してから判定しても仕方ないので注意
-bool dominatesCards(const Board b, const Cards oc) {
+inline bool dominatesCards(const Board b, const Cards oc) {
     if (b.isNull()) return false;
     if (b.domInevitably()) return true;
 

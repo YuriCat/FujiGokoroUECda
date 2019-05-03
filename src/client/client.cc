@@ -6,16 +6,10 @@
 
 /////////////////////////////////
 
-
 #include "connection.h"
-#include "UECda.h"
+#include "../UECda.h"
+#include "../engine/engine.hpp"
 
-// クライアント
-#ifdef HUMAN_MODE
-#elif RANDOM_MODE
-#else
-#include "engine/engine.hpp"
-#endif
 WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda
@@ -59,62 +53,8 @@ int main(int argc, char* argv[]) { // for UECda
         // プレー設定 大会版ビルドでは定数として埋め込む
         else if (!strcmp(argv[c], "-th")) { // num of threads
             int NThreads = atoi(argv[c + 1]);
-            Settings::NPlayThreads = NThreads;
-            Settings::NChangeThreads = max(1, NThreads / 2);
-        } else if (!strcmp(argv[c], "-pm")) { // play modeling
-            Settings::simulationPlayModel = true;
-        } else if (!strcmp(argv[c], "-npm")) { // no play modeling
-            Settings::simulationPlayModel = false;
-        } else if (!strcmp(argv[c], "-l2r")) { // L2 search on the root state
-            Settings::L2SearchOnRoot = true;
-        } else if (!strcmp(argv[c], "-nol2r")) { // no L2 search on the root state
-            Settings::L2SearchOnRoot = false;
-        } else if (!strcmp(argv[c], "-mater")) { // Mate search on the root state
-            Settings::MateSearchOnRoot = true;
-        } else if (!strcmp(argv[c], "-nomater")) { // no Mate search on the root state
-            Settings::MateSearchOnRoot = false;
-        } else if (!strcmp(argv[c], "-t")) { // temperarure
-            Settings::simulationTemperaturePlay = atof(argv[c + 1]);
-            Settings::temperaturePlay = atof(argv[c + 1]);
-            Settings::temperatureChange = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-ac")) { // softmax amplify coefficient
-            Settings::simulationAmplifyCoef = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-ae")) { // softmax amplify exponent
-            Settings::simulationAmplifyExponent = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-l2s")) { // L2 search in simulations
-            Settings::L2SearchInSimulation = true;
-        } else if (!strcmp(argv[c], "-nol2s")) { // no L2 search in simulations
-            Settings::L2SearchInSimulation = false;
-        } else if (!strcmp(argv[c], "-mates")) { // Mate search in simulations
-            Settings::MateSearchInSimulation = true;
-        } else if (!strcmp(argv[c], "-nomates")) { // no Mate search in simulations
-            Settings::MateSearchInSimulation = false;
-        } else if (!strcmp(argv[c], "-ss")) { // selector in simulation
-            std::string selectorName = std::string(argv[c + 1]);
-            if (!strcmp(argv[c + 1], "e")) { // exp
-                Settings::simulationSelector = Selector::EXP_BIASED;
-            } else if (!strcmp(argv[c + 1], "p")) { // poly
-                Settings::simulationSelector = Selector::POLY_BIASED;
-            } else if (!strcmp(argv[c + 1], "t")) { // thres
-                Settings::simulationSelector = Selector::THRESHOLD;
-            } else if (!strcmp(argv[c + 1], "n")) { // naive
-                Settings::simulationSelector = Selector::NAIVE;
-            } else {
-                cerr << " : unknown selector [" << std::string(std::string()) << "] : default selector will be used." << endl;
-            }
-        } else if (!strcmp(argv[c], "-dt")) { // deal type in estimation
-            std::string dealTypeName = std::string(argv[c + 1]);
-            if (!strcmp(argv[c + 1], "re")) { // rejection
-                Settings::monteCarloDealType = DealType::REJECTION;
-            } else if (!strcmp(argv[c + 1], "b")) { // bias
-                Settings::monteCarloDealType = DealType::BIAS;
-            } else if (!strcmp(argv[c + 1], "s")) { // subjective info
-                Settings::monteCarloDealType = DealType::SBJINFO;
-            } else if (!strcmp(argv[c + 1], "rn")) { // random
-                Settings::monteCarloDealType = DealType::RANDOM;
-            } else {
-                cerr << " : unknown deal type [" << std::string(std::string()) << "] : default deal type will be used." << endl;
-            }
+            Settings::numPlayThreads = NThreads;
+            Settings::numChangeThreads = max(1, NThreads / 2);
         }
 #endif
 #endif

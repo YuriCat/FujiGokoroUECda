@@ -60,13 +60,13 @@ struct L2Field {
     
 };
 // L2局面表現へのチェンジ
-L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
+inline L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
     L2Field f;
     f.info = info;
     f.b = b;
     return f;
 }
-L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
+inline L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
     L2Field f;
     f.b = cur.b;
     f.info = cur.info;
@@ -74,7 +74,7 @@ L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
     f.b.procAndFlush(mv);
     return f;
 }
-int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
+inline int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
     pnext->b = cur.b;
     pnext->info = cur.info;
     pnext->info.init();
@@ -234,7 +234,7 @@ public:
 };
 
 template <int S_LEVEL, int E_LEVEL>
-int L2Judge::judge(const int depth, MoveInfo *const buf,
+inline int L2Judge::judge(const int depth, MoveInfo *const buf,
                    const Hand& myHand, const Hand& opsHand, const L2Field& field) {
     // 判定を返す
     int res;
@@ -383,7 +383,7 @@ int L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     return L2_DRAW;
 }
 
-int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
+inline int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
                    const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
     
     bool pass = tmp.isPASS();
@@ -438,7 +438,7 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     return res;
 }
 
-int L2Judge::search(const int depth, MoveInfo *const buf, const int NMoves,
+inline int L2Judge::search(const int depth, MoveInfo *const buf, const int NMoves,
                     const Hand& myHand, const Hand& opsHand, const L2Field& field) {
     
     // 反復深化をするのでなければ終了レベルは常に最大で呼ばれると思われる
@@ -468,7 +468,7 @@ int L2Judge::search(const int depth, MoveInfo *const buf, const int NMoves,
     else return -1;
 }
 
-int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
+inline int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ
@@ -476,7 +476,7 @@ int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b,
     return res;
 }
 
-int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
+inline int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ

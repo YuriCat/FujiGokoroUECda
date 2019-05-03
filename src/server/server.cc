@@ -1,5 +1,5 @@
 /*
- daihubc.cc
+ server.cc
  */
 
 #include <stdio.h>
@@ -46,8 +46,8 @@
 
 #include "statistics.h"
 
+#include "../settings.h"
 #include "../UECda.h"
-#include "../engine/engineSettings.h"
 #include "../engine/data.hpp"
 #include "../extra/rating.hpp"
 

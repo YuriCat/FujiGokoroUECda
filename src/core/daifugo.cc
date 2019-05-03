@@ -1,46 +1,48 @@
 #include <map>
 #include "daifugo.hpp"
 
+using namespace std;
+
 // ランク
 
-const std::string rankChar  = "-3456789TJQKA2+:";
+const string rankChar  = "-3456789TJQKA2+:";
 
-std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
+ostream& operator <<(ostream& out, const OutRank& arg) {
     out << rankChar[arg.r];
     return out;
 }
 
-std::ostream& operator <<(std::ostream& ost, const RankRange& arg) {
+ostream& operator <<(ostream& ost, const RankRange& arg) {
     for (int r = arg.r0; r <= arg.r1; r++) ost << rankChar[r];
     return ost;
 }
 
 int CharToRank(char c) {
     int r = rankChar.find(c);
-    if (r != std::string::npos) return r;
+    if (r != string::npos) return r;
     r = rankChar.find(toupper(c));
-    if (r != std::string::npos) return r;
+    if (r != string::npos) return r;
     return RANK_NONE;
 }
 
 // スート
 
-const std::string suitNumChar  = "CDHSX";
+const string suitNumChar  = "CDHSX";
     
-std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg) {
+ostream& operator <<(ostream& ost, const OutSuitNum& arg) {
     ost << suitNumChar[arg.sn];
     return ost;
 }
 
 int CharToSuitNum(char c) {
     int sn = suitNumChar.find(c);
-    if (sn != std::string::npos) return sn;
+    if (sn != string::npos) return sn;
     sn = suitNumChar.find(toupper(c));
-    if (sn != std::string::npos) return sn;
+    if (sn != string::npos) return sn;
     return SUITNUM_NONE;
 }
 
-std::ostream& operator <<(std::ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
+ostream& operator <<(ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
     for (int sn = 0; sn < N_SUITS + 1; sn++) {
         if (arg.s & SuitNumToSuits(sn)) {
             out << suitNumChar[sn];
@@ -118,7 +120,7 @@ void initSuits() {
     }
     
     // (suits, suits, suits) pattern index
-    std::map<std::array<int, ipow(2, 3) - 1>, int> sssMap;
+    map<array<int, ipow(2, 3) - 1>, int> sssMap;
     for (unsigned s0 = 0; s0 < 16; s0++) {
         for (unsigned s1 = 0; s1 < 16; s1++) {
             for (unsigned s2 = 0; s2 < 16; s2++) {
@@ -127,7 +129,7 @@ void initSuits() {
                 int c0 = popcnt(s0), c1 = popcnt(s1), c2 = popcnt(s2);
                 int c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
                 int c012 = popcnt(s012);
-                std::array<int, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
+                array<int, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
                 int cnt;
                 if (sssMap.count(pattern) == 0) {
                     cnt = sssMap.size();
@@ -143,7 +145,7 @@ void initSuits() {
     ASSERT(sssMap.size() == N_PATTERNS_SUITS_SUITS_SUITS,
            cerr << sssMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_SUITS << endl;);
 
-    std::map<std::array<int, ipow(2, 3) - 3>, int> s1ssMap;
+    map<array<int, ipow(2, 3) - 3>, int> s1ssMap;
     for (unsigned s0 = 1; s0 < 16; s0 <<= 1) {
         for (unsigned s1 = 0; s1 < 16; ++s1) {
             for (unsigned s2 = 0; s2 < 16; ++s2) {
@@ -151,7 +153,7 @@ void initSuits() {
                 unsigned s012 = s0 & s1 & s2;
                 int c1 = popcnt(s1), c2 = popcnt(s2);
                 int c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
-                std::array<int, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
+                array<int, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
                 int cnt;
                 if (s1ssMap.count(pattern) == 0) {
                     cnt = s1ssMap.size();
@@ -170,7 +172,7 @@ SuitsInitializer suitsInitializer;
 
 // カード
 
-std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
+ostream& operator <<(ostream& out, const OutIntCard& arg) {
     if (arg.ic == INTCARD_JOKER) {
         out << "JO";
     } else {
@@ -179,7 +181,7 @@ std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
     return out;
 }
 
-IntCard StringToIntCard(const std::string& str) {
+IntCard StringToIntCard(const string& str) {
     if (str.size() != 2) return INTCARD_NONE;
     if (toupper(str) == "JO") return INTCARD_JOKER;
     int sn = CharToSuitNum(str[0]);
@@ -188,12 +190,12 @@ IntCard StringToIntCard(const std::string& str) {
     return RankSuitNumToIntCard(r, sn);
 }
 
-std::ostream& operator <<(std::ostream& out, const Cards& c) {
+ostream& operator <<(ostream& out, const Cards& c) {
     out << c.toString();
     return out;
 }
 
-std::ostream& operator <<(std::ostream& out, const OutCardTables& arg) {
+ostream& operator <<(ostream& out, const OutCardTables& arg) {
     // テーブル形式で見やすく
     // ２つを横並びで表示
     for (int i = 0; i < (int)arg.cv.size(); i++) {
@@ -255,7 +257,7 @@ CardsInitializer cardsInitializer;
 
 // 着手
 
-std::ostream& operator <<(std::ostream& out, const MeldChar& m) { // MeldChar出力
+ostream& operator <<(ostream& out, const MeldChar& m) { // MeldChar出力
     if (m.isPASS()) {
         out << "PASS";
     } else if (m.isSingleJOKER()) {
@@ -281,13 +283,13 @@ std::ostream& operator <<(std::ostream& out, const MeldChar& m) { // MeldChar出
     return out;
 }
 
-std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
+ostream& operator <<(ostream& out, const Move& m) { // Move出力
     out << MeldChar(m) << m.cards();
     return out;
 }
 
-std::string toRecordString(Move m) {
-    std::ostringstream oss;
+string toRecordString(Move m) {
+    ostringstream oss;
     if (m.isPASS()) {
         oss << "P";
     } else if (m.isSingleJOKER()) {
@@ -354,7 +356,7 @@ Move CardsToMove(const Cards chara, const Cards used) {
     return m;
 }
 
-Move StringToMoveM(const std::string& str) {
+Move StringToMoveM(const string& str) {
     // 入力文字列からMove型への変更
     Move mv = MOVE_NULL;
     bool jk = false; // joker used
@@ -439,7 +441,7 @@ Move StringToMoveM(const std::string& str) {
     return mv;
 }
 
-std::ostream& operator <<(std::ostream& out, const Board& b) { // Board出力
+ostream& operator <<(ostream& out, const Board& b) { // Board出力
     if (b.isNull()) out << "NULL";
     else out << b.move();
     // オーダー...一時オーダーのみ

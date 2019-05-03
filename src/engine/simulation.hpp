@@ -1,7 +1,7 @@
 #pragma once
 
 // ランダムシミュレーション
-#include "engineSettings.h"
+#include "../settings.h"
 #include "../core/daifugo.hpp"
 #include "../core/prim2.hpp"
 #include "../core/field.hpp"
@@ -11,7 +11,16 @@
 #include "mate.hpp"
 #include "lastTwo.hpp"
 
-int simulation(Field& field,
+namespace Settings {
+    const bool L2SearchInSimulation = true;
+    const bool MateSearchInSimulation = true;
+    const double simulationTemperatureChange = 1.0;
+    const double simulationTemperaturePlay = 1.1;
+    const double simulationAmplifyCoef = 0.22;
+    const double simulationAmplifyExponent = 2;
+}
+
+static int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
     double progress = 1;
@@ -23,7 +32,6 @@ int simulation(Field& field,
         field.prepareForPlay();
 
         if (Settings::L2SearchInSimulation && field.isL2Situation()) { // L2
-#ifdef SEARCH_LEAF_L2
             const uint32_t blackPlayer = tp;
             const uint32_t whitePlayer = field.ps.searchOpsPlayer(blackPlayer);
 
@@ -41,7 +49,6 @@ int simulation(Field& field,
                 field.setNewClassOf(blackPlayer, field.getWorstClass());
                 goto GAME_END;
             }
-#endif // SEARCH_LEAF_L2
         }
         // 合法着手生成
         field.NMoves = field.NActiveMoves = genMove(field.mv, field.hand[tp].cards, field.board);
@@ -50,7 +57,6 @@ int simulation(Field& field,
         } else {
             // search mate-move
             int idxMate = -1;
-#ifdef SEARCH_LEAF_MATE
             if (Settings::MateSearchInSimulation) {
                 int mateIndex[N_MAX_MOVES];
                 int mates = 0;
@@ -63,7 +69,6 @@ int simulation(Field& field,
                 if (mates == 1) idxMate = mateIndex[0];
                 else if (mates > 1) idxMate = mateIndex[ptools->dice() % mates];
             }
-#endif // SEARCH_LEAF_MATE
             if (idxMate != -1) { // mate
                 field.setPlayMove(field.mv[idxMate]);
                 field.playMove.setMPMate();
@@ -103,7 +108,7 @@ GAME_END:
     return 0;
 }
 
-int startPlaySimulation(Field& field,
+static int startPlaySimulation(Field& field,
                         MoveInfo mv,
                         SharedData *const pshared,
                         ThreadTools *const ptools) {
@@ -113,7 +118,7 @@ int startPlaySimulation(Field& field,
     return simulation(field, pshared, ptools);
 }
 
-int startChangeSimulation(Field& field,
+static int startChangeSimulation(Field& field,
                           int p, Cards c,
                           SharedData *const pshared,
                           ThreadTools *const ptools) {
@@ -129,7 +134,7 @@ int startChangeSimulation(Field& field,
     return simulation(field, pshared, ptools);
 }
 
-int startAllSimulation(Field& field,
+static int startAllSimulation(Field& field,
                        SharedData *const pshared,
                        ThreadTools *const ptools) {
     //cerr << field.toString();

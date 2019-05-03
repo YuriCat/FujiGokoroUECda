@@ -23,8 +23,7 @@
 #endif
 
 #include "connection.h"
-
-#include "settings.h"
+#include "../settings.h"
 
 #define PROTOCOL_VERSION    20070       //プロトコルヴァージョンを表す整数
 #define DEFAULT_SERVER      "127.0.0.1" //デフォルトのサーバのアドレス 文字列で指定

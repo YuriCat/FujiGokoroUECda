@@ -252,18 +252,18 @@ using namespace UECda;
 
 constexpr int SEQ_MIN_QTY = 3;
 
-bool Move::domInevitably() const {
+inline bool Move::domInevitably() const {
     if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
     else return rank() == RANK_8;
 }
-bool Move::isRev() const { return isSeq() ? qty() >= 5 : qty() >= 4; }
-bool Move::isBack() const { return false; }
+inline bool Move::isRev() const { return isSeq() ? qty() >= 5 : qty() >= 4; }
+inline bool Move::isBack() const { return false; }
 
-bool Board::domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
-bool Board::locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
-bool Board::locksRank(Move m) const { return false; }
+inline bool Board::domConditionally(Move m) const { return isSingleJOKER() && m.isS3(); }
+inline bool Board::locksSuits(Move m) const { return !isNull() && suits() == m.suits(); }
+inline bool Board::locksRank(Move m) const { return false; }
 
-bool Move::exam() const {
+inline bool Move::exam() const {
     // 変な値でないかチェック
     int q = qty();
     int r = rank();

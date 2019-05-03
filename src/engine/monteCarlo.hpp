@@ -1,12 +1,18 @@
 #pragma once
 
-#include "engineSettings.h"
+#include "../settings.h"
 #include "data.hpp"
 #include "estimation.hpp"
 #include "simulation.hpp"
 
 // マルチスレッディングのときはスレッド、
 // シングルの時は関数として呼ぶ
+
+namespace Settings {
+    const double valuePerClock = 5.0 / (THINKING_LEVEL * THINKING_LEVEL) / pow(10.0, 8);
+    // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
+    const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6); 
+}
 
 template <class dice_t>
 static int selectBanditAction(const RootInfo& root, dice_t& dice) {
@@ -49,7 +55,7 @@ static bool finishCheck(const RootInfo& root, double simuTime, dice_t& dice) {
     double rewardScale = root.rewardGap;
 
     struct Dist { double mean, sem, reg; };
-    double line = -1600.0 * double(2 * simuTime * VALUE_PER_SEC) / rewardScale;
+    double line = -1600.0 * double(2 * simuTime * Settings::valuePerSec) / rewardScale;
     
     // regret check
     Dist d[N_MAX_MOVES + 64];
@@ -93,7 +99,7 @@ static void MonteCarloThread
 
     // 世界生成のためのクラスを初期化
     const auto& record = pshared->record.latestGame();
-    RandomDealer<EngineGameRecord> estimator(record, *pfield, myPlayerNum);
+    RandomDealer estimator(*pfield, myPlayerNum);
 
     Field pf = *pfield;
     pf.myPlayerNum = -1; // 客観視点に変更
@@ -120,7 +126,7 @@ static void MonteCarloThread
         } else if (numThreads * numWorlds + threadId < (int)worlds.size()) {
             // 新しい世界を作成
             simuTime += clock.restart();
-            estimator.create(&worlds[numWorlds], Settings::monteCarloDealType, *pshared, ptools);
+            estimator.create(&worlds[numWorlds], DealType::REJECTION, record, *pshared, ptools);
             estTime += clock.restart();
             world = numWorlds++;
         } else {
