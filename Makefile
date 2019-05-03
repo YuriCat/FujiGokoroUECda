@@ -1,121 +1,72 @@
-# 
-# 1. General Compiler Settings
-#
+TARGET    = all
 CXX       = g++
-CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-missing-field-initializers -fno-exceptions -fno-rtti -march=native
+CXXFLAGS  = -std=c++14 -march=native -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-missing-field-initializers -fno-exceptions -fno-rtti
 INCLUDES  =
 LIBRARIES = -lpthread
 
-#
-# 2. Target Specific Settings
-#
-ifeq ($(TARGET),teacher)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
-        output_dir := out/teacher/
-endif
-ifeq ($(TARGET),match)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
-        output_dir := out/match/
-endif
-ifeq ($(TARGET),release)
+ifdef mode
+	ifeq ($(mode),teacher)
+		CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
+	else ifeq ($(mode),match)	
+		CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
+	else ifeq ($(mode),default)
+		CXXFLAGS += -Ofast -g -ggdb -fno-fast-math
+	else ifeq ($(mode),debug)
+		CXXFLAGS += -O0 -g -ggdb -DDEBUG -DBROADCAST -D_GLIBCXX_DEBUG
+	else
+		CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM
+	endif
+else
 	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM
-        output_dir := out/release/
-endif
-ifeq ($(TARGET),debug)
-	CXXFLAGS += -O0 -g -ggdb -DDEBUG -DBROADCAST -D_GLIBCXX_DEBUG
-        output_dir := out/debug/
-endif
-ifeq ($(TARGET),default)
-	CXXFLAGS += -Ofast -g -ggdb -fno-fast-math
-        output_dir := out/default/
 endif
 
-#
-# 2. Default Settings (applied if there is no target-specific settings)
-#
-sources      ?= $(shell ls -R src/*.cc)
-sources_dir  ?= src/
-engine_dir   ?= src/engine/
-ptest_dir    ?= src/performance/
-objects      ?=
-directories  ?= $(output_dir)
+OBJ_DIR = out/obj
 
-#
-# 4. Public Targets
-#
-default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation client estimation_test policy_learner l2_test policy_test dominance_test cards_test movegen_test policy_client mate_test server
+BASE_HEADERS   = $(wildcard src/base/*.hpp)
+CORE_HEADERS   = $(wildcard src/core/*.hpp)
+ENGINE_HEADERS = $(wildcard src/engine/*.hpp) $(wildcard src/engine/*.h)
+SERVER_HEADERS = $(wildcard src/server/*.hpp) $(wildcard src/server/*.h)
+ALL_HEADERS    = $(BASE_HEADERS) $(CORE_HEADERS) $(ENGINE_HEADERS) $(SERVER_HEADERS)
 
-match:
-	$(MAKE) TARGET=$@ preparation client policy_client
+CORE_SOURCES   = $(wildcard src/core/*.cc)
+ENGINE_SOURCES = $(wildcard src/engine/*.cc)
 
-teacher:
-	$(MAKE) TARGET=$@ preparation client
+ALL_SOURCES    = $(shell ls src/*.cc) $(shell ls src/*.c) $(shell ls src/server/*.cc) $(shell ls src/server/*.c)
 
-run-coverage: coverage
-	out/coverage --gtest_output=xml
+CORE_OBJECTS   = $(subst .cc,.o,$(subst src/,$(OBJ_DIR)/,$(CORE_SOURCES)))
+ENGINE_OBJECTS = $(subst .cc,.o,$(subst src/,$(OBJ_DIR)/,$(ENGINE_SOURCES)))
+CLIENT_OBJECTS = $(patsubst %,$(OBJ_DIR)/%,client.o connection.o)
+SERVER_OBJECTS = $(patsubst %,$(OBJ_DIR)/%,server/server.o server/mt19937ar.o)
+
+OBJECTS        = $(CORE_OBJECTS) $(ENGINE_OBJECTS) $(CLIENT_OBJECTS) $(SERVER_OBJECTS)
+
+all: $(OBJ_DIR) $(patsubst %,out/%,client server)
 
 clean:
-	rm -rf out/*
+	rm -rf out
 
-scaffold:
-	mkdir -p out test out/data doc lib obj resource
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR) $(OBJ_DIR)/core $(OBJ_DIR)/engine $(OBJ_DIR)/server
 
-#
-# 5. Private Targets
-#
-preparation $(directories):
-	mkdir -p $(directories)
+out/client: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o out/client $(CLIENT_OBJECTS) $(CORE_OBJECTS)
 
-record_analyzer :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)record_analyzer $(ptest_dir)/record_analyzer.cc $(LIBRARIES)
+out/server: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o out/server $(SERVER_OBJECTS) $(CORE_OBJECTS)
 
-rating_calculator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)rating_calculator $(ptest_dir)/rating_calculator.cc $(LIBRARIES)
+$(OBJ_DIR)/core/daifugo.o: src/core/daifugo.cc src/core/daifugo.hpp $(BASE_HEADERS)
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-value_generator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)value_generator $(ptest_dir)/value_generator.cc $(LIBRARIES)
 
-cards_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)cards_test $(ptest_dir)/cards_test.cc $(LIBRARIES)
+$(OBJ_DIR)/client.o: src/client.cc $(ALL_HEADERS)
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-movegen_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)movegen_test $(ptest_dir)/movegen_test.cc $(LIBRARIES)
+$(OBJ_DIR)/connection.o: src/connection.c src/connection.h
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-dominance_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)dominance_test $(ptest_dir)/dominance_test.cc $(LIBRARIES)
 
-mate_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)mate_test $(ptest_dir)/mate_test.cc $(LIBRARIES)
+$(OBJ_DIR)/server/server.o: src/server/daihubc.cc $(ALL_HEADERS)
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-l2_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)l2_test $(ptest_dir)/l2_test.cc $(LIBRARIES)
-
-policy_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_test $(ptest_dir)/policy_test.cc $(LIBRARIES)
-
-estimation_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)estimation_test $(ptest_dir)/estimation_test.cc $(LIBRARIES)
-
-client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES)
-
-policy_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DPOLICY_ONLY
-
-policy_rl_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_rl_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DPOLICY_ONLY -DRL_POLICY
-
-server :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)server $(sources_dir)server/daihubc.cc $(sources_dir)server/mt19937ar.c $(LIBRARIES)
-
-policy_learner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_learner $(ptest_dir)policy_learner.cc $(LIBRARIES)
-
-random_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)random_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DRANDOM_MODE
-
-human_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)human_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DHUMAN_MODE -DBROADCAST
-
--include $(dependencies)
+$(OBJ_DIR)/server/mt19937ar.o: src/server/mt19937ar.c src/server/mt19937ar.h
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
