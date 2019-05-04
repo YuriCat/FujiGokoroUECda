@@ -66,7 +66,7 @@ void initSuits() {
     int cnt = 0;
     for (int c0 = 0; c0 <= 4; c0++) {
         for (int c1 = 0; c1 <= c0; c1++) {
-            for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
+            for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); c01++) {
                 DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
                 twoSuitsCountIndex[c0][c1][c01] = cnt++;
             }
@@ -79,7 +79,7 @@ void initSuits() {
     cnt = 0;
     for (int c0 = 0; c0 <= 4; c0++) {
         for (int c1 = 0; c1 <= 4; c1++) {
-            for (size_t c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
+            for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); c01++) {
                 DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
                 suitsSuitsCountIndex[c0][c1][c01] = cnt++;
             }

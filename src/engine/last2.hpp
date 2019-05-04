@@ -10,6 +10,9 @@
 namespace L2 {
     // L2関連
     extern TwoValueBook<(1 << 18)> book;
+    inline void init() {
+        book.init();
+    }
 }
 
 enum L2Result {

@@ -278,9 +278,10 @@ struct RootInfo {
     int actions; // 全候補行動数
     int candidates; // 選択の候補とする数
     bool isChange;
+    bool policyAdded = false;
     
     // 雑多な情報
-    int myPlayerNum, rivalPlayerNum;
+    int myPlayerNum = -1, rivalPlayerNum = -1;
     int bestReward, worstReward;
     int rewardGap;
     int bestClass, worstClass;
@@ -288,9 +289,9 @@ struct RootInfo {
     // モンテカルロ用の情報
     bool exitFlag;
     uint64_t limitSimulations;
-    //uint64_t limitTime;
     BetaDistribution monteCarloAllScore;
     uint64_t allSimulations;
+
 #ifdef MULTI_THREADING
     SpinLock<int> lock_;
     void lock() { lock_.lock(); }
@@ -360,6 +361,7 @@ struct RootInfo {
         for (int i = 0; i < candidates; i++) {
             monteCarloAllScore += child[i].monteCarloScore;
         }
+        policyAdded = true;
     }
     
     void feedPolicyScore(const double *const score, int num) {
@@ -443,9 +445,7 @@ struct RootInfo {
                                 if (!a.pruned && b.pruned) return true;
                                 if (a.mean() > b.mean()) return true;
                                 if (a.mean() < b.mean()) return false;
-#ifndef USE_POLICY_TO_ROOT
-                                if (allSimulations > 0) return true;
-#endif
+                                if (policyAdded) if (allSimulations > 0) return true;
                                 if (a.policyProb > b.policyProb) return true;
                                 if (a.policyProb < b.policyProb) return false;
                                 return a.policyScore > b.policyScore;

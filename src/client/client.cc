@@ -45,19 +45,15 @@ int main(int argc, char* argv[]) { // for UECda
         } else if (!strcmp(argv[c], "-s")) { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-m")) { // output directory
+        } else if (!strcmp(argv[c], "-m")) { // output
             monitor = true;
-        }
-#ifdef _ENGINE_FUJI_
-#ifndef MATCH
-        // プレー設定 大会版ビルドでは定数として埋め込む
-        else if (!strcmp(argv[c], "-th")) { // num of threads
+        } else if (!strcmp(argv[c], "-pol")) { // policy mode
+            Settings::policyMode = true;
+        } else if (!strcmp(argv[c], "-th")) { // num of threads
             int NThreads = atoi(argv[c + 1]);
             Settings::numPlayThreads = NThreads;
             Settings::numChangeThreads = max(1, NThreads / 2);
         }
-#endif
-#endif
     }
     
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更

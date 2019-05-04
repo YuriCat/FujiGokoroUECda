@@ -28,13 +28,13 @@ int outputParams() {
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(3) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + SSIndex[SUITS_H][SUITS_CH];
+                             + sSIndex[SUITS_H][SUITS_CH];
     int f2 = PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
                              + 0 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(4) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + SSIndex[SUITS_H][SUITS_C];
+                             + sSIndex[SUITS_H][SUITS_C];
 
     cerr << f0 << " " << playPolicy.param(f0) << endl;
     cerr << f1 << " " << playPolicy.param(f1) << endl;
@@ -257,8 +257,8 @@ int testSelector(const MatchRecord& mrecord) {
 }
 
 bool PolicyTest(const vector<string>& recordFiles) {
-    cerr << DIRECTORY_PARAMS_IN << endl;
-    //changePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+
+    changePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
     playPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
 
     outputParams();

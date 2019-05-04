@@ -509,8 +509,7 @@ int playPolicyScore(double *const dst,
                 FASSERT(s,);
             }
             FASSERT(s,);
-            
-#ifdef MODELING_PLAY
+
         MODEL:;
             {
                 // 相手行動傾向をモデル化する項
@@ -531,7 +530,6 @@ int playPolicyScore(double *const dst,
                     } else FooM(base + 0)
                 }
             }
-#endif
         }
         pol.template feedCandidateScore(i, exp(s / pol.temperature()));
         

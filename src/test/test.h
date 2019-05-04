@@ -2,9 +2,6 @@
 
 #include "../core/daifugo.hpp"
 #include "../UECda.h"
-#include "../engine/data.hpp"
-
-extern SharedData shared;
 
 bool CardsTest();
 bool MovegenTest(const std::vector<std::string>& recordFiles);

@@ -40,20 +40,6 @@
 // 末端報酬を階級リセットから何試合前まで計算するか
 constexpr int N_REWARD_CALCULATED_GAMES = 32;
 
-// ログ関連
-
-// ログを取って外部ファイルに書き出す
-#define LOGGING_FILE
-
-// 置換表設定
-#define USE_L2BOOK // ラスト2人置換表を使う
-
-// ヒューリスティックの利用設定
-#define PRUNE_ROOT_CHANGE_BY_HEURISTICS // ヒューリスティックなルート候補交換の枝刈り
-
-// ルートでの方策関数利用設定
-#define USE_POLICY_TO_ROOT
-
 // 自分以外で通算順位の最高のプレーヤーの結果も考慮
 //#define DEFEAT_RIVAL_MC // MCにて
 #define DEFEAT_RIVAL_MATE // 必勝着手がある場合
@@ -74,6 +60,7 @@ enum DealType {
 #define N_NORMAL_PLAYERS (5)
 
 namespace Settings {
+    extern bool policyMode;
     extern int numPlayThreads;
     extern int numChangeThreads;
 }

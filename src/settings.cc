@@ -6,6 +6,8 @@
 using namespace std;
 
 namespace Settings {
+    bool policyMode = false;
+
     int numPlayThreads = max(1, N_THREADS);
     int numChangeThreads = max(1, (numPlayThreads + 1) / 2);
 }

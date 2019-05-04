@@ -16,6 +16,8 @@
 #include "monteCarlo.hpp"
 
 namespace Settings {
+    const bool changeHeuristicsOnRoot = true;
+    const bool addPolicyOnRoot = true;
     const bool L2SearchOnRoot = true;
     const bool MateSearchOnRoot = true;
 }
@@ -70,11 +72,8 @@ public:
         const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
         for (int cl = 0; cl < N_PLAYERS; cl++) {
             shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
-        }         
-        // 置換表初期化
-#ifdef USE_L2BOOK
-        L2::book.init();
-#endif
+        }
+        L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
         if (numThreads > 1) {
@@ -98,9 +97,9 @@ public:
 
         // 手札レベルで枝刈りする場合
         Cards tmp = myCards;
-#ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
-        tmp = Heuristics::pruneCards(myCards, changeQty);    
-#endif
+        if (Settings::changeHeuristicsOnRoot) {
+            tmp = Heuristics::pruneCards(myCards, changeQty);
+        }
         
         if (countCards(tmp) == changeQty) return tmp;
 
@@ -134,16 +133,18 @@ public:
                 }
             }
         }
-#ifdef PRUNE_ROOT_CHANGE_BY_HEURISTICS
-        for (int i = 0; i < NCands; i++) {
-            Cards restCards = myCards - cand[i];
-            // 残り札に革命が無い場合,Aもダメ
-            if (isNoRev(restCards)) {
-                if (cand[i] & CARDS_A) std::swap(cand[i], cand[--NCands]);
+
+        if (Settings::changeHeuristicsOnRoot) {
+            for (int i = 0; i < NCands; i++) {
+                Cards restCards = myCards - cand[i];
+                // 残り札に革命が無い場合,Aもダメ
+                if (isNoRev(restCards)) {
+                    if (cand[i] & CARDS_A) std::swap(cand[i], cand[--NCands]);
+                }
+                if (NCands == 1) return cand[0];
             }
-            if (NCands == 1) return cand[0];
         }
-#endif
+
         // ルートノード設定
         Field field;
         setFieldFromClientLog(gr, myPlayerNum, &field);
@@ -159,32 +160,15 @@ public:
         }
         root.feedPolicyScore(score, NCands);
         
-#ifndef POLICY_ONLY
         // モンテカルロ法による評価
-        if (changeCards == CARDS_NULL) {
-#ifdef USE_POLICY_TO_ROOT
-            root.addPolicyScoreToMonteCarloScore();
-#endif
+        if (!Settings::policyMode && changeCards == CARDS_NULL) {
+            if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
             startMonteCarlo(root, field, Settings::numChangeThreads);
         }
-#endif // POLICY_ONLY
         root.sort();
-        
-#ifdef POLICY_ONLY
-        if (changeCards == CARDS_NULL && Settings::temperatureChange > 0) {
-            // 確率的に選ぶ場合
-            BiasedSoftmaxSelector<double> selector(score, root.candidates,
-                                                   Settings::simulationTemperatureChange,
-                                                   Settings::simulationAmplifyCoef,
-                                                   Settings::simulationAmplifyExponent);
-            // rootは着手をソートしているので元の着手生成バッファから選ぶ
-            changeCards = cand[selector.select(dice.random())];
-        }
-#endif
-        if (changeCards == CARDS_NULL) {
-            // 最高評価の交換を選ぶ
-            changeCards = root.child[0].changeCards;
-        }
+
+        // 最高評価の交換を選ぶ
+        if (changeCards == CARDS_NULL) changeCards = root.child[0].changeCards;
         
     DECIDED_CHANGE:
         assert(countCards(changeCards) == changeQty);
@@ -287,7 +271,6 @@ public:
                 || dominatesCards(move, myCards - move.cards(), b)) {
                 move.setDM(); // 自己支配
             }
-            
             if (Settings::MateSearchOnRoot) { // 多人数必勝判定
                 if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b, fieldInfo)) {
                     move.setMPMate(); fieldInfo.setMPMate();
@@ -295,11 +278,7 @@ public:
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
-#ifdef POLICY_ONLY
-                    L2Judge lj(200000, searchBuffer);
-#else
-                    L2Judge lj(2000000, searchBuffer);
-#endif
+                    L2Judge lj(Settings::policyMode ? 200000 : 2000000, searchBuffer);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                     if (l2Result == L2_WIN) { // 勝ち
                         DERR << "l2win!" << endl;
@@ -350,16 +329,13 @@ public:
         double score[N_MAX_MOVES + 256];
         playPolicyScore(score, mv.data(), NMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, NMoves);
-        
-#ifndef POLICY_ONLY
+
         // モンテカルロ法による評価(結果確定のとき以外)
-        if (!fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
-#ifdef USE_POLICY_TO_ROOT
-            root.addPolicyScoreToMonteCarloScore();
-#endif
+        if (!Settings::policyMode
+            && !fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
+            if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
             startMonteCarlo(root, field, Settings::numPlayThreads);
         }
-#endif
         // 着手決定のための情報が揃ったので着手を決定する
         
         // 方策とモンテカルロの評価
@@ -418,22 +394,10 @@ public:
             
             playMove = root.child[0].move; // 必勝手から選ぶ
         }
-        
-#ifdef POLICY_ONLY
-        if (playMove == MOVE_NONE && Settings::temperaturePlay > 0) {
-            // 確率的に選ぶ場合
-            BiasedSoftmaxSelector<double> selector(score, root.candidates,
-                                                   Settings::simulationTemperaturePlay,
-                                                   Settings::simulationAmplifyCoef,
-                                                   Settings::simulationAmplifyExponent);
-            // rootは着手をソートしているので元の着手生成バッファから選ぶ
-            playMove = mv[selector.select(dice.random())];
-        }
-#endif
-        if (playMove == MOVE_NONE) {
-            // 最高評価の着手を選ぶ
-            playMove = root.child[0].move;
-        }
+
+        // 最高評価の着手を選ぶ
+        if (playMove == MOVE_NONE) playMove = root.child[0].move;
+
         if (monitor) {
             cerr << root.toString();
             cerr << "\033[1m";
