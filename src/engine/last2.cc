@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace L2 {
-    TwoValueBook<(1 << 18)> book;
+    TwoValueBook<(1 << 20) - 3> book;
 }
 
 // L2局面表現
@@ -211,7 +211,6 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
             if (E_LEVEL <= 3) break; // fallthrough
         case 4:
             // 局面登録を検索
-#ifdef USE_L2BOOK
             // NFのみ
             if (field.isNull()) {
                 ASSERT(myHand.exam_key(), cerr << myHand.toDebugString(););
@@ -220,7 +219,6 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
                 fkey = knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b));
                 res = L2::book.read(fkey);
                 if (res != -1) { // 結果が既に登録されていた
-#ifdef DEBUG
                     DERR << string(2 * depth, ' ');
                     switch (res) {
                         case L2_WIN: DERR << "-HASHWIN"; break;
@@ -229,11 +227,9 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
                         default: break;
                     }
                     DERR << endl;
-#endif
                     return res;
                 }
             }
-#endif
             if (E_LEVEL <= 4) break; // fallthrough
         case 5:
             // 簡易評価
@@ -273,20 +269,16 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
             res = search(depth, buf, NMoves, myHand, opsHand, field);
             
             if (res >= 0) {
-#ifdef USE_L2BOOK
                 if (field.isNull()) {
                     ASSERT(fkey == knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b)), cerr << fkey << endl;);
                     L2::book.regist(L2_WIN, fkey);
                 }
-#endif
                 return L2_WIN;
             } else if (res == -1) {
-#ifdef USE_L2BOOK
                 if (field.isNull()) {
                     ASSERT(fkey == knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b)), cerr << fkey << endl;);
                     L2::book.regist(L2_LOSE, fkey);
                 }
-#endif
                 return L2_LOSE;
             }
             break;

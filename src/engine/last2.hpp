@@ -9,7 +9,7 @@
 
 namespace L2 {
     // L2関連
-    extern TwoValueBook<(1 << 18)> book;
+    extern TwoValueBook<(1 << 20) - 3> book;
     inline void init() {
         book.init();
     }
