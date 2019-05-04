@@ -153,8 +153,7 @@ public:
         
         // 方策関数による評価
         double escore[N_MAX_CHANGES + 1], score[N_MAX_CHANGES];
-        calcChangePolicyScoreSlow(escore, cand.data(), NCands, myCards, changeQty, field,
-                                  shared.baseChangePolicy);
+        changePolicyScore(escore, cand.data(), NCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
         // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
         for (int i = 0; i < NCands; i++) {
             score[i] = log(max(escore[i + 1] - escore[i], 0.000001));
@@ -227,6 +226,7 @@ public:
         
         Field field;
         setFieldFromClientLog(gameLog, myPlayerNum, &field);
+        field.setMoveBuffer(mv.data());
         DERR << "tp = " << gameLog.current.turn() << endl;
         ASSERT_EQ(field.turn(), myPlayerNum);
         
@@ -349,7 +349,7 @@ public:
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES + 256];
-        calcPlayPolicyScoreSlow<0>(score, mv.data(), NMoves, field, shared.basePlayPolicy);
+        playPolicyScore(score, mv.data(), NMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, NMoves);
         
 #ifndef POLICY_ONLY
@@ -400,10 +400,10 @@ public:
             if (fieldInfo.isUnrivaled()) {
                 // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                 //    そうでなければパスを優先
-                int division = computeDivision(searchBuffer, myCards);
+                int division = divisionCount(searchBuffer, myCards);
                 for (int i = 0; i < NMoves; i++) {
                     Cards nextCards = myCards - root.child[i].move.cards();
-                    root.child[i].nextDivision = computeDivision(searchBuffer, nextCards);
+                    root.child[i].nextDivision = divisionCount(searchBuffer, nextCards);
                 }
                 next = root.sort(next, [](const RootAction& a) { return a.nextDivision; });
                 if (root.child[0].nextDivision < division) {

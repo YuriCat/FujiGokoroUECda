@@ -34,10 +34,10 @@ all: $(TARGET)
 $(OBJ_DIRS):
 	mkdir -p $(OBJ_DIRS)
 
-$(BLD_DIR)/client: $(OBJS) $(LIBS)
+$(BLD_DIR)/client: $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LIBS)
 	$(CXX) -o $@ $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LDFLAGS)
 
-$(BLD_DIR)/server: $(OBJS) $(LIBS)
+$(BLD_DIR)/server: $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LIBS)
 	$(CXX) -o $@ $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc

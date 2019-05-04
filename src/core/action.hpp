@@ -68,3 +68,15 @@ inline std::vector<MoveInfo> genMove(const Field& field) {
     moves.resize(numMoves);
     return moves;
 }
+
+inline int divisionCount(Move *const mbuf, const Cards c) {
+    // paoon氏のbeersongのアイデアを利用
+    int ret = countCards(CardsToER(c)); // 階段なしの場合の最小分割数
+    const int cnt = genAllSeq(mbuf, c);
+    // 階段を使った場合の方が分割数を減らせる場合を考慮
+    for (int i = 0; i < cnt; i++) {
+        int nret = divisionCount(mbuf + cnt, c - mbuf[i].cards()) + 1;
+        ret = min(ret, nret);
+    }
+    return ret;
+}

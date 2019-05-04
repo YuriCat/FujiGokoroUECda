@@ -41,8 +41,7 @@ public:
     
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
-    template <class dice64_t>
-    void dealWithBias(Cards *const dst, dice64_t& dice) const;
+    void dealWithBias(Cards *const dst, Dice& dice) const;
     template <class gameRecord_t>
     void dealWithRejection(Cards *const dst,
                            const gameRecord_t& record,
@@ -179,7 +178,7 @@ private:
                 playLH += log(0.1 / (double)(NMoves + 1));
             } else {
                 std::array<double, N_MAX_MOVES> score;
-                calcPlayPolicyScoreSlow<0>(score.data(), mv, NMoves, field, shared.basePlayPolicy);
+                playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
                 // Mateの手のスコアを設定
                 double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
                 for (int i = 0; i < NMoves; i++) {

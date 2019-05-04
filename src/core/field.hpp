@@ -843,12 +843,7 @@ inline void copyField(const Field& arg, Field *const dst) {
 /**************************仮想世界**************************/
 
 struct ImaginaryWorld {
-    //仮想世界
-    constexpr static int ACTIVE = 0;
-    constexpr static int USED = 1;
-    
-    std::bitset<32> flags;
-    
+    // 仮想世界
     double weight; // この世界の存在確率比
     int builtTurn; // この世界がセットされたターン
     uint64_t key; // 世界識別ハッシュ。着手検討中ターンにおいて世界を識別出来れば形式は問わない
@@ -857,16 +852,8 @@ struct ImaginaryWorld {
     uint64_t cardKey[N_PLAYERS];
 
     void clear() {
-        flags.reset();
         weight = 1.0;
     }
-    void activate() {
-        flags.set(ACTIVE);
-        DERR << "ACTIVEATED!" << endl;
-    }
-    
-    int isActive() const { return flags.test(ACTIVE); }
-    
     void set(int turnCount, const Cards c[]) {
         clear();
         for (int p = 0; p < N_PLAYERS; p++) {
@@ -875,12 +862,6 @@ struct ImaginaryWorld {
         }
         builtTurn = turnCount;
     }
-    
-    void proc(const int p, const Move mv, const Cards dc) {
-        // 世界死がおきずに進行した
-    }
-    ImaginaryWorld() { clear(); }
-    ~ImaginaryWorld() { clear(); }
 };
 
 // set estimated information

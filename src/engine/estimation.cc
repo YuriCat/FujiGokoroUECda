@@ -3,6 +3,8 @@
 #include "linearPolicy.hpp"
 #include "estimation.hpp"
 
+using namespace std;
+
 // Walker's Alias Method はこちらを参考に
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
@@ -132,12 +134,11 @@ void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
-template <class dice64_t>
-void RandomDealer::dealWithBias(Cards *const dst, dice64_t& dice) const {
+void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     //　逆関数法でバイアスを掛けて分配
     if (initGame) return dealWithSubjectiveInfo(dst, dice);
 
-    std::array<Cards, N> tmp = detCards;
+    array<Cards, N> tmp = detCards;
     int tmpNDeal[N];
     for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
     Cards fromCards = dealCards;
@@ -439,7 +440,7 @@ Cards RandomDealer::selectInWA(double urand) const {
 }
     
 void RandomDealer::setWeightInWA() {
-    std::vector<double> probs;
+    vector<double> probs;
     const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
     if (T == 0) return; // どうしようもない
     const int NMyDC = countCards(myDealtCards);
@@ -473,7 +474,7 @@ void RandomDealer::setWeightInWA() {
     for (double prob : probs) sum += prob;
     for (double& prob : probs) prob *= probs.size() / sum;
 
-    std::queue<int> small, large;
+    queue<int> small, large;
     for (int i = 0; i < (int)probs.size(); i++) {
         if (probs[i] < 1) small.push(i);
         else large.push(i);
@@ -540,8 +541,8 @@ void RandomDealer::prepareSubjectiveInfo() {
 
     // 結局配る枚数
     NdealCards = countCards(dealCards);
-    ASSERT(NdealCards == std::accumulate(NDeal.begin(), NDeal.begin() + N, 0),
-           cerr << NdealCards << " " << NDeal << " " << std::accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
+    ASSERT(NdealCards == accumulate(NDeal.begin(), NDeal.begin() + N, 0),
+           cerr << NdealCards << " " << NDeal << " " << accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
 
     if (!inChange && turnCount > 0) {
         // 他人が使用したカード枚数から採択棄却の際の候補数を設定
