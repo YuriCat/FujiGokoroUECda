@@ -340,11 +340,7 @@ public:
         oss << endl;
         return oss.str();
     }
-    int fin(std::string fName) {
-        // ファイルから読み込み
-        fileName_ = fName;
-        return readMatchLogFile(fName, this);
-    }
+    int fin(std::string fName);
     int fout(std::string fName) {
         // ファイルに書き込み
         fileName_ = fName;
@@ -447,6 +443,14 @@ struct MatchRecordAccessor { // ランダム順なアクセス
 
 using MatchRecord = MatchRecordBase<GameRecord<PlayRecord>>;
 using Record = MatchRecordAccessor<MatchRecordBase<GameRecord<PlayRecord>>>;
+
+extern int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog);
+
+template <> inline int MatchRecord::fin(std::string fName) {
+    // ファイルから読み込み
+    fileName_ = fName;
+    return readMatchLogFile(fName, this);
+}
 
 // ここから棋譜から局面を正方向に読む関数たち
 

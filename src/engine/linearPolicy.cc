@@ -2,6 +2,8 @@
 #include "../core/dominance.hpp"
 #include "linearPolicy.hpp"
 
+using namespace std;
+
 inline double rankScore(Cards pqr, int jk, int ord) {
     // 階級平均点を計算
     int r = 0;

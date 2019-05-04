@@ -8,11 +8,11 @@ BLD_DIR  = ./out
 OBJ_DIR  = $(BLD_DIR)/obj
 SRCS     = $(wildcard $(SRC_DIR)/*.cc) $(wildcard $(SRC_DIR)/**/*.cc)
 OBJS     = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRCS:.cc=.o))
-EXEOBJS  = $(addprefix $(OBJ_DIR)/, client/client.o server/server.o)
+EXEOBJS  = $(addprefix $(OBJ_DIR)/, client/client.o server/server.o test/test.o)
 SUBOBJS  = $(filter-out $(EXEOBJS), $(OBJS))
 SRC_DIRS = $(shell find $(SRC_DIR) -maxdepth 2 -mindepth 1 -type d)
 OBJ_DIRS = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRC_DIRS))
-TARGET   = $(addprefix $(BLD_DIR)/, client server)
+TARGET   = $(addprefix $(BLD_DIR)/, client server test)
 DEPENDS  = $(OBJS:.o=.d)
 
 OPT = -Ofast -DNDEBUG -DMINIMUM
@@ -31,14 +31,14 @@ CXXFLAGS += $(OPT)
 
 all: $(TARGET)
 
-$(OBJ_DIRS):
-	mkdir -p $(OBJ_DIRS)
-
 $(BLD_DIR)/client: $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LIBS)
 	$(CXX) -o $@ $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LDFLAGS)
 
 $(BLD_DIR)/server: $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LIBS)
 	$(CXX) -o $@ $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LDFLAGS)
+
+$(BLD_DIR)/test: $(OBJ_DIR)/test/test.o $(SUBOBJS) $(LIBS)
+	$(CXX) -o $@ $(OBJ_DIR)/test/test.o $(SUBOBJS) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@if [ ! -d $(OBJ_DIR) ]; \

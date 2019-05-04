@@ -4,7 +4,10 @@
 
 #include "../core/field.hpp"
 #include "../core/record.hpp"
+#include "../core/action.hpp"
 #include "data.hpp"
+#include "mate.hpp"
+#include "linearPolicy.hpp"
 
 namespace Settings {
     const double estimationTemperaturePlay = 1.1;
@@ -18,7 +21,7 @@ public:
     RandomDealer(const Field& f, int turn) {
         set(f, turn);
     }
-    
+
     template <class gameRecord_t>
     int create(ImaginaryWorld *const dst, DealType type, const gameRecord_t& record,
                const SharedData& shared, ThreadTools *const ptools) {

@@ -3,8 +3,6 @@
 // 思考部メイン
 // 実際のゲームでの局面更新など低次な処理はmain関数にて
 
-#define _ENGINE_FUJI_
-
 #include <thread>
 #include "../settings.h"
 #include "data.hpp"
@@ -14,6 +12,7 @@
 #include "lastTwo.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
+#include "simulation.hpp"
 #include "monteCarlo.hpp"
 
 namespace Settings {
@@ -273,7 +272,7 @@ public:
         std::shuffle(mv.begin(), mv.begin() + NMoves, dice);
         
         // 場の情報をまとめる
-        field.prepareForPlay(true);
+        field.prepareForPlay();
         
         // 着手追加情報を設定
         bool l2failure = false;

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../UECda.h"
+#include "daifugo.hpp"
+#include "hand.hpp"
+
 // 支配性(確実に場を流せるか)の判定
 
 // カード集合の付加情報が計算されていない場合の支配性判定
