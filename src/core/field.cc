@@ -104,20 +104,22 @@ void Field::procHand(int tp, Move mv) {
     }
 }
 
-void Field::makeChange(int from, int to, Cards dc) {
+void Field::makeChange(int from, int to, Cards dc, bool sendOnly) {
     ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
     ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
-    ASSERT(examCards(dc), cerr << dc << endl;);
-    ASSERT(holdsCards(hand[from].cards, dc),
-           cerr << hand[from] << " -> " << dc << endl;);
-    ASSERT(!anyCards(andCards(dc, hand[to].cards)),
-           cerr << dc << " -> " << hand[to] << endl;)
+    ASSERT(dc.exam(), cerr << dc << endl;);
+    ASSERT(hand[from].cards.holds(dc), cerr << hand[from] << " -> " << dc << endl;);
     int dq = dc.count();
     uint64_t dkey = CardsToHashKey(dc);
     hand[from].subtrAll(dc, dq, dkey);
-    hand[to].addAll(dc, dq, dkey);
     opsHand[from].addAll(dc, dq, dkey);
-    opsHand[to].subtrAll(dc, dq, dkey);
+    if (sendOnly) {
+        // 送る側オンリーの時は相手側手札を更新しない
+        assert(hand[to].holds(dc));
+    } else {
+        hand[to].addAll(dc, dq, dkey);
+        opsHand[to].subtrAll(dc, dq, dkey);
+    }
     sentCards[from] = dc;
     recvCards[to] = dc;
 }

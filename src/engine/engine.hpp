@@ -9,7 +9,7 @@
 #include "value.hpp"
 #include "../core/dominance.hpp"
 #include "mate.hpp"
-#include "lastTwo.hpp"
+#include "last2.hpp"
 #include "heuristics.hpp"
 #include "linearPolicy.hpp"
 #include "simulation.hpp"

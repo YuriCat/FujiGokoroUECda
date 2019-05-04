@@ -168,6 +168,7 @@ enum IntCard : int {
 
 // 総カード数（ゲーム上では存在しないUやOのカードも定義されているため、ゲームの定義ではなくこちらを使う）
 constexpr int N_CARDS = 53;
+constexpr int N_JOKERS = 1;
 constexpr int N_IMG_CARDS = 61;
 
 constexpr bool examIntCard(IntCard ic) {
@@ -216,15 +217,15 @@ constexpr BitCards CARDS_MIN = CARDS_HORIZON << INTCARD_MIN;
 constexpr BitCards CARDS_MAX = CARDS_HORIZON << INTCARD_MAX;
 
 constexpr BitCards CARDS_NULL = 0ULL;
-constexpr BitCards CARDS_ALL = 0x10FFFFFFFFFFFFF0; // このゲームに登場する全て
-constexpr BitCards CARDS_IMG_ALL = 0x1FFFFFFFFFFFFFFF; // 存在を定義しているもの全て
+constexpr BitCards CARDS_PLAIN_ALL = 0x00FFFFFFFFFFFFF0;
+constexpr BitCards CARDS_IMG_PLAIN_ALL = 0x0FFFFFFFFFFFFFFF;
 
 constexpr BitCards CARDS_D3 = IntCardToCards(INTCARD_D3);
 constexpr BitCards CARDS_S3 = IntCardToCards(INTCARD_S3);
 constexpr BitCards CARDS_JOKER = IntCardToCards(INTCARD_JOKER);
 
-constexpr BitCards CARDS_ALL_PLAIN = CARDS_ALL - CARDS_JOKER;
-constexpr BitCards CARDS_IMG_ALL_PLAIN = CARDS_IMG_ALL - CARDS_JOKER;
+constexpr BitCards CARDS_ALL = CARDS_PLAIN_ALL + CARDS_JOKER;
+constexpr BitCards CARDS_IMG_ALL = CARDS_IMG_PLAIN_ALL + CARDS_JOKER;
 
 // 各ランクのカード全体
 constexpr BitCards CARDS_U  = 0x000000000000000F;
@@ -324,8 +325,8 @@ constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
 constexpr BitCards anyCards(BitCards c) { return c; }
 
 // validation
-constexpr bool examCards(BitCards c) { return holdsCards(CARDS_ALL, c); }
-constexpr bool examImaginaryCards(BitCards c) { return holdsCards(CARDS_IMG_ALL, c); }
+constexpr bool examPlainCards(BitCards c) { return holdsCards(CARDS_PLAIN_ALL, c); }
+constexpr bool examImaginaryPlainCards(BitCards c) { return holdsCards(CARDS_IMG_PLAIN_ALL, c); }
 
 // Cards型特殊演算
 
@@ -585,14 +586,17 @@ union Cards {
     constexpr bool anyJOKER() const { return containsJOKER(c_); }
     constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
 
-    constexpr int joker() const { return joker_; } //containsJOKER(c_) ? 1 : 0; }
+    constexpr unsigned joker() const { return joker_; }
     constexpr Cards plain() const { return plain_; }
 
-    int count() const { return countCards(c_); }
-    constexpr int countInCompileTime() const { return countFewCards(c_); }
-    int countPlain() const { return countCards(plain()); }
+    unsigned count() const { return joker_ + countPlain(); }
+    constexpr unsigned countInCompileTime() const { return joker_ + countFewCards(plain_); }
+    unsigned countPlain() const { return countCards(plain_); }
 
-    constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
+    constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
+    constexpr bool holds(Cards c) const {
+        return joker_ >= c.joker_ && holdsCards(plain(), c.plain());
+    }
     constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
 
     // 指定されたランクのスート集合を得る
@@ -676,6 +680,10 @@ union Cards {
 
     constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
 
+    bool exam() const {
+        return joker_ <= N_JOKERS && examPlainCards(plain());
+    }
+
     std::string toString() const {
         std::ostringstream oss;
         oss << "{";
@@ -728,21 +736,21 @@ extern BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 // ND 無支配型(ジョーカーのビットは関係ないが、存在は加味)
 
 // PQR定数
-constexpr BitCards PQR_1    = CARDS_IMG_ALL_PLAIN & 0x1111111111111111;
-constexpr BitCards PQR_2    = CARDS_IMG_ALL_PLAIN & 0x2222222222222222;
-constexpr BitCards PQR_3    = CARDS_IMG_ALL_PLAIN & 0x4444444444444444;
-constexpr BitCards PQR_4    = CARDS_IMG_ALL_PLAIN & 0x8888888888888888;
-constexpr BitCards PQR_12   = CARDS_IMG_ALL_PLAIN & 0x3333333333333333;
-constexpr BitCards PQR_13   = CARDS_IMG_ALL_PLAIN & 0x5555555555555555;
-constexpr BitCards PQR_14   = CARDS_IMG_ALL_PLAIN & 0x9999999999999999;
-constexpr BitCards PQR_23   = CARDS_IMG_ALL_PLAIN & 0x6666666666666666;
-constexpr BitCards PQR_24   = CARDS_IMG_ALL_PLAIN & 0xaaaaaaaaaaaaaaaa;
-constexpr BitCards PQR_34   = CARDS_IMG_ALL_PLAIN & 0xcccccccccccccccc;
-constexpr BitCards PQR_123  = CARDS_IMG_ALL_PLAIN & 0x7777777777777777;
-constexpr BitCards PQR_124  = CARDS_IMG_ALL_PLAIN & 0xbbbbbbbbbbbbbbbb;
-constexpr BitCards PQR_134  = CARDS_IMG_ALL_PLAIN & 0xdddddddddddddddd;
-constexpr BitCards PQR_234  = CARDS_IMG_ALL_PLAIN & 0xeeeeeeeeeeeeeeee;
-constexpr BitCards PQR_1234 = CARDS_IMG_ALL_PLAIN & 0xffffffffffffffff;
+constexpr BitCards PQR_1    = CARDS_IMG_PLAIN_ALL & 0x1111111111111111;
+constexpr BitCards PQR_2    = CARDS_IMG_PLAIN_ALL & 0x2222222222222222;
+constexpr BitCards PQR_3    = CARDS_IMG_PLAIN_ALL & 0x4444444444444444;
+constexpr BitCards PQR_4    = CARDS_IMG_PLAIN_ALL & 0x8888888888888888;
+constexpr BitCards PQR_12   = CARDS_IMG_PLAIN_ALL & 0x3333333333333333;
+constexpr BitCards PQR_13   = CARDS_IMG_PLAIN_ALL & 0x5555555555555555;
+constexpr BitCards PQR_14   = CARDS_IMG_PLAIN_ALL & 0x9999999999999999;
+constexpr BitCards PQR_23   = CARDS_IMG_PLAIN_ALL & 0x6666666666666666;
+constexpr BitCards PQR_24   = CARDS_IMG_PLAIN_ALL & 0xaaaaaaaaaaaaaaaa;
+constexpr BitCards PQR_34   = CARDS_IMG_PLAIN_ALL & 0xcccccccccccccccc;
+constexpr BitCards PQR_123  = CARDS_IMG_PLAIN_ALL & 0x7777777777777777;
+constexpr BitCards PQR_124  = CARDS_IMG_PLAIN_ALL & 0xbbbbbbbbbbbbbbbb;
+constexpr BitCards PQR_134  = CARDS_IMG_PLAIN_ALL & 0xdddddddddddddddd;
+constexpr BitCards PQR_234  = CARDS_IMG_PLAIN_ALL & 0xeeeeeeeeeeeeeeee;
+constexpr BitCards PQR_1234 = CARDS_IMG_PLAIN_ALL & 0xffffffffffffffff;
 
 // 定義通りの関数
 constexpr BitCards QtyToPQR(unsigned q) { return PQR_1 << (q - 1); }

@@ -291,11 +291,11 @@ int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards m
     double r = dice.random() * score[NChanges];
     return std::upper_bound(score.begin(), score.begin() + NChanges, r) - score.begin() - 1;
 }
-/*template <class policy_t, class dice_t>
+template <class policy_t, class dice_t>
 int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
                          const Field& field, const policy_t& pol, dice_t& dice) {
     double score[N_MAX_CHANGES + 1];
-    calcChangePolicyScoreSlow<0>(score, buf, NChanges, myCards, NChangeCards, field, pol);
+    changePolicyScore(score, buf, NChanges, myCards, NChangeCards, field, pol, 0);
     int bestIndex[N_MAX_CHANGES];
     bestIndex[0] = -1;
     int NBestMoves = 0;
@@ -316,7 +316,7 @@ int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards
 template <int STOCK = 0, class move_t, class policy_t, class dice_t>
 int playWithBestPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t& dice) {
     double score[N_MAX_MOVES + 1];
-    calcPlayPolicyScoreSlow<STOCK ? 2 : 0>(score, buf, NMoves, field, pol);
+    playPolicyScore(score, buf, NMoves, field, pol, STOCK ? 2 : 0);
     int bestIndex[N_MAX_MOVES];
     bestIndex[0] = -1;
     int NBestMoves = 0;
@@ -333,4 +333,4 @@ int playWithBestPolicy(move_t *const buf, const int NMoves, const Field& field, 
     }
     if (NBestMoves <= 1) return bestIndex[0];
     else return bestIndex[dice() % NBestMoves];
-}*/
+}

@@ -74,11 +74,15 @@ public:
     int fin(const std::string& fName){
         memset(param_, 0, sizeof(param_));
         std::ifstream ifs(fName, std::ios::in);
-        if(!ifs){
+        if (!ifs){
             cerr << "SoftmaxClassifier::fin() : failed to import! " << fName << endl;
             return -1;
         }
-        for(int i = 0; ifs && i < N_STAGES_ * N_PARAMS_; ++i){
+        for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
+            if (!ifs) {
+                cerr << "SoftmaxClassifier::fin() : failed to read parameter " << i << endl;
+                return -1;
+            }
             ifs >> param_[i];
         }
         return 0;

@@ -11,17 +11,17 @@ inline double rankScore(Cards pqr, int jk, int ord) {
     if (ord == 0) {
         for (IntCard ic : pqr) {
             r += IntCardToRank(ic);
-            ++cnt;
+            cnt++;
         }
     } else {
         for (IntCard ic : pqr) {
             r += RANK_3 + RANK_2 - IntCardToRank(ic);
-            ++cnt;
+            cnt++;
         }
     }
     if (jk) {
         r += RANK_2 + 1;
-        ++cnt;
+        cnt++;
     }
     return r / (double)cnt;
 }
@@ -63,8 +63,7 @@ int playPolicyScore(double *const dst,
     const int myHR = IntCardToRank(pickIntCardHigh(myCards));
     
     const int order = bd.order();
-    
-    const double nowRS = rankScore(curPqr, containsJOKER(myCards) ? 1 : 0, bd.order());
+    const double nowRS = rankScore(curPqr, myCards.joker(), order);
     
     // 場役主から自分が何人目か数える
     int distanceToOwner = 0;
@@ -89,14 +88,14 @@ int playPolicyScore(double *const dst,
         MoveInfo& mv = buf[i];
         typename policy_t::real_t s = 0;
         
-        if (mv.isMate() || !anyCards(subtrCards(myCards, mv.cards()))) {
+        if (mv.isMate() || !anyCards(myCards - mv.cards())) {
             s -= 1000; // Mateのときは低い点にする
         } else {
             // 着手パラメータ
             const int aftOrd = bd.nextOrder(mv);
             const int q4 = min(mv.qty(), 4);
             
-            const Cards afterCards = subtrCards(myCards, mv.cards());
+            const Cards afterCards = myCards - mv.cards();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
             
@@ -564,25 +563,15 @@ int changePolicyScore(double *const dst,
     
     const Cards pqr = CardsToPQR(myCards);
     
-    // インデックス計算用
-    //bits256_t myCardsL = bits256_t::zero();
-    //for (int r = 0; r < 4; ++r)myCardsL[r] = pdep64(myCards >> (r * 16), 0x0F0F0F0F);
-    
-    //bits256_t ccIndex = bits256_t::zero();
-    //bits128_t dstIndex = bits256_t::filled16();
-    
-    //typename policy_t::real_t *baseAddress = pol.param_ + FEA_IDX(FEA_CHANGE_CC) + ;
-    
-    
     for (int i = 0; i < NChanges; i++) {
         
         pol.template initCalculatingCandidateScore();
         
         typename policy_t::real_t s = 0;
         const Cards changeCards = change[i];
-        const Cards changePlainCards = maskJOKER(changeCards);
-        const Cards afterCards = maskCards(myCards, changeCards);
-        const Cards afterPlainCards = maskJOKER(afterCards);
+        const Cards changePlainCards = changeCards.plain();
+        const Cards afterCards = myCards - changeCards;
+        const Cards afterPlainCards = afterCards.plain();
         
         const Cards afterPqr = CardsToPQR(afterPlainCards);
         
@@ -680,9 +669,9 @@ int changePolicyScore(double *const dst,
             if (NChangeCards == 2) {
                 if (!any2Cards(CardsToER(changePlainCards))) { // 同じ階級のカードをあげる
                     Foo(FEA_IDX(FEA_CHANGE_DOUBLE));
-                }else if (polymRanks<2>(changePlainCards)) { // 同じスートの連続した2階級
+                } else if (polymRanks<2>(changePlainCards)) { // 同じスートの連続した2階級
                     Foo(FEA_IDX(FEA_CHANGE_PART_SEQ));
-                }else if (polymJump(changePlainCards)) { // 同じスートの1つ飛ばし階級
+                } else if (polymJump(changePlainCards)) { // 同じスートの1つ飛ばし階級
                     Foo(FEA_IDX(FEA_CHANGE_PART_SEQ) + 1);
                 }
             }

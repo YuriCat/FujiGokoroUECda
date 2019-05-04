@@ -4,7 +4,7 @@
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
-#include "../engine/lastTwo.hpp"
+#include "../engine/last2.hpp"
 #include "test.h"
 
 using namespace std;
@@ -153,7 +153,7 @@ int testRecordL2(const Record& record) {
     return 0;
 }
 
-bool L2Test(const vector<string>& recordFiles) {
+bool Last2Test(const vector<string>& recordFiles) {
 
     mt.seed(1);
     

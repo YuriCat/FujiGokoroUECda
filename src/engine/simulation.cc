@@ -2,7 +2,7 @@
 #include "../core/action.hpp"
 #include "linearPolicy.hpp"
 #include "mate.hpp"
-#include "lastTwo.hpp"
+#include "last2.hpp"
 #include "simulation.hpp"
 
 using namespace std;
@@ -124,11 +124,12 @@ int startChangeSimulation(Field& field,
 int startAllSimulation(Field& field,
                        SharedData *const pshared,
                        ThreadTools *const ptools) {
-    //cerr << field.toString();
     // 試合全部行う
     if (!field.isInitGame()) {
         // 献上
-        field.removePresentedCards(); // 代わりにこちらの操作を行う
+        // 棋譜読みのdealtCallbackで呼び出すためすでに献上が行われているため、
+        // このタイミングで献上元から献上札を抜いておく
+        field.removePresentedCards();
         // 交換
         Cards change[N_MAX_CHANGES];
         for (int cl = 0; cl < MIDDLE; cl++) {

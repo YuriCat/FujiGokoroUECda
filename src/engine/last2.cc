@@ -1,6 +1,6 @@
 #include "../base/util.hpp"
 #include "mate.hpp"
-#include "lastTwo.hpp"
+#include "last2.hpp"
 
 using namespace std;
 

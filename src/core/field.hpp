@@ -350,7 +350,7 @@ struct Field {
     int proc(const int tp, const Move mv) { return proc(tp, MoveInfo(mv)); }
     int procSlowest(const Move mv);
     
-    void makeChange(int from, int to, Cards dc);
+    void makeChange(int from, int to, Cards dc, bool sendOnly = false);
     void makePresents();
     void removePresentedCards();
     

@@ -493,12 +493,12 @@ int iterateGameLogBeforePlay
         Cards tmp = gLog.getDealtCards(p);
         field.hand[p].cards = tmp; // とりあえずcardsだけセットしておく
     }
-    // present
+    // 献上が先にある場合
     for (int t = 0, tend = gLog.changes(); t < tend; t++) {
         const typename game_t::change_t& change = gLog.change(t);
         if (field.classOf(change.to) < HEIMIN) {
             Cards present = change.cards;
-            field.hand[change.to].cards |= present;
+            field.hand[change.to].cards += present;
         }
     }
     // set card info
@@ -516,19 +516,22 @@ int iterateGameLogBeforePlay
     dealtCallback(field);
     
     // change
-    for (int t = 0, tend = gLog.changes(); t < tend; t++) {
+    for (int t = 0; t < gLog.changes(); t++) {
         const typename game_t::change_t& change = gLog.change(t);
-        if (field.classOf(change.from) < HEIMIN) {
+        int fromClass = field.classOf(change.from);
+        if (fromClass < HEIMIN) {
+            // 上位側の交換選択機会
             int ret = changeCallback(field, change.from, change.to, change.cards);
             if (ret <= -2) {
-                cerr << "error on change "
-                << change.from << " -> " << change.to << endl;
+                cerr << "error on change " << change.from << " -> " << change.to << endl;
                 return ret;
             } else if (ret == -1) {
                 break;
             }
         }
-        field.makeChange(change.from, change.to, change.cards);
+        // 配布時献上ルールならば献上側はあげるだけ
+        bool sendOnly = fromClass > HEIMIN;
+        field.makeChange(change.from, change.to, change.cards, sendOnly);
     }
     field.resetInChange();
     lastCallback(field);
