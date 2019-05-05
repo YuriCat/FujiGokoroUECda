@@ -262,121 +262,136 @@ bool RandomDealer::okForRejection() const {
             if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
             break;
         case HEIMIN:
-            if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 7
+            if (NDet[DAIFUGO] >= 8 || NDet[FUGO] >= 8
                 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
             break;
         case HINMIN:
-            if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 3 || NDet[DAIHINMIN] >= 5) return false;
+            if (NDet[DAIFUGO] >= 10 || NDet[FUGO] >= 10 || NDet[DAIHINMIN] >= 10) return false;
             break;
         case DAIHINMIN:
-            if (NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5) return false;
+            if (NDet[DAIFUGO] >= 10 || NDet[FUGO] >= 10 || NDet[HINMIN] >= 10) return false;
             break;
         default: UNREACHABLE; break;
     }
     return true;
 }
 
-bool RandomDealer::dealWithChangeRejection(Cards *const dst,
-                                           const SharedData& shared,
-                                           ThreadTools *const ptools) const {
+// 採択棄却法のためのカード交換モデル
+Cards RandomDealer::change(const int p, const Cards cards, const int qty,
+                           const EngineSharedData& shared, EngineThreadTools *const ptools) const {
+    Cards cand[N_MAX_CHANGES];
+    int NCands = genChange(cand, cards, qty);
+    Field field;
+    // 交換方策によって交換してみる
+    int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, ptools->dice);
+    return cand[index];
+}
+
+double changeProb(const int p, const Cards cards, const int qty,
+                   const EngineSharedData& shared, EngineThreadTools *const ptools,
+                                const Cards cc) {
+    Cards cand[N_MAX_CHANGES];
+    int NCands = genChange(cand, cards, qty);
+    Field field;
+    // callbackに合う交換確率を求める
+    double score[N_MAX_CHANGES];
+    changePolicyScore(score, cand, NCands, cards, qty, field, shared.baseChangePolicy, 0);
+    int idx = 0;
+    for (idx = 0; idx < NCands; idx++) if (cand[idx] == cc) break;
+    SoftmaxSelector<double> selector(score, NCands, 1.0);
+    return selector.prob(idx);
+}
+
+double RandomDealer::dealWithChangeRejection(Cards *const dst,
+                                             const SharedData& shared,
+                                             ThreadTools *const ptools) {
     // 採択棄却法のカード交換パート
     auto& dice = ptools->dice;
     if (initGame) {
         dealWithSubjectiveInfo(dst, dice);
-        return true;
+        return 0;
     }
 
     bool success = false;
     int trials = 0;
+    double logLikelihood = 0;
 
     BitCards R[N] = {0};
-    if (myClass != HEIMIN) {
-        // 交換に関与しているとき
+    for (int t = 0; t < MAX_REJECTION; t++) {
+        double lls = 0;
 
-        while (trials++ <= MAX_REJECTION) {
-            int ptClass = getChangePartnerClass(myClass);
-            if (myClass < MIDDLE) {
-                // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
-                R[ptClass] = detCards[ptClass];
-                if (NDeal[ptClass]) {
-                    Cards tmpDist = selectInWA(dice.random());
-                    R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], countCards(tmpDist) - NDeal[ptClass], dice);
-                }
-            } else {
-                // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
-                int ptClass = getChangePartnerClass(myClass);
-                R[ptClass] = detCards[ptClass] + recvCards;
-                BitCards remained = CARDS_NULL;
-                int numDealOthers = NdealCards - NDeal[ptClass];
-                int numChangeMine = N_CHANGE_CARDS(myClass);
-                if (NDeal[ptClass]) {
-                    dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
-                    // 交換相手の交換が実際に沿うか検証
-                    Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
-                    if (!holdsCards(detCards[myClass], cc)) continue; // 矛盾
-                    R[ptClass] -= cc;
-                }
+        int ptClass = getChangePartnerClass(myClass);
+        if (myClass < MIDDLE) {
+            // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
+            R[ptClass] = detCards[ptClass];
+            if (NDeal[ptClass]) {
+                Cards tmpDist = selectInWA(dice.random());
+                R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
             }
+        } else {
+            // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
+            int ptClass = getChangePartnerClass(myClass);
+            R[ptClass] = detCards[ptClass] + recvCards;
+            BitCards remained = CARDS_NULL;
+            int numDealOthers = NdealCards - NDeal[ptClass];
+            int numChangeMine = N_CHANGE_CARDS(myClass);
+            if (NDeal[ptClass]) {
+                dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
+                // 交換相手の交換尤度を計算
+                double prob = changeProb(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools, recvCards);
+                lls += log(prob);
+                R[ptClass] -= recvCards;
+            }
+        }
 
-            // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-            BitCards remained = dealCards & ~R[ptClass];
+        // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
+        BitCards rem = dealCards;
+        if (myClass != HEIMIN) {
+            rem -= R[ptClass] - detCards[ptClass];
             int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
             int otherPoor = getChangePartnerClass(otherRich);
             int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
             BitCards otherPair = CARDS_NULL;
             R[HEIMIN] = detCards[HEIMIN];
             if (NDeal[HEIMIN]) {
-                dist2_64(&otherPair, &R[HEIMIN], remained, numDealOtherPair, NDeal[HEIMIN], dice);
+                dist2_64(&otherPair, &R[HEIMIN], rem, numDealOtherPair, NDeal[HEIMIN], dice);
+                rem = otherPair;
             } else {
-                otherPair = remained;
+                otherPair = rem;
             }
+        }
 
-            // 3. 自分が関与した以外の交換系の配布
-            int numChangeOtherPair = N_CHANGE_CARDS(otherRich);
+        // 3. 自分が関与した以外の交換系の配布
+        // 残り札を自分が関わっていない交換の系で分配
+        BitCards remained[2] = {0};
+        if (myClass == HEIMIN) {
+            dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
+        } else {
+            remained[1 - min(myClass, ptClass)] = rem;
+        }
+
+        bool ok = true;
+        for (int cl = FUGO; cl >= 0; cl--) {
+            int rich = cl, poor = getChangePartnerClass(cl);
+            if (rich == myClass || poor == myClass) continue;
+            int numChange = N_CHANGE_CARDS(rich);
             BitCards restricted;
-            if (!dist2Rest_64(numChangeOtherPair, &restricted,
-                              &R[otherRich], &R[otherPoor], otherPair,
-                              NOrg[otherRich], NOrg[otherPoor],
-                              detCards[otherRich], detCards[otherPoor], dice)) continue;
-            Cards cc = change(infoClassPlayer[otherRich], R[otherRich], numChangeOtherPair, shared, ptools);
-            // 交換と既知の情報との矛盾をチェック
-            if (!holdsCards(cc, restricted) || (cc & detCards[otherRich])) continue;
-            R[otherRich] -= cc;
-            R[otherPoor] += cc;
-            success = true;
-            break;
-        }
-    } else {
-        // 交換無関与のとき
-        BitCards R0_R4, R1_R3, R0_R4Rest, R1_R3Rest;
-        while (trials++ <= MAX_REJECTION) {
-
-            // 1. カードを大富豪-大貧民系と富豪-貧民系に分ける
-            BitCards remained[2] = {0};
-            dist2_64(&remained[0], &remained[1], dealCards, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
-
-            // 2. それぞれの系で交換を起こしてみて矛盾が無いか調べる
-            bool ok = true;
-            for (int cl = FUGO; cl >= 0; cl--) {
-                int rich = cl, poor = getChangePartnerClass(cl);
-                int numChange = N_CHANGE_CARDS(rich);
-                BitCards restricted;
-                if (!dist2Rest_64(numChange, &restricted, &R[rich], &R[poor], remained[cl],
-                                  NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
-                    ok = false; break;
-                }
-                Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
-                if (!holdsCards(cc, restricted) || (cc & detCards[rich])) {
-                    ok = false; break;
-                }
-                R[rich] -= cc;
-                R[poor] += cc;
+            if (!dist2Rest_64(numChange, &restricted, &R[rich], &R[poor], remained[cl],
+                              NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
+                ok = false; break;
             }
-            if (!ok) continue;
-
-            success = true;
-            break;
+            Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
+            if (!holdsCards(cc, restricted) || (cc & detCards[rich])) {
+                ok = false; break;
+            }
+            R[rich] -= cc;
+            R[poor] += cc;
         }
+        if (!ok) continue;
+
+        logLikelihood = lls;
+        success = true;
+        break;
     }
 
     if (success) {
@@ -385,13 +400,12 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
         }
         dst[myNum] = myCards;
         checkDeal(dst);
-    } else {
-        DERR << "DEAL_REJEC FAILED..." << endl;
-        // 失敗の場合は逆関数法に変更
+    } else { // 失敗の場合は逆関数法に変更
+        if (++failures >= 2) failed = true; 
         dealWithBias(dst, dice);
-        return false;
+        return 0;
     }
-    return true;
+    return logLikelihood;
 }
     
 /*template <class sharedData_t, class threadTools_t>
@@ -418,17 +432,6 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     
     return 0;
 }*/
-    
-    // 採択棄却法のためのカード交換モデル
-Cards RandomDealer::change(const int p, const Cards cards, const int qty,
-                           const EngineSharedData& shared, EngineThreadTools *const ptools) const {
-    Cards cand[78];
-    int NCands = genChange(cand, cards, qty);
-    Field field;
-    // 交換方策によって交換してみる
-    int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, ptools->dice);
-    return cand[index];
-}
 
 Cards RandomDealer::selectInWA(double urand) const {
     double v = urand * candidatesInWA;

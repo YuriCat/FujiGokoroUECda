@@ -52,21 +52,24 @@ public:
                            ThreadTools *const ptools) {
         // 採択棄却法メイン
         Cards deal[BUCKET_MAX][N]; // カード配置候補
+        double lhs[BUCKET_MAX];
         int bestDeal = 0;
+        // カード交換の効果を考慮して手札を分配
         for (int i = 0; i < buckets; i++) {
+            lhs[i] = 0;
             if (failed) {
                 dealWithBias(deal[i], ptools->dice);
             } else {
-                bool ok = dealWithChangeRejection(deal[i], shared, ptools);
-                // 失敗の回数が一定値を超えた以降は逆関数法に移行
-                if (!ok && ++failures > 1) failed = true;
+                double cllh = dealWithChangeRejection(deal[i], shared, ptools);
+                lhs[i] += cllh;
             }
         }
         // 役提出の尤度を計算してし使用する手札配置を決定
         if (buckets > 1) {
-            double lhs[BUCKET_MAX];
             for (int i = 0; i < buckets; i++) {
-                lhs[i] = calcPlayLikelihood(deal[i], record, shared, ptools);
+                double playllh = calcPlayLikelihood(deal[i], record, shared, ptools);
+                //cerr << lhs[i] << " " << playllh << endl;
+                lhs[i] += playllh;
             }
             SoftmaxSelector<double> selector(lhs, buckets, 0.3);
             bestDeal = selector.select(ptools->dice.random());
@@ -127,9 +130,8 @@ private:
 
     void checkDeal(Cards *const dst, bool sbj = true) const;
     bool okForRejection() const;
-    bool dealWithChangeRejection(Cards *const dst,
-                                 const SharedData& shared,
-                                 ThreadTools *const ptools) const;
+    double dealWithChangeRejection(Cards *const dst,
+                                   const SharedData& shared, ThreadTools *const ptools);
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
@@ -140,7 +142,7 @@ private:
     double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
                               const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
-        double playLH = 0; // 対数尤度
+        double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         MoveInfo *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
@@ -150,7 +152,7 @@ private:
         // after change callback
         [](const auto& field)->void{},
         // play callback
-        [this, &playLH, &orgCards, mv, &shared]
+        [this, &playllh, &orgCards, mv, &shared]
         (const auto& field, const Move chosen, uint32_t usedTime)->int{
             const int tp = field.turn();
             const Board b = field.board;
@@ -177,9 +179,8 @@ private:
                 return tmp == chosen;
             });
 
-            if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
-                playLH += log(0.1 / (double)(NMoves + 1));
-            } else {
+            double prob = 1e-3; // 最小値
+            if (chosenIdx >= 0) {
                 std::array<double, N_MAX_MOVES> score;
                 playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
                 // Mateの手のスコアを設定
@@ -188,10 +189,11 @@ private:
                     if (mv[i].isMate()) score[i] = maxScore + 4;
                 }
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
-                playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
+                prob = min(1.0, prob + selector.prob(chosenIdx));
             }
+            playllh += log(prob);
             return 0;
         });
-        return playLH;
+        return playllh;
     }
 };

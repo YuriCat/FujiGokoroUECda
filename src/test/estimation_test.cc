@@ -47,7 +47,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
             RandomDealer estimator(field, field.turn());
             // 一致度計測
             ImaginaryWorld world;
-            for (int j = 0; j < 1; j++) {
+            for (int j = 0; j < 2; j++) {
                 cl.start();
                 estimator.create(&world, type, grecord, shared, &tools[0]);
                 time += cl.stop();
