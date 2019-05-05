@@ -238,54 +238,23 @@ extern int changePolicyScore(double *const dst, const Cards *const change, const
                              const Cards myCards, const int NChangeCards, const Field& field,
                              ChangePolicyLearner<policy_value_t>& , int mode = 1);
 
-template <class move_t, class policy_t>
-double playPolicyExpScore(double *const dst,
-                                  move_t *const buf,
-                                  const int NMoves,
-                                  const Field& field,
-                                  const policy_t& pol,
-                                  int mode = 1) {
-    // 指数をかけるところまで計算したsoftmax policy score
-    // 指数を掛けた後の合計値を返す
-    playPolicyScore(dst, buf, NMoves, field, pol, mode);
-    double sum = 0;
-    for (int m = 0; m < NMoves; m++) {
-        double es = exp(dst[m] / pol.temperature());
-        dst[m] = es;
-        sum += es;
-    }
-    return sum;
-}
-
 template <int STOCK = 0, class move_t, class policy_t, class dice_t>
 int playWithPolicy(move_t *const buf, const int NMoves, const Field& field, const policy_t& pol, dice_t& dice,
                    double *const pentropy = nullptr) {
-    double score[N_MAX_MOVES + 1];
-    double sum = playPolicyExpScore(score, buf, NMoves, field, pol, STOCK ? 2 : 0);
-    double r = dice.random() * sum;
-    double entropy = 0;
-    if (sum > 0) {
-        for (int m = 0; m < NMoves; m++) {
-            double prob = score[m] / sum;
-            if (prob > 0) entropy -= prob * log2(prob);
-        }
-    }
-    int m = 0;
-    for (; m < NMoves - 1; m++) {
-        r -= score[m];
-        if (r <= 0) break;
-    }
-    if (pentropy != nullptr) *pentropy = entropy;
-    return m;
+    double score[N_MAX_MOVES];
+    playPolicyScore(score, buf, NMoves, field, pol, STOCK ? 2 : 0);
+    SoftmaxSelector<double> selector(score, NMoves, pol.temperature());
+    if (pentropy != nullptr) *pentropy = selector.entropy();
+    return selector.select(dice.random());
 }
 
 template <class cards_t, class policy_t, class dice_t>
 int changeWithPolicy(const cards_t *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
                      const Field& field, const policy_t& pol, dice_t& dice) {
-    std::array<double, N_MAX_CHANGES + 1> score;
-    changePolicyScore(score.data(), buf, NChanges, myCards, NChangeCards, field, pol, 0);
-    double r = dice.random() * score[NChanges];
-    return std::upper_bound(score.begin(), score.begin() + NChanges, r) - score.begin() - 1;
+    double score[N_MAX_CHANGES];
+    changePolicyScore(score, buf, NChanges, myCards, NChangeCards, field, pol, 0);
+    SoftmaxSelector<double> selector(score, NChanges, pol.temperature());
+    return selector.select(dice.random());
 }
 template <class policy_t, class dice_t>
 int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards myCards, const int NChangeCards,
@@ -297,7 +266,7 @@ int changeWithBestPolicy(const Cards *const buf, const int NChanges, const Cards
     int NBestMoves = 0;
     double bestScore = -DBL_MAX;
     for (int m = 0; m < NChanges; m++) {
-        double s = score[m + 1] - score[m];
+        double s = score[m];
         if (s > bestScore) {
             bestIndex[0] = m;
             bestScore = s;

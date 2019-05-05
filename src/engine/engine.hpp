@@ -152,12 +152,8 @@ public:
         root.setChange(cand.data(), NCands, field, shared, limitSimulations);
         
         // 方策関数による評価
-        double escore[N_MAX_CHANGES + 1], score[N_MAX_CHANGES];
-        changePolicyScore(escore, cand.data(), NCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
-        // 手札推定時の方策高速計算の都合により指数を取った数値が返るので、元に戻す
-        for (int i = 0; i < NCands; i++) {
-            score[i] = log(max(escore[i + 1] - escore[i], 0.000001));
-        }
+        double score[N_MAX_CHANGES];
+        changePolicyScore(score, cand.data(), NCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
         root.feedPolicyScore(score, NCands);
         
         // モンテカルロ法による評価

@@ -700,17 +700,10 @@ int changePolicyScore(double *const dst,
                 Foo(base + Index::get(rank, RANK_JOKER, afterPqr[rank]));
             }
         }
-        
-        double exps = exp(s / pol.temperature());
-        
-        pol.template feedCandidateScore(i, exps);
-        
-        if (M) {
-            if (dst != nullptr) dst[i + 1] = dst[i] + exps;
-        } else {
-            dst[i + 1] = dst[i] + exps;
-        }
+        pol.template feedCandidateScore(i, exp(s / pol.temperature()));
+        if (!M || dst != nullptr) dst[i] = s;
     }
+    pol.template finishCalculatingScore();
     return 0;
 }
 
