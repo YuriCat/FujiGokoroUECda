@@ -179,7 +179,7 @@ private:
                 return tmp == chosen;
             });
 
-            double prob = 1e-3; // 最小値
+            double prob = 0;
             if (chosenIdx >= 0) {
                 std::array<double, N_MAX_MOVES> score;
                 playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
@@ -189,9 +189,10 @@ private:
                     if (mv[i].isMate()) score[i] = maxScore + 4;
                 }
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
-                prob = min(1.0, prob + selector.prob(chosenIdx));
+                prob = selector.prob(chosenIdx);
             }
-            playllh += log(prob);
+            const double probFrac = 1e-2;
+            playllh += log(prob * (1 - probFrac) + probFrac / NMoves);
             return 0;
         });
         return playllh;

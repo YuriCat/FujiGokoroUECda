@@ -76,8 +76,7 @@ namespace Deal {
 
 // 拘束条件分割
 template <class dice64_t>
-bool dist2Rest_64(int numRest,
-                  uint64_t *const rest, uint64_t *const goal0, uint64_t *const goal1,
+bool dist2Rest_64(int numRest, uint64_t *const goal0, uint64_t *const goal1,
                   const uint64_t arg, int N0, int N1,
                   const uint64_t rest0, const uint64_t rest1, dice64_t& dice) {   
     // 0が交換上手側、1が下手側
@@ -86,25 +85,26 @@ bool dist2Rest_64(int numRest,
 
     // まず確定ビットを探す
     if (rest0) {
-        uint64_t low = highestNBits(all, N1 + numRest);
-        uint64_t set0 = rest0 & ~low;
+        // 上位者の確定札のうち、全体の下位 num1 - numRest 枚は献上で移動した
+        // 訳では無いことが確定するので先に配っておく
+        uint64_t set0 = rest0 & lowestNBits(all, N1 - numRest);
         if (set0) {
             int NSet0 = popcnt64(set0);
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
-    assert((int)popcnt64(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
-    tmp0 |= highNRest; tmp1 -= highNRest;
-
-    if (!holdsBits(tmp0, rest0)
-        || !holdsBits(tmp1, rest1 & ~highNRest)) return false;
-
+    tmp0 |= highNRest;
+    // 上位者の所持札はここから増えることは無い
+    if (!holdsBits(tmp0, rest0)) return false;
+    tmp1 -= highNRest;
+    // 下位者は上位者からもらうことで手札が増えるが枚数には限度あり
+    if (popcnt64(maskCards(rest1, tmp1)) > numRest) return false;
+    
     *goal0 = tmp0;
     *goal1 = tmp1;
-    *rest = tmp0 & rest1;
 
     return true;
 }
@@ -315,6 +315,7 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     bool success = false;
     int trials = 0;
     double logLikelihood = 0;
+    const double probFrac = 1e-2;
 
     BitCards R[N] = {0};
     for (int t = 0; t < MAX_REJECTION; t++) {
@@ -339,7 +340,7 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
                 // 交換相手の交換尤度を計算
                 double prob = changeProb(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools, recvCards);
-                lls += log(prob);
+                lls += log(prob * (1 - probFrac) + probFrac / (ptClass == DAIFUGO ? 78 : 11));
                 R[ptClass] -= recvCards;
             }
         }
@@ -367,6 +368,7 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
         if (myClass == HEIMIN) {
             dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
         } else {
+            // 平民で無いときは自分が関わっていない系に全振り
             remained[1 - min(myClass, ptClass)] = rem;
         }
 
@@ -375,13 +377,13 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
             int rich = cl, poor = getChangePartnerClass(cl);
             if (rich == myClass || poor == myClass) continue;
             int numChange = N_CHANGE_CARDS(rich);
-            BitCards restricted;
-            if (!dist2Rest_64(numChange, &restricted, &R[rich], &R[poor], remained[cl],
+            if (!dist2Rest_64(numChange, &R[rich], &R[poor], remained[cl],
                               NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
                 ok = false; break;
             }
             Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
-            if (!holdsCards(cc, restricted) || (cc & detCards[rich])) {
+            if (!Cards(R[poor] + cc).holds(detCards[poor])
+                || !Cards(R[rich] - cc).holds(detCards[rich])) {
                 ok = false; break;
             }
             R[rich] -= cc;
