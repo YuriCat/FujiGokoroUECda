@@ -34,7 +34,7 @@ public:
                 dealWithSubjectiveInfo(c, ptools->dice); break;
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る*/
                 dealWithBias(c, ptools->dice); break;
-           case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
+            case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
                 dealWithRejection(c, record, shared, ptools); break;
             default: UNREACHABLE; break;
         }
