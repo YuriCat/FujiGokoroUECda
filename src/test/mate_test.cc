@@ -138,8 +138,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -165,7 +165,7 @@ int testRecordMoveMate(const Record& record) {
             //cerr << "next" << endl;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "judge result (hand) = " << endl;
@@ -187,8 +187,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -210,7 +210,7 @@ int testRecordMoveMate(const Record& record) {
             checkMatrix[pw][mate] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
 
@@ -234,8 +234,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -292,7 +292,7 @@ int testRecordMoveMate(const Record& record) {
             
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "search result (hand) = " << endl;
@@ -317,8 +317,8 @@ int analyzeMateDistribution(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -330,7 +330,7 @@ int analyzeMateDistribution(const Record& record) {
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "number of mate moves = " << mateMovesDistribution << endl;

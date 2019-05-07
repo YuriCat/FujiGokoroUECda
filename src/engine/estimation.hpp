@@ -140,7 +140,7 @@ private:
     double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
                               const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
-        double playLH = 0; // 対数尤度
+        double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         MoveInfo *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
@@ -148,10 +148,10 @@ private:
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
         // after change callback
-        [](const auto& field)->void{},
+        [](const Field& field)->void{},
         // play callback
-        [this, &playLH, &orgCards, mv, &shared]
-        (const auto& field, const Move chosen, uint32_t usedTime)->int{
+        [this, &playllh, &orgCards, mv, &shared]
+        (const Field& field, const Move chosen, uint32_t usedTime)->int{
             const int tp = field.turn();
             const Board b = field.board;
             const Cards myCards = field.getCards(tp);
@@ -173,12 +173,12 @@ private:
             // フェーズ(空場0、通常場1、パス支配場2)
             const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
             // プレー尤度計算
-            int chosenIdx = searchMove(mv, NMoves, [chosen](const auto& tmp)->bool{
+            int chosenIdx = searchMove(mv, NMoves, [chosen](const MoveInfo& tmp)->bool{
                 return tmp == chosen;
             });
 
             if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
-                playLH += log(0.1 / (double)(NMoves + 1));
+                playllh += log(0.1 / (double)(NMoves + 1));
             } else {
                 std::array<double, N_MAX_MOVES> score;
                 playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
@@ -188,10 +188,10 @@ private:
                     if (mv[i].isMate()) score[i] = maxScore + 4;
                 }
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
-                playLH += log(max(selector.prob(chosenIdx), 1 / 256.0));
+                playllh += log(max(selector.prob(chosenIdx), 1 / 256.0));
             }
             return 0;
         });
-        return playLH;
+        return playllh;
     }
 };

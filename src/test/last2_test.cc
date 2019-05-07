@@ -97,8 +97,8 @@ int testRecordL2(const Record& record) {
     
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange(field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             
             if (field.getNAlivePlayers() == 2) {
                 const int turnPlayer = field.turn();
@@ -130,7 +130,7 @@ int testRecordL2(const Record& record) {
             }
             return 0;
         },
-        [&](const auto& field) { // last callback
+        [&](const Field& field) { // last callback
             // ここで新しい順位を得ることができる
             if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
                 int turnResult = field.newClassOf(l2TurnPlayer);

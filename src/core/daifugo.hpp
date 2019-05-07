@@ -520,7 +520,7 @@ struct CardsAsSet {
     BitCards c_;
     constexpr CardsAsSet(BitCards c): c_(c) {}
 
-    constexpr BitCards lowest() const { assert(c_); return c_ & -c_; }
+    BitCards lowest() const { assert(c_); return c_ & -c_; }
     BitCards popLowest() {
         assert(c_);
         BitCards l = lowest();

@@ -44,8 +44,8 @@ int testRecordMoveDominance(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turn = field.turn();
             Cards opsCards = field.getOpsCards(turn);
             Board b = field.board;
@@ -69,7 +69,7 @@ int testRecordMoveDominance(const Record& record) {
             judgeMatrix[0][ans][dom] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     
@@ -77,8 +77,8 @@ int testRecordMoveDominance(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turn = field.turn();
             const Hand& opsHand = field.getOpsHand(turn);
             Board b = field.board;
@@ -94,7 +94,7 @@ int testRecordMoveDominance(const Record& record) {
             judgeMatrix[1][ans][dom] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
 
@@ -103,8 +103,8 @@ int testRecordMoveDominance(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             Cards remCards = field.remCards;
             Hand remHand;
             remHand.set(remCards);
@@ -122,7 +122,7 @@ int testRecordMoveDominance(const Record& record) {
             judgeMatrix[2][ans][dom] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     
@@ -130,8 +130,8 @@ int testRecordMoveDominance(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             Cards remCards = field.remCards;
             Hand remHand;
             remHand.set(remCards);
@@ -149,7 +149,7 @@ int testRecordMoveDominance(const Record& record) {
             judgeMatrix[3][ans][dom] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     
