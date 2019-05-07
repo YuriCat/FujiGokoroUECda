@@ -10,7 +10,7 @@ using namespace std;
 
 static MoveInfo buffer[8192];
 static Clock cl;
-static std::mt19937 mt;
+static mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
@@ -105,7 +105,7 @@ int testRecordMoves(const Record& record) {
                 // 棋譜の着手が生成されているかチェック
                 if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
                     cerr << "ungenerated record move " << move;
-                    cerr << " " << std::hex << move.toInt() << std::dec;
+                    cerr << " " << hex << move.toInt() << dec;
                     cerr << " by " << cards << " on " << bd << endl;
                 } else {
                     genHolded[0] += 1;

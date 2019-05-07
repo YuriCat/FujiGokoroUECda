@@ -26,9 +26,12 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     }
     mt19937 dice(0);
 
+     // カード一致率
     long long cnt = 0;
     long long same = 0, all = 0;
     long long time = 0;
+
+    long long perfect = 0; // 完全一致率
 
     double entropy = 0;
     long long ecnt = 0;
@@ -52,12 +55,15 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                 estimator.create(&world, type, grecord, shared, &tools[0]);
                 time += cl.stop();
                 cnt++;
+                int tsame = 0, tall = 0;
                 for (int p = 0; p < N_PLAYERS; p++) {
                     if (p == field.turn() || !field.isAlive(p)) continue;
                     Cards sameCards = field.hand[p].cards & world.cards[p];
-                    same += sameCards.count();
-                    all += field.hand[p].qty;
+                    tsame += sameCards.count();
+                    tall += field.hand[p].qty;
                 }
+                if (tsame == tall) perfect++;
+                same += tsame; all += tall;
             }
             // 多様性計測
             if (field.turnCount() == tc) {
@@ -95,7 +101,9 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
         },
         [](const auto& field)->void{}); // last callback
     }
-    cerr << "type " << type << ": " << same << " / " << all << " (" << double(same) / all << ") ";
+    cerr << "type " << type << ": ";
+    cerr << perfect << " / " << cnt << " ";
+    cerr << same << " / " << all << " (" << double(same) / all << ") ";
     cerr << "entropy " << entropy / ecnt << " in " << time / cnt << " clock" << endl;
 }
 

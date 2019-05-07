@@ -75,10 +75,9 @@ namespace Deal {
 }
 
 // 拘束条件分割
-template <class dice64_t>
 bool dist2Rest_64(int numRest, uint64_t *const goal0, uint64_t *const goal1,
                   const uint64_t arg, int N0, int N1,
-                  const uint64_t rest0, const uint64_t rest1, dice64_t& dice) {   
+                  const uint64_t rest0, const uint64_t rest1, Dice& dice) {
     // 0が交換上手側、1が下手側
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
@@ -93,6 +92,7 @@ bool dist2Rest_64(int numRest, uint64_t *const goal0, uint64_t *const goal1,
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
+    // 残った札を枚数で分ける
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
@@ -256,20 +256,20 @@ bool RandomDealer::okForRejection() const {
     if (initGame) return true;
     switch (myClass) {
         case DAIFUGO:
-            if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
+            if (NDet[FUGO] >= 7 || NDet[HINMIN] >= 7) return false;
             break;
         case FUGO:
-            if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
+            if (NDet[DAIFUGO] >= 7 || NDet[DAIHINMIN] >= 7) return false;
             break;
         case HEIMIN:
             if (NDet[DAIFUGO] >= 8 || NDet[FUGO] >= 8
                 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
             break;
         case HINMIN:
-            if (NDet[DAIFUGO] >= 10 || NDet[FUGO] >= 10 || NDet[DAIHINMIN] >= 10) return false;
+            if (NDet[DAIFUGO] >= 9 || NDet[FUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
             break;
         case DAIHINMIN:
-            if (NDet[DAIFUGO] >= 10 || NDet[FUGO] >= 10 || NDet[HINMIN] >= 10) return false;
+            if (NDet[DAIFUGO] >= 9 || NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
             break;
         default: UNREACHABLE; break;
     }
@@ -340,7 +340,8 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
                 // 交換相手の交換尤度を計算
                 double prob = changeProb(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools, recvCards);
-                lls += log(prob * (1 - probFrac) + probFrac / (ptClass == DAIFUGO ? 78 : 11));
+                //lls += log(prob * (1 - probFrac) + probFrac / (ptClass == DAIFUGO ? 78 : 11));
+                if (dice.random() >= prob) continue;
                 R[ptClass] -= recvCards;
             }
         }
@@ -409,31 +410,63 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     }
     return logLikelihood;
 }
-    
-/*template <class sharedData_t, class threadTools_t>
-    int dealWithLikelifood(Cards *const dst, const sharedData_t& shared,
-    threadTools_t *const ptools) {
-    // 尤度計算
-    // 主観的情報で明らかな矛盾のない配り方
+
+double RandomDealer::dealWithChangeLikelihood(Cards *const dst, const SharedData& shared, ThreadTools *const ptools) {
+    // 尤度つきで手札を生成して返す
+
+    // まず主観情報から矛盾の無いように配る
     dealWithSubjectiveInfo(dst, ptools->dice);
-    Field field;
-    
-    double logLHSum = 0, logLHOK = 0;
-    // カード交換前の手札をすべて生成
-    Cards thrownCards[N_MAX_CHANGES];
-    const int throwns = genChange(thrownCards, dst[infoClassPlayer[DAIHINMIN]] | usedCards[DAIHINMIN], N_CHANGE_CARDS(DAIFUGO));
-    for (int i = 0; i < throwns; i++) {
-    // 交換前の大富豪の手札
-    Cards dealtCards = dst[infoClassPlayer[DAIFUGO]] | usedCards[DAIFUGO] | thrownCards[i];
-    Cards changeCards[N_MAX_CHANGES];
-    double score[N_MAX_CHANGES + 1];
-    const int changes = genChange(changeCards, dealtCards, N_CHANGE_CARDS(DAIFUGO));
-    calcChangePolicyScoreSlow<>(score, changes, )
-    
+
+    if (initGame) return 0;
+
+    // モデルを使って逆演算で尤度を近似
+    double likelihoodProduct = 1;
+    for (int rich = 0; rich < MIDDLE; rich++) {
+        double likelihood = 0;
+        int poor = getChangePartnerClass(rich);
+        int richID = infoClassPlayer[rich];
+        int poorID = infoClassPlayer[poor];
+        int changeQty = N_CHANGE_CARDS(rich);
+        // 交換時に呼ばれたときはまだ上位から下位に渡されていないことに注意
+        Cards richAfterChange = dst[richID] + usedCards[rich];
+        Cards poorAfterChange = dst[poorID] + usedCards[poor];
+        if (myClass == rich) {
+            Cards richAfterPresent = richAfterChange, poorAfterPresent = poorAfterChange;
+            // 自分がこの交換上位のとき献上が起こるパターン数のみ調べる
+            if (!inChange) {
+                richAfterPresent += sentCards;
+                poorAfterPresent -= sentCards;
+            }
+            Cards higher = pickHigher(richAfterPresent, poorAfterPresent);
+            double pattern = dCombination(higher.count(), changeQty);
+            likelihood += pattern;
+        } else if (myClass == poor) {
+            Cards richAfterPresent = richAfterChange;
+            if (!inChange) richAfterPresent += recvCards;
+            double prob = changeProb(richID, richAfterPresent, changeQty, shared, ptools, recvCards);
+            likelihood += prob;
+        } else {
+            // カード交換前の手札をすべて生成
+            Cards thrown[N_MAX_CHANGES];
+            const int numThrowns = genChange(thrown, dst[poorID] + usedCards[poor], changeQty);
+            for (int i = 0; i < numThrowns; i++) {
+                // 上位の献上後のカード
+                Cards richAfterPresent = richAfterChange + thrown[i];
+                Cards poorAfterPresent = poorAfterChange - thrown[i];
+                //この交換の元になったパターン数を調べる
+                Cards higher = pickHigher(richAfterPresent, poorAfterPresent);
+                double pattern = dCombination(higher.count(), changeQty);
+                if (pattern > 0) {
+                    // この交換が発生した確率を調べる
+                    double prob = changeProb(richID, richAfterPresent, changeQty, shared, ptools, thrown[i]);
+                    likelihood += prob * pattern;
+                }
+            }
+        }
+        likelihoodProduct *= likelihood;
     }
-    
-    return 0;
-}*/
+    return log(likelihoodProduct);
+}
 
 Cards RandomDealer::selectInWA(double urand) const {
     double v = urand * candidatesInWA;
@@ -554,8 +587,9 @@ void RandomDealer::prepareSubjectiveInfo() {
         // 1 -> ... -> max -> ... -> 1 と台形に変化
         int line1 = (BUCKET_MAX - 1) * NOppUsedCards / 4 + 1;
         int line2 = BUCKET_MAX;
-        int line3 = (BUCKET_MAX - 1) * NdealCards / 16 + 1;
-        buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
+        //int line3 = (BUCKET_MAX - 1) * NdealCards / 16 + 1;
+        //buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
+        buckets = NOppUsedCards > 0 ? min(line1, line2) : 1;
         // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
         playFlag.reset();
         for (int p = 0; p < N; p++) {

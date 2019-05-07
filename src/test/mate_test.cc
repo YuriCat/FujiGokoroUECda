@@ -11,15 +11,15 @@ using namespace std;
 
 static MoveInfo buffer[8192];
 static Clock cl;
-static std::mt19937 mt;
+static mt19937 mt;
 
 int outputMateJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     return 0;
 }
 
-std::set<uint32_t> mateMoves;
-std::unordered_map<uint64_t, bool> visitedCards;
+set<uint32_t> mateMoves;
+unordered_map<uint64_t, bool> visitedCards;
 
 template <int M = 0>
 int searchCardsPWSlow(MoveInfo *const, const int, const int,
@@ -311,7 +311,7 @@ int testRecordMoveMate(const Record& record) {
 int analyzeMateDistribution(const Record& record) {
     
     // search
-    std::array<uint64_t, 12> mateMovesDistribution = {0};
+    array<uint64_t, 12> mateMovesDistribution = {0};
     Field field;
     
     for (int i = 0; i < record.games(); i++) {
@@ -339,7 +339,7 @@ int analyzeMateDistribution(const Record& record) {
 }
 
 bool MateTest(const vector<string>& recordFiles) {
-    std::vector<std::string> logFileNames;
+    vector<string> logFileNames;
 
     mt.seed(1);
     

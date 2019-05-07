@@ -553,12 +553,6 @@ int changePolicyScore(double *const dst,
     
     pol.template initCalculatingScore(NChanges);
     
-    if (M) {
-        if (dst != nullptr) dst[0] = 0;
-    } else {
-        dst[0] = 0;
-    }
-    
     const Cards pqr = CardsToPQR(myCards);
     
     for (int i = 0; i < NChanges; i++) {

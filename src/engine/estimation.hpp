@@ -56,19 +56,17 @@ public:
         int bestDeal = 0;
         // カード交換の効果を考慮して手札を分配
         for (int i = 0; i < buckets; i++) {
-            lhs[i] = 0;
             if (failed) {
-                dealWithBias(deal[i], ptools->dice);
+                //dealWithBias(deal[i], ptools->dice); lhs[i] = 0;
+                lhs[i] = dealWithChangeLikelihood(deal[i], shared, ptools);
             } else {
-                double cllh = dealWithChangeRejection(deal[i], shared, ptools);
-                lhs[i] += cllh;
+                lhs[i] = dealWithChangeRejection(deal[i], shared, ptools);
             }
         }
         // 役提出の尤度を計算してし使用する手札配置を決定
         if (buckets > 1) {
             for (int i = 0; i < buckets; i++) {
                 double playllh = calcPlayLikelihood(deal[i], record, shared, ptools);
-                //cerr << lhs[i] << " " << playllh << endl;
                 lhs[i] += playllh;
             }
             SoftmaxSelector<double> selector(lhs, buckets, 0.3);
@@ -132,6 +130,8 @@ private:
     bool okForRejection() const;
     double dealWithChangeRejection(Cards *const dst,
                                    const SharedData& shared, ThreadTools *const ptools);
+    double dealWithChangeLikelihood(Cards *const dst,
+                                    const SharedData& shared, ThreadTools *const ptools);
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
@@ -191,7 +191,7 @@ private:
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
                 prob = selector.prob(chosenIdx);
             }
-            const double probFrac = 1e-2;
+            const double probFrac = 5e-3;
             playllh += log(prob * (1 - probFrac) + probFrac / NMoves);
             return 0;
         });

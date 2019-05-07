@@ -11,7 +11,7 @@ using namespace std;
 
 static MoveInfo buffer[8192];
 static Clock cl;
-static std::mt19937 mt;
+static mt19937 mt;
 
 int outputDominanceJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
