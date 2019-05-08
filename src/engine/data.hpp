@@ -437,19 +437,18 @@ struct RootInfo {
     
     void sort() { // 評価が高い順に候補行動をソート
         std::stable_sort(child.begin(), child.begin() + actions,
-                            [&](const RootAction& a, const RootAction& b)->bool{
-                                // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
-                                // ただしルートで方策の点を使わないときにはそうではない
-                                // いちおう除外されたものに方策の点がついた場合にはその中で並べ替える
-                                if (a.pruned && !b.pruned) return false;
-                                if (!a.pruned && b.pruned) return true;
-                                if (a.mean() > b.mean()) return true;
-                                if (a.mean() < b.mean()) return false;
-                                if (policyAdded) if (allSimulations > 0) return true;
-                                if (a.policyProb > b.policyProb) return true;
-                                if (a.policyProb < b.policyProb) return false;
-                                return a.policyScore > b.policyScore;
-                            });
+                         [&](const RootAction& a, const RootAction& b)->bool{
+                             // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
+                             // ただしルートで方策の点を使わないときにはそうではない
+                             // いちおう除外されたものに方策の点がついた場合にはその中で並べ替える
+                             if (a.pruned && !b.pruned) return false;
+                             if (!a.pruned && b.pruned) return true;
+                             if (a.mean() > b.mean()) return true;
+                             if (a.mean() < b.mean()) return false;
+                             if (a.policyProb > b.policyProb) return true;
+                             if (a.policyProb < b.policyProb) return false;
+                             return a.policyScore > b.policyScore;
+                         });
     }
     template <class callback_t>
     int sort(int ed, const callback_t& callback) { // 数値基準を定義して候補行動をソート
