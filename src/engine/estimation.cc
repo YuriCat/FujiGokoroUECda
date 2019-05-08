@@ -210,7 +210,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
     myCards = field.getCards(myNum);
     // 交換無し時の階級の代用込みでの設定
     myClass = infoClass[myNum];
-    firstTurnClass = infoClass[field.firstTurn()];
+    firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
 
     // サーバー視点の場合はdealtとrecvが分かれて入っていて、
     // プレーヤー視点ではdealtに全て入っているので足す処理にする
