@@ -51,8 +51,8 @@ public:
                            ThreadTools *const ptools) {
         int bestDeal = 0;
         // カード交換の効果を考慮して手札を分配
-        //for (int i = 0; i < 100; i++) {
-        while (worldPool.size() < 1024) {
+        for (int i = 0; i < 1024; i++) {
+            if (worldPool.size() >= 1024) break;
             // まず主観情報から矛盾の無いように配る
             Cards c[N_PLAYERS];
             dealWithSubjectiveInfo(c, ptools->dice);
@@ -70,7 +70,7 @@ public:
             wholeLikelihood += world.likelihood;
         }
         // 世界を選ぶ
-        cerr << worldPool.size() << endl;
+        //cerr << worldPool.size() << endl;
         double r = ptools->dice.random() * wholeLikelihood;
         World chosen;
         for (auto& w : worldPool) {
