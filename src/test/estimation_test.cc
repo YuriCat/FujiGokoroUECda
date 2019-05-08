@@ -42,17 +42,16 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
         int tc = dice() % grecord.plays();
         iterateGameLogAfterChange
         (field, grecord,
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             if (field.getNAlivePlayers() <= 2) return 0;
             //cerr << field.toDebugString() << endl;
             // この手の前までの情報から手札推定を行う
             RandomDealer estimator(field, field.turn());
             // 一致度計測
-            ImaginaryWorld world;
             for (int j = 0; j < 2; j++) {
                 cl.start();
-                estimator.create(&world, type, grecord, shared, &tools[0]);
+                World world = estimator.create(type, grecord, shared, &tools[0]);
                 time += cl.stop();
                 cnt++;
                 int tsame = 0, tall = 0;
@@ -66,11 +65,11 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                 same += tsame; all += tall;
             }
             // 多様性計測
-            if (field.turnCount() == tc) {
+            if (0 && field.turnCount() == tc) {
                 ecnt++;
-                ImaginaryWorld worlds[256];
+                World worlds[256];
                 for (int i = 0; i < 256; i++) {
-                    estimator.create(&worlds[i], type, grecord, shared, &tools[0]);
+                    worlds[i] = estimator.create(type, grecord, shared, &tools[0]);
                 }
                 // 局面の多様性を計算
                 int own[64][N_PLAYERS] = {0};
@@ -99,10 +98,10 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
             }
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     cerr << "type " << type << ": ";
-    cerr << perfect << " / " << cnt << " ";
+    cerr << perfect << " / " << cnt << " (" << double(perfect) / cnt << ") ";
     cerr << same << " / " << all << " (" << double(same) / all << ") ";
     cerr << "entropy " << entropy / ecnt << " in " << time / cnt << " clock" << endl;
 }

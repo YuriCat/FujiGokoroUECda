@@ -288,7 +288,7 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
 }
 
 double changeProb(const int p, const Cards cards, const int qty,
-                   const EngineSharedData& shared, EngineThreadTools *const ptools,
+                  const EngineSharedData& shared, EngineThreadTools *const ptools,
                                 const Cards cc) {
     Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
@@ -411,12 +411,8 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     return logLikelihood;
 }
 
-double RandomDealer::dealWithChangeLikelihood(Cards *const dst, const SharedData& shared, ThreadTools *const ptools) {
-    // 尤度つきで手札を生成して返す
-
-    // まず主観情報から矛盾の無いように配る
-    dealWithSubjectiveInfo(dst, ptools->dice);
-
+double RandomDealer::changeLikelihood(const Cards *const dst, const SharedData& shared, ThreadTools *const ptools) {
+    // 手札の交換尤度を返す
     if (initGame) return 0;
 
     // モデルを使って逆演算で尤度を近似
@@ -466,6 +462,43 @@ double RandomDealer::dealWithChangeLikelihood(Cards *const dst, const SharedData
         likelihoodProduct *= likelihood;
     }
     return log(likelihoodProduct);
+}
+
+double RandomDealer::onePlayLikelihood(const Field& field, Move move, unsigned time,
+                                       const SharedData& shared, ThreadTools *const ptools) const {
+    MoveInfo *const mv = ptools->buf;
+    const int turn = field.turn();
+    const Board b = field.board;
+    const int NMoves = genMove(mv, field.getCards(turn), b);
+    if (NMoves <= 1) return 1;
+
+    // 場の情報をまとめる
+    for (int i = 0; i < NMoves; i++) {
+        bool mate = checkHandMate(0, mv + NMoves, mv[i], field.hand[turn],
+                                  field.opsHand[turn], b, field.fieldInfo);
+        if (mate) mv[i].setMPMate();
+    }
+
+    // プレー尤度計算
+    int moveIndex = searchMove(mv, NMoves, [move](const MoveInfo& tmp)->bool{
+        return tmp == move;
+    });
+
+    double prob = 0;
+    if (moveIndex >= 0) {
+        std::array<double, N_MAX_MOVES> score;
+        playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
+        // Mateの手のスコアを設定
+        double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
+        for (int i = 0; i < NMoves; i++) {
+            if (mv[i].isMate()) score[i] = maxScore + 4;
+        }
+        SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
+        prob = selector.prob(moveIndex);
+    }
+    // 確率をソフトにする
+    const double probFrac = 5e-3;
+    return prob * (1 - probFrac) + probFrac / NMoves;
 }
 
 Cards RandomDealer::selectInWA(double urand) const {

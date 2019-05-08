@@ -71,8 +71,8 @@ void doSimulationsToEvaluate(const gameLog_t& gLog,
     Field field;
     iterateGameLogBeforePlay
     (field, gLog,
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field)->void{ // dealt callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field)->void{ // dealt callback
             // シミュレーションにより結果を予測
             std::vector<std::thread> thr;
             for (int ith = 0; ith < N_THREADS; ith++) {
@@ -83,8 +83,8 @@ void doSimulationsToEvaluate(const gameLog_t& gLog,
                 th.join();
             }
         },
-        [](const auto& field, const int from, const int to, const Cards c)->int{ return 0; }, // change callback
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field, const int from, const int to, const Cards c)->int{ return 0; }, // change callback
+        [](const Field& field)->void{}); // last callback
 }
 
 template <class gameLog_t, class sharedData_t, class threadTools_t>

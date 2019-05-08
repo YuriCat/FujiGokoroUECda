@@ -58,9 +58,9 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogBeforePlay
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [](const auto& field)->void{}, // dealt callback
-        [&](const auto& field, int from, int to, Cards ch)->int{ // change callback
+        [](const Field& field)->void{}, // first callback
+        [](const Field& field)->void{}, // dealt callback
+        [&](const Field& field, int from, int to, Cards ch)->int{ // change callback
             Cards change[N_MAX_CHANGES + 1];
             const int cl = field.classOf(from);
             if (cl < MIDDLE) {
@@ -80,7 +80,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
             }
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << mrecord.player(p);
@@ -109,8 +109,8 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogAfterChange
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             int turn = field.turn();
             auto moves = genMove(field);
             
@@ -124,7 +124,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
             trials[turn] += 1;
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << mrecord.player(p);
@@ -147,8 +147,8 @@ int testSelector(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogAfterChange
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             MoveInfo play[N_MAX_MOVES];
             double score[N_MAX_MOVES];
             
@@ -225,7 +225,7 @@ int testSelector(const MatchRecord& mrecord) {
             trials += 1;
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     
     cerr << "Softmax Selector" << endl;

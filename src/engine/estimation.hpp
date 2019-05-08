@@ -23,7 +23,7 @@ public:
     }
 
     template <class gameRecord_t>
-    int create(ImaginaryWorld *const dst, DealType type, const gameRecord_t& record,
+    World create(DealType type, const gameRecord_t& record,
                const SharedData& shared, ThreadTools *const ptools) {
         Cards c[N_PLAYERS];
         // レベル指定からカード分配
@@ -38,8 +38,7 @@ public:
                 dealWithRejection(c, record, shared, ptools); break;
             default: UNREACHABLE; break;
         }
-        dst->set(turnCount, c);
-        return 0;
+        return World(turnCount, c);
     }
     
     void dealAllRand(Cards *const dst, Dice& dice) const;
@@ -50,29 +49,41 @@ public:
                            const gameRecord_t& record,
                            const SharedData& shared,
                            ThreadTools *const ptools) {
-        // 採択棄却法メイン
-        Cards deal[BUCKET_MAX][N]; // カード配置候補
-        double lhs[BUCKET_MAX];
         int bestDeal = 0;
         // カード交換の効果を考慮して手札を分配
-        for (int i = 0; i < buckets; i++) {
-            if (failed) {
-                //dealWithBias(deal[i], ptools->dice); lhs[i] = 0;
-                lhs[i] = dealWithChangeLikelihood(deal[i], shared, ptools);
-            } else {
-                lhs[i] = dealWithChangeRejection(deal[i], shared, ptools);
+        //for (int i = 0; i < 100; i++) {
+        while (worldPool.size() < 1024) {
+            // まず主観情報から矛盾の無いように配る
+            Cards c[N_PLAYERS];
+            dealWithSubjectiveInfo(c, ptools->dice);
+            World world(turnCount, c);
+            // 既にプールにある場合は飛ばす
+            if (worldPool.count(world)) continue;
+            // 交換尤度を計算する
+            double changellh = changeLikelihood(world.cards, shared, ptools);
+            double playllh = playLikelihood(world.cards, record, shared, ptools);
+            double temperature = 1;
+            world.likelihood = std::exp((changellh + playllh) / temperature);
+            //cerr << world.key << " " << changellh << " " << playllh << endl;
+            // 世界プールに入れる
+            worldPool.insert(world);
+            wholeLikelihood += world.likelihood;
+        }
+        // 世界を選ぶ
+        cerr << worldPool.size() << endl;
+        double r = ptools->dice.random() * wholeLikelihood;
+        World chosen;
+        for (auto& w : worldPool) {
+            r -= w.likelihood;
+            if (r <= 0) {
+                chosen = w;
+                break;
             }
         }
-        // 役提出の尤度を計算してし使用する手札配置を決定
-        if (buckets > 1) {
-            for (int i = 0; i < buckets; i++) {
-                double playllh = calcPlayLikelihood(deal[i], record, shared, ptools);
-                lhs[i] += playllh;
-            }
-            SoftmaxSelector<double> selector(lhs, buckets, 0.3);
-            bestDeal = selector.select(ptools->dice.random());
-        }
-        for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+        // 選ばれた世界を抜く
+        wholeLikelihood -= chosen.likelihood;
+        worldPool.erase(chosen);
+        for (int p = 0; p < N; p++) dst[p] = chosen.cards[p];
         checkDeal(dst);
     }
 
@@ -92,6 +103,9 @@ private:
     Cards dealCards; // まだ特定されていないカード
     std::array<Cards, N> usedCards; // 使用済みカード
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
+
+    std::unordered_set<World, World::Hash> worldPool;
+    double wholeLikelihood = 0;
 
     int myNum, myClass;
     int myChangePartner, firstTurnClass;
@@ -130,8 +144,10 @@ private:
     bool okForRejection() const;
     double dealWithChangeRejection(Cards *const dst,
                                    const SharedData& shared, ThreadTools *const ptools);
-    double dealWithChangeLikelihood(Cards *const dst,
-                                    const SharedData& shared, ThreadTools *const ptools);
+    double changeLikelihood(const Cards *const dst,
+                            const SharedData& shared, ThreadTools *const ptools);
+    double onePlayLikelihood(const Field& field, Move move, unsigned time,
+                             const SharedData& shared, ThreadTools *const ptools) const;
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
@@ -139,60 +155,27 @@ private:
     Cards selectInWA(double urand) const;
 
     template <class gameRecord_t>
-    double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
-                              const SharedData& shared, ThreadTools *const ptools) const {
+    double playLikelihood(const Cards *const c, const gameRecord_t& gLog,
+                          const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
-        MoveInfo *const mv = ptools->buf;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
         Field field;
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
         // after change callback
-        [](const auto& field)->void{},
+        [](const Field& field)->void{},
         // play callback
-        [this, &playllh, &orgCards, mv, &shared]
-        (const auto& field, const Move chosen, uint32_t usedTime)->int{
-            const int tp = field.turn();
-            const Board b = field.board;
-            const Cards myCards = field.getCards(tp);
-
-            if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
-            if (!holdsCards(myCards, chosen.cards())) return -1; // 終了(エラー)
-            // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-            if (!playFlag.test(tp)) return 0;
-            const int NMoves = genMove(mv, myCards, b);
-            if (NMoves <= 1) return 0;
-
-            // 場の情報をまとめる
-            for (int i = 0; i < NMoves; i++) {
-                bool mate = checkHandMate(0, mv + NMoves, mv[i], field.hand[tp],
-                                          field.opsHand[tp], b, field.fieldInfo);
-                if (mate) mv[i].setMPMate();
-            }
-
-            // フェーズ(空場0、通常場1、パス支配場2)
-            const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
-            // プレー尤度計算
-            int chosenIdx = searchMove(mv, NMoves, [chosen](const auto& tmp)->bool{
-                return tmp == chosen;
-            });
-
-            double prob = 0;
-            if (chosenIdx >= 0) {
-                std::array<double, N_MAX_MOVES> score;
-                playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
-                // Mateの手のスコアを設定
-                double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
-                for (int i = 0; i < NMoves; i++) {
-                    if (mv[i].isMate()) score[i] = maxScore + 4;
-                }
-                SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
-                prob = selector.prob(chosenIdx);
-            }
-            const double probFrac = 5e-3;
-            playllh += log(prob * (1 - probFrac) + probFrac / NMoves);
+        [this, &playllh, &orgCards, &shared, ptools]
+        (const Field& field, Move chosen, unsigned time)->int{
+            // 決めたところまで読み終えた場合は終了(オフラインでの判定用)
+            if (field.turnCount() >= turnCount) return -1;
+            // カードが全確定しているプレーヤーについては考慮しない
+            if (!playFlag.test(field.turn())) return 0;
+            // 一手分の尤度を追加
+            double prob = onePlayLikelihood(field, chosen, time, shared, ptools);
+            playllh += std::log(prob);
             return 0;
         });
         return playllh;

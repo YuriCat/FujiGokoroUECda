@@ -85,8 +85,8 @@ int testRecordMoves(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         if (iterateGameLogAfterChange
         (field, record.game(i),
-            [&](const auto& field) {}, // first callback
-            [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            [&](const Field& field) {}, // first callback
+            [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
                 int turnPlayer = field.turn();
                 Cards cards = field.getCards(turnPlayer);
                 Board bd = field.board;
@@ -113,7 +113,7 @@ int testRecordMoves(const Record& record) {
                 
                 return 0;
             },
-            [&](const auto& field) {} // last callback
+            [&](const Field& field) {} // last callback
             )) {
             cerr << "failed move generation by Cards." << endl;
             return -1;

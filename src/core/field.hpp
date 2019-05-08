@@ -384,27 +384,40 @@ extern void copyField(const Field& arg, Field *const dst);
 
 /**************************仮想世界**************************/
 
-struct ImaginaryWorld {
+struct World {
     // 仮想世界
-    double weight; // この世界の存在確率比
+    double likelihood; // この世界の存在確率比
     int builtTurn; // この世界がセットされたターン
-    uint64_t key; // 世界識別ハッシュ。着手検討中ターンにおいて世界を識別出来れば形式は問わない
-    
     Cards cards[N_PLAYERS];
     uint64_t cardKey[N_PLAYERS];
-
-    void clear() {
-        weight = 1.0;
-    }
-    void set(int turnCount, const Cards c[]) {
-        clear();
+    uint64_t key;
+    World() {}
+    World(int turnCount, const Cards c[]) {
+        likelihood = 1.0;
+        key = 0;
         for (int p = 0; p < N_PLAYERS; p++) {
             cards[p] = c[p];
             cardKey[p] = CardsToHashKey(c[p]);
+            key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & cardKey[p];
         }
         builtTurn = turnCount;
     }
+    bool operator !=(const World& w) const {
+        for (int p = 0; p < N_PLAYERS; p++) {
+            if (cards[p] != w.cards[p]) return true;
+        }
+        return false;
+    }
+    bool operator ==(const World& w) const {
+        return !(*this != w);
+    }
+    struct Hash {
+        using result_type = uint64_t;
+        result_type operator ()(const World& key) const {
+            return key.key;
+        }
+    };
 };
 
 // set estimated information
-extern void setWorld(const ImaginaryWorld& world, Field *const dst);
+extern void setWorld(const World& world, Field *const dst);

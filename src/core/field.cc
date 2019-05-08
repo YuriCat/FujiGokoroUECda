@@ -479,7 +479,7 @@ void copyField(const Field& arg, Field *const dst) {
 }
 
 // set estimated information
-void setWorld(const ImaginaryWorld& world, Field *const dst) {
+void setWorld(const World& world, Field *const dst) {
     Cards remCards = dst->remCards;
     uint64_t remKey = dst->remKey;
     for (int p = 0; p < N_PLAYERS; p++) {
