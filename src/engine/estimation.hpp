@@ -49,41 +49,37 @@ public:
                            const gameRecord_t& record,
                            const SharedData& shared,
                            ThreadTools *const ptools) {
-        int bestDeal = 0;
         // カード交換の効果を考慮して手札を分配
-        for (int i = 0; i < 1024; i++) {
+        for (int i = 0; i < 10; i++) {
             if (worldPool.size() >= 1024) break;
             // まず主観情報から矛盾の無いように配る
             Cards c[N_PLAYERS];
             dealWithSubjectiveInfo(c, ptools->dice);
             World world(turnCount, c);
             // 既にプールにある場合は飛ばす
-            if (worldPool.count(world)) continue;
+            if (worldKeys.count(world.key)) continue;
             // 交換尤度を計算する
             double changellh = changeLikelihood(world.cards, shared, ptools);
             double playllh = playLikelihood(world.cards, record, shared, ptools);
-            double temperature = 1;
-            world.likelihood = std::exp((changellh + playllh) / temperature);
+            world.likelihood = changellh + playllh;
             //cerr << world.key << " " << changellh << " " << playllh << endl;
             // 世界プールに入れる
-            worldPool.insert(world);
-            wholeLikelihood += world.likelihood;
+            worldKeys.insert(world.key);
+            worldPool.push_back(world);
+            likelihoods.push_back(world.likelihood);
         }
         // 世界を選ぶ
-        //cerr << worldPool.size() << endl;
-        double r = ptools->dice.random() * wholeLikelihood;
-        World chosen;
-        for (auto& w : worldPool) {
-            r -= w.likelihood;
-            if (r <= 0) {
-                chosen = w;
-                break;
-            }
-        }
-        // 選ばれた世界を抜く
-        wholeLikelihood -= chosen.likelihood;
-        worldPool.erase(chosen);
-        for (int p = 0; p < N; p++) dst[p] = chosen.cards[p];
+        auto tmpllh = likelihoods;
+        SoftmaxSelector<double> selector(tmpllh.data(), tmpllh.size(), 1);
+        int worldIndex = selector.select(ptools->dice.random());
+        //cerr << worldIndex << " " << likelihoods.size() << " " << worldPool.size() << " " << worldKeys.size() << endl;
+        World world = worldPool[worldIndex];
+        worldKeys.erase(world.key);
+        worldPool[worldIndex] = worldPool.back();
+        worldPool.pop_back();
+        likelihoods[worldIndex] = likelihoods.back();
+        likelihoods.pop_back();
+        for (int p = 0; p < N; p++) dst[p] = world.cards[p];
         checkDeal(dst);
     }
 
@@ -104,8 +100,9 @@ private:
     std::array<Cards, N> usedCards; // 使用済みカード
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
-    std::unordered_set<World, World::Hash> worldPool;
-    double wholeLikelihood = 0;
+    std::set<uint64_t> worldKeys;
+    std::vector<World> worldPool;
+    std::vector<double> likelihoods;
 
     int myNum, myClass;
     int myChangePartner, firstTurnClass;
@@ -158,6 +155,7 @@ private:
     double playLikelihood(const Cards *const c, const gameRecord_t& gLog,
                           const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
+        if (inChange) return 0;
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];

@@ -468,8 +468,10 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move, unsigned t
                                        const SharedData& shared, ThreadTools *const ptools) const {
     MoveInfo *const mv = ptools->buf;
     const int turn = field.turn();
+    const Cards myCards = field.getCards(turn);
     const Board b = field.board;
-    const int NMoves = genMove(mv, field.getCards(turn), b);
+    const int NMoves = genMove(mv, myCards, b);
+    assert(myCards.holds(move.cards()));
     if (NMoves <= 1) return 1;
 
     // 場の情報をまとめる
