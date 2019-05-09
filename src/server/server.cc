@@ -1,5 +1,5 @@
 /*
- daihubc.cc
+ server.cc
  */
 
 #include <stdio.h>
@@ -46,9 +46,9 @@
 
 #include "statistics.h"
 
+#include "../settings.h"
 #include "../UECda.h"
-#include "../engine/engineSettings.h"
-#include "../engine/engineStructure.hpp"
+#include "../engine/data.hpp"
 #include "../extra/rating.hpp"
 
 using namespace UECda;
@@ -57,14 +57,12 @@ const char* one_to_yes(int n) {
     if (n) return "YES";
     else return "NO";
 }
-
-std::string DIR_IN(""), DIR_OUT(""), DIR_LOG("");
 std::string record_file = "";
 
 MatchRecord match_log;
 GameRecord<PlayRecord> game_log;
-EngineSharedData shared;
-EngineThreadTools threadTools[N_THREADS];
+SharedData shared;
+ThreadTools threadTools[N_THREADS];
 
 void outputLog() {
     // 棋譜書き出し
@@ -76,7 +74,7 @@ void outputLog() {
             FILE *pf;
             //ログの番号を決める
             for (i = 0; i < 999; ++i) {
-                snprintf(str_file, 256, std::string(DIR_LOG+"logn%d.dat").c_str(), i);
+                snprintf(str_file, 256, std::string(DIRECTORY_LOGS+"logn%d.dat").c_str(), i);
                 pf = fopen(str_file, "r");
                 if (pf == NULL) { break; }
                 iret = fclose(pf);
@@ -86,7 +84,7 @@ void outputLog() {
         }
         
         //ログファイルのオープン
-        snprintf(str_file, 256, std::string(DIR_LOG+"logn%d.dat").c_str(), record_num);
+        snprintf(str_file, 256, std::string(DIRECTORY_LOGS+"logn%d.dat").c_str(), record_num);
         record_file = std::string(str_file);
     }
     
@@ -223,13 +221,7 @@ int main(int argc, char *argv[]) {
     std::array<double, N_PLAYERS> playerRateMean = {0};
     std::array<double, N_PLAYERS> playerRateExpMean = {0};
     constexpr double rateEpsilon = 0.99;
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        ifs >> DIR_IN;
-        ifs >> DIR_OUT;
-        ifs >> DIR_LOG;
-    }
+
     //cerr << "test" << endl;
     //ファイルパスの取得
     match_log.init();
@@ -319,17 +311,16 @@ int main(int argc, char *argv[]) {
     
     if (rating) {
         // レート計算のためシミュレーションに使用するデータを準備
-        shared.setMyPlayerNum(-1);
-        shared.basePlayPolicy.fin(DIR_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIR_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
         // スレッドごとのデータ初期化
-        for (int th = 0; th < N_THREADS; ++th) {
+        for (int th = 0; th < N_THREADS; th++) {
             threadTools[th].init(th);
         }
         XorShift64 tdice;
         tdice.srand((unsigned int)time(NULL));
-        for (int th = 0; th < N_THREADS; ++th) {
-            threadTools[th].dice.srand(tdice.rand() * (th + 111));
+        for (int th = 0; th < N_THREADS; th++) {
+            threadTools[th].dice.srand(tdice() * (th + 111));
         }
     }
     
@@ -1362,7 +1353,7 @@ int main(int argc, char *argv[]) {
         
         // レーティング計算
         if (rating) {
-            std::array<double, N_PLAYERS> dist = UECda::calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
+            std::array<double, N_PLAYERS> dist = calcDiffRateByRelativeWpWithSimulation(playerRate, game_log, 1500, 16.0, &shared, &threadTools[0]);
             for (int p = 0; p < N_PLAYERS; ++p) {
                 playerRate[p] += dist[p];
                 playerRateMean[p] = (playerRateMean[p] * (now_number_of_games - 1) + playerRate[p]) / now_number_of_games;

@@ -1,19 +1,19 @@
 
 // ラスト2人完全情報状態の勝敗判定動作テスト
 
-#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
-#include "../engine/lastTwo.hpp"
+#include "../engine/last2.hpp"
+#include "test.h"
 
-using namespace UECda;
+using namespace std;
 
-MoveInfo buffer[8192];
-Clock cl;
-std::mt19937 mt;
+static MoveInfo buffer[8192];
+static Clock cl;
+static std::mt19937 mt;
 
-int outputMateJudgeResult() {
+int outputL2JudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     //Cards myCards = CARDS_C3 | CARDS_H3 | CARDS_D9 | CARDS_CQ | CARDS_HQ;
     //Cards oppCards = CARDS_C4 | CARDS_D4 | CARDS_S5 | CARDS_D6 /*| CARDS_H9*/ | CARDS_DK | CARDS_HK /*| CARDS_SK*/ | CARDS_JOKER;
@@ -83,6 +83,8 @@ int testRecordL2(const Record& record) {
     // 棋譜中の局面においてL2判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
     // 正解を調べるのがきついこともあるのでとりあえず棋譜の結果を正解とする
+
+    L2::init();
     
     // judge(高速判定)
     uint64_t judgeTime[2] = {0};
@@ -95,8 +97,8 @@ int testRecordL2(const Record& record) {
     
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange(field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             
             if (field.getNAlivePlayers() == 2) {
                 const int turnPlayer = field.turn();
@@ -128,7 +130,7 @@ int testRecordL2(const Record& record) {
             }
             return 0;
         },
-        [&](const auto& field) { // last callback
+        [&](const Field& field) { // last callback
             // ここで新しい順位を得ることができる
             if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
                 int turnResult = field.newClassOf(l2TurnPlayer);
@@ -153,27 +155,22 @@ int testRecordL2(const Record& record) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
-    std::vector<std::string> logFileNames;
-    
-    for (int c = 1; c < argc; ++c) {
-        if (!strcmp(argv[c], "-l")) {
-            logFileNames.push_back(std::string(argv[c + 1]));
-        }
-    }
+bool Last2Test(const vector<string>& recordFiles) {
+
     mt.seed(1);
     
-    if (outputMateJudgeResult()) {
-        cerr << "failed case test." << endl; return -1;
+    if (outputL2JudgeResult()) {
+        cerr << "failed case test." << endl;
+        return false;
     }
     cerr << "passed case test." << endl;
     
-    Record record(logFileNames);
+    Record record(recordFiles);
     
     if (testRecordL2(record)) {
         cerr << "failed record L2 judge test." << endl;
     }
     cerr << "passed record L2 judge test." << endl;
     
-    return 0;
+    return true;
 }

@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <array>
-#include <map>
 #include <iterator>
 #include "../base/util.hpp"
 
@@ -10,7 +9,7 @@
 
 /**************************オーダー**************************/
 
-inline constexpr int flipOrder(int ord) { return 1 - ord; }
+constexpr int flipOrder(int ord) { return 1 - ord; }
 
 /**************************ランク**************************/
 
@@ -34,31 +33,20 @@ enum {
 };
 
 // 出力
-static const std::string rankChar  = "-3456789TJQKA2+:";
-
 struct OutRank {
     int r;
-    constexpr OutRank(const int& arg): r(arg) {}
+    constexpr OutRank(int arg): r(arg) {}
 };
-inline std::ostream& operator <<(std::ostream& out, const OutRank& arg) {
-    out << rankChar[arg.r];
-    return out;
-}
 struct RankRange { // 連続ランク
     int r0, r1;
-    constexpr RankRange(const int& arg0, const int& arg1): r0(arg0), r1(arg1) {}
+    constexpr RankRange(int arg0, int arg1): r0(arg0), r1(arg1) {}
 };
-inline std::ostream& operator <<(std::ostream& ost, const RankRange& arg) {
-    for (int r = arg.r0; r <= arg.r1; r++) ost << rankChar[r];
-    return ost;
-}
-inline int CharToRank(char c) {
-    int r = rankChar.find(c);
-    if (r != std::string::npos) return r;
-    r = rankChar.find(toupper(c));
-    if (r != std::string::npos) return r;
-    return RANK_NONE;
-}
+
+extern const std::string rankChar;
+extern std::ostream& operator <<(std::ostream& out, const OutRank& arg);
+extern std::ostream& operator <<(std::ostream& ost, const RankRange& arg);
+extern int CharToRank(char c);
+
 /**************************スート番号**************************/
 
 // 単スート
@@ -71,41 +59,24 @@ enum {
 };
 
 constexpr int N_SUITS = 4;
-
-// 出力
-const std::string suitNumChar  = "CDHSX";
     
 struct OutSuitNum {
     int sn;
-    constexpr OutSuitNum(const int& arg): sn(arg) {}
+    constexpr OutSuitNum(int arg): sn(arg) {}
 };
-inline std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg) {
-    ost << suitNumChar[arg.sn];
-    return ost;
-}
-inline int CharToSuitNum(char c) {
-    int sn = suitNumChar.find(c);
-    if (sn != std::string::npos) return sn;
-    sn = suitNumChar.find(toupper(c));
-    if (sn != std::string::npos) return sn;
-    return SUITNUM_NONE;
-}
+
+extern const std::string suitNumChar;
+extern std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg);
+extern int CharToSuitNum(char c);
 
 /**************************スート**************************/
 
-using Suits = unsigned int;
-
 // 単スート
-enum {
-    SUIT_NULL = 0,
-    SUIT_C = 1, SUIT_D = 2, SUIT_H = 4, SUIT_S = 8,
-    SUIT_X = 16,
-    SUIT_MIN = SUIT_C,
-    SUIT_MAX = SUIT_S
-};
+enum { SUIT_X = 16 };
 
 // スート集合 (スートの和集合)
 enum {
+    
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
@@ -114,7 +85,7 @@ enum {
     SUITS_ALL = SUITS_CDHS,
 };
 
-inline int countSuits(uint32_t s) { return popcnt(s); }
+inline int countSuits(unsigned s) { return popcnt(s); }
 
 // スートインデックス
 // スートビットから、その種類の役の中で何番目のスートパターンとされているかを得る
@@ -130,26 +101,19 @@ constexpr int SuitsToSuitNum(int suit) { return suitsIdx[suit]; } // 複スー�
 
 // 出力
 struct OutSuits {
-    uint32_t s;
-    constexpr OutSuits(const uint32_t& arg): s(arg) {}
+    unsigned s;
+    constexpr OutSuits(unsigned arg): s(arg) {}
 };
-static std::ostream& operator <<(std::ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
-    for (int sn = 0; sn < N_SUITS + 1; sn++) {
-        if (arg.s & SuitNumToSuits(sn)) {
-            out << suitNumChar[sn];
-        }
-    }
-    return out;
-}
+
+extern std::ostream& operator <<(std::ostream& out, const OutSuits& arg);
 
 // (スート, スート)のパターン
-uint8_t suitsSuitsIndexTable[16][16];
-uint8_t twoSuitsIndexTable[16][16];
-BitArray64<4, 16> suitSuitsIndexTable[16];
-
+extern uint8_t sSIndex[16][16];
+extern uint8_t S2Index[16][16];
+extern uint8_t SSIndex[16][16];
 // (スート, スート, スート)のパターン
-uint16_t suitsSuitsSuitsIndexTable[16][16][16];
-uint16_t suitSuitsSuitsIndexTable[16][16][16];
+extern uint8_t sSSIndex[16][16][16];
+extern uint16_t SSSIndex[16][16][16];
 
 constexpr int N_PATTERNS_SUIT_SUITS = 8;
 constexpr int N_PATTERNS_2SUITS = 22;
@@ -157,143 +121,7 @@ constexpr int N_PATTERNS_SUITS_SUITS = 35;
 constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
 constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
 
-inline int getSuitSuitsIndex(uint32_t s0, uint32_t s1) {
-    return suitSuitsIndexTable[s0][s1];
-}
-inline int getSuitsSuitsIndex(uint32_t s0, uint32_t s1) {
-    return suitsSuitsIndexTable[s0][s1];
-}
-inline int get2SuitsIndex(uint32_t s0, uint32_t s1) {
-    return twoSuitsIndexTable[s0][s1];
-}
-inline int getSuitsSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
-    return suitsSuitsSuitsIndexTable[s0][s1][s2];
-}
-inline int getSuitSuitsSuitsIndex(uint32_t s0, uint32_t s1, uint32_t s2) {
-    return suitsSuitsSuitsIndexTable[s0][s1][s2];
-}
-
-inline void initSuits() {
-    
-    // (suits suits) pattern index (exchangable) 0 ~ 21
-    int twoSuitsCountIndex[5][5][5] = {0};
-    int cnt = 0;
-    for (int c0 = 0; c0 <= 4; c0++) {
-        for (int c1 = 0; c1 <= c0; c1++) {
-            for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
-                DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
-                twoSuitsCountIndex[c0][c1][c01] = cnt;
-                ++cnt;
-            }
-        }
-    }
-    ASSERT(cnt == N_PATTERNS_2SUITS, cerr << cnt << " <-> " << N_PATTERNS_2SUITS << endl;);
-    
-    // (suits, suits) pattern index 0 ~ 34
-    int suitsSuitsCountIndex[5][5][5] = {0};
-    cnt = 0;
-    for (int c0 = 0; c0 <= 4; c0++) {
-        for (int c1 = 0; c1 <= 4; c1++) {
-            for (size_t c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); ++c01) {
-                DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
-                suitsSuitsCountIndex[c0][c1][c01] = cnt++;
-            }
-        }
-    }
-    ASSERT(cnt == N_PATTERNS_SUITS_SUITS,
-           cerr << cnt << " <-> " << N_PATTERNS_SUITS_SUITS << endl;);
-    
-    for (uint32_t s0 = 0; s0 < 16; s0++) {
-        for (uint32_t s1 = 0; s1 < 16; s1++) {
-            const uint32_t s01 = s0 & s1;
-            const uint32_t c0 = popcnt(s0), c1 = popcnt(s1);
-            const uint32_t cmin = min(c0, c1), cmax = max(c0, c1);
-            const uint32_t c01 = popcnt(s01);
-
-            suitsSuitsIndexTable[s0][s1]
-            = suitsSuitsCountIndex[c0][c1][c01];
-            
-            twoSuitsIndexTable[s0][s1]
-            = twoSuitsCountIndex[cmax][cmin][c01];
-        }
-    }
-    
-    // (suit, suits) pattern index 0 ~ 7
-    int suitSuitsCountIndex[5][2] = {0};
-    cnt = 0;
-    for (int c1 = 0; c1 <= 4; ++c1) {
-        for (int c01 = max(0, 1 + c1 - 4); c01 <= min(c1, 1); ++c01) {
-            assert(c01 == 0 || c01 == 1);
-            DERR << "pattern " << cnt << " = " << c1 << ", " << c01 << endl;
-            suitSuitsCountIndex[c1][c01] = cnt;
-            ++cnt;
-        }
-    }
-    ASSERT(cnt == N_PATTERNS_SUIT_SUITS, cerr << cnt << " <-> " << N_PATTERNS_SUIT_SUITS << endl;);
-    
-    for (int sn0 = 0; sn0 < 4; ++sn0) {
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            const uint32_t s0 = SuitNumToSuits(sn0);
-            const uint32_t s01 = s0 & s1;
-            const uint32_t c1 = popcnt(s1);
-            const uint32_t c01 = popcnt(s01);
-            
-            suitSuitsIndexTable[s0].assign(s1, suitSuitsCountIndex[c1][c01]);
-        }
-    }
-    
-    // (suits, suits, suits) pattern index
-    //int suitsSuitsSuitsCountIndex[5][5][5][5][5][5][5] = {0};
-    std::map<std::array<uint32_t, ipow(2, 3) - 1>, int> sssMap;
-    for (uint32_t s0 = 0; s0 < 16; ++s0) {
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            for (uint32_t s2 = 0; s2 < 16; ++s2) {
-                const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
-                const uint32_t s012 = s0 & s1 & s2;
-                const uint32_t c0 = popcnt(s0), c1 = popcnt(s1), c2 = popcnt(s2);
-                const uint32_t c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
-                const uint32_t c012 = popcnt(s012);
-                std::array<uint32_t, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
-                int cnt;
-                if (sssMap.count(pattern) == 0) {
-                    cnt = sssMap.size();
-                    sssMap[pattern] = cnt;
-                    DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << ", " << c012 << endl;
-                } else {
-                    cnt = sssMap[pattern];
-                }
-                //suitsSuitsSuitsCountIndex[c0][c1][c2][c01][c02][c12][c012] = cnt;
-                suitsSuitsSuitsIndexTable[s0][s1][s2] = cnt;
-            }
-        }
-    }
-    ASSERT(sssMap.size() == N_PATTERNS_SUITS_SUITS_SUITS,
-           cerr << sssMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_SUITS << endl;);
-    
-    //int suitSuitsSuitsCountIndex[5][5][5][5][5] = {0};
-    std::map<std::array<uint32_t, ipow(2, 3) - 3>, int> s1ssMap;
-    for (uint32_t s0 = 1; s0 < 16; s0 <<= 1) {
-        for (uint32_t s1 = 0; s1 < 16; ++s1) {
-            for (uint32_t s2 = 0; s2 < 16; ++s2) {
-                const uint32_t s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
-                const uint32_t s012 = s0 & s1 & s2;
-                const uint32_t c1 = popcnt(s1), c2 = popcnt(s2);
-                const uint32_t c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
-                std::array<uint32_t, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
-                int cnt;
-                if (s1ssMap.count(pattern) == 0) {
-                    cnt = s1ssMap.size();
-                    s1ssMap[pattern] = cnt;
-                    DERR << "pattern " << cnt << " = " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << endl;
-                } else {
-                    cnt = s1ssMap[pattern];
-                }
-                //suitSuitsSuitsCountIndex[c1][c2][c01][c02][c12] = cnt;
-                suitSuitsSuitsIndexTable[s0][s1][s2] = cnt;
-            }
-        }
-    }
-}
+extern void initSuits();
 
 struct SuitsInitializer {
     SuitsInitializer() {
@@ -301,7 +129,7 @@ struct SuitsInitializer {
     }
 };
 
-SuitsInitializer suitsInitializer;
+extern SuitsInitializer suitsInitializer;
 
 /**************************カード整数**************************/
 
@@ -340,6 +168,7 @@ enum IntCard : int {
 
 // 総カード数（ゲーム上では存在しないUやOのカードも定義されているため、ゲームの定義ではなくこちらを使う）
 constexpr int N_CARDS = 53;
+constexpr int N_JOKERS = 1;
 constexpr int N_IMG_CARDS = 61;
 
 constexpr bool examIntCard(IntCard ic) {
@@ -363,23 +192,9 @@ struct OutIntCard {
     IntCard ic;
     constexpr OutIntCard(const IntCard& arg): ic(arg) {}
 };
-inline std::ostream& operator <<(std::ostream& out, const OutIntCard& arg) {
-    if (arg.ic == INTCARD_JOKER) {
-        out << "JO";
-    } else {
-        out << OutSuitNum(IntCardToSuitNum(arg.ic)) << OutRank(IntCardToRank(arg.ic));
-    }
-    return out;
-}
 
-inline IntCard StringToIntCard(const std::string& str) {
-    if (str.size() != 2) return INTCARD_NONE;
-    if (toupper(str) == "JO") return INTCARD_JOKER;
-    int sn = CharToSuitNum(str[0]);
-    int r = CharToRank(str[1]);
-    if (sn == SUITNUM_NONE || r == RANK_NONE) return INTCARD_NONE;
-    return RankSuitNumToIntCard(r, sn);
-}
+extern std::ostream& operator <<(std::ostream& out, const OutIntCard& arg);
+extern IntCard StringToIntCard(const std::string& str);
 
 /**************************カード集合**************************/
 
@@ -402,15 +217,15 @@ constexpr BitCards CARDS_MIN = CARDS_HORIZON << INTCARD_MIN;
 constexpr BitCards CARDS_MAX = CARDS_HORIZON << INTCARD_MAX;
 
 constexpr BitCards CARDS_NULL = 0ULL;
-constexpr BitCards CARDS_ALL = 0x10FFFFFFFFFFFFF0; // このゲームに登場する全て
-constexpr BitCards CARDS_IMG_ALL = 0x1FFFFFFFFFFFFFFF; // 存在を定義しているもの全て
+constexpr BitCards CARDS_PLAIN_ALL = 0x00FFFFFFFFFFFFF0;
+constexpr BitCards CARDS_IMG_PLAIN_ALL = 0x0FFFFFFFFFFFFFFF;
 
 constexpr BitCards CARDS_D3 = IntCardToCards(INTCARD_D3);
 constexpr BitCards CARDS_S3 = IntCardToCards(INTCARD_S3);
 constexpr BitCards CARDS_JOKER = IntCardToCards(INTCARD_JOKER);
 
-constexpr BitCards CARDS_ALL_PLAIN = CARDS_ALL - CARDS_JOKER;
-constexpr BitCards CARDS_IMG_ALL_PLAIN = CARDS_IMG_ALL - CARDS_JOKER;
+constexpr BitCards CARDS_ALL = CARDS_PLAIN_ALL + CARDS_JOKER;
+constexpr BitCards CARDS_IMG_ALL = CARDS_IMG_PLAIN_ALL + CARDS_JOKER;
 
 // 各ランクのカード全体
 constexpr BitCards CARDS_U  = 0x000000000000000F;
@@ -460,22 +275,20 @@ constexpr BitCards CARDS_DHS  = 0x0EEEEEEEEEEEEEEE;
 constexpr BitCards CARDS_CDHS = 0x0FFFFFFFFFFFFFFF;
 
 // スートの指定からカード集合を生成する
-constexpr BitCards SuitsToCards(uint32_t s) {
+constexpr BitCards SuitsToCards(unsigned s) {
     return CARDS_HORIZONSUIT * s; // あるスートのカード全て
 }
 // ランクとスートの指定からカード集合を生成する
 // スートは集合として用いる事が出来る
-constexpr BitCards RankSuitsToCards(int r, uint32_t s) {
-    return (BitCards)s << (r << 2);
+constexpr BitCards RankSuitsToCards(int r, unsigned s) {
+    return BitCards(s) << (r << 2);
 }
 
 // Cards型基本演算
 
 // 追加
 constexpr BitCards addCards(BitCards c0, BitCards c1) { return c0 | c1; }
-
 constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
-constexpr BitCards addJOKER(BitCards c) { return addCards(c, CARDS_JOKER); }
 
 // 限定
 constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
@@ -492,8 +305,8 @@ constexpr BitCards subtrCards(BitCards c0, BitCards c1) { return c0 - c1; }
 constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
 
 // 要素数
-constexpr uint32_t countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
-inline uint32_t countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
+constexpr unsigned countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
+inline unsigned countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
 constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
 
 // 排他性
@@ -512,8 +325,8 @@ constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
 constexpr BitCards anyCards(BitCards c) { return c; }
 
 // validation
-constexpr bool examCards(BitCards c) { return holdsCards(CARDS_ALL, c); }
-constexpr bool examImaginaryCards(BitCards c) { return holdsCards(CARDS_IMG_ALL, c); }
+constexpr bool examPlainCards(BitCards c) { return holdsCards(CARDS_PLAIN_ALL, c); }
+constexpr bool examImaginaryPlainCards(BitCards c) { return holdsCards(CARDS_IMG_PLAIN_ALL, c); }
 
 // Cards型特殊演算
 
@@ -665,7 +478,7 @@ inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
     switch (ord) {
         case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = subtrCards(RankRangeToCards(RANK_MIN, RANK_MAX), RankToCards(rank)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, RANK_MAX) - RankToCards(rank); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -676,8 +489,8 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     switch (ord) {
         case 0: res = RankRangeToCards(rank + qty, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
-        case 2: res = addCards(RankRangeToCards(RANK_MIN, rank - 1),
-                               RankRangeToCards(rank + qty, RANK_MAX)); break;
+        case 2: res = RankRangeToCards(RANK_MIN, rank - 1)
+                      | RankRangeToCards(rank + qty, RANK_MAX); break;
         default: UNREACHABLE; res = CARDS_NULL; break;
     }
     return res;
@@ -707,7 +520,7 @@ struct CardsAsSet {
     BitCards c_;
     constexpr CardsAsSet(BitCards c): c_(c) {}
 
-    constexpr BitCards lowest() const { assert(c_); return c_ & -c_; }
+    BitCards lowest() const { assert(c_); return c_ & -c_; }
     BitCards popLowest() {
         assert(c_);
         BitCards l = lowest();
@@ -773,14 +586,17 @@ union Cards {
     constexpr bool anyJOKER() const { return containsJOKER(c_); }
     constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
 
-    constexpr int joker() const { return joker_; } //containsJOKER(c_) ? 1 : 0; }
+    constexpr unsigned joker() const { return joker_; }
     constexpr Cards plain() const { return plain_; }
 
-    int count() const { return countCards(c_); }
-    constexpr int countInCompileTime() const { return countFewCards(c_); }
-    int countPlain() const { return countCards(plain()); }
+    unsigned count() const { return joker_ + countPlain(); }
+    constexpr unsigned countInCompileTime() const { return joker_ + countFewCards(plain_); }
+    unsigned countPlain() const { return countCards(plain_); }
 
-    constexpr bool holds(BitCards c) const { return holdsCards(c_, c); }
+    constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
+    constexpr bool holds(Cards c) const {
+        return joker_ >= c.joker_ && holdsCards(plain(), c.plain());
+    }
     constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
 
     // 指定されたランクのスート集合を得る
@@ -864,23 +680,20 @@ union Cards {
 
     constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
 
+    bool exam() const {
+        return joker_ <= N_JOKERS && examPlainCards(plain());
+    }
+
     std::string toString() const {
         std::ostringstream oss;
         oss << "{";
-        int cnt = 0;
-        for (IntCard ic : *this) {
-            if (cnt++ > 0) oss << " "; 
-            oss << OutIntCard(ic);
-        }
+        for (IntCard ic : *this) oss << " " << OutIntCard(ic);
         oss << " }";
         return oss.str();
     }
 };
 
-inline std::ostream& operator <<(std::ostream& out, const Cards& c) {
-    out << c.toString();
-    return out;
-}
+extern std::ostream& operator <<(std::ostream& out, const Cards& c);
 
 struct CardArray : public BitArray64<4, 16> {
     constexpr CardArray(): BitArray64<4, 16>() {}
@@ -895,35 +708,7 @@ struct OutCardTables {
     OutCardTables(const std::vector<Cards>& c): cv(c) {}
 };
 
-static std::ostream& operator <<(std::ostream& out, const OutCardTables& arg) {
-    // テーブル形式で見やすく
-    // ２つを横並びで表示
-    for (int i = 0; i < (int)arg.cv.size(); i++) {
-        out << " ";
-        for (int r = RANK_3; r <= RANK_2; r++) out << " " << OutRank(r);
-        out << " X    ";
-    }
-    out << endl;
-    for (int sn = 0; sn < N_SUITS; sn++) {
-        for (Cards c : arg.cv) {
-            out << OutSuitNum(sn) << " ";
-            for (int r = RANK_3; r <= RANK_2; r++) {
-                IntCard ic = RankSuitNumToIntCard(r, sn);
-                if (c.contains(ic)) out << "O ";
-                else out << ". ";
-            }
-            if (sn == 0) {
-                if (containsJOKER(c)) out << "O ";
-                else out << ". ";
-                out << "   ";
-            } else {
-                out << "     ";
-            }
-        }
-        out << endl;
-    }
-    return out;
-}
+extern std::ostream& operator <<(std::ostream& out, const OutCardTables& arg);
 
 inline BitCards canMakeSeq(Cards c, int qty) {
     int joker = c.joker();
@@ -938,7 +723,7 @@ inline BitCards canMakeSeq(Cards c, int qty) {
 // 現在はいずれにせよ、ジョーカーは絡めないことにしている
 
 // 無支配ゾーン
-BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
+extern BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 
 // 現在用意されている型は以下
 
@@ -951,25 +736,24 @@ BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 // ND 無支配型(ジョーカーのビットは関係ないが、存在は加味)
 
 // PQR定数
-constexpr BitCards PQR_NULL = 0ULL;
-constexpr BitCards PQR_1    = CARDS_IMG_ALL_PLAIN & 0x1111111111111111;
-constexpr BitCards PQR_2    = CARDS_IMG_ALL_PLAIN & 0x2222222222222222;
-constexpr BitCards PQR_3    = CARDS_IMG_ALL_PLAIN & 0x4444444444444444;
-constexpr BitCards PQR_4    = CARDS_IMG_ALL_PLAIN & 0x8888888888888888;
-constexpr BitCards PQR_12   = CARDS_IMG_ALL_PLAIN & 0x3333333333333333;
-constexpr BitCards PQR_13   = CARDS_IMG_ALL_PLAIN & 0x5555555555555555;
-constexpr BitCards PQR_14   = CARDS_IMG_ALL_PLAIN & 0x9999999999999999;
-constexpr BitCards PQR_23   = CARDS_IMG_ALL_PLAIN & 0x6666666666666666;
-constexpr BitCards PQR_24   = CARDS_IMG_ALL_PLAIN & 0xaaaaaaaaaaaaaaaa;
-constexpr BitCards PQR_34   = CARDS_IMG_ALL_PLAIN & 0xcccccccccccccccc;
-constexpr BitCards PQR_123  = CARDS_IMG_ALL_PLAIN & 0x7777777777777777;
-constexpr BitCards PQR_124  = CARDS_IMG_ALL_PLAIN & 0xbbbbbbbbbbbbbbbb;
-constexpr BitCards PQR_134  = CARDS_IMG_ALL_PLAIN & 0xdddddddddddddddd;
-constexpr BitCards PQR_234  = CARDS_IMG_ALL_PLAIN & 0xeeeeeeeeeeeeeeee;
-constexpr BitCards PQR_1234 = CARDS_IMG_ALL_PLAIN & 0xffffffffffffffff;
+constexpr BitCards PQR_1    = CARDS_IMG_PLAIN_ALL & 0x1111111111111111;
+constexpr BitCards PQR_2    = CARDS_IMG_PLAIN_ALL & 0x2222222222222222;
+constexpr BitCards PQR_3    = CARDS_IMG_PLAIN_ALL & 0x4444444444444444;
+constexpr BitCards PQR_4    = CARDS_IMG_PLAIN_ALL & 0x8888888888888888;
+constexpr BitCards PQR_12   = CARDS_IMG_PLAIN_ALL & 0x3333333333333333;
+constexpr BitCards PQR_13   = CARDS_IMG_PLAIN_ALL & 0x5555555555555555;
+constexpr BitCards PQR_14   = CARDS_IMG_PLAIN_ALL & 0x9999999999999999;
+constexpr BitCards PQR_23   = CARDS_IMG_PLAIN_ALL & 0x6666666666666666;
+constexpr BitCards PQR_24   = CARDS_IMG_PLAIN_ALL & 0xaaaaaaaaaaaaaaaa;
+constexpr BitCards PQR_34   = CARDS_IMG_PLAIN_ALL & 0xcccccccccccccccc;
+constexpr BitCards PQR_123  = CARDS_IMG_PLAIN_ALL & 0x7777777777777777;
+constexpr BitCards PQR_124  = CARDS_IMG_PLAIN_ALL & 0xbbbbbbbbbbbbbbbb;
+constexpr BitCards PQR_134  = CARDS_IMG_PLAIN_ALL & 0xdddddddddddddddd;
+constexpr BitCards PQR_234  = CARDS_IMG_PLAIN_ALL & 0xeeeeeeeeeeeeeeee;
+constexpr BitCards PQR_1234 = CARDS_IMG_PLAIN_ALL & 0xffffffffffffffff;
 
 // 定義通りの関数
-constexpr BitCards QtyToPQR(uint32_t q) { return PQR_1 << (q - 1); }
+constexpr BitCards QtyToPQR(unsigned q) { return PQR_1 << (q - 1); }
 
 // パラレル演算関数
 inline CardArray CardsToQR(BitCards c) {
@@ -999,7 +783,7 @@ inline BitCards CardsTo0R(BitCards c) {
     return CardsToFR(~c);
 }
 inline BitCards CardsToNR(BitCards c, int q) {
-    Cards nr;
+    BitCards nr;
     switch (q) {
         case 0: nr = CardsTo0R(c); break;
         case 1: nr = CardsTo1R(c); break;
@@ -1049,7 +833,7 @@ inline BitCards PQRToSC(BitCards pqr) {
     r |= (r & PQR_34) >> 2;
     return r;
 }
-inline void PQRToND(BitCards pqr, uint32_t jk, Cards *const nd) {
+inline void PQRToND(BitCards pqr, unsigned jk, Cards *const nd) {
     // pqr -> nd[2] 変換
     // ジョーカーの枚数の情報も必要
     assert(jk == 0 || jk == 1); // 0or1枚
@@ -1164,8 +948,7 @@ inline uint64_t CardsToHashKey(Cards c) {
     return key;
 }
 
-//constexpr uint64_t HASH_CARDS_ALL = 0xe59ef9b1d4fe1c44ULL; // 先に計算してある
-uint64_t HASH_CARDS_ALL;
+extern uint64_t HASH_CARDS_ALL;
 
 inline uint64_t CardsCardsToHashKey(Cards c0, Cards c1) {
     return cross64(CardsToHashKey(c0), CardsToHashKey(c1));
@@ -1174,30 +957,7 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
     return cross64(key0, key1);
 }
 
-inline void initCards() {
-    // カード集合関係の初期化
-    HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
-    // nd計算に使うテーブル
-    for (int r = 0; r < 16; r++) {
-        // オーダー通常
-        ORQ_NDTable[0][r][0] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1;
-        ORQ_NDTable[0][r][1] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_12;
-        ORQ_NDTable[0][r][2] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_123;
-        ORQ_NDTable[0][r][3] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-        }
-        // オーダー逆転
-        ORQ_NDTable[1][r][0] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1;
-        ORQ_NDTable[1][r][1] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_12;
-        ORQ_NDTable[1][r][2] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_123;
-        ORQ_NDTable[1][r][3] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        }
-        // 複数ジョーカーには未対応
-    }
-}
+extern void initCards();
 
 struct CardsInitializer {
     CardsInitializer() {
@@ -1205,7 +965,7 @@ struct CardsInitializer {
     }
 };
 
-CardsInitializer cardsInitializer;
+extern CardsInitializer cardsInitializer;
 
 /**************************着手表現**************************/
 
@@ -1240,13 +1000,16 @@ struct Move {
     uint32_t toInt() const {
         return uint32_t(*reinterpret_cast<const uint64_t*>(this));
     }
+    bool operator ==(const Move& m) const {
+        return toInt() == m.toInt();
+    }
     
     void clear()                      { Move tmp = {0}; (*this) = tmp; }
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
     void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ
-    void setJokerRank(uint32_t jr)    { jkr = jr; }
-    void setJokerSuits(uint32_t js)   { jks = js; }
+    void setJokerRank(unsigned jr)    { jkr = jr; }
+    void setJokerSuits(unsigned js)   { jks = js; }
     void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
     // タイプを指定してまとめて処理
@@ -1277,21 +1040,21 @@ struct Move {
     constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
     
-    constexpr bool isEqualRankSuits(uint32_t r, uint32_t s) const {
+    constexpr bool isEqualRankSuits(unsigned r, unsigned s) const {
         // rank と スートが一致するか
         return rank() == r && suits() == s;
     }
 
     // 情報を得る
-    constexpr uint32_t suits()      const { return s; }
+    constexpr unsigned suits()      const { return s; }
     constexpr int qty()             const { return q; }
     constexpr int rank()            const { return r; }
     constexpr int jokerRank()       const { return jkr; }
-    constexpr uint32_t jokerSuits() const { return jks; }
-    constexpr uint32_t type()       const { return t; }
+    constexpr unsigned jokerSuits() const { return jks; }
+    constexpr int type()            const { return t; }
 
     int typeNum() const {
-        uint32_t q = qty();
+        int q = qty();
         if (isSeq()) {
             if (q >= 6) return 8;
             return 2 + q;
@@ -1305,10 +1068,10 @@ struct Move {
         if (isPASS()) return CARDS_NULL;
         if (isSingleJOKER()) return CARDS_JOKER;
         int r = rank();
-        uint32_t s = suits();
+        unsigned s = suits();
         if (!isSeq()) {
             Cards c = CARDS_NULL;
-            uint32_t jks = jokerSuits();
+            unsigned jks = jokerSuits();
             if (jks) {
                 c |= CARDS_JOKER;
                 if (jks != SUITS_CDHS) s -= jks; // クインタプル対策
@@ -1360,14 +1123,7 @@ struct Move {
     bool domInevitably() const;
     bool isRev() const;
     bool isBack() const;
-
-    bool changesPrmState() const { return isRev(); }
-
     bool exam() const;
-
-    bool operator ==(const Move& m) const {
-        return toInt() == m.toInt();
-    }
 };
 
 const Move MOVE_NULL = {0};
@@ -1378,198 +1134,14 @@ struct MeldChar : public Move {
     MeldChar(Move m): Move(m) {}
 };
 
-std::ostream& operator <<(std::ostream& out, const MeldChar& m) { // MeldChar出力
-    if (m.isPASS()) {
-        out << "PASS";
-    } else if (m.isSingleJOKER()) {
-        out << "JOKER";
-    } else {
-        // スート
-        if (m.isQuintuple()) { // クインタ特別
-            out << OutSuits(SUITS_CDHSX);
-        } else {
-            out << OutSuits(m.suits());
-        }
-        out << "-";
-        
-        // ランク
-        int r = m.rank();
-        if (m.isSeq()) {
-            uint32_t q = m.qty();
-            out << RankRange(r, r + q - 1);
-        } else {
-            out << OutRank(r);
-        }
-    }
-    return out;
-}
-
-static std::ostream& operator <<(std::ostream& out, const Move& m) { // Move出力
-    out << MeldChar(m) << m.cards();
-    return out;
-}
-
-class LogMove : public Move {
-    // ログ出力用
-public:
-    LogMove(const Move& arg) : Move(arg) {}
-};
-
-static std::string toRecordString(LogMove m) {
-    std::ostringstream oss;
-    if (m.isPASS()) {
-        oss << "P";
-    } else if (m.isSingleJOKER()) {
-        oss << "JK";
-    } else {
-        int r = m.rank();
-        if (m.isSeq()) {
-            oss << OutSuits(m.suits());
-            oss << "-";
-            int q = m.qty();
-            oss << RankRange(r, r + q - 1);
-            // ジョーカー
-            if (m.containsJOKER()) {
-                oss << "(" << OutRank(m.jokerRank()) << ")";
-            }
-        } else {
-            if (m.isQuintuple()) oss << OutSuits(SUITS_CDHSX);
-            else oss << OutSuits(m.suits());
-            oss << "-";
-            oss << OutRank(r);
-            if (m.containsJOKER()) {
-                uint32_t jks = m.jokerSuits();
-                if (jks == SUITS_CDHS) jks = SUIT_X;
-                oss << "(" << OutSuits(jks) << ")";
-            }
-        }
-    }
-    return tolower(oss.str());
-}
-    
-inline Move CardsToMove(const Cards chara, const Cards used) {
-    // 性質 chara 構成札 used のカードから着手への変換
-    Move m = MOVE_NULL;
-    DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
-    if (chara == CARDS_NULL) return MOVE_PASS;
-    if (chara == CARDS_JOKER) {
-        m.setSingleJOKER();
-        return m;
-    }
-    IntCard ic = chara.lowest();
-    int r = IntCardToRank(ic);
-    uint32_t s = chara[r];
-    uint32_t ps = used[r]; // ジョーカーなしのスート
-    int q = countCards(chara);
-    if (!polymRanks<2>(chara)) { // グループ系
-        if (q == 1) {
-            m.setSingle(r, s);
-        } else {
-            m.setGroup(q, r, s);
-            uint32_t js = s - ps;
-            if (js) m.setJokerSuits(js);
-        }
-    } else { // 階段系
-        m.setSeq(q, r, s);
-        if (containsJOKER(used)) {
-            IntCard jic = Cards(subtrCards(chara, used.plain())).lowest();
-            uint32_t jr = IntCardToRank(jic);
-            m.setJokerRank(jr);
-            m.setJokerSuits(s);
-        }
-    }
-    DERR << "pointer &m = " << (uint64_t)(&m) << endl;
-    DERR << "chara " << chara << " used " << used << " -> " << MeldChar(m) << endl;
-    return m;
-}
-
-inline Move StringToMoveM(const std::string& str) {
-    // 入力文字列からMove型への変更
-    Move mv = MOVE_NULL;
-    bool jk = false; // joker used
-    uint32_t s = SUITS_NULL;
-    int rank = RANK_NONE;
-    uint32_t ns = 0; // num of suits
-    uint32_t nr = 0; // num of ranks
-    size_t i = 0;
-    
-    // special
-    if (str == "p") return MOVE_PASS;
-    if (str == "jk") {
-        mv.setSingleJOKER();
-        return mv;
-    }
-    // suits
-    for (; i < str.size(); i++) {
-        char c = str[i];
-        if (c == '-') { i++; break; }
-        int sn = CharToSuitNum(c);
-        if (sn == SUITNUM_NONE) {
-            CERR << "illegal suit number" << endl;
-            return MOVE_NONE;
-        }
-        if (sn != SUITNUM_X) s |= SuitNumToSuits(sn);
-        else jk = true; // クインタプル
-        ns++;
-    }
-    // rank
-    for (; i < str.size(); i++) {
-        char c = str[i];
-        if (c == '(') { jk = true; i++; break; }
-        int r = CharToRank(c);
-        if (r == RANK_NONE) {
-            CERR << "illegal rank" << endl;
-            return MOVE_NONE;
-        }
-        if (rank == RANK_NONE) rank = r;
-        nr++;
-    }
-    // invalid
-    if (s == SUITS_NULL) { CERR << "null suits" << endl; return MOVE_NONE; }
-    if (!ns) { CERR << "zero suits" << endl; return MOVE_NONE; }
-    if (rank == RANK_NONE) { CERR << "null lowest-rank" << endl; return MOVE_NONE; }
-    if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
-    // seq or group?
-    if (nr > 1) mv.setSeq(nr, rank, s);
-    else if (ns == 1) mv.setSingle(rank, s);
-    else  mv.setGroup(ns, rank, s);
-    // joker
-    if (jk) {
-        if (!mv.isSeq()) {
-            uint32_t jks = SUITS_NULL;
-            for (; i < str.size(); i++) {
-                char c = str[i];
-                if (c == ')') break;
-                int sn = CharToSuitNum(c);
-                if (sn == SUITNUM_NONE) {
-                    CERR << "illegal joker-suit" << c << " from " << str << endl;
-                    return MOVE_NONE;
-                }
-                jks |= SuitNumToSuits(sn);
-            }
-            if (jks == SUITS_NULL || (jks & SUIT_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
-            mv.setJokerSuits(jks);
-        } else {
-            int jkr = RANK_NONE;
-            for (; i < str.size(); i++) {
-                char c = str[i];
-                if (c == ')') break;
-                int r = CharToRank(c);
-                if (r == RANK_NONE) {
-                    CERR << "illegal joker-rank " << c << " from " << str << endl;
-                    return MOVE_NONE;
-                }
-                jkr = r;
-            }
-            mv.setJokerRank(jkr);
-            mv.setJokerSuits(mv.suits());
-        }
-    }
-    return mv;
-}
+extern std::ostream& operator <<(std::ostream& out, const MeldChar& m);
+extern  std::ostream& operator <<(std::ostream& out, const Move& m);
+extern std::string toRecordString(Move m);
+extern Move CardsToMove(const Cards chara, const Cards used);
+extern Move StringToMoveM(const std::string& str);
 
 // 生成関数
-Move IntCardToSingleMove(IntCard ic) {
+inline Move IntCardToSingleMove(IntCard ic) {
     // IntCard型から対応するシングル役に変換
     // シングルジョーカー、ジョーカーS3は非対応
     Move m = MOVE_NULL;
@@ -1605,15 +1177,10 @@ struct Board : public Move {
     
     void init() { clear(); }
     Move move() const { return Move(*this); }
-    
-    // set, fix
-    
-    void setTmpOrder(uint32_t ord) { Move::o = ord; }
-    void setPrmOrder(uint32_t ord) { Move::po = ord; }
-    
-    void fixTmpOrder(uint32_t ord) { setTmpOrder(ord); }
-    void fixPrmOrder(uint32_t ord) { setPrmOrder(ord); }
-    
+
+    void setTmpOrder(int ord) { Move::o = ord; }
+    void setPrmOrder(int ord) { Move::po = ord; }
+
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
     
@@ -1662,13 +1229,13 @@ struct Board : public Move {
     void flush() {
         int ord = Move::po;
         init();
-        fixPrmOrder(ord);
-        fixTmpOrder(ord);
+        setPrmOrder(ord);
+        setTmpOrder(ord);
     }
     void lockSuits() { Move::sl = 1; }
     void procPASS() {} //何もしない
 
-    void fixMeld (Move m) {
+    void setMeld (Move m) {
         Move::s = m.s;
         Move::r = m.r;
         Move::jks = m.jks;
@@ -1686,7 +1253,7 @@ struct Board : public Move {
             } else {
                 procOrder(m);
                 if (locksSuits(m)) lockSuits();
-                fixMeld(m);
+                setMeld(m);
             }
         }
     }
@@ -1702,69 +1269,22 @@ struct Board : public Move {
         procOrder(m);
         // スートロック
         if (locksSuits(m)) lockSuits();
-        fixMeld(m);
+        setMeld(m);
         if (m.domInevitably() || domConditionally(m)) {
             invalid = 1;
         }
     }
 };
 
-Board OrderToNullBoard(int o) {
+inline Board OrderToNullBoard(int o) {
     Board b;
     b.init();
     b.o = o; b.po = o;
     return b;
 }
 
-static std::ostream& operator <<(std::ostream& out, const Board& b) { // Board出力
-    if (b.isNull()) out << "NULL";
-    else out << b.move();
-    // オーダー...一時オーダーのみ
-    out << "  Order : ";
-    if (b.order() == 0) out << "NORMAL";
-    else out << "REVERSED";
-    out << "  Suits : ";
-    if (b.suitsLocked()) out << "LOCKED";
-    else out << "FREE";
-    return out;
-}
-
-inline bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const uint32_t q) {
-    // 不完全情報の上での合法性判定
-    // c はそのプレーヤーが所持可能なカード
-    // q はそのプレーヤーの手札枚数（公開されている情報）
-    if (mv.isPASS()) return true;
-    // 枚数オーバー
-    if (mv.qty() > q) return false;
-    // 持っていないはずの札を使った場合
-    if (!holdsCards(c, mv.cards())) return false;
-    if (!b.isNull()) {
-        if (b.type() != mv.type()) return false; // 型違い
-        if (b.isSeq()) {
-            if (!isValidSeqRank(mv.rank(), b.order(), b.rank(), mv.qty())) {
-                return false;
-            }
-            if (b.suitsLocked()) {
-                if (b.suits() != mv.suits()) return false;
-            }
-        } else {
-            if (b.isSingleJOKER()) {
-                return mv.isS3();
-            }
-            if (mv.isSingleJOKER()) {
-                if (!b.isSingle()) return false;
-            } else {
-                if (!isValidGroupRank(mv.rank(), b.order(), b.rank())) {
-                    return false;
-                }
-                if (b.suitsLocked()) {
-                    if (b.suits() != mv.suits()) return false;
-                }
-            }
-        }
-    }
-    return true;
-}
+extern std::ostream& operator <<(std::ostream& out, const Board& b);
+extern bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q);
 
 // L2局面ハッシュ値
 // 空場
@@ -1772,7 +1292,7 @@ inline bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const uint32_t
 constexpr uint64_t NullBoardToHashKey(Board bd) {
     return bd.order();
 }
-uint64_t BoardToHashKey(Board bd) {
+inline uint64_t BoardToHashKey(Board bd) {
     return bd.toInt();
 }
 // 完全情報局面なのでシンプルな後退ハッシュ値

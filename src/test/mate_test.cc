@@ -1,17 +1,17 @@
 
 // 必勝判定の動作テスト
 
-#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 #include "../engine/mate.hpp"
+#include "test.h"
 
-using namespace UECda;
+using namespace std;
 
-MoveInfo buffer[8192];
-Clock cl;
-std::mt19937 mt;
+static MoveInfo buffer[8192];
+static Clock cl;
+static std::mt19937 mt;
 
 int outputMateJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
@@ -138,8 +138,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -165,7 +165,7 @@ int testRecordMoveMate(const Record& record) {
             //cerr << "next" << endl;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "judge result (hand) = " << endl;
@@ -187,8 +187,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -210,7 +210,7 @@ int testRecordMoveMate(const Record& record) {
             checkMatrix[pw][mate] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
 
@@ -234,8 +234,8 @@ int testRecordMoveMate(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -292,7 +292,7 @@ int testRecordMoveMate(const Record& record) {
             
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "search result (hand) = " << endl;
@@ -317,8 +317,8 @@ int analyzeMateDistribution(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         iterateGameLogAfterChange
         (field, record.game(i),
-        [&](const auto& field) {}, // first callback
-        [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+        [&](const Field& field) {}, // first callback
+        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
@@ -330,7 +330,7 @@ int analyzeMateDistribution(const Record& record) {
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
             return 0;
         },
-        [&](const auto& field) {} // last callback
+        [&](const Field& field) {} // last callback
         );
     }
     cerr << "number of mate moves = " << mateMovesDistribution << endl;
@@ -338,22 +338,18 @@ int analyzeMateDistribution(const Record& record) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
+bool MateTest(const vector<string>& recordFiles) {
     std::vector<std::string> logFileNames;
-    
-    for (int c = 1; c < argc; ++c) {
-        if (!strcmp(argv[c], "-l")) {
-            logFileNames.push_back(std::string(argv[c + 1]));
-        }
-    }
+
     mt.seed(1);
     
     if (outputMateJudgeResult()) {
-        cerr << "failed case test." << endl; return -1;
+        cerr << "failed case test." << endl;
+        return false;
     }
     cerr << "passed case test." << endl;
     
-    Record record(logFileNames);
+    Record record(recordFiles);
     
     if (testRecordMoveMate(record)) {
         cerr << "failed record move mate judge test." << endl;
@@ -363,5 +359,5 @@ int main(int argc, char* argv[]) {
     analyzeMateDistribution(record);
     cerr << "finished analyzing mate moves distribution." << endl;
     
-    return 0;
+    return true;
 }

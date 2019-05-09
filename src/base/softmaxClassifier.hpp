@@ -74,11 +74,15 @@ public:
     int fin(const std::string& fName){
         memset(param_, 0, sizeof(param_));
         std::ifstream ifs(fName, std::ios::in);
-        if(!ifs){
+        if (!ifs){
             cerr << "SoftmaxClassifier::fin() : failed to import! " << fName << endl;
             return -1;
         }
-        for(int i = 0; ifs && i < N_STAGES_ * N_PARAMS_; ++i){
+        for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
+            if (!ifs) {
+                cerr << "SoftmaxClassifier::fin() : failed to read parameter " << i << endl;
+                return -1;
+            }
             ifs >> param_[i];
         }
         return 0;
@@ -134,10 +138,10 @@ public:
         memmove(param_, ap, sizeof(param_));
     }
     template<class dice_t>
-    void setRandomParam(double mean, double sigma, dice_t *const pdice){
-        NormalDistribution norm(mean, sigma);
+    void setRandomParam(double mean, double sigma, dice_t& dice){
+        std::normal_distribution<real_t> nd(mean, sigma);
         for(int i = 0; i < N_STAGES_ * N_PARAMS_; ++i){
-            param_[i] = norm.rand(pdice);
+            param_[i] = nd(dice);
         }
     }
     

@@ -40,12 +40,12 @@ struct Hand {
     // qrは使わなさそう?
     
     constexpr operator Cards() const { return cards; }
-    bool holds(Cards c) const { return holdsCards(cards, c); }
+    bool holds(Cards c) const { return cards.holds(c); }
     constexpr bool any() const { return cards.any(); }
     void setKey(uint64_t k) { key = k; }
 
-    void set1stHalf(Cards c, uint32_t q) {
-        assert(q > 0); assert(c.count() == q);
+    void set1stHalf(Cards c, unsigned q) {
+        assert(c.count() == q);
         cards = c;
         jk = c.joker();
         qty = q;
@@ -264,7 +264,7 @@ struct Hand {
                 }
             }
         }
-        if (pqr & ~CARDS_ALL_PLAIN) {
+        if (pqr & ~CARDS_PLAIN_ALL) {
             cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
             return false;
         }
@@ -280,7 +280,7 @@ struct Hand {
                 return false;
             } // scの定義
         }
-        if (sc & ~CARDS_ALL_PLAIN) {
+        if (sc & ~CARDS_PLAIN_ALL) {
             cerr << "Hand : exam_sc()" << endl;
             return false;
         }
@@ -415,7 +415,7 @@ inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_
         }
     }
 
-    if (dc & CARDS_ALL_PLAIN) {
+    if (dc & CARDS_PLAIN_ALL) {
         if (!m.isSeq()) {
             // ジョーカーの存在により少し処理が複雑に
             dq -= djk; // ジョーカーの分引く

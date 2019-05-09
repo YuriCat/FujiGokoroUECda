@@ -6,17 +6,10 @@
 
 /////////////////////////////////
 
-
 #include "connection.h"
-#include "UECda.h"
+#include "../UECda.h"
+#include "../engine/engine.hpp"
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
-// クライアント
-#ifdef HUMAN_MODE
-#elif RANDOM_MODE
-#else
-#include "engine/engineMain.hpp"
-#endif
 WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda
@@ -35,16 +28,7 @@ int main(int argc, char* argv[]) { // for UECda
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    
-    // ファイルパスの取得
-    {
-        std::ifstream ifs("./blauweregen_config.txt");
-        if (!ifs) cerr << "main() : failed to open config file." << endl;
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
-    
+
     // 全試合前の初期化
     auto& record = engine.record;
     auto& shared = engine.shared;
@@ -61,73 +45,15 @@ int main(int argc, char* argv[]) { // for UECda
         } else if (!strcmp(argv[c], "-s")) { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-m")) { // output directory
+        } else if (!strcmp(argv[c], "-m")) { // output
             monitor = true;
-        }
-#ifdef _ENGINE_FUJI_
-#ifndef MATCH
-        // プレー設定 大会版ビルドでは定数として埋め込む
-        else if (!strcmp(argv[c], "-th")) { // num of threads
+        } else if (!strcmp(argv[c], "-pol")) { // policy mode
+            Settings::policyMode = true;
+        } else if (!strcmp(argv[c], "-th")) { // num of threads
             int NThreads = atoi(argv[c + 1]);
-            Settings::NPlayThreads = NThreads;
-            Settings::NChangeThreads = max(1, NThreads / 2);
-        } else if (!strcmp(argv[c], "-pm")) { // play modeling
-            Settings::simulationPlayModel = true;
-        } else if (!strcmp(argv[c], "-npm")) { // no play modeling
-            Settings::simulationPlayModel = false;
-        } else if (!strcmp(argv[c], "-l2r")) { // L2 search on the root state
-            Settings::L2SearchOnRoot = true;
-        } else if (!strcmp(argv[c], "-nol2r")) { // no L2 search on the root state
-            Settings::L2SearchOnRoot = false;
-        } else if (!strcmp(argv[c], "-mater")) { // Mate search on the root state
-            Settings::MateSearchOnRoot = true;
-        } else if (!strcmp(argv[c], "-nomater")) { // no Mate search on the root state
-            Settings::MateSearchOnRoot = false;
-        } else if (!strcmp(argv[c], "-t")) { // temperarure
-            Settings::simulationTemperaturePlay = atof(argv[c + 1]);
-            Settings::temperaturePlay = atof(argv[c + 1]);
-            Settings::temperatureChange = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-ac")) { // softmax amplify coefficient
-            Settings::simulationAmplifyCoef = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-ae")) { // softmax amplify exponent
-            Settings::simulationAmplifyExponent = atof(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-l2s")) { // L2 search in simulations
-            Settings::L2SearchInSimulation = true;
-        } else if (!strcmp(argv[c], "-nol2s")) { // no L2 search in simulations
-            Settings::L2SearchInSimulation = false;
-        } else if (!strcmp(argv[c], "-mates")) { // Mate search in simulations
-            Settings::MateSearchInSimulation = true;
-        } else if (!strcmp(argv[c], "-nomates")) { // no Mate search in simulations
-            Settings::MateSearchInSimulation = false;
-        } else if (!strcmp(argv[c], "-ss")) { // selector in simulation
-            std::string selectorName = std::string(argv[c + 1]);
-            if (!strcmp(argv[c + 1], "e")) { // exp
-                Settings::simulationSelector = Selector::EXP_BIASED;
-            } else if (!strcmp(argv[c + 1], "p")) { // poly
-                Settings::simulationSelector = Selector::POLY_BIASED;
-            } else if (!strcmp(argv[c + 1], "t")) { // thres
-                Settings::simulationSelector = Selector::THRESHOLD;
-            } else if (!strcmp(argv[c + 1], "n")) { // naive
-                Settings::simulationSelector = Selector::NAIVE;
-            } else {
-                cerr << " : unknown selector [" << std::string(std::string()) << "] : default selector will be used." << endl;
-            }
-        } else if (!strcmp(argv[c], "-dt")) { // deal type in estimation
-            std::string dealTypeName = std::string(argv[c + 1]);
-            if (!strcmp(argv[c + 1], "re")) { // rejection
-                Settings::monteCarloDealType = DealType::REJECTION;
-            } else if (!strcmp(argv[c + 1], "b")) { // bias
-                Settings::monteCarloDealType = DealType::BIAS;
-            } else if (!strcmp(argv[c + 1], "s")) { // subjective info
-                Settings::monteCarloDealType = DealType::SBJINFO;
-            } else if (!strcmp(argv[c + 1], "rn")) { // random
-                Settings::monteCarloDealType = DealType::RANDOM;
-            } else {
-                cerr << " : unknown deal type [" << std::string(std::string()) << "] : default deal type will be used." << endl;
-            }
+            Settings::numPlayThreads = NThreads;
+            Settings::numChangeThreads = max(1, NThreads / 2);
         }
-#endif
-#endif
     }
     
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更
@@ -280,8 +206,8 @@ int main(int argc, char* argv[]) { // for UECda
             if (suitsLocked(recv_table))
                 playRecord.bd.lockSuits();
             
-            playRecord.bd.fixPrmOrder(getPrmOrder(recv_table));
-            playRecord.bd.fixTmpOrder(getTmpOrder(recv_table));
+            playRecord.bd.setPrmOrder(getPrmOrder(recv_table));
+            playRecord.bd.setTmpOrder(getTmpOrder(recv_table));
             playRecord.setTurn(turnPlayer);
             
             if (firstTurn) { // 初手の特別な処理
@@ -372,7 +298,6 @@ int main(int argc, char* argv[]) { // for UECda
                     if (!myMove.isPASS()) { // UECdaではパスはrejectと同じフラグが返る
                         shared.feedPlayRejection();
                         cerr << "main() : My Play was Rejected(" << accept_flag << ")! " << myMove << endl;
-                        getchar();
                     }
                 }
 #ifdef BROADCAST

@@ -1,16 +1,16 @@
 
 // 着手生成のテスト
 
-#include "../UECda.h"
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
+#include "test.h"
 
-using namespace UECda;
+using namespace std;
 
-MoveInfo buffer[8192];
-Clock cl;
-std::mt19937 mt;
+static MoveInfo buffer[8192];
+static Clock cl;
+static std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
@@ -85,8 +85,8 @@ int testRecordMoves(const Record& record) {
     for (int i = 0; i < record.games(); i++) {
         if (iterateGameLogAfterChange
         (field, record.game(i),
-            [&](const auto& field) {}, // first callback
-            [&](const auto& field, const auto move, const uint64_t time)->int{ // play callback
+            [&](const Field& field) {}, // first callback
+            [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
                 int turnPlayer = field.turn();
                 Cards cards = field.getCards(turnPlayer);
                 Board bd = field.board;
@@ -113,7 +113,7 @@ int testRecordMoves(const Record& record) {
                 
                 return 0;
             },
-            [&](const auto& field) {} // last callback
+            [&](const Field& field) {} // last callback
             )) {
             cerr << "failed move generation by Cards." << endl;
             return -1;
@@ -124,28 +124,21 @@ int testRecordMoves(const Record& record) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
-    
-    std::vector<std::string> logFileNames;
-    
-    for (int c = 1; c < argc; ++c) {
-        if (!strcmp(argv[c], "-l")) {
-            logFileNames.push_back(std::string(argv[c + 1]));
-        }
-    }
+bool MovegenTest(const vector<string>& recordFiles) {
+
     mt.seed(1);
     
     if (outputGenerationResult()) {
         cerr << "failed case test." << endl;
-        return -1;
+        return false;
     }
     cerr << "passed case test." << endl;
-    Record record(logFileNames);
-    if (testRecordMoves(logFileNames)) {
+    Record record(recordFiles);
+    if (testRecordMoves(recordFiles)) {
         cerr << "failed record moves generation test." << endl;
-        return -1;
+        return false;
     }
     cerr << "passed record moves generation test." << endl;
     
-    return 0;
+    return true;
 }

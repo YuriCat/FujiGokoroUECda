@@ -1,127 +1,54 @@
-# 
-# 1. General Compiler Settings
-#
-CXX       = g++
-CXXFLAGS  = -std=c++14 -Wall -Wextra -Wcast-qual -Wno-sign-compare -Wno-unused-value -Wno-unused-label -Wno-unused-variable -Wno-unused-parameter -Wno-unused-function -Wno-missing-field-initializers -fno-exceptions -fno-rtti -march=native
-INCLUDES  =
-LIBRARIES = -lpthread
+CXX      = g++
+CXXFLAGS = -std=c++11 -march=native -MMD -MP 
+LDFLAGS  = -pthread
+LIBS     =
+INCLUDE  =
+SRC_DIR  = ./src
+BLD_DIR  = ./out
+OBJ_DIR  = $(BLD_DIR)/obj
+SRCS     = $(wildcard $(SRC_DIR)/*.cc) $(wildcard $(SRC_DIR)/**/*.cc)
+OBJS     = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRCS:.cc=.o))
+EXEOBJS  = $(addprefix $(OBJ_DIR)/, client/client.o server/server.o test/test.o)
+SUBOBJS  = $(filter-out $(EXEOBJS), $(OBJS))
+SRC_DIRS = $(shell find $(SRC_DIR) -maxdepth 2 -mindepth 1 -type d)
+OBJ_DIRS = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRC_DIRS))
+TARGET   = $(addprefix $(BLD_DIR)/, client server test)
+DEPENDS  = $(OBJS:.o=.d)
 
-#
-# 2. Target Specific Settings
-#
-ifeq ($(TARGET),teacher)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DTEACHER
-        output_dir := out/teacher/
+OPT = -Ofast -DNDEBUG -DMINIMUM
+ifdef mode
+	ifeq ($(mode),teacher)
+		OPT := -Ofast -DNDEBUG -DMINIMUM -DTEACHER
+	else ifeq ($(mode),match)	
+		OPT := -Ofast -DNDEBUG -DMINIMUM -DMATCH
+	else ifeq ($(mode),default)
+		OPT := -Ofast -g -ggdb -fno-fast-math
+	else ifeq ($(mode),debug)
+		OPT := -O0 -g -ggdb -DDEBUG -DBROADCAST -D_GLIBCXX_DEBUG
+	endif
 endif
-ifeq ($(TARGET),match)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM -DMATCH
-        output_dir := out/match/
-endif
-ifeq ($(TARGET),release)
-	CXXFLAGS += -Ofast -DNDEBUG -DMINIMUM
-        output_dir := out/release/
-endif
-ifeq ($(TARGET),debug)
-	CXXFLAGS += -O0 -g -ggdb -DDEBUG -DBROADCAST -D_GLIBCXX_DEBUG
-        output_dir := out/debug/
-endif
-ifeq ($(TARGET),default)
-	CXXFLAGS += -Ofast -g -ggdb -fno-fast-math
-        output_dir := out/default/
-endif
+CXXFLAGS += $(OPT)
 
-#
-# 2. Default Settings (applied if there is no target-specific settings)
-#
-sources      ?= $(shell ls -R src/*.cc)
-sources_dir  ?= src/
-engine_dir   ?= src/engine/
-exec_dir     ?= src/exec/
-objects      ?=
-directories  ?= $(output_dir)
+all: $(TARGET)
 
-#
-# 4. Public Targets
-#
-default release debug development profile test coverage:
-	$(MAKE) TARGET=$@ preparation client policy_learner l2_test policy_test dominance_test cards_test movegen_test policy_client mate_test server
+$(BLD_DIR)/client: $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LIBS)
+	$(CXX) -o $@ $(OBJ_DIR)/client/client.o $(SUBOBJS) $(LDFLAGS)
 
-match:
-	$(MAKE) TARGET=$@ preparation client policy_client
+$(BLD_DIR)/server: $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LIBS)
+	$(CXX) -o $@ $(OBJ_DIR)/server/server.o $(SUBOBJS) $(LDFLAGS)
 
-teacher:
-	$(MAKE) TARGET=$@ preparation client
+$(BLD_DIR)/test: $(OBJ_DIR)/test/test.o $(SUBOBJS) $(LIBS)
+	$(CXX) -o $@ $(OBJ_DIR)/test/test.o $(SUBOBJS) $(LDFLAGS)
 
-run-coverage: coverage
-	out/coverage --gtest_output=xml
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+	@if [ ! -d $(OBJ_DIR) ]; \
+		then echo "mkdir -p $(OBJ_DIRS)"; mkdir -p $(OBJ_DIRS); \
+		fi
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $< 
 
 clean:
-	rm -rf out/*
+	$(RM) -r $(BLD_DIR)
 
-scaffold:
-	mkdir -p out test out/data doc lib obj resource
+-include $(DEPENDS)
 
-#
-# 5. Private Targets
-#
-preparation $(directories):
-	mkdir -p $(directories)
-
-record_analyzer :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)record_analyzer $(exec_dir)/record_analyzer.cc $(LIBRARIES)
-
-rating_calculator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)rating_calculator $(exec_dir)/rating_calculator.cc $(LIBRARIES)
-
-value_generator :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)value_generator $(exec_dir)/value_generator.cc $(LIBRARIES)
-
-cards_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)cards_test $(exec_dir)/cards_test.cc $(LIBRARIES)
-
-movegen_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)movegen_test $(exec_dir)/movegen_test.cc $(LIBRARIES)
-
-dominance_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)dominance_test $(exec_dir)/dominance_test.cc $(LIBRARIES)
-
-mate_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)mate_test $(exec_dir)/mate_test.cc $(LIBRARIES)
-
-l2_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)l2_test $(exec_dir)/l2_test.cc $(LIBRARIES)
-
-maxn_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)maxn_test $(exec_dir)/maxn_test.cc $(LIBRARIES)
-
-policy_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_test $(exec_dir)/policy_test.cc $(LIBRARIES)
-
-modeling_test :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)modeling_test $(exec_dir)/modeling_test.cc $(LIBRARIES)
-
-estimator_learner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)estimator_learner $(exec_dir)/estimator_learner.cc $(LIBRARIES)
-
-client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES)
-
-policy_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DPOLICY_ONLY
-
-policy_rl_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_rl_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DPOLICY_ONLY -DRL_POLICY
-
-server :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)server $(sources_dir)server/daihubc.cc $(sources_dir)server/mt19937ar.c $(LIBRARIES)
-
-policy_learner :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)policy_learner $(exec_dir)policy_learner.cc $(LIBRARIES)
-
-random_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)random_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DRANDOM_MODE
-
-human_client :
-	$(CXX) $(CXXFLAGS) -o $(output_dir)human_client $(sources_dir)client.cc $(sources_dir)connection.c $(LIBRARIES) -DHUMAN_MODE -DBROADCAST
-
--include $(dependencies)
+.PHONY: all clean

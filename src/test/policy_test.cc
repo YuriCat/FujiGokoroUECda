@@ -1,46 +1,44 @@
 
 // 方策関数のテスト
 
-#include "../UECda.h"
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../engine/linearPolicy.hpp"
+#include "../engine/simulation.hpp"
+#include "test.h"
 
-std::string DIRECTORY_PARAMS_IN(""), DIRECTORY_PARAMS_OUT(""), DIRECTORY_LOGS("");
+using namespace std;
 
-using namespace UECda;
+static XorShift64 dice((unsigned int)time(NULL));
 
-XorShift64 dice((unsigned int)time(NULL));
-
-ChangePolicy<policy_value_t> changePolicy;
-PlayPolicy<policy_value_t> playPolicy;
+static ChangePolicy<policy_value_t> changePolicy;
+static PlayPolicy<policy_value_t> playPolicy;
 
 int outputParams() {
     // 方策関数中で気になるパラメータを出力
-    cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_GR_CARDS)
+    int f0 = PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_GR_CARDS)
                              + 0 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_6 * (2) * (16) * N_PATTERNS_SUITS_SUITS
                              + 1 * (16) * N_PATTERNS_SUITS_SUITS
                              + RANK_A * N_PATTERNS_SUITS_SUITS
-                             + getSuitsSuitsIndex(SUITS_S, SUITS_S)
-                             ) << endl;
-    
-    cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
+                             + SSIndex[SUITS_S][SUITS_S];
+    int f1 = PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
                              + 0 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(3) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + getSuitSuitsIndex(SUITS_H, SUITS_CH)
-                             ) << endl;
-    
-    cerr << playPolicy.param(PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
+                             + sSIndex[SUITS_H][SUITS_CH];
+    int f2 = PlayPolicySpace::FEA_IDX(PlayPolicySpace::FEA_SEQ_CARDS)
                              + 0 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_4 * (3) * (16) * N_PATTERNS_SUIT_SUITS
                              + min(int(4) - 3, 2) * (16) * N_PATTERNS_SUIT_SUITS
                              + RANK_7 * N_PATTERNS_SUIT_SUITS
-                             + getSuitSuitsIndex(SUITS_H, SUITS_C)
-                             ) << endl;
+                             + sSIndex[SUITS_H][SUITS_C];
+
+    cerr << f0 << " " << playPolicy.param(f0) << endl;
+    cerr << f1 << " " << playPolicy.param(f1) << endl;
+    cerr << f2 << " " << playPolicy.param(f2) << endl;
 
     //PlayPolicySpace::commentToPolicyParam(cerr, playPolicy.param_);    
     return 0;
@@ -60,9 +58,9 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogBeforePlay
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [](const auto& field)->void{}, // dealt callback
-        [&](const auto& field, int from, int to, Cards ch)->int{ // change callback
+        [](const Field& field)->void{}, // first callback
+        [](const Field& field)->void{}, // dealt callback
+        [&](const Field& field, int from, int to, Cards ch)->int{ // change callback
             Cards change[N_MAX_CHANGES + 1];
             const int cl = field.classOf(from);
             if (cl < MIDDLE) {
@@ -72,7 +70,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
                 
                 Clock clock;
                 clock.start();
-                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, field, changePolicy, &dice);
+                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, field, changePolicy, dice);
                 time[from][cl] += clock.stop();
                 
                 Cards p = change[index];
@@ -82,7 +80,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
             }
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << mrecord.player(p);
@@ -111,14 +109,14 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogAfterChange
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             int turn = field.turn();
             auto moves = genMove(field);
             
             Clock clock;
             clock.start();
-            int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, &dice);
+            int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, dice);
             time[turn] += clock.stop();
             Move p = moves[index];
             
@@ -126,7 +124,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
             trials[turn] += 1;
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << mrecord.player(p);
@@ -149,15 +147,15 @@ int testSelector(const MatchRecord& mrecord) {
     for (int i = 0; i < mrecord.games(); i++) {
         iterateGameLogAfterChange
         (field, mrecord.game(i),
-        [](const auto& field)->void{}, // first callback
-        [&](const auto& field, Move pl, uint32_t tm)->int{ // play callback
+        [](const Field& field)->void{}, // first callback
+        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             MoveInfo play[N_MAX_MOVES];
             double score[N_MAX_MOVES];
             
             const int turnPlayer = field.turn();
             const int moves = genMove(play, field.getCards(turnPlayer), field.board);
             
-            calcPlayPolicyScoreSlow<0>(score, play, moves, field, playPolicy);
+            playPolicyScore(score, play, moves, field, playPolicy, 0);
             
             int recordIndex = searchMove(play, moves, MoveInfo(pl));
             
@@ -198,7 +196,7 @@ int testSelector(const MatchRecord& mrecord) {
                         
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
-                        double rate = SIMULATION_AMPLIFY_EXPONENT;
+                        double rate = Settings::simulationAmplifyExponent;
                         
                         BiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, rate);
                         if (recordIndex >= 0) {
@@ -227,7 +225,7 @@ int testSelector(const MatchRecord& mrecord) {
             trials += 1;
             return 0;
         },
-        [](const auto& field)->void{}); // last callback
+        [](const Field& field)->void{}); // last callback
     }
     
     cerr << "Softmax Selector" << endl;
@@ -258,38 +256,18 @@ int testSelector(const MatchRecord& mrecord) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
-    
-    {
-        std::ifstream ifs("blauweregen_config.txt");
-        if (ifs) { ifs >> DIRECTORY_PARAMS_IN; }
-        if (ifs) { ifs >> DIRECTORY_PARAMS_OUT; }
-        if (ifs) { ifs >> DIRECTORY_LOGS; }
-    }
-    std::vector<std::string> logFileNames;
-    
-    for (int c = 1; c < argc; ++c) {
-        if (!strcmp(argv[c], "-i")) { // input directory
-            DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-l")) { // log path
-            logFileNames.push_back(std::string(argv[c + 1]));
-        } else if (!strcmp(argv[c], "-ld")) { // log directory path
-            auto tmpLogFileNames = getFilePathVectorRecursively(std::string(argv[c + 1]), ".dat");
-            logFileNames.insert(logFileNames.end(), tmpLogFileNames.begin(), tmpLogFileNames.end());
-        }
-    }
-    
+bool PolicyTest(const vector<string>& recordFiles) {
+
     changePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
     playPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-    
+
     outputParams();
     
-    for (const std::string& log : logFileNames) {
-        MatchRecord record(log);
+    for (string file : recordFiles) {
+        MatchRecord record(file);
         testChangePolicyWithRecord(record);
         testPlayPolicyWithRecord(record);
         testSelector(record);
     }
-    
-    return 0;
+    return true;
 }
