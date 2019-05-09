@@ -8,7 +8,6 @@
 #include "../engine/data.hpp"
 #include "../engine/estimation.hpp"
 #include "test.h"
-#include <omp.h>
 
 using namespace std;
 

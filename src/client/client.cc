@@ -298,7 +298,6 @@ int main(int argc, char* argv[]) { // for UECda
                     if (!myMove.isPASS()) { // UECdaではパスはrejectと同じフラグが返る
                         shared.feedPlayRejection();
                         cerr << "main() : My Play was Rejected(" << accept_flag << ")! " << myMove << endl;
-                        getchar();
                     }
                 }
 #ifdef BROADCAST

@@ -87,8 +87,8 @@ private:
     std::array<int8_t, N> infoClassPlayer;
     std::array<int8_t, N> infoClass;
     unsigned NdealCards;
-    Cards remCards;  // まだ使用されていないカード
     Cards dealCards; // まだ特定されていないカード
+    Cards remCards; // まだ使用されていないカード
     std::array<Cards, N> usedCards; // 使用済みカード
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
@@ -140,10 +140,13 @@ private:
     double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
                               const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
+        if (inChange) return 0;
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         MoveInfo *const mv = ptools->buf;
-        for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
+        for (int p = 0; p < N; p++) {
+            orgCards[p] = c[p] + usedCards[infoClass[p]];
+        }
         Field field;
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
