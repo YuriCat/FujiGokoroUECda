@@ -2,7 +2,7 @@
 #include "dominance.hpp"
 #include "field.hpp"
 
-/**************************プレーヤー状態**************************/
+using namespace std;
 
 bool PlayersState::exam_alive() const {
     if (getNAlive() <= 0 || N < getNAlive()) {
@@ -51,7 +51,7 @@ bool PlayersState::examSemiNF() const {
     return exam();
 }
 
-std::ostream& operator <<(std::ostream& out, const PlayersState& arg) { // 出力
+ostream& operator <<(ostream& out, const PlayersState& arg) { // 出力
     // 勝敗
     out << "al{";
     for (int i = 0; i < PlayersState::N; i++) {
@@ -311,8 +311,8 @@ bool Field::exam() const {
     return true;
 }
 
-std::string Field::toString() const {
-    std::ostringstream oss;
+string Field::toString() const {
+    ostringstream oss;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": ";
         if (hand[p].qty > 0) {
@@ -324,8 +324,8 @@ std::string Field::toString() const {
     }
     return oss.str();
 }
-std::string Field::toDebugString() const {
-    std::ostringstream oss;
+string Field::toDebugString() const {
+    ostringstream oss;
     oss << "turn = " << turnCount() << endl;
     oss << "player = " << turn() << endl;
     oss << "class = " << infoClass << endl;
