@@ -634,7 +634,7 @@ public:
     TwoValueBook() { init(); }
     
     int read(uint64_t key) {
-        const page_t& fpage = page_[KeyToIndex(key)];
+        page_t fpage = page_[KeyToIndex(key)];
         if (!fpage.any() || fpage.compareKey(key)) return -1;
         return fpage.value();
     }
@@ -648,6 +648,47 @@ private:
         return key % N;
     }
 };
+
+/*template <entry_t, size_t N, size_t B = 1>
+class ChainTable {
+public:
+    struct Bucket {
+        size_t size;
+        entry_t entry[B];
+    };
+    void clear() {
+        std::memset(bucket_, 0, sizeof(bucket_));
+    }
+    ChainTable() { clear(); }
+    
+    bool read(uint64_t key, entry_t& entry) {
+        const auto& b = bucket_[KeyToIndex(key)];
+        for (size_t i = 0; i < b.size; i++) {
+            entry_t e = b.entry[i]; 
+            if (e.key == (key >> entry_t::vsize())) {
+                entry = e;
+                return true;
+            }
+        }
+        return false;
+    }
+    void regist(uint64_t key, const entry_t& entry) {
+        auto& b = bucket_[KeyToIndex(key)];
+        for (size_t i = 0; i < std::min(B - 1, b.size); i++) {
+            if (b.entry.key == key >> entry_t::vsize()) {
+
+                return;
+            }
+            b.entry[i] = b.entry[i - 1];
+        }
+        b.entry[0] = entry;
+    }
+private:
+    Bucket bucket_[N];
+    static constexpr int KeyToIndex(uint64_t key) {
+        return key % N;
+    }
+};*/
 
 template <typename T = int>
 class SpinLock {
