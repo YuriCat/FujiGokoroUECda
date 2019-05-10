@@ -346,8 +346,9 @@ struct Field {
     void procHand(int tp, Move mv);
 
     // 局面更新
-    int proc(const int tp, const MoveInfo mv);
-    int proc(const int tp, const Move mv) { return proc(tp, MoveInfo(mv)); }
+    template <bool FAST> int procImpl(const MoveInfo mv);
+    int proc(const MoveInfo mv);
+    int proc(const Move mv) { return proc(MoveInfo(mv)); }
     int procSlowest(const Move mv);
     
     void makeChange(int from, int to, Cards dc, bool sendOnly = false);

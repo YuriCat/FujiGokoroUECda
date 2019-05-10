@@ -83,7 +83,7 @@ int simulation(Field& field,
         DERR << field.playMove << " " << field.ps << endl;
         
         // 盤面更新
-        int nextTurnPlayer = field.proc(tp, field.playMove);
+        int nextTurnPlayer = field.proc(field.playMove);
         
         if (nextTurnPlayer == -1) goto GAME_END;
         progress *= 0.95;

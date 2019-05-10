@@ -339,9 +339,11 @@ string Field::toDebugString() const {
     return oss.str();
 }
 
-int Field::proc(const int tp, const MoveInfo mv) {
-    // 丁寧に局面更新
-    ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
+template <bool FAST>
+int Field::procImpl(const MoveInfo mv) {
+    // 局面更新
+    assert(exam());
+    const int tp = turn();
     if (mv.isPASS()) {
         if (ps.isSoloAwake()) {
             flush();
@@ -349,36 +351,40 @@ int Field::proc(const int tp, const MoveInfo mv) {
             setPlayerAsleep(tp);
             rotateTurnPlayer(tp);
         }
-        common.turnCount++;
     } else {
-        if (mv.isMate() || mv.qty() >= hand[tp].qty) { // 即上がりまたはMATE宣言のとき
-            if (isOnlyValue(attractedPlayers, tp)) {
-                // 結果が欲しいプレーヤーがすべて上がったので、プレイアウト終了
-                setNewClassOf(tp, getBestClass());
-                return -1;
-            } else if (getNAlivePlayers() == 2) {
-                // ゲームが終了
-                setNewClassOf(tp, getWorstClass() - 1);
-                setNewClassOf(ps.searchOpsPlayer(tp), getWorstClass());
-                return -1;
-            } else {
-                // 通常の上がり/MATE処理
-                if (mv.qty() >= hand[tp].qty) { // 即上がり
+        bool agari = mv.qty() >= hand[tp].qty;
+        if (agari || (FAST && mv.isMate())) { // 即上がりまたはMATE宣言のとき
+            if (FAST) {
+                if (isOnlyValue(attractedPlayers, tp)) {
+                    // 結果が欲しいプレーヤーがすべて上がったので終了
                     setNewClassOf(tp, getBestClass());
-                    ps.setDead(tp);
-                    attractedPlayers.reset(tp);
+                    return -1;
+                } else if (getNAlivePlayers() == 2) {
+                    // ゲーム終了
+                    setNewClassOf(tp, getBestClass());
+                    setNewClassOf(ps.searchOpsPlayer(tp), getBestClass() + 1);
+                    return -1;
                 }
+            }
+            // 通常の上がり処理
+            if (agari) { // 即上がり
+                setNewClassOf(tp, getBestClass());
+                ps.setDead(tp);
+                if (!FAST && ps.isSoloAlive()) {
+                    setNewClassOf(ps.searchL1Player(), getBestClass());
+                    return -1;
+                }
+                attractedPlayers.reset(tp);
             }
         }
         procHand(tp, mv);
         board.proc(mv);
         setOwner(tp);
-        common.turnCount++;
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (mv.isDO()) { // 他人を支配
-                if (mv.isDM()) { // 自分も支配したので流れる
+            if (FAST && mv.isDO()) { // 他人を支配
+                if (FAST && mv.isDM()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
@@ -400,48 +406,13 @@ int Field::proc(const int tp, const MoveInfo mv) {
             }
         }
     }
-    ASSERT(exam(), cerr << toDebugString() << endl;);
+    common.turnCount++;
+    assert(exam());
     return turn();
 }
 
-int Field::procSlowest(const Move mv) {
-    const int tp = turn();
-    // 丁寧に局面更新
-    ASSERT(exam(), cerr << toDebugString() << endl;); // should be valid before Play
-    if (mv.isPASS()) {
-        if (ps.isSoloAwake()) {
-            flush();
-        } else {
-            setPlayerAsleep(tp);
-            rotateTurnPlayer(tp);
-        }
-        common.turnCount++;
-    } else {
-        if (mv.qty() >= hand[tp].qty) { // agari
-            setNewClassOf(tp, getBestClass());
-            ps.setDead(tp);
-            if (ps.isSoloAlive()) {
-                setNewClassOf(ps.searchL1Player(), getBestClass());
-                return -1;
-            }
-        }
-        procHand(tp, mv);
-        board.proc(mv);
-        setOwner(tp);
-        common.turnCount++;
-        if (board.isNull()) { // 流れた
-            flushState();
-        } else {
-            if (ps.anyAwake()) {
-                rotateTurnPlayer(tp);
-            } else {
-                flush();
-            }
-        }
-    }
-    ASSERT(exam(), cerr << toDebugString() << endl;);
-    return turn();
-}
+int Field::proc(const MoveInfo m) { return procImpl<true>(m); }
+int Field::procSlowest(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
 void copyField(const Field& arg, Field *const dst) {
     // playout result
