@@ -249,9 +249,14 @@ int playPolicyScore(double *const dst,
             {
                 constexpr int base = FEA_IDX(FEA_REV_CLASS);
                 if (!bd.isRev() && m.isRev()) {
-                    int relativeClass = field.classOf(tp);
-                    for (int r = 0; r < (int)field.classOf(tp); r++) {
-                        if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                    int relativeClass;
+                    if (field.isInitGame()) {
+                        relativeClass = (field.getNAlivePlayers() - 1) / 2;
+                    } else {
+                        relativeClass = field.classOf(tp);
+                        for (int r = 0; r < (int)field.classOf(tp); r++) {
+                            if (!field.isAlive(field.classPlayer(r))) relativeClass--;
+                        }
                     }
                     Foo(base + relativeClass)
                 }
@@ -262,7 +267,7 @@ int playPolicyScore(double *const dst,
             {
                 constexpr int base = FEA_IDX(FEA_PASS_PHASE);
                 if (m.isPASS()) {
-                    int key = base + ((field.getNRemCards() > 30) ? 0 : ((field.getNRemCards() > 15) ? 1 : 2));
+                    int key = base + (field.getNRemCards() > 30 ? 0 : (field.getNRemCards() > 15 ? 1 : 2));
                     Foo(key)
                 }
             }
