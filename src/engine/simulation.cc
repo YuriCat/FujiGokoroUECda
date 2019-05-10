@@ -24,7 +24,7 @@ int simulation(Field& field,
 
             ASSERT(field.isAlive(blackPlayer) && field.isAlive(whitePlayer),);
 
-            L2Judge l2(65536, field.mv);
+            L2Judge l2(65536, field.mbuf);
             int l2Result = l2.start_judge(field.hand[blackPlayer], field.hand[whitePlayer], field.board, field.fieldInfo);
 
             if (l2Result == L2_WIN) {
@@ -38,9 +38,9 @@ int simulation(Field& field,
             }
         }
         // 合法着手生成
-        field.NMoves = field.NActiveMoves = genMove(field.mv, field.hand[tp].cards, field.board);
+        field.NMoves = field.NActiveMoves = genMove(field.mbuf, field.hand[tp].cards, field.board);
         if (field.NMoves == 1) {
-            field.setPlayMove(field.mv[0]);
+            field.setPlayMove(field.mbuf[0]);
         } else {
             // search mate-move
             int idxMate = -1;
@@ -48,7 +48,7 @@ int simulation(Field& field,
                 int mateIndex[N_MAX_MOVES];
                 int mates = 0;
                 for (int m = 0; m < field.NActiveMoves; m++) {
-                    bool mate = checkHandMate(0, field.mv + field.NActiveMoves, field.mv[m],
+                    bool mate = checkHandMate(0, field.mbuf + field.NActiveMoves, field.mbuf[m],
                                               field.hand[tp], field.opsHand[tp], field.board, field.fieldInfo);
                     if (mate) mateIndex[mates++] = m;
                 }
@@ -57,17 +57,17 @@ int simulation(Field& field,
                 else if (mates > 1) idxMate = mateIndex[ptools->dice() % mates];
             }
             if (idxMate != -1) { // mate
-                field.setPlayMove(field.mv[idxMate]);
+                field.setPlayMove(field.mbuf[idxMate]);
                 field.playMove.setMPMate();
                 field.fieldInfo.setMPMate();
             } else {
                 if (field.NActiveMoves <= 1) {
-                    field.setPlayMove(field.mv[0]);
+                    field.setPlayMove(field.mbuf[0]);
                 } else {
                     double score[N_MAX_MOVES + 1];
 
                     // 行動評価関数を計算
-                    playPolicyScore(score, ptools->buf, field.NMoves, field, pshared->basePlayPolicy, 0);
+                    playPolicyScore(score, ptools->mbuf, field.NMoves, field, pshared->basePlayPolicy, 0);
 
                     // 行動評価関数からの着手の選び方は複数パターン用意して実験できるようにする
                     BiasedSoftmaxSelector<double> selector(score, field.NActiveMoves,
@@ -75,7 +75,7 @@ int simulation(Field& field,
                                                            Settings::simulationAmplifyCoef,
                                                            Settings::simulationAmplifyExponent);
                     int idx = selector.select(ptools->dice.random());
-                    field.setPlayMove(field.mv[idx]);
+                    field.setPlayMove(field.mbuf[idx]);
                 }
             }
         }
@@ -96,12 +96,12 @@ GAME_END:
 }
 
 int startPlaySimulation(Field& field,
-                        MoveInfo mv,
+                        MoveInfo m,
                         SharedData *const pshared,
                         ThreadTools *const ptools) {
     DERR << field.toString();
     DERR << "turn : " << field.turn() << endl;
-    if (field.procSlowest(mv) == -1) return 0;
+    if (field.procSlowest(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 

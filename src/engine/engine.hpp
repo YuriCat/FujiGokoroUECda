@@ -29,7 +29,7 @@ private:
     // 0番スレッドのサイコロをメインサイコロとして使う
     decltype(threadTools[0].dice)& dice = threadTools[0].dice;
     // 先読み用バッファはスレッド0のもの
-    MoveInfo *const searchBuffer = threadTools[0].buf;
+    MoveInfo *const searchBuffer = threadTools[0].mbuf;
     
 public:
     SharedData shared;
@@ -199,13 +199,13 @@ public:
         RootInfo root;
         
         // ルート合法手生成バッファ
-        std::array<MoveInfo, N_MAX_MOVES + 256> mv;
+        std::array<MoveInfo, N_MAX_MOVES + 256> mbuf;
         
         const int myPlayerNum = record.myPlayerNum;
         
         Field field;
         setFieldFromClientLog(gameLog, myPlayerNum, &field);
-        field.setMoveBuffer(mv.data());
+        field.setMoveBuffer(mbuf.data());
         DERR << "tp = " << gameLog.current.turn() << endl;
         ASSERT_EQ(field.turn(), myPlayerNum);
         
@@ -221,7 +221,7 @@ public:
         if (b.isInvalid()) return MOVE_PASS;
             
         // 合法着手生成
-        int NMoves = genMove(mv.data(), myCards, b);
+        int NMoves = genMove(mbuf.data(), myCards, b);
         if (NMoves <= 0) { // 合法着手なし
             cerr << "No valid move." << endl;
             return MOVE_PASS;
@@ -230,26 +230,26 @@ public:
             // 合法着手1つ。パスのみか、自分スタートで手札1枚
             // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
             if (monitor) {
-                if (!mv[0].isPASS()) cerr << "final move. " << mv[0] << endl;
+                if (!mbuf[0].isPASS()) cerr << "final move. " << mbuf[0] << endl;
                 else cerr << "no chance. PASS" << endl;
             }
-            if (!mv[0].isPASS()) {
+            if (!mbuf[0].isPASS()) {
                 shared.setMyMate(field.getBestClass()); // 上がり
                 shared.setMyL2Result(1);
             }
-            return mv[0];
+            return mbuf[0];
         }
         
         // 合法着手生成(特別着手)
         if (b.isNull()) {
-            mv[NMoves++].setPASS();
+            mbuf[NMoves++].setPASS();
         }
         if (containsJOKER(myCards) && containsS3(opsCards)) {
             if (b.isGroup() && b.qty() > 1) {
-                NMoves += genJokerGroup(mv.data() + NMoves, myCards, opsCards, b);
+                NMoves += genJokerGroup(mbuf.data() + NMoves, myCards, opsCards, b);
             }
         }
-        std::shuffle(mv.begin(), mv.begin() + NMoves, dice);
+        std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, dice);
         
         // 場の情報をまとめる
         field.prepareForPlay();
@@ -257,7 +257,7 @@ public:
         // 着手追加情報を設定
         bool l2failure = false;
         for (int i = 0; i < NMoves; i++) {
-            MoveInfo& move = mv[i];
+            MoveInfo& move = mbuf[i];
             // 支配性
             if (move.qty() > fieldInfo.getMaxNCardsAwake()
                 || dominatesCards(move, opsCards, b)) {
@@ -313,17 +313,17 @@ public:
             cerr << "My Cards : " << myCards << endl;
             cerr << b << " " << fieldInfo << endl;
             for (int i = 0; i < NMoves; i++) {
-                cerr << mv[i] << toInfoString(mv[i], b) << endl;
+                cerr << mbuf[i] << toInfoString(mbuf[i], b) << endl;
             }
         }
         
         // ルートノード設定
         int limitSimulations = std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
-        root.setPlay(mv.data(), NMoves, field, shared, limitSimulations);
+        root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES + 256];
-        playPolicyScore(score, mv.data(), NMoves, field, shared.basePlayPolicy, 0);
+        playPolicyScore(score, mbuf.data(), NMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, NMoves);
 
         // モンテカルロ法による評価(結果確定のとき以外)

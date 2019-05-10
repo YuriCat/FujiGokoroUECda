@@ -84,9 +84,9 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
     assert(ret != 0U);
     return ret;
 }
-void Field::procHand(int tp, Move mv) {
-    int dq = mv.qty();
-    Cards dc = mv.cards();
+void Field::procHand(int tp, Move m) {
+    int dq = m.qty();
+    Cards dc = m.cards();
     uint64_t dkey = CardsToHashKey(dc);
     
     // 全体の残り手札の更新
@@ -99,8 +99,8 @@ void Field::procHand(int tp, Move mv) {
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) {
             if (dq >= hand[tp].qty) hand[p].setAll(CARDS_NULL, 0, 0);
-            else hand[p].makeMoveAll(mv, dc, dq, dkey);
-        } else if (isAlive(p)) opsHand[p].makeMoveAll(mv, dc, dq, dkey);
+            else hand[p].makeMoveAll(m, dc, dq, dkey);
+        } else if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
     }
 }
 
@@ -340,11 +340,11 @@ string Field::toDebugString() const {
 }
 
 template <bool FAST>
-int Field::procImpl(const MoveInfo mv) {
+int Field::procImpl(const MoveInfo m) {
     // 局面更新
     assert(exam());
     const int tp = turn();
-    if (mv.isPASS()) {
+    if (m.isPASS()) {
         if (ps.isSoloAwake()) {
             flush();
         } else {
@@ -352,8 +352,8 @@ int Field::procImpl(const MoveInfo mv) {
             rotateTurnPlayer(tp);
         }
     } else {
-        bool agari = mv.qty() >= hand[tp].qty;
-        if (agari || (FAST && mv.isMate())) { // 即上がりまたはMATE宣言のとき
+        bool agari = m.qty() >= hand[tp].qty;
+        if (agari || (FAST && m.isMate())) { // 即上がりまたはMATE宣言のとき
             if (FAST) {
                 if (isOnlyValue(attractedPlayers, tp)) {
                     // 結果が欲しいプレーヤーがすべて上がったので終了
@@ -377,14 +377,14 @@ int Field::procImpl(const MoveInfo mv) {
                 attractedPlayers.reset(tp);
             }
         }
-        procHand(tp, mv);
-        board.proc(mv);
+        procHand(tp, m);
+        board.proc(m);
         setOwner(tp);
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (FAST && mv.isDO()) { // 他人を支配
-                if (FAST && mv.isDM()) { // 自分も支配したので流れる
+            if (FAST && m.isDO()) { // 他人を支配
+                if (FAST && m.isDM()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
@@ -420,7 +420,7 @@ void copyField(const Field& arg, Field *const dst) {
 
     // playout info
     dst->attractedPlayers = arg.attractedPlayers;
-    dst->mv = arg.mv;
+    dst->mbuf = arg.mbuf;
     
     // game info
     dst->board = arg.board;

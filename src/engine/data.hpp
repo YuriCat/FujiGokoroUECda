@@ -14,10 +14,10 @@ struct ThreadTools {
     // 各スレッドの持ち物
     int threadIndex; // スレッド番号
     XorShift64 dice; // サイコロ
-    MoveInfo buf[8192]; // 着手生成バッファ
+    MoveInfo mbuf[8192]; // 着手生成バッファ
     void init(int index) {
         threadIndex = index;
-        memset(buf, 0, sizeof(buf));
+        memset(mbuf, 0, sizeof(mbuf));
     }
     void close() {}
 };

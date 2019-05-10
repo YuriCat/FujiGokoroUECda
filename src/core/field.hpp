@@ -144,7 +144,7 @@ struct Field {
     
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
-    MoveInfo *mv = nullptr; // buffer of move
+    MoveInfo *mbuf = nullptr; // buffer of move
     
     // playout result
     BitArray64<11, N_PLAYERS> infoReward; // rewards
@@ -184,7 +184,7 @@ struct Field {
     }
     uint32_t getRivalPlayersFlag(int myPlayerNum) const;
     
-    void setMoveBuffer(MoveInfo *const pmv) { mv = pmv; }
+    void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void setPlayMove(MoveInfo ami) { playMove = ami; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
@@ -343,13 +343,13 @@ struct Field {
     uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
     uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
-    void procHand(int tp, Move mv);
+    void procHand(int tp, Move m);
 
     // 局面更新
-    template <bool FAST> int procImpl(const MoveInfo mv);
-    int proc(const MoveInfo mv);
-    int proc(const Move mv) { return proc(MoveInfo(mv)); }
-    int procSlowest(const Move mv);
+    template <bool FAST> int procImpl(const MoveInfo m);
+    int proc(const MoveInfo m);
+    int proc(const Move m) { return proc(MoveInfo(m)); }
+    int procSlowest(const Move m);
     
     void makeChange(int from, int to, Cards dc, bool sendOnly = false);
     void makePresents();
