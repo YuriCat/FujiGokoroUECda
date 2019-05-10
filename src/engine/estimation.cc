@@ -421,7 +421,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     
     // 採択棄却法のためのカード交換モデル
 Cards RandomDealer::change(const int p, const Cards cards, const int qty,
-                           const EngineSharedData& shared, EngineThreadTools *const ptools) const {
+                           const SharedData& shared, ThreadTools *const ptools) const {
     Cards cand[78];
     int NCands = genChange(cand, cards, qty);
     Field field;

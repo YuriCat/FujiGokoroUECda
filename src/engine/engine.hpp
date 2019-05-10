@@ -24,7 +24,7 @@ namespace Settings {
 
 class WisteriaEngine {
 private:
-    EngineThreadTools threadTools[N_THREADS];
+    ThreadTools threadTools[N_THREADS];
     
     // 0番スレッドのサイコロをメインサイコロとして使う
     decltype(threadTools[0].dice)& dice = threadTools[0].dice;
@@ -32,7 +32,7 @@ private:
     MoveInfo *const searchBuffer = threadTools[0].buf;
     
 public:
-    EngineSharedData shared;
+    SharedData shared;
     decltype(shared.record)& record = shared.record;
     bool monitor = false;
     
