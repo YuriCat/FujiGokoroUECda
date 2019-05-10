@@ -105,10 +105,8 @@ void Field::procHand(int tp, Move m) {
 }
 
 void Field::makeChange(int from, int to, Cards dc, bool sendOnly) {
-    ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
-    ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
-    ASSERT(dc.exam(), cerr << dc << endl;);
-    ASSERT(hand[from].cards.holds(dc), cerr << hand[from] << " -> " << dc << endl;);
+    assert(hand[from].exam()); assert(hand[to].exam());
+    assert(dc.exam()); assert(hand[from].cards.holds(dc));
     int dq = dc.count();
     uint64_t dkey = CardsToHashKey(dc);
     hand[from].subtrAll(dc, dq, dkey);
