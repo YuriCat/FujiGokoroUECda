@@ -3,7 +3,7 @@
 // 思考用の構造体
 #include "../core/record.hpp"
 #include "../core/field.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 
 namespace Settings {
     const double rootPlayPriorCoef = 4;

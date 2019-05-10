@@ -11,7 +11,7 @@
 #include "mate.hpp"
 #include "last2.hpp"
 #include "heuristics.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
 

@@ -1,6 +1,6 @@
 #include "../settings.h"
 #include "../core/action.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
 #include "simulation.hpp"

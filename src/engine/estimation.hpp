@@ -7,7 +7,7 @@
 #include "../core/action.hpp"
 #include "data.hpp"
 #include "mate.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 
 namespace Settings {
     const double estimationTemperaturePlay = 1.1;

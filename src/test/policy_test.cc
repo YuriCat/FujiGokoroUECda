@@ -4,7 +4,7 @@
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
-#include "../engine/linearPolicy.hpp"
+#include "../engine/policy.hpp"
 #include "../engine/simulation.hpp"
 #include "test.h"
 

@@ -4,7 +4,6 @@
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../core/field.hpp"
-#include "../engine/linearPolicy.hpp"
 #include "../engine/data.hpp"
 #include "../engine/estimation.hpp"
 #include "test.h"

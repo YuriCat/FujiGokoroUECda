@@ -1,5 +1,5 @@
 #include "mate.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 #include "estimation.hpp"
 
 using namespace std;
