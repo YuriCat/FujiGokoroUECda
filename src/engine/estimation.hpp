@@ -7,7 +7,7 @@
 #include "../core/action.hpp"
 #include "data.hpp"
 #include "mate.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 
 namespace Settings {
     const double estimationTemperaturePlay = 1.1;
@@ -143,7 +143,7 @@ private:
         if (inChange) return 0;
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
-        MoveInfo *const mv = ptools->buf;
+        MoveInfo *const mbuf = ptools->mbuf;
         for (int p = 0; p < N; p++) {
             orgCards[p] = c[p] + usedCards[infoClass[p]];
         }
@@ -153,7 +153,7 @@ private:
         // after change callback
         [](const Field& field)->void{},
         // play callback
-        [this, &playllh, &orgCards, mv, &shared]
+        [this, &playllh, &orgCards, mbuf, &shared]
         (const Field& field, const Move chosen, uint32_t usedTime)->int{
             const int tp = field.turn();
             const Board b = field.board;
@@ -163,20 +163,20 @@ private:
             if (!holdsCards(myCards, chosen.cards())) return -1; // 終了(エラー)
             // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
             if (!playFlag.test(tp)) return 0;
-            const int NMoves = genMove(mv, myCards, b);
+            const int NMoves = genMove(mbuf, myCards, b);
             if (NMoves <= 1) return 0;
 
             // 場の情報をまとめる
             for (int i = 0; i < NMoves; i++) {
-                bool mate = checkHandMate(0, mv + NMoves, mv[i], field.hand[tp],
+                bool mate = checkHandMate(0, mbuf + NMoves, mbuf[i], field.hand[tp],
                                           field.opsHand[tp], b, field.fieldInfo);
-                if (mate) mv[i].setMPMate();
+                if (mate) mbuf[i].setMPMate();
             }
 
             // フェーズ(空場0、通常場1、パス支配場2)
             const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
             // プレー尤度計算
-            int chosenIdx = searchMove(mv, NMoves, [chosen](const MoveInfo& tmp)->bool{
+            int chosenIdx = searchMove(mbuf, NMoves, [chosen](const MoveInfo& tmp)->bool{
                 return tmp == chosen;
             });
 
@@ -184,11 +184,11 @@ private:
                 playllh += log(0.1 / (double)(NMoves + 1));
             } else {
                 std::array<double, N_MAX_MOVES> score;
-                playPolicyScore(score.data(), mv, NMoves, field, shared.basePlayPolicy, 0);
+                playPolicyScore(score.data(), mbuf, NMoves, field, shared.basePlayPolicy, 0);
                 // Mateの手のスコアを設定
                 double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
                 for (int i = 0; i < NMoves; i++) {
-                    if (mv[i].isMate()) score[i] = maxScore + 4;
+                    if (mbuf[i].isMate()) score[i] = maxScore + 4;
                 }
                 SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
                 playllh += log(max(selector.prob(chosenIdx), 1 / 256.0));

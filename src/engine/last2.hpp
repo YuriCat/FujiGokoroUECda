@@ -11,7 +11,7 @@ namespace L2 {
     // L2関連
     extern TwoValueBook<(1 << 20) - 3> book;
     inline void init() {
-        book.init();
+        book.clear();
     }
 }
 

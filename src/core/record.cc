@@ -1,28 +1,30 @@
 #include "record.hpp"
 
+using namespace std;
+
 namespace Recorder {
-    const std::vector<std::string> commandList = {
+    const vector<string> commandList = {
         "//", "/*", "*/"
         "player", "game", "score", "seat", "class",
         "dealt", "changed", "original",
         "play", "result",
     };
     
-    std::map<std::string, int> commandMap;
+    map<string, int> commandMap;
     
-    bool isCommand(const std::string& str) {
+    bool isCommand(const string& str) {
         return commandMap.find(str) != commandMap.end();
     }
     void initCommandSet() {
         commandMap.clear();
         int cnt = 0;
-        for (std::string command : commandList) commandMap[command] = cnt++;
+        for (string command : commandList) commandMap[command] = cnt++;
     }
 }
     
-int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
+int StringQueueToCardsM(queue<string>& q, Cards *const dst) {
     *dst = CARDS_NULL;
-    const std::string& str = q.front();
+    const string& str = q.front();
     if (Recorder::isCommand(str)) {
         cerr << "com" << endl; return -1;
     }
@@ -34,7 +36,7 @@ int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
         if (!q.size()) {
             cerr << "not q size" << endl; return -1;
         }
-        const std::string& str = q.front();
+        const string& str = q.front();
         if (Recorder::isCommand(str)) {
             cerr << "com" << endl; return -1;
         }
@@ -49,14 +51,14 @@ int StringQueueToCardsM(std::queue<std::string>& q, Cards *const dst) {
     return 0;
 }
 
-int StringToMoveTimeM(const std::string& str, Move *const dstMv, uint64_t *const dstTime) {
+int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstTime) {
     *dstMv = MOVE_PASS;
     *dstTime = 0;
     
     Move mv;
-    std::vector<std::string> v = split(str, " []\n");
+    vector<string> v = split(str, " []\n");
     
-    for (const std::string& tstr : v) DERR << tstr << ", ";
+    for (const string& tstr : v) DERR << tstr << ", ";
     DERR << endl;
     
     if (v.size() <= 0) {
@@ -83,11 +85,7 @@ int StringToMoveTimeM(const std::string& str, Move *const dstMv, uint64_t *const
 #define Foo() {DERR << "unexpected command : " << q.front() << endl; goto NEXT;}
 #define ToI(str) stoll(str)
 
-int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog) {
-    
-    using std::string;
-    using std::vector;
-    using std::queue;
+int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
     
     using game_t = typename MatchRecord::game_t;
     using playLog_t = typename game_t::playLog_t;
@@ -97,9 +95,9 @@ int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog) {
     
     Recorder::initCommandSet();
     
-    std::ifstream ifs;
+    ifstream ifs;
     
-    ifs.open(fName, std::ios::in);
+    ifs.open(fName, ios::in);
     
     if (!ifs) {
         cerr << "readMatchLogFile() : no log file." << endl;
@@ -110,10 +108,10 @@ int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog) {
     
     game_t gLog;
     BitArray32<4, N> infoClass, infoSeat, infoNewClass;
-    std::map<int, change_t> cLogMap;
+    map<int, change_t> cLogMap;
     Move lastMove;
     
-    std::bitset<32> flagGame, flagMatch;
+    bitset<32> flagGame, flagMatch;
     int startedGame = -1;
     int failedGames = 0;
     

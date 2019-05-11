@@ -627,14 +627,11 @@ class TwoValueBook {
 public:
     using page_t = TwoValuePage32;
     
-    void init() {
-        std::memset(page_, 0, sizeof(page_));
-    }
-    void clear() {}
-    TwoValueBook() { init(); }
+    void clear() { std::memset(page_, 0, sizeof(page_)); }
+    TwoValueBook() { clear(); }
     
     int read(uint64_t key) {
-        const page_t& fpage = page_[KeyToIndex(key)];
+        page_t fpage = page_[KeyToIndex(key)];
         if (!fpage.any() || fpage.compareKey(key)) return -1;
         return fpage.value();
     }

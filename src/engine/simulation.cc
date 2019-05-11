@@ -1,94 +1,74 @@
 #include "../settings.h"
 #include "../core/action.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
 #include "simulation.hpp"
 
 using namespace std;
 
+MoveInfo simulationMove(Field& field, const SharedData& shared,
+                        ThreadTools *const ptools) {
+    int turn = field.turn();
+    int NMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
+    if (NMoves == 1) return field.mbuf[0];
+    if (Settings::MateSearchInSimulation) {
+        int mateIndice[N_MAX_MOVES];
+        int mates = 0;
+        for (int i = 0; i < NMoves; i++) {
+            bool mate = checkHandMate(0, field.mbuf + NMoves, field.mbuf[i],
+                                      field.hand[turn], field.opsHand[turn], field.board, field.fieldInfo);
+            if (mate) mateIndice[mates++] = i;
+        }
+        if (mates > 0) {
+            // 探索順バイアス回避のために必勝全部の中からランダムに選ぶ
+            int mateIndex = mateIndice[mates > 1 ? (ptools->dice() % mates) : 0];
+            MoveInfo move = field.mbuf[mateIndex];
+            move.setMPMate();
+            field.fieldInfo.setMPMate();
+            return move;
+        }
+    }
+
+    // 行動方策を計算
+    double score[N_MAX_MOVES];
+    playPolicyScore(score, ptools->mbuf, NMoves, field, shared.basePlayPolicy, 0);
+
+    // ランダム選択
+    BiasedSoftmaxSelector<double> selector(score, NMoves,
+                                           Settings::simulationTemperaturePlay,
+                                           Settings::simulationAmplifyCoef,
+                                           Settings::simulationAmplifyExponent);
+    return field.mbuf[selector.select(ptools->dice.random())];
+}
+
 int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
-    double progress = 1;
-    field.initForPlayout();
     while (1) {
-        DERR << field.toString();
-        DERR << "turn : " << field.turn() << endl;
-        uint32_t tp = field.turn();
+        DERR << field.toString() << "turn : " << field.turn() << endl;
         field.prepareForPlay();
 
-        if (Settings::L2SearchInSimulation && field.isL2Situation()) { // L2
-            const uint32_t blackPlayer = tp;
-            const uint32_t whitePlayer = field.ps.searchOpsPlayer(blackPlayer);
+        if (Settings::L2SearchInSimulation && field.isL2Situation()) {
+            int p[2];
+            p[0] = field.turn();
+            p[1] = field.ps.searchOpsPlayer(p[0]);
+            assert(field.isAlive(p[0]) && field.isAlive(p[1]));
 
-            ASSERT(field.isAlive(blackPlayer) && field.isAlive(whitePlayer),);
-
-            L2Judge l2(65536, field.mv);
-            int l2Result = l2.start_judge(field.hand[blackPlayer], field.hand[whitePlayer], field.board, field.fieldInfo);
-
-            if (l2Result == L2_WIN) {
-                field.setNewClassOf(blackPlayer, field.getWorstClass() - 1);
-                field.setNewClassOf(whitePlayer, field.getWorstClass());
-                goto GAME_END;
-            } else if (l2Result == L2_LOSE) {
-                field.setNewClassOf(whitePlayer, field.getWorstClass() - 1);
-                field.setNewClassOf(blackPlayer, field.getWorstClass());
-                goto GAME_END;
+            L2Judge l2(65536, field.mbuf);
+            int l2Result = l2.start_judge(field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
+            if (l2Result == L2_WIN || l2Result == L2_LOSE) {
+                int winner = l2Result == L2_WIN ? 0 : 1;
+                field.setNewClassOf(p[winner],     field.getBestClass());
+                field.setNewClassOf(p[1 - winner], field.getBestClass() + 1);
+                break;
             }
         }
-        // 合法着手生成
-        field.NMoves = field.NActiveMoves = genMove(field.mv, field.hand[tp].cards, field.board);
-        if (field.NMoves == 1) {
-            field.setPlayMove(field.mv[0]);
-        } else {
-            // search mate-move
-            int idxMate = -1;
-            if (Settings::MateSearchInSimulation) {
-                int mateIndex[N_MAX_MOVES];
-                int mates = 0;
-                for (int m = 0; m < field.NActiveMoves; m++) {
-                    bool mate = checkHandMate(0, field.mv + field.NActiveMoves, field.mv[m],
-                                              field.hand[tp], field.opsHand[tp], field.board, field.fieldInfo);
-                    if (mate) mateIndex[mates++] = m;
-                }
-                // 探索順バイアス回避のために必勝全部の中からランダムに選ぶ
-                if (mates == 1) idxMate = mateIndex[0];
-                else if (mates > 1) idxMate = mateIndex[ptools->dice() % mates];
-            }
-            if (idxMate != -1) { // mate
-                field.setPlayMove(field.mv[idxMate]);
-                field.playMove.setMPMate();
-                field.fieldInfo.setMPMate();
-            } else {
-                if (field.NActiveMoves <= 1) {
-                    field.setPlayMove(field.mv[0]);
-                } else {
-                    double score[N_MAX_MOVES + 1];
-
-                    // 行動評価関数を計算
-                    playPolicyScore(score, ptools->buf, field.NMoves, field, pshared->basePlayPolicy, 0);
-
-                    // 行動評価関数からの着手の選び方は複数パターン用意して実験できるようにする
-                    BiasedSoftmaxSelector<double> selector(score, field.NActiveMoves,
-                                                           Settings::simulationTemperaturePlay,
-                                                           Settings::simulationAmplifyCoef,
-                                                           Settings::simulationAmplifyExponent);
-                    int idx = selector.select(ptools->dice.random());
-                    field.setPlayMove(field.mv[idx]);
-                }
-            }
-        }
-        DERR << tp << " : " << field.playMove << " (" << field.hand[tp].qty << ")" << endl;
-        DERR << field.playMove << " " << field.ps << endl;
-        
-        // 盤面更新
-        int nextTurnPlayer = field.proc(tp, field.playMove);
-        
-        if (nextTurnPlayer == -1) goto GAME_END;
-        progress *= 0.95;
+        // 手を選んで進める
+        MoveInfo move = simulationMove(field, *pshared, ptools);
+        if (field.proc(move) < 0) break;
     }
-GAME_END:
+    // 後処理
     for (int p = 0; p < N_PLAYERS; p++) {
         field.infoReward.assign(p, pshared->gameReward[field.newClassOf(p)]);
     }
@@ -96,12 +76,12 @@ GAME_END:
 }
 
 int startPlaySimulation(Field& field,
-                        MoveInfo mv,
+                        MoveInfo m,
                         SharedData *const pshared,
                         ThreadTools *const ptools) {
     DERR << field.toString();
     DERR << "turn : " << field.turn() << endl;
-    if (field.procSlowest(mv) == -1) return 0;
+    if (field.procSlowest(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 
@@ -111,13 +91,8 @@ int startChangeSimulation(Field& field,
                           ThreadTools *const ptools) {
     
     int changePartner = field.classPlayer(getChangePartnerClass(field.classOf(p)));
-    
     field.makeChange(p, changePartner, c);
     field.prepareAfterChange();
-    
-    DERR << field.toString();
-    DERR << "turn : " << field.turn() << endl;
-
     return simulation(field, pshared, ptools);
 }
 
@@ -140,11 +115,9 @@ int startAllSimulation(Field& field,
             int index = changeWithPolicy(change, changes,
                                          field.getCards(from), N_CHANGE_CARDS(cl),
                                          field, pshared->baseChangePolicy, ptools->dice);
-            ASSERT(index < changes, cerr << index << " in " << changes << endl;)
             field.makeChange(from, to, change[index]);
         }
     }
     field.prepareAfterChange();
-    DERR << field.toString();
     return simulation(field, pshared, ptools);
 }

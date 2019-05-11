@@ -46,18 +46,17 @@ struct PlayersState : public BitArray32<8, 4> {
     constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
     // set
     void setAsleep(const int p) {
-        ASSERT(isAwake(p), cerr << "p = " << p << "," << std::hex << data() << endl;); // 現在Awake
+        assert(isAwake(p)); // 現在Awake
         base_t::data_ -= (BMASK << 24) + ((BMASK << 16) << p);
     }
     void setDead(const int p) {
         // プレーヤーがあがった
-        ASSERT(isAwake(p), cerr << "p = " << p <<endl;);
-        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在AliveかつAwakeの必要
+        assert(isAwake(p)); assert(isAlive(p)); // 現在AliveかつAwakeの必要
         base_t::data_ -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
     }
     void setDeadOnly(const int p) {
         // プレーヤーがあがった
-        ASSERT(isAlive(p), cerr << "p = " << p << endl;); // 現在Aliveの必要
+        assert(isAlive(p)); // 現在Aliveの必要
         base_t::data_ -= (BMASK << 8) + ((1U << 0) << p);
     }
     void setAwake(const int p) {
@@ -74,14 +73,9 @@ struct PlayersState : public BitArray32<8, 4> {
         base_t::data_ &= (PMASK << 0) | (NMASK << 8);
     }
     
-    void setNAlive(const int n) {
-        assign(1, n);
-    }
-    void setNAwake(const int n) {
-        assign(3, n);
-    }
-    // get
-    
+    void setNAlive(const int n) { assign(1, n); }
+    void setNAwake(const int n) { assign(3, n); }
+
     constexpr data_t isAlive(int p) const { return data() & ((BMASK << 0) << p); }
     constexpr data_t isAwake(int p) const { return data() & ((BMASK << 16) << p); }
     constexpr bool isExcluded(int p) const { return false; } // あがり以外の除外(都落ち)
@@ -93,16 +87,15 @@ struct PlayersState : public BitArray32<8, 4> {
     uint32_t searchOpsPlayer(int p) const {
         // p以外でaliveなプレーヤーを1人挙げる
         // pがaliveであることは保証される
-        assert(isAlive(p));
-        assert(getNAlive() >= 2);
+        assert(isAlive(p)); assert(getNAlive() >= 2);
         return bsf32(data() ^ (BMASK << p));
     }
     
     constexpr data_t getNAlive() const { return (*this)[1]; }
     constexpr data_t getNAwake() const { return (*this)[3]; }
     
-    uint32_t countNAlive() const { return popcnt(part(0)); }
-    uint32_t countNAwake() const { return popcnt(part(2)); }
+    unsigned countNAlive() const { return popcnt(part(0)); }
+    unsigned countNAwake() const { return popcnt(part(2)); }
     
     constexpr data_t anyAlive() const { return data() & (PMASK <<  0); }
     constexpr data_t anyAwake() const { return data() & (PMASK << 16); }
@@ -125,7 +118,7 @@ struct PlayersState : public BitArray32<8, 4> {
         base_t::data_ = alive | (alive << 16); // awake情報をalive情報に置き換える
     }
     void init() {
-        base_t::data_  = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
+        base_t::data_ = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
     }
     
     bool exam_alive() const;
@@ -144,17 +137,13 @@ struct Field {
     
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
-    MoveInfo *mv = nullptr; // buffer of move
+    MoveInfo *mbuf = nullptr; // buffer of move
     
     // playout result
     BitArray64<11, N_PLAYERS> infoReward; // rewards
-    std::bitset<32> flags;
     
     // information for playout
     std::bitset<32> attractedPlayers; // players we want playout-result
-    int NMoves;
-    int NActiveMoves;
-    MoveInfo playMove; // move chosen by player int playout
     FieldAddInfo fieldInfo;
     
     CommonStatus common;
@@ -184,8 +173,7 @@ struct Field {
     }
     uint32_t getRivalPlayersFlag(int myPlayerNum) const;
     
-    void setMoveBuffer(MoveInfo *const pmv) { mv = pmv; }
-    void setPlayMove(MoveInfo ami) { playMove = ami; }
+    void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
@@ -343,12 +331,13 @@ struct Field {
     uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
     uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
-    void procHand(int tp, Move mv);
+    void procHand(int tp, Move m);
 
     // 局面更新
-    int proc(const int tp, const MoveInfo mv);
-    int proc(const int tp, const Move mv) { return proc(tp, MoveInfo(mv)); }
-    int procSlowest(const Move mv);
+    template <bool FAST> int procImpl(const MoveInfo m);
+    int proc(const MoveInfo m);
+    int proc(const Move m) { return proc(MoveInfo(m)); }
+    int procSlowest(const Move m);
     
     void makeChange(int from, int to, Cards dc, bool sendOnly = false);
     void makePresents();
@@ -366,9 +355,6 @@ struct Field {
         remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
 
-    void initForPlayout() {
-        flags.reset();
-    }
     void prepareForPlay();
     void initGame();
     void prepareAfterChange();
