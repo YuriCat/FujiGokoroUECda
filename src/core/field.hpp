@@ -141,13 +141,9 @@ struct Field {
     
     // playout result
     BitArray64<11, N_PLAYERS> infoReward; // rewards
-    std::bitset<32> flags;
     
     // information for playout
     std::bitset<32> attractedPlayers; // players we want playout-result
-    int NMoves;
-    int NActiveMoves;
-    MoveInfo playMove; // move chosen by player int playout
     FieldAddInfo fieldInfo;
     
     CommonStatus common;
@@ -178,7 +174,6 @@ struct Field {
     uint32_t getRivalPlayersFlag(int myPlayerNum) const;
     
     void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
-    void setPlayMove(MoveInfo ami) { playMove = ami; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
@@ -360,9 +355,6 @@ struct Field {
         remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
 
-    void initForPlayout() {
-        flags.reset();
-    }
     void prepareForPlay();
     void initGame();
     void prepareAfterChange();
