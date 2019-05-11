@@ -43,7 +43,7 @@ int playPolicyScore(double *const dst,
     // 速度不問で計算
     
     // 恒常パラメータ
-    const Board bd = field.board;
+    const Board b = field.board;
     const int tp = field.turn();
     const int turnSeat = field.seatOf(tp);
     const int owner = field.owner();
@@ -61,7 +61,7 @@ int playPolicyScore(double *const dst,
     const int myLR = IntCardToRank(pickIntCardLow(myCards));
     const int myHR = IntCardToRank(pickIntCardHigh(myCards));
     
-    const int order = bd.order();
+    const int order = b.order();
     const double nowRS = rankScore(curPqr, myCards.joker(), order);
     
     // 場役主から自分が何人目か数える
@@ -91,7 +91,7 @@ int playPolicyScore(double *const dst,
             s -= 1000; // Mateのときは低い点にする
         } else {
             // 着手パラメータ
-            const int aftOrd = bd.nextOrder(m);
+            const int aftOrd = b.nextOrder(m);
             const int q4 = min(m.qty(), 4);
             
             const Cards afterCards = myCards - m.cards();
@@ -104,7 +104,7 @@ int playPolicyScore(double *const dst,
             {
                 int base = FEA_IDX(FEA_HAND_SNOWL);
                 
-                if (!bd.isNull()) {
+                if (!b.isNull()) {
                     if (fieldInfo.isUnrivaled()) base += 166 * 2;
                     else base += 166;
                 }
@@ -177,7 +177,7 @@ int playPolicyScore(double *const dst,
             // nf min party
             {
                 constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
-                if (bd.isNull()) FooX(base, divisionCount(buf + NMoves, afterCards) - NParty)
+                if (b.isNull()) FooX(base, divisionCount(buf + NMoves, afterCards) - NParty)
                 else FooX(base + 1, divisionCount(buf + NMoves, afterCards) - NParty)
             }
             FASSERT(s,);
@@ -192,14 +192,14 @@ int playPolicyScore(double *const dst,
             // qty
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_QTY);
-                if (bd.isNull()) Foo(base + q4 - 1)
+                if (b.isNull()) Foo(base + q4 - 1)
             }
             FASSERT(s,);
             
             //same qr
             {
                 constexpr int base = FEA_IDX(FEA_SAME_QR);
-                if (bd.isNull() && !m.isSeq()) {
+                if (b.isNull() && !m.isSeq()) {
                     int sameQ = countCards(curPqr & (PQR_1 << (q4 - 1)));
                     if (!m.containsJOKER()) FooX(base, sameQ)
                     else {
@@ -214,13 +214,13 @@ int playPolicyScore(double *const dst,
             // suit lock
             {
                 constexpr int base = FEA_IDX(FEA_SUITLOCK_EFFECT);
-                if (!m.isPASS() && !bd.isNull()) {
-                    if (!fieldInfo.isLastAwake() && bd.locksSuits(m)) { // LAでなく、スートロックがかかる
+                if (!m.isPASS() && !b.isNull()) {
+                    if (!fieldInfo.isLastAwake() && b.locksSuits(m)) { // LAでなく、スートロックがかかる
                         int key;
                         if (m.qty() > 1) key = base + 2; // 2枚以上のロックは強力
                         else {
                             // 最強のを自分が持っているか??
-                            Cards lockedSuitCards = SuitsToCards(bd.suits());
+                            Cards lockedSuitCards = SuitsToCards(b.suits());
                             Cards mine = maskJOKER(afterCards) & lockedSuitCards;
                             // ジョーカーをここで使っていい場合にはロックしたいので、
                             // それは考慮に入れる
@@ -248,7 +248,7 @@ int playPolicyScore(double *const dst,
             // rev(only normal order)
             {
                 constexpr int base = FEA_IDX(FEA_REV_CLASS);
-                if (!bd.isRev() && m.isRev()) {
+                if (!b.isRev() && m.isRev()) {
                     int relativeClass;
                     if (field.isInitGame()) {
                         relativeClass = (field.getNAlivePlayers() - 1) / 2;
@@ -307,7 +307,7 @@ int playPolicyScore(double *const dst,
             // s3(move)
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_S3);
-                if (bd.isSingleJOKER() && m.isS3()) {
+                if (b.isSingleJOKER() && m.isS3()) {
                     int key = base + (fieldInfo.isPassDom() ? 1 : 0);
                     Foo(key)
                 }
@@ -330,13 +330,13 @@ int playPolicyScore(double *const dst,
             // sequence
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_SEQ);
-                if (bd.isNull()) {
+                if (b.isNull()) {
                     if (m.isSeq()) {
                         Foo(base)
                         FooX(base + 2, NMyCards)
                     }
                 } else {
-                    if (bd.isSeq()) Foo(base + 1)
+                    if (b.isSeq()) Foo(base + 1)
                 }
             }
             FASSERT(s,);
@@ -344,7 +344,7 @@ int playPolicyScore(double *const dst,
             // rf group break
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
-                if (!bd.isNull() && !fieldInfo.isUnrivaled() && m.isGroup() && !m.containsJOKER()) {
+                if (!b.isNull() && !fieldInfo.isUnrivaled() && m.isGroup() && !m.containsJOKER()) {
                     if (myHand.qr[m.rank()] != m.qty()) { // 崩して出した
                         if (m.domInevitably()) Foo(base) // 8切り
                         else {
@@ -377,7 +377,7 @@ int playPolicyScore(double *const dst,
             FASSERT(s,);
             
             // NF_EIGHT
-            if (bd.isNull()) {
+            if (b.isNull()) {
                 if (m.domInevitably() && !m.isSeq()) {
                     if (isNoRev(afterCards)) {
                         Cards seq = myAfterSeqCards;
@@ -406,8 +406,8 @@ int playPolicyScore(double *const dst,
             // min rank
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_MIN_RANK);
-                if (bd.order() == 0 && m.rank() == myLR) Foo(base)
-                else if (bd.order() != 0 && m.rank() == myHR) Foo(base + 1)
+                if (b.order() == 0 && m.rank() == myLR) Foo(base)
+                else if (b.order() != 0 && m.rank() == myHR) Foo(base + 1)
             }
             FASSERT(s,);
 
@@ -430,13 +430,13 @@ int playPolicyScore(double *const dst,
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
                             uint32_t as = afterCards[f];
                             if (as) {
-                                int key = base + Index::get(order, m.rank(), bd.locksSuits(m) ? 1 : 0,
+                                int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
                                                             f, SSIndex[m.suits()][as]);
                                 Foo(key)
                             }
                         }
                         if (containsJOKER(afterCards)) {
-                            int key = base + Index::get(order, m.rank(), bd.locksSuits(m) ? 1 : 0,
+                            int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
                                                         RANK_JOKER, m.qty());
                             // suits - suits のパターン数より少ないのでOK
                             Foo(key)
@@ -480,13 +480,13 @@ int playPolicyScore(double *const dst,
                         for (int f = RANK_MIN; f <= RANK_MAX; ++f) {
                             uint32_t os = opsCards[f];
                             if (os) {
-                                int key = base + Index::get(order, m.rank(), bd.locksSuits(m) ? 1 : 0,
+                                int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
                                                             f, SSIndex[m.suits()][os]);
                                 Foo(key)
                             }
                         }
                         if (containsJOKER(opsCards)) {
-                            int key = base + Index::get(order, m.rank(), bd.locksSuits(m) ? 1 : 0,
+                            int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
                                                         RANK_JOKER, m.qty());
                             // suits - suits のパターン数より少ないのでOK
                             Foo(key);
