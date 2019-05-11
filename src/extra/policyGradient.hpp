@@ -16,10 +16,10 @@ namespace PolicyGradient {
         Field field;
         iterateGameLogBeforePlay
         (field, gLog,
-            [](const auto& field)->void{}, // first callback
-            [](const auto& field)->void{}, // dealt callback
+            [](const Field& field)->void{}, // first callback
+            [](const Field& field)->void{}, // dealt callback
             // change callback
-            [buf, flags, plearningSpace](const auto& field, const int from, const int to, const Cards chosenChange)->int{
+            [buf, flags, plearningSpace](const Field& field, const int from, const int to, const Cards chosenChange)->int{
                 
                 int myClass = field.classOf(from);
                 if (myClass > Class::MIDDLE) return 0;
@@ -57,7 +57,7 @@ namespace PolicyGradient {
                     }
                 } else {
                     
-                    if (!calcChangePolicyScoreSlow<1>(score, change, NChanges, myCards, changeQty, field, *plearner)) {
+                    if (!changePolicyScore(score, change, NChanges, myCards, changeQty, field, *plearner, 1)) {
                         
                         if (flags.test(1)) { // feed feature value
                             plearner->feedFeatureValue(ph);
@@ -73,7 +73,7 @@ namespace PolicyGradient {
                 }
                 return 0;
             },
-            [](const auto&)->void{} // last callback
+            [](const Field&)->void{} // last callback
             );
         return 0;
     }
@@ -89,9 +89,9 @@ namespace PolicyGradient {
         iterateGameLogAfterChange
         (field, gLog,
             //after change callback
-            [](const auto& field)->void{},
+            [](const Field& field)->void{},
             //play callback
-            [buf, flags, plearningSpace](const auto& field, const Move chosenMove, const uint64_t time)->int{
+            [buf, flags, plearningSpace](const Field& field, const Move chosenMove, const uint64_t time)->int{
                 
                 if (field.isEndGame()) return -1;
                 
@@ -108,7 +108,7 @@ namespace PolicyGradient {
                 
                 if (NMoves == 1) return 0;
                 
-                int idx = searchMove(buf, NMoves, [chosenMove](const auto& mv)->bool{
+                int idx = searchMove(buf, NMoves, [chosenMove](const Move mv)->bool{
                     return mv == chosenMove;
                 });
                 
@@ -125,7 +125,7 @@ namespace PolicyGradient {
                         plearner->feedObjValue(idx);
                     }
                 } else {                     
-                    if (!calcPlayPolicyScoreSlow<1>(score, buf, NMoves, field, *plearner)) {  
+                    if (!playPolicyScore(score, buf, NMoves, field, *plearner, 1)) {  
                         if (flags.test(1)) { // feed feature value
                             plearner->feedFeatureValue();
                         }
@@ -141,7 +141,7 @@ namespace PolicyGradient {
                 return 0;
             },
             // last callback
-            [](const auto&)->void{}
+            [](const Field&)->void{}
             );
         return 0;
     }
