@@ -191,22 +191,15 @@ struct Field {
     
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
-    uint32_t getNAwakePlayers() const { return ps.getNAwake(); }
-    uint32_t getNAlivePlayers() const { return ps.getNAlive(); }
+    unsigned getNAwakePlayers() const { return ps.getNAwake(); }
+    unsigned getNAlivePlayers() const { return ps.getNAlive(); }
     
     uint32_t searchOpsPlayer(const int p) const {
         return ps.searchOpsPlayer(p);
     }
     int getBestClass() const { return ps.getBestClass(); }
     int getWorstClass() const { return ps.getWorstClass(); }
-    
-    void clearSeats() {
-        infoSeat.fill(-1); infoSeatPlayer.fill(-1);
-    }
-    void clearClasses() {
-        infoClass.fill(-1); infoClassPlayer.fill(-1);
-    }
-    
+
     void setClassOf(int p, int cl) {
         infoClass[p] = cl;
         infoClassPlayer[cl] = p;
@@ -242,7 +235,7 @@ struct Field {
     
     Cards getCards(int p) const { return hand[p].cards; }
     Cards getOpsCards(int p) const { return opsHand[p].cards; }
-    uint32_t getNCards(int p) const { return hand[p].qty; }
+    unsigned getNCards(int p) const { return hand[p].qty; }
     Cards getRemCards() const { return remCards; }
     Cards getNRemCards() const { return remQty; }
     const Hand& getHand(int p) const { return hand[p]; }
@@ -253,10 +246,10 @@ struct Field {
     Cards getSentCards(int p) const { return sentCards[p]; }
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
-    uint32_t getFlushLeadPlayer() const {
+    int getFlushLeadPlayer() const {
         // 全員パスの際に誰から始まるか
         if (isNull()) return turn();
-        uint32_t own = owner();
+        int own = owner();
         if (!isAlive(own)) { // すでにあがっている
             // own~tp間のaliveなプレーヤーを探す
             while (1) {
@@ -266,20 +259,20 @@ struct Field {
         }
         return own;
     }
-    uint32_t getNextSeatPlayer(const int p) const {
+    int getNextSeatPlayer(const int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
-    void rotateTurnPlayer(uint32_t tp) {
+    void rotateTurnPlayer(int turn) {
         do {
-            tp = getNextSeatPlayer(tp);
-        } while (!isAwake(tp));
-        setTurn(tp);
+            turn = getNextSeatPlayer(turn);
+        } while (!isAwake(turn));
+        setTurn(turn);
     }
     
     void flushTurnPlayer() {
-        uint32_t tp = owner();
-        if (isAlive(tp)) setTurn(tp);
-        else rotateTurnPlayer(tp);
+        int turn = owner();
+        if (isAlive(turn)) setTurn(turn);
+        else rotateTurnPlayer(turn);
     }
     
     void setPlayerAsleep(const int p) { ps.setAsleep(p); }
@@ -296,40 +289,35 @@ struct Field {
         board.flush();
         flushState();
     }
-    
-    uint32_t searchOpsMinNCards(int pn) const { // 自分以外の最小枚数
-        uint32_t nc = N_CARDS;
+
+    unsigned getOpsMinNCards(int pn) const {
+        unsigned nc = N_CARDS;
         for (int p = 0; p < N_PLAYERS; p++) {
             if (isAlive(p) && p != pn) nc = min(nc, getNCards(p));
         }
         return nc;
     }
-    uint32_t searchOpsMinNCardsAwake(int pn) const { // 自分以外のAwakeなプレーヤーの最小枚数
-        uint32_t nc = N_CARDS;
+    unsigned getOpsMinNCardsAwake(int pn) const {
+        unsigned nc = N_CARDS;
         for (int p = 0; p < N_PLAYERS; p++) {
             if (isAwake(p) && p != pn) nc = min(nc, getNCards(p));
         }
         return nc;
     }
-    uint32_t searchOpsMaxNCards(int pn) const { // 自分以外の最大枚数
-        uint32_t nc = 0;
+    unsigned getOpsMaxNCards(int pn) const {
+        unsigned nc = 0;
         for (int p = 0; p < N_PLAYERS; p++) {
             if (isAlive(p) && p != pn) nc = max(nc, getNCards(p));
         }
         return nc;
     }
-    uint32_t searchOpsMaxNCardsAwake(int pn) const { // 自分以外のAwakeなプレーヤーの最小枚数
-        uint32_t nc = 0;
+    unsigned getOpsMaxNCardsAwake(int pn) const {
+        unsigned nc = 0;
         for (int p = 0; p < N_PLAYERS; p++) {
             if (isAwake(p) && p != pn) nc = max(nc, getNCards(p));
         }
         return nc;
     }
-    
-    uint32_t getOpsMinNCards(int pn) const { return searchOpsMinNCards(pn); }
-    uint32_t getOpsMinNCardsAwake(int pn) const { return searchOpsMinNCardsAwake(pn); }
-    uint32_t getOpsMaxNCards(int pn) const { return searchOpsMaxNCards(pn); }
-    uint32_t getOpsMaxNCardsAwake(int pn) const { return searchOpsMaxNCardsAwake(pn); }
 
     void procHand(int tp, Move m);
 
@@ -343,12 +331,8 @@ struct Field {
     void makePresents();
     void removePresentedCards();
     
-    void setHand(int p, Cards c) {
-        hand[p].setAll(c);
-    }
-    void setOpsHand(int p, Cards c) {
-        opsHand[p].setAll(c);
-    }
+    void setHand(int p, Cards c) { hand[p].setAll(c); }
+    void setOpsHand(int p, Cards c) { opsHand[p].setAll(c); }
     void setRemHand(Cards c) {
         remCards = c;
         remQty = c.count();

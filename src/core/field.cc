@@ -74,10 +74,10 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
         if (p != myPlayerNum) {
             int pos = positionOf(p);
             if (pos < best) {
-                ret = (1U << p);
+                ret = 1U << p;
                 best = pos;
             } else if (pos == best) {
-                ret |= (1U << p);
+                ret |= 1U << p;
             }
         }
     }
