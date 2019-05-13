@@ -171,11 +171,9 @@ public:
         assert(holdsCards(myCards, changeCards));
         if (monitor) {
             cerr << root.toString();
-            cerr << "\033[1m";
-            cerr << "\033[" << 34 << "m";
+            cerr << "\033[1m\033[" << 34 << "m";
             cerr << "Best Change : " << changeCards << endl;
-            cerr << "\033[" << 39 << "m";
-            cerr << "\033[0m";
+            cerr << "\033[" << 39 << "m\033[0m";
         }
         return changeCards;
     }
@@ -396,11 +394,9 @@ public:
 
         if (monitor) {
             cerr << root.toString();
-            cerr << "\033[1m";
-            cerr << "\033[" << 31 << "m";
+            cerr << "\033[1m\033[" << 31 << "m";
             cerr << "Best Move : " << playMove << endl;
-            cerr << "\033[" << 39 << "m";
-            cerr << "\033[0m";
+            cerr << "\033[" << 39 << "m\033[0m";
         }
         
         return playMove;
