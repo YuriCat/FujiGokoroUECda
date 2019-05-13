@@ -5,11 +5,6 @@
 #include "../engine/policy.hpp"
 #include "policyGradient.hpp"
 
-struct ThreadTools {
-    MoveInfo buf[8192];
-    XorShift64 dice;
-};
-
 using namespace std;
 
 enum {
@@ -21,7 +16,6 @@ enum {
 
 namespace LearningSettings {
     // 学習用パラメータの設定
-    constexpr int N_MAX_THREADS = 64;
     int threads = 1;
     constexpr double temperature = 1;
     double learningRate = 0.000005;

@@ -2,24 +2,25 @@
 
 #include "../core/action.hpp"
 #include "../engine/mate.hpp"
+#include "../engine/data.hpp"
 
 namespace PolicyGradient {
     // 試合ログから方策勾配法で着手方策関数を棋譜の着手が選ばれやすいように近づける
     
-    template <class gameLog_t, class learningSpace_t, class threadTools_t>
+    template <class gameLog_t, class learningSpace_t>
     int learnChangeParamsGame(const gameLog_t& gLog,
                               const std::bitset<32> flags,
                               learningSpace_t *const plearningSpace,
-                              threadTools_t *const ptools) {
+                              ThreadTools *const ptools) {
         
-        MoveInfo *const buf = ptools->buf;
+        MoveInfo *const mbuf = ptools->mbuf;
         Field field;
         iterateGameLogBeforePlay
         (field, gLog,
             [](const Field& field)->void{}, // first callback
             [](const Field& field)->void{}, // dealt callback
             // change callback
-            [buf, flags, plearningSpace](const Field& field, const int from, const int to, const Cards chosenChange)->int{
+            [mbuf, flags, plearningSpace](const Field& field, const int from, const int to, const Cards chosenChange)->int{
                 
                 int myClass = field.classOf(from);
                 if (myClass > Class::MIDDLE) return 0;
@@ -65,20 +66,20 @@ namespace PolicyGradient {
         return 0;
     }
     
-    template <int MODELING = 0, class gameLog_t, class learningSpace_t, class threadTools_t>
+    template <int MODELING = 0, class gameLog_t, class learningSpace_t>
     int learnPlayParamsGame(const gameLog_t& gLog,
                             const std::bitset<32> flags,
                             learningSpace_t *const plearningSpace,
-                            threadTools_t *const ptools) {
+                            ThreadTools *const ptools) {
         
-        MoveInfo *const buf = ptools->buf;
+        MoveInfo *const mbuf = ptools->mbuf;
         Field field;
         iterateGameLogAfterChange
         (field, gLog,
             //after change callback
             [](const Field& field)->void{},
             //play callback
-            [buf, flags, plearningSpace](const Field& field, const Move chosenMove, const uint64_t time)->int{
+            [mbuf, flags, plearningSpace](const Field& field, const Move chosenMove, const uint64_t time)->int{
                 
                 if (field.isEndGame()) return -1;
                 
@@ -90,14 +91,14 @@ namespace PolicyGradient {
                 if (!holdsCards(myHand.cards, chosenMove.cards())) return -1;
                 
                 // generate moves
-                const int NMoves = genMove(buf, myHand, b);
+                const int NMoves = genMove(mbuf, myHand, b);
                 if (NMoves == 1) return 0;
                 
-                int idx = searchMove(buf, NMoves, [chosenMove](const Move mv)->bool{
+                int idx = searchMove(mbuf, NMoves, [chosenMove](const Move mv)->bool{
                     return mv == chosenMove;
                 });
                 
-                if (searchHandMate(0, buf, NMoves, myHand, opsHand, b, field.fieldInfo) >= 0) return 0;
+                if (searchHandMate(0, mbuf, NMoves, myHand, opsHand, b, field.fieldInfo) >= 0) return 0;
                 
                 double score[N_MAX_MOVES + 1];
                 auto *const plearner = &plearningSpace->playLearner(turn);
@@ -106,7 +107,7 @@ namespace PolicyGradient {
                     if (flags.test(1)) plearner->feedUnfoundFeatureValue();
                     if (flags.test(2)) plearner->feedObjValue(idx);
                 } else {                     
-                    if (!playPolicyScore(score, buf, NMoves, field, *plearner, 1)) {  
+                    if (!playPolicyScore(score, mbuf, NMoves, field, *plearner, 1)) {  
                         if (flags.test(1)) plearner->feedFeatureValue();
                         if (flags.test(0)) { // learn
                             plearner->feedSupervisedActionIndex(idx);
@@ -122,11 +123,11 @@ namespace PolicyGradient {
         return 0;
     }
 
-    template <class gameLog_t, class learningSpace_t, class threadTools_t>
+    template <class gameLog_t, class learningSpace_t>
     int learnParamsGame(const gameLog_t& gLog,
                         const std::bitset<32> flags,
                         learningSpace_t *const plearningSpace,
-                        threadTools_t *const ptools,
+                        ThreadTools *const ptools,
                         bool change) {
         if (change) {
             return learnChangeParamsGame(gLog, flags, plearningSpace, ptools);
