@@ -90,7 +90,7 @@ void Field::procHand(int tp, Move m) {
     uint64_t dkey = CardsToHashKey(dc);
     
     // 全体の残り手札の更新
-    usedCards[tp] |= dc;
+    usedCards[tp] += dc;
     remCards -= dc;
     remQty -= dq;
     remKey = subCardKey(remKey, dkey);
