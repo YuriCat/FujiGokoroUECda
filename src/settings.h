@@ -15,7 +15,6 @@ const std::string MY_VERSION = "20190514";
 // 重要な設定
 
 //#define MINIMUM // 本番用
-//#define MONITOR // 着手決定関連の表示
 //#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
@@ -27,11 +26,10 @@ const std::string MY_VERSION = "20190514";
 
 // 戦略設定
 
-// 思考レベル(0~＋∞だが、6以上の場合は計算時間解析が上手く行かないかも)
-// 0だとMCに入らない(POLICY_ONLYをオンにするのと同じ)
+// 思考レベル(0~＋∞)
 #define THINKING_LEVEL (9)
 
-// 並列スレッド数
+// 最大並列スレッド数
 #define N_THREADS (8)
 
 // 末端報酬を階級リセットから何試合前まで計算するか
