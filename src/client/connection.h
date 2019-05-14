@@ -2,7 +2,7 @@
 
 void checkArg(int argc,char* argv[]);
 int  startGame(int table[8][15]);
-int  entryToGame(void);
+int  entryToGame(const char*);
 void sendChangingCards(int cards[8][15]);
 int  receiveCards(int cards[8][15]);
 int  sendCards(int cards[8][15]);

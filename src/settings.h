@@ -8,12 +8,9 @@
 #include <algorithm>
 
 // プロフィール
-#define MY_MC_NAME "lilovyy"
-#define MY_POL_NAME "maLilovyy"
-#define MY_POL_RL_NAME "maLilovyyRL"
-
-#define MY_VERSION "20190504"
-#define MY_COACH "KatsukiOhto"
+const std::string MY_NAME = "lilovyy";
+const std::string MY_POL_NAME = "maLilovyy";
+const std::string MY_VERSION = "20190514";
 
 // 重要な設定
 
@@ -101,28 +98,6 @@ extern ConfigReader configReader;
 // 標準人数に設定
 #define _PLAYERS (N_NORMAL_PLAYERS)
 #endif
-
-// 方策関数そのままのクライアントとしてのビルド
-#ifdef POLICY_ONLY
-
-// 名前
-#define MY_NAME MY_POL_NAME
-
-// スレッド数は1ということにする
-// (0にすると探索用バッファが無くなる)
-#ifdef N_THREADS
-#undef N_THREADS
-#define N_THREADS (1)
-#endif
-
-#else // POLICY_ONLY
-
-// モンテカルロありのとき
-
-// 名前
-#define MY_NAME MY_MC_NAME
-
-#endif // POLICY_ONLY
 
 
 // 本番用のとき、プレーに無関係なものは全て削除
