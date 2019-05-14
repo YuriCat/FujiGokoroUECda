@@ -40,8 +40,6 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
 
 こちらは開発版なので、弱かったり大会の時間制限を満たしていないことがあります。
 
-パラメータファイルは未アップです。
-
 ## ルール等 公式のドキュメント
 
 http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/document.html
