@@ -173,7 +173,7 @@ void Field::prepareForPlay() {
                 fieldInfo.setFlushLead();
                 if (fieldInfo.isLastAwake()) {
                 } else {
-                    if (dominatesHand(board, opsHand[tp])) {
+                    if (dominatesCards(board, opsHand[tp].cards)) {
                         // 場が全員を支配しているので、パスをすれば自分から
                         fieldInfo.setBDO();
                         fieldInfo.setPassDom(); // fl && bdo ならパス支配

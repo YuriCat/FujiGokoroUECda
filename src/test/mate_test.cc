@@ -195,7 +195,7 @@ int testRecordMoveMate(const Record& record) {
             Board bd = field.board;
             MoveInfo mi = MoveInfo(move);
             
-            if (dominatesHand(bd, myHand)) return 0;
+            if (dominatesCards(bd, myHand.cards)) return 0;
             
             cl.start();
             bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd, field.fieldInfo);
@@ -205,7 +205,7 @@ int testRecordMoveMate(const Record& record) {
             cl.start();
             visitedCards.clear();
             bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
-                                        myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
+                                       myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
             checkTime[1] += cl.stop();
             checkMatrix[pw][mate] += 1;
             return 0;

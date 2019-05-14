@@ -368,7 +368,7 @@ int playPolicyScore(double *const dst,
             // NF_Dominance Move On PassDom
             {
                 if (fieldInfo.isPassDom()) {
-                    if (m.domInevitably() || dominatesHand(m, opsHand, OrderToNullBoard(order))) {
+                    if (m.domInevitably() || dominatesCards(m, opsHand.cards, OrderToNullBoard(order))) {
                         int key = FEA_IDX(FEA_MOVE_NFDOM_PASSDOM);
                         Foo(key)
                     }

@@ -370,7 +370,7 @@ inline bool judgeHandMate(const int depth, MoveInfo *const buf,
                         return true;
                     }
                 } else {
-                    if (dominatesHand(mv, opsHand, b)) {
+                    if (dominatesCards(mv, opsHand.cards, b)) {
                         if (judgeHandPW_NF(nextHand, opsHand, b)) return true;
                     } else {
                         // 支配的でない場合、この役を最後に出すことを検討
@@ -485,7 +485,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
     // DERR << depth << endl;
     // 通常
     if (mv.qty() >= myHand.qty) return true; // 即上がり
-    if (dominatesHand(mv, opsHand, b)
+    if (dominatesCards(mv, opsHand.cards, b)
        || mv.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
         
         mv.setDO(); // 支配フラグ付加
