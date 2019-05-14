@@ -1,3 +1,0 @@
-./param/1503546433/param/
-./param_out/
-./record/

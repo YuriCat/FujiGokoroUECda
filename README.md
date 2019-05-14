@@ -1,3 +1,5 @@
+This program was dedicated to MK, a gentle wind to me.
+
 # コンピュータ大貧民プログラム FujiGokoro (藤心)
 
 UECコンピュータ大貧民大会（UECda）ルール・プロトコルに準拠した大富豪（大貧民）の思考プログラムです。
@@ -10,21 +12,21 @@ UECda2014, 2015, 2016, 2017 無差別級で優勝しています。
 
 ## 使用方法
 
-make release -j4
+make -j4
 
 でビルドし、
 
-./out/release/server -g 100 &
+./out/server -g 100 &
 
-./out/release/client &  
-./out/release/client &  
-./out/release/client &  
-./out/release/client &  
-./out/release/client &  
+./out/client &  
+./out/client &  
+./out/client &  
+./out/client &  
+./out/client &  
 
 のように5体の自己対戦を行うことができます。
 
-./out/release/server -g 100 -bc -l tmp.dat
+./out/server -g 100 -bc -l tmp.dat
 
 としてサーバーを起動すると試合内容をコンソールで表示し、tmp.datに棋譜を保存することができます。
 
