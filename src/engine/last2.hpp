@@ -34,7 +34,7 @@ class L2Judge {
 private:
     const int NODE_LIMIT;
     
-    MoveInfo *const buf;
+    MoveInfo *const mbuf;
     
     // 統計情報
     int nodes, childs, failed;
@@ -44,8 +44,8 @@ public:
         nodes = childs = failed = 0;
     }
     
-    L2Judge(int nl,MoveInfo *const argMI):
-    NODE_LIMIT(nl), buf(argMI) { init(); }
+    L2Judge(int nl, MoveInfo *const mb):
+    NODE_LIMIT(nl), mbuf(mb) { init(); }
     ~L2Judge() {}
 
     // 再帰版
