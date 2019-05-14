@@ -12,6 +12,11 @@ UECda2014, 2015, 2016, 2017 無差別級で優勝しています。
 
 ## 使用方法
 
+git clone https://github.com/YuriCat/FujiGokoroUECda  
+cd FujiGokoroUECda
+
+（この際、パラメータファイルがGit-LFS経由でparam/下にダウンロードされたことをご確認ください）
+
 make -j4
 
 でビルドし、
@@ -39,8 +44,6 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
 からダウンロードできます。
 
 こちらは開発版なので、弱かったり大会の時間制限を満たしていないことがあります。
-
-パラメータファイルは未アップです。
 
 ## ルール等 公式のドキュメント
 
