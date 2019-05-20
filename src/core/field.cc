@@ -84,6 +84,7 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
     assert(ret != 0U);
     return ret;
 }
+
 void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
