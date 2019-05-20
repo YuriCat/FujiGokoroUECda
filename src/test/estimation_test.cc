@@ -32,6 +32,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     long long perfect = 0; // 完全一致率
 
     double entropy = 0;
+    double cross_entropy = 0;
     long long ecnt = 0;
 
     for (int i = 0; i < mrecord.games(); i++) {
@@ -82,18 +83,18 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                     }
                 }
                 // 各カードごとの情報量を計算
-                double e = 0;
+                double e = 0, ce = 0;
                 for (int ic = 0; ic < 64; ic++) {
                     int sum = 0;
                     for (int p = 0; p < N_PLAYERS; p++) sum += own[ic][p];
                     for (int p = 0; p < N_PLAYERS; p++) {
-                        if (own[ic][p] > 0) {
-                            double prob = own[ic][p] / double(sum);
-                            if (own[ic][p] > 0) e += -prob * log2(prob);
-                        }
+                        double prob = (own[ic][p] + 1.0 / N_PLAYERS) / double(sum + 1);
+                        e += -prob * log2(prob);
+                        if (field.getCards(p).contains(IntCard(ic))) ce += -log2(prob);
                     }
                 }
                 entropy += e;
+                cross_entropy += ce;
             }
             return 0;
         },
@@ -102,7 +103,8 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     cerr << "type " << type << ": ";
     cerr << perfect << " / " << cnt << " (" << double(perfect) / cnt << ") ";
     cerr << same << " / " << all << " (" << double(same) / all << ") ";
-    cerr << "entropy " << entropy / ecnt << " in " << time / cnt << " clock" << endl;
+    cerr << "entropy " << entropy / ecnt << " centropy " << cross_entropy / ecnt;
+    cerr << " in " << time / cnt << " clock" << endl;
 }
 
 bool EstimationTest(const vector<string>& recordFiles) {
