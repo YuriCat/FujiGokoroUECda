@@ -233,26 +233,32 @@ inline T highestNBits(T v, int n) {
     return ans;
 }
 
-constexpr uint64_t cross64(uint64_t a, uint64_t b) {
-    return (a & 0x5555555555555555) | (b & 0xAAAAAAAAAAAAAAAA);
+template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
+constexpr T fill_bits_impl(T a, int n) {
+    return n <= 0 ? a :
+      (W <= 0 ? T(0) :
+      (W >= MAX_SIZE ? a :
+      ((fill_bits_impl<T, W, MAX_SIZE>(a, n - 1) << W) | a)));
 }
 
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8> T fill_bits(T a);
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8> T fill_bits_impl(T a, int n);
-
-template <typename T, int W, int MAX_SIZE>
-inline T fill_bits(T a) {
+template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
+constexpr T fill_bits(T a) {
     return W <= 0 ? T(0) :
       (W >= MAX_SIZE ? a :
       (((fill_bits_impl<T, W, MAX_SIZE>(a, (MAX_SIZE - 1) / W)) << W) | a));
 }
 
-template <typename T, int W, int MAX_SIZE>
-inline T fill_bits_impl(T a, int n) {
-    return n <= 0 ? a :
-      (W <= 0 ? T(0) :
-      (W >= MAX_SIZE ? a :
-      ((fill_bits_impl<T, W, MAX_SIZE>(a, n - 1) << W) | a)));
+constexpr uint64_t cross64(uint64_t a, uint64_t b) {
+    return (a & 0x5555555555555555) | (b & 0xAAAAAAAAAAAAAAAA);
+}
+template <size_t N, size_t M>
+constexpr uint64_t cross64Impl(uint64_t *a) {
+    return M == 0 ? 0
+           : (fill_bits<uint64_t, N>(1ULL << (N - M)) & *a) | cross64Impl<N, (M > 0 ? (M - 1) : 0)>(a + 1);
+}
+template <size_t N>
+constexpr uint64_t cross64(uint64_t *a) {
+    return cross64Impl<N, N>(a);
 }
 
 template <class dice64_t>
@@ -872,6 +878,13 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     for (int i = 0; i < (int)N - 1; i++) ost << ba[i] << ", ";
     if (ba.size() > 0) ost << ba[N - 1];
     ost << "}";
+    return ost;
+}
+template <std::size_t N>
+std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
+    ost << "[";
+    for (int i = 0; i < N; i++) ost << bool(a.test(i));
+    ost << "]";
     return ost;
 }
 

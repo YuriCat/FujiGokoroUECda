@@ -362,12 +362,11 @@ struct ImaginaryWorld {
     uint64_t key;
 
     void set(int turnCount, const Cards c[]) {
-        key = 0;
         for (int p = 0; p < N_PLAYERS; p++) {
             cards[p] = c[p];
             cardKey[p] = CardsToHashKey(c[p]);
-            key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & cardKey[p];
         }
+        key = cross64<N_PLAYERS>(cardKey);
         builtTurn = turnCount;
     }
 };
