@@ -8,17 +8,13 @@
 #include <algorithm>
 
 // プロフィール
-#define MY_MC_NAME "lilovyy"
-#define MY_POL_NAME "maLilovyy"
-#define MY_POL_RL_NAME "maLilovyyRL"
-
-#define MY_VERSION "20190504"
-#define MY_COACH "KatsukiOhto"
+const std::string MY_NAME = "lilovyy";
+const std::string MY_POL_NAME = "maLilovyy";
+const std::string MY_VERSION = "20190514";
 
 // 重要な設定
 
 //#define MINIMUM // 本番用
-//#define MONITOR // 着手決定関連の表示
 //#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
@@ -30,11 +26,10 @@
 
 // 戦略設定
 
-// 思考レベル(0~＋∞だが、6以上の場合は計算時間解析が上手く行かないかも)
-// 0だとMCに入らない(POLICY_ONLYをオンにするのと同じ)
+// 思考レベル(0~＋∞)
 #define THINKING_LEVEL (9)
 
-// 並列スレッド数
+// 最大並列スレッド数
 #define N_THREADS (8)
 
 // 末端報酬を階級リセットから何試合前まで計算するか
@@ -101,28 +96,6 @@ extern ConfigReader configReader;
 // 標準人数に設定
 #define _PLAYERS (N_NORMAL_PLAYERS)
 #endif
-
-// 方策関数そのままのクライアントとしてのビルド
-#ifdef POLICY_ONLY
-
-// 名前
-#define MY_NAME MY_POL_NAME
-
-// スレッド数は1ということにする
-// (0にすると探索用バッファが無くなる)
-#ifdef N_THREADS
-#undef N_THREADS
-#define N_THREADS (1)
-#endif
-
-#else // POLICY_ONLY
-
-// モンテカルロありのとき
-
-// 名前
-#define MY_NAME MY_MC_NAME
-
-#endif // POLICY_ONLY
 
 
 // 本番用のとき、プレーに無関係なものは全て削除

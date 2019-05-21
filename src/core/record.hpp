@@ -11,11 +11,7 @@ struct PlayRecord { // 1つの着手の記録
     void set(Move m, unsigned t) {
         move = m; time = t;
     }
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << toRecordString(move) << "[" << time << "]";
-        return oss.str();
-    }
+    std::string toString() const;
 };
 
 class EnginePlayRecord : public PlayRecord {
@@ -165,7 +161,7 @@ protected:
 
 template <class _playLog_t>
 class GameRecord : public CommonGameRecord<_playLog_t> {
-private:
+protected:
     using base = CommonGameRecord<_playLog_t>;
 public:
     void init() {
@@ -183,59 +179,13 @@ public:
     Cards getOrgCards(int p) const { return orgCards[p]; }
     void setOrgCards(int p, Cards c) { orgCards[p] = c; }
     void addOrgCards(int p, Cards c) { orgCards[p] |= c; }
-    
-    std::string toString(int gn) const {
-        std::ostringstream oss;
-        
-        oss << "/* " << endl;
-        oss << "game " << gn << " " << endl;
-        oss << "score " << endl;
-        oss << "class ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::classOf(p) << " ";
-        }
-        oss << endl;
-        oss << "seat ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::seatOf(p) << " ";
-        }
-        oss << endl;
-        oss << "dealt ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(getDealtCards(p).toString()) << " ";
-        }
-        oss << endl;
-        oss << "changed ";
-        
-        Cards changeCards[N_PLAYERS];
-        for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
-        for (int c = 0; c < base::changes(); c++) {
-            changeCards[base::change(c).from] = base::change(c).cards;
-        }
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(changeCards[p].toString()) << " ";
-        }
-        oss << endl;
-        oss << "original ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(getOrgCards(p).toString()) << " ";
-        }
-        oss << endl;
-        oss << "play ";
-        for (int t = 0; t < base::plays(); t++) {
-            oss << base::play(t).toString() << " ";
-        }
-        oss << endl;
-        oss << "result ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::newClassOf(p) << " ";
-        }
-        oss << endl;
-        oss << "*/ " << endl;
-        
-        return oss.str();
-    }
-    
+
+    std::array<Cards, N_PLAYERS> dealtCards, orgCards;
+};
+
+class ServerGameRecord : public GameRecord<PlayRecord> {
+public:
+    std::string toString(int gn) const;
     int fadd(const std::string& fName, int g) {
         // ファイルに追加書き込み
         std::ofstream ofs(fName, std::ios::app);
@@ -243,8 +193,6 @@ public:
         ofs << toString(g);
         return 0;
     }
-    
-    std::array<Cards, N_PLAYERS> dealtCards, orgCards;
 };
 
 class EngineGameRecord : public GameRecord<EnginePlayRecord> {
@@ -441,8 +389,8 @@ struct MatchRecordAccessor { // ランダム順なアクセス
     }
 };
 
-using MatchRecord = MatchRecordBase<GameRecord<PlayRecord>>;
-using Record = MatchRecordAccessor<MatchRecordBase<GameRecord<PlayRecord>>>;
+using MatchRecord = MatchRecordBase<ServerGameRecord>;
+using Record = MatchRecordAccessor<MatchRecordBase<ServerGameRecord>>;
 
 extern int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog);
 

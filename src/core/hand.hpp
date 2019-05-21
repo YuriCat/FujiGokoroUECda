@@ -7,10 +7,6 @@
 // 手札表現の基本
 // 単に集合演算がしたい場合はCards型のみでやるが
 // 着手生成や支配、必勝判定等行う場合はこちらが便利
-// 用途によってどの部分を更新するかは要指定
-// 枚数指定をミスると最後まで改善されないので注意
-
-// TODO: pqr の算出は qr からの計算の方が高速と思ったが要検証
 
 struct Hand {
     Cards cards; // 通常型
@@ -25,8 +21,8 @@ struct Hand {
 
     uint64_t key; // ハッシュ値
     
-    // 情報を使う早さにより、前後半(ハッシュ値だけは例外としてその他)に分ける。
-    // allが付く進行はhash値も含めて更新する。
+    // 情報を使う早さにより、前後半(keyだけは例外としてその他)に分ける
+    // allが付く進行はkeyも含めて更新する
     
     // 前半
     // cards, qty, jk, seq, qr, pqr
@@ -34,10 +30,6 @@ struct Hand {
     // sc, nd[2]
     // その他
     // key
-    
-    // (未実装)必勝判定のとき
-    // cards, qty, jk, seq, pqrを更新
-    // qrは使わなさそう?
     
     constexpr operator Cards() const { return cards; }
     bool holds(Cards c) const { return cards.holds(c); }
@@ -82,96 +74,7 @@ struct Hand {
     void makeMoveAll(Move m, Cards dc, int dq, uint64_t dk);
     void makeMove1stHalf(Move m);
     void makeMove1stHalf(Move m, Cards dc, int dq);
-    void unmakeMove(Move m, Cards dc, uint32_t dq) {
-        // カードが増えない時は入らない
-        // 更新するものは最初にチェック
-        assert(exam());
-        assert(!m.isPASS());
-        ASSERT(isExclusiveCards(cards, dc),
-               cerr << "Hand::unmakeMove : inclusive unmaking-move. " << dc << " to " << cards << endl; );
-        
-        int djk = dc.joker();
-        int r = m.rank();
-        
-        cards += dc; // 通常型は足せば良い
-        qty += dq; // 枚数進行
-        
-        assert(cards != CARDS_NULL);
-        assert(qty > 0);
-        
-        Cards plain = cards.plain();
-        jk = cards.joker();
-        seq = polymRanks(plain, jk, 3);
 
-        // 無支配型(共通処理)
-        if (djk) {
-            // ジョーカーが増えた事で、1枚分ずれる
-            // 1枚のところは全て無支配
-            nd[0] = ((nd[0] & PQR_123) << 1) | PQR_1;
-            nd[1] = ((nd[1] & PQR_123) << 1) | PQR_1;
-        }
-
-        if (dc != CARDS_JOKER) { // ジョーカーだけ増えた場合はこれで終わり
-            if (!m.isSeq()) {
-                // ジョーカーの存在により少し処理が複雑に
-                dq -= djk; // ジョーカーの分引く
-                
-                Cards mask = RankToCards(r); // 当該ランクのマスク
-                
-                // 枚数型は当該ランクの枚数を足す
-                qr = qr.data() + (BitCards(dq) << (r << 2));
-                uint32_t nq = qr[r]; // 当該ランクの新しい枚数
-                
-                // 枚数位置型、圧縮型ともに新しい枚数に入れ替える
-                pqr = ((Cards(1U << (nq - 1U))) << (r << 2)) | (pqr & ~mask);
-                sc |= Cards((1U << nq) -1U) << (r << 2);
-                
-                Cards npqr = pqr & mask; // 当該ランクの新しいpqr
-                
-                // 無支配型
-                // グループは増やすのが簡単(ただしテーブル参照あり)
-                if (jk) {
-                    // ジョーカーありの場合には1ビット枚数を増やして判定
-                    if (npqr & PQR_4) {
-                        npqr = (npqr & PQR_4) | ((npqr & PQR_123) << 1);
-                    } else {
-                        npqr <<= 1;
-                    }
-                    nq += jk;
-                }
-                
-                // 通常オーダー
-                if (!(npqr & nd[0])) { // 増分が無支配ゾーンに関係するので更新の必要あり
-                    nd[0] |= ORQ_NDTable[0][r - 1][nq - 1];
-                }
-                // 逆転オーダー
-                if (!(npqr & nd[1])) { // 増分が無支配ゾーンに関係するので更新の必要あり
-                    nd[1] |= ORQ_NDTable[1][r + 1][nq - 1];
-                }
-                
-            } else {
-                // 階段
-                Cards mask = RankRangeToCards(r, r + dq - 1); // 当該ランクのマスク
-                Cards dqr = dc >> SuitToSuitNum(m.suits()); // スートの分だけずらすと枚数を表すようになる
-
-                if (djk) {
-                    Cards jkmask = RankToCards(m.jokerRank()); // ジョーカーがある場合のマスク
-                    mask ^= jkmask; // ジョーカー部分はマスクに関係ないので外す
-                    dqr &= ~jkmask;
-                }
-                
-                // 枚数型はジョーカー以外の差分を足す
-                qr = qr.data() + dqr;
-                
-                // 枚数位置型は当該ランクを1枚分シフトし、元々無かった所には1枚をうめる
-                // 圧縮型は当該ランクを1枚分シフトし、1枚のところを埋める
-                pqr = ((pqr & mask) << 1) | (~sc & mask & PQR_1) | (pqr & ~mask); // 昔のscを使う
-                sc |= ((sc  & mask) << 1) | (mask & PQR_1);
-                PQRToND(pqr, jk, nd);
-            }
-        }
-        assert(exam());
-    }
     // カード集合単位(役の形をなしていない)の場合
     void add(Cards dc, const int dq) {
         set(addCards(cards, dc), qty + dq);

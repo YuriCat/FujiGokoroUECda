@@ -10,6 +10,8 @@
 #include "../UECda.h"
 #include "../engine/engine.hpp"
 
+using namespace std;
+
 WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda
@@ -17,9 +19,7 @@ int main(int argc, char* argv[]) { // for UECda
     // main関数はクライアントの思考の進行役を務める
     // サーバーの情報を、クライアントが用いる共通型に変換して最低限の主観的情報を更新する
     // それ以上高次な演算はクライアントが行う
-    
-    CERR << MY_NAME << " ver. " << MY_VERSION << " trained with " << MY_COACH << "." << endl;
-    
+
     // 時間計測(microsec単位)
     ClockMicS clms;
     uint64_t tmpTime;
@@ -39,9 +39,9 @@ int main(int argc, char* argv[]) { // for UECda
     
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
-            DIRECTORY_PARAMS_IN = std::string(argv[c + 1]);
+            DIRECTORY_PARAMS_IN = string(argv[c + 1]);
         } else if (!strcmp(argv[c], "-o")) { // output directory
-            DIRECTORY_PARAMS_OUT = std::string(argv[c + 1]);
+            DIRECTORY_PARAMS_OUT = string(argv[c + 1]);
         } else if (!strcmp(argv[c], "-s")) { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
@@ -57,7 +57,9 @@ int main(int argc, char* argv[]) { // for UECda
     }
     
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更
-    int myPlayerNum = entryToGame(); // ゲームに参加
+    string name = Settings::policyMode ? MY_POL_NAME : MY_NAME;
+    CERR << name << " ver. " << MY_VERSION << endl;
+    int myPlayerNum = entryToGame(name.c_str()); // ゲームに参加
     
     record.myPlayerNum = myPlayerNum;
     engine.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない 
@@ -298,7 +300,6 @@ int main(int argc, char* argv[]) { // for UECda
                     if (!myMove.isPASS()) { // UECdaではパスはrejectと同じフラグが返る
                         shared.feedPlayRejection();
                         cerr << "main() : My Play was Rejected(" << accept_flag << ")! " << myMove << endl;
-                        getchar();
                     }
                 }
 #ifdef BROADCAST

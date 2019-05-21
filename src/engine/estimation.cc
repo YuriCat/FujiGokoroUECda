@@ -1,5 +1,5 @@
 #include "mate.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 #include "estimation.hpp"
 
 using namespace std;
@@ -276,9 +276,10 @@ bool RandomDealer::okForRejection() const {
     return true;
 }
 
-// 採択棄却法のためのカード交換モデル
 Cards RandomDealer::change(const int p, const Cards cards, const int qty,
-                           const EngineSharedData& shared, EngineThreadTools *const ptools) const {
+                           const SharedData& shared, ThreadTools *const ptools) const {
+    
+    // 採択棄却法のためのカード交換モデル
     Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
     Field field;
@@ -288,7 +289,7 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
 }
 
 double changeProb(const int p, const Cards cards, const int qty,
-                  const EngineSharedData& shared, EngineThreadTools *const ptools,
+                  const SharedData& shared, ThreadTools *const ptools,
                                 const Cards cc) {
     Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
@@ -433,7 +434,7 @@ double RandomDealer::changeLikelihood(const Cards *const dst, const SharedData& 
                 richAfterPresent += sentCards;
                 poorAfterPresent -= sentCards;
             }
-            Cards higher = pickHigher(richAfterPresent, poorAfterPresent);
+            Cards higher = richAfterPresent & pickHigher(poorAfterPresent);
             double pattern = dCombination(higher.count(), changeQty);
             likelihood += pattern;
         } else if (myClass == poor) {
@@ -450,7 +451,7 @@ double RandomDealer::changeLikelihood(const Cards *const dst, const SharedData& 
                 Cards richAfterPresent = richAfterChange + thrown[i];
                 Cards poorAfterPresent = poorAfterChange - thrown[i];
                 //この交換の元になったパターン数を調べる
-                Cards higher = pickHigher(richAfterPresent, poorAfterPresent);
+                Cards higher = richAfterPresent & pickHigher(poorAfterPresent);
                 double pattern = dCombination(higher.count(), changeQty);
                 if (pattern > 0) {
                     // この交換が発生した確率を調べる
@@ -464,14 +465,13 @@ double RandomDealer::changeLikelihood(const Cards *const dst, const SharedData& 
     return log(likelihoodProduct);
 }
 
-double RandomDealer::onePlayLikelihood(const Field& field, Move move, unsigned time,
+double RandomDealer::onePlayLikelihood(const Field& field, Move move,
                                        const SharedData& shared, ThreadTools *const ptools) const {
-    MoveInfo *const mv = ptools->buf;
+    MoveInfo *const mv = ptools->mbuf;
     const int turn = field.turn();
     const Cards myCards = field.getCards(turn);
     const Board b = field.board;
     const int NMoves = genMove(mv, myCards, b);
-    assert(myCards.holds(move.cards()));
     if (NMoves <= 1) return 1;
 
     // 場の情報をまとめる

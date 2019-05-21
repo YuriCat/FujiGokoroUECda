@@ -7,7 +7,7 @@
 #include "../core/action.hpp"
 #include "data.hpp"
 #include "mate.hpp"
-#include "linearPolicy.hpp"
+#include "policy.hpp"
 
 namespace Settings {
     const double estimationTemperaturePlay = 1.1;
@@ -95,8 +95,8 @@ private:
     std::array<int8_t, N> infoClassPlayer;
     std::array<int8_t, N> infoClass;
     unsigned NdealCards;
-    Cards remCards;  // まだ使用されていないカード
     Cards dealCards; // まだ特定されていないカード
+    Cards remCards; // まだ使用されていないカード
     std::array<Cards, N> usedCards; // 使用済みカード
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
@@ -143,7 +143,7 @@ private:
                                    const SharedData& shared, ThreadTools *const ptools);
     double changeLikelihood(const Cards *const dst,
                             const SharedData& shared, ThreadTools *const ptools);
-    double onePlayLikelihood(const Field& field, Move move, unsigned time,
+    double onePlayLikelihood(const Field& field, Move move,
                              const SharedData& shared, ThreadTools *const ptools) const;
 
     // 採択棄却法のためのカード交換モデル
@@ -158,22 +158,24 @@ private:
         if (inChange) return 0;
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
-        for (int p = 0; p < N; p++) orgCards[p] = c[p] | detCards[infoClass[p]];
+        for (int p = 0; p < N; p++) {
+            orgCards[p] = c[p] + usedCards[infoClass[p]];
+        }
         Field field;
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
         // after change callback
         [](const Field& field)->void{},
         // play callback
-        [this, &playllh, &orgCards, &shared, ptools]
-        (const Field& field, Move chosen, unsigned time)->int{
-            // 決めたところまで読み終えた場合は終了(オフラインでの判定用)
-            if (field.turnCount() >= turnCount) return -1;
-            // カードが全確定しているプレーヤーについては考慮しない
-            if (!playFlag.test(field.turn())) return 0;
-            // 一手分の尤度を追加
-            double prob = onePlayLikelihood(field, chosen, time, shared, ptools);
-            playllh += std::log(prob);
+        [this, &shared, ptools, &playllh]
+        (const Field& field, Move move, unsigned time)->int{
+            int turn = field.turn();
+            if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
+            if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
+            // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
+            if (!playFlag.test(turn)) return 0;
+            double lh = onePlayLikelihood(field, move, shared, ptools);
+            if (lh < 1) playllh += log(lh);
             return 0;
         });
         return playllh;

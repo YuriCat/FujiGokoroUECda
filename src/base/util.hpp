@@ -233,26 +233,32 @@ inline T highestNBits(T v, int n) {
     return ans;
 }
 
-constexpr uint64_t cross64(uint64_t a, uint64_t b) {
-    return (a & 0x5555555555555555) | (b & 0xAAAAAAAAAAAAAAAA);
+template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
+constexpr T fill_bits_impl(T a, int n) {
+    return n <= 0 ? a :
+      (W <= 0 ? T(0) :
+      (W >= MAX_SIZE ? a :
+      ((fill_bits_impl<T, W, MAX_SIZE>(a, n - 1) << W) | a)));
 }
 
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8> T fill_bits(T a);
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8> T fill_bits_impl(T a, int n);
-
-template <typename T, int W, int MAX_SIZE>
-inline T fill_bits(T a) {
+template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
+constexpr T fill_bits(T a) {
     return W <= 0 ? T(0) :
       (W >= MAX_SIZE ? a :
       (((fill_bits_impl<T, W, MAX_SIZE>(a, (MAX_SIZE - 1) / W)) << W) | a));
 }
 
-template <typename T, int W, int MAX_SIZE>
-inline T fill_bits_impl(T a, int n) {
-    return n <= 0 ? a :
-      (W <= 0 ? T(0) :
-      (W >= MAX_SIZE ? a :
-      ((fill_bits_impl<T, W, MAX_SIZE>(a, n - 1) << W) | a)));
+constexpr uint64_t cross64(uint64_t a, uint64_t b) {
+    return (a & 0x5555555555555555) | (b & 0xAAAAAAAAAAAAAAAA);
+}
+template <size_t N, size_t M>
+constexpr uint64_t cross64Impl(uint64_t *a) {
+    return M == 0 ? 0
+           : (fill_bits<uint64_t, N>(1ULL << (N - M)) & *a) | cross64Impl<N, (M > 0 ? (M - 1) : 0)>(a + 1);
+}
+template <size_t N>
+constexpr uint64_t cross64(uint64_t *a) {
+    return cross64Impl<N, N>(a);
 }
 
 template <class dice64_t>
@@ -627,14 +633,11 @@ class TwoValueBook {
 public:
     using page_t = TwoValuePage32;
     
-    void init() {
-        std::memset(page_, 0, sizeof(page_));
-    }
-    void clear() {}
-    TwoValueBook() { init(); }
+    void clear() { std::memset(page_, 0, sizeof(page_)); }
+    TwoValueBook() { clear(); }
     
     int read(uint64_t key) {
-        const page_t& fpage = page_[KeyToIndex(key)];
+        page_t fpage = page_[KeyToIndex(key)];
         if (!fpage.any() || fpage.compareKey(key)) return -1;
         return fpage.value();
     }
@@ -712,6 +715,18 @@ struct StochasticSelector {
     StochasticSelector(T *const ascore, int asize):
     score_(ascore), size_(asize), sum_(0) {}
 
+    void init_max() {
+        // max selector としての初期化
+        if (size_ == 0) return;
+        T maxValue = *std::max_element(score_, score_ + size_);
+        for (int i = 0; i < size_; i++) {
+            if (score_[i] == maxValue) {
+                score_[i] = 1;
+                sum_ += 1;
+            } else score_[i] = 0;
+        }
+    }
+
     double prob(int i) const {
         return sum_ == 0 ? 1.0 / size_ : score_[i] / sum_;
     }
@@ -740,10 +755,12 @@ struct SoftmaxSelector : public StochasticSelector<T> {
     using base_t = StochasticSelector<T>;
 
     SoftmaxSelector(T *const ascore, int asize, double atemp):
-    base_t(ascore, asize) {
-        for (int i = 0; i < asize; i++) {
+    base_t(ascore, asize) { init(atemp); }
+
+    void init(double atemp) {
+        if (atemp == 0) return base_t::init_max();
+        for (int i = 0; i < base_t::size_; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
-            if (std::isinf(es)) getchar();
             base_t::score_[i] = es;
             base_t::sum_ += es;
         }
@@ -755,12 +772,15 @@ struct ThresholdSoftmaxSelector : public StochasticSelector<T> {
     using base_t = StochasticSelector<T>;
 
     ThresholdSoftmaxSelector(T *const ascore, int asize, double atemp, double athreshold):
-    base_t(ascore, asize) {
-        for (int i = 0; i < asize; i++) {
+    base_t(ascore, asize) { init(atemp, athreshold); }
+
+    void init(double atemp, double athreshold) {
+        if (atemp == 0) return base_t::init_max();
+        for (int i = 0; i < base_t::size_; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
             base_t::score_[i] = es;
         }
-        for (int i = 0; i < asize; i++) {
+        for (int i = 0; i < base_t::size_; i++) {
             base_t::score_[i] = std::max(base_t::score_[i] - athreshold, 1e-8);
             base_t::sum_ += base_t::score_[i];
         }
@@ -772,16 +792,17 @@ struct BiasedSoftmaxSelector : public StochasticSelector<T> {
     using base_t = StochasticSelector<T>;
     BiasedSoftmaxSelector(T *const ascore, int asize,
                           double atemp, double acoef, double arate):
-    base_t(ascore, asize) {
-        T max_score = -std::numeric_limits<T>::max();
-        for (int i = 0; i < asize; i++) {
-            max_score = std::max(max_score, base_t::score_[i]);
-        }
+    base_t(ascore, asize) { init(atemp, acoef, arate); }
+
+    void init(double atemp, double acoef, double arate) {
+        if (atemp == 0) return base_t::init_max();
+        if (base_t::size_ == 0) return;
+        T max_score = *std::max_element(base_t::score_, base_t::score_ + base_t::size_);
         // minus bias by the difference from best score
-        for (int i = 0; i < asize; i++) {
+        for (int i = 0; i < base_t::size_; i++) {
             base_t::score_[i] -= acoef * std::pow(max_score - base_t::score_[i], arate);
         }
-        for (int i = 0; i < asize; i++) {
+        for (int i = 0; i < base_t::size_; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
             base_t::score_[i] = es;
             base_t::sum_ += es;
@@ -794,16 +815,17 @@ struct ExpBiasedSoftmaxSelector : public StochasticSelector<T> {
     using base_t = StochasticSelector<T>;
     ExpBiasedSoftmaxSelector(T *const ascore, int asize,
                              double atemp, double acoef, double aetemp):
-    base_t(ascore, asize) {
-        T max_score = -std::numeric_limits<T>::max();
-        for (int i = 0; i < asize; i++) {
-            max_score = std::max(max_score, base_t::score_[i]);
-        }
+    base_t(ascore, asize) { init(atemp, acoef, aetemp); }
+
+    void init(double atemp, double acoef, double aetemp) {
+        if (atemp == 0) return base_t::init_max();
+        if (base_t::size_ == 0) return;
+        T max_score = *std::max_element(base_t::score_, base_t::score_ + base_t::size_);
         // minus bias by the difference from best score
-        for (int i = 0; i < asize; i++) {
+        for (int i = 0; i < base_t::size_; i++) {
             base_t::score_[i] -= acoef * std::exp(max_score - base_t::score_[i] / aetemp);
         }
-        for (int i = 0; i < asize; i++) {
+        for (int i = 0; i < base_t::size_; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
             base_t::score_[i] = es;
             base_t::sum_ += es;
@@ -856,6 +878,13 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     for (int i = 0; i < (int)N - 1; i++) ost << ba[i] << ", ";
     if (ba.size() > 0) ost << ba[N - 1];
     ost << "}";
+    return ost;
+}
+template <std::size_t N>
+std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
+    ost << "[";
+    for (int i = 0; i < N; i++) ost << bool(a.test(i));
+    ost << "]";
     return ost;
 }
 

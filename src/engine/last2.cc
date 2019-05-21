@@ -415,7 +415,7 @@ int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b,
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ
-    int res = judge<1, 1024>(0, buf, myHand, opsHand, field);
+    int res = judge<1, 1024>(0, mbuf, myHand, opsHand, field);
     return res;
 }
 
@@ -424,7 +424,7 @@ int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsH
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ
     MoveInfo tmp = mi;
-    int res = check(0, buf, tmp, myHand, opsHand, field);
+    int res = check(0, mbuf, tmp, myHand, opsHand, field);
     DERR << "L2Check ";
     switch (res) {
         case L2_WIN: DERR << "-WIN"; break;

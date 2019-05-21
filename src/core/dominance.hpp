@@ -64,11 +64,11 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
     if (!m.isSeq() && m.qty() <= oh.jk) return false;
     
     if (!m.isSeq()) {
-        int aftTmpOrd = b.nextOrder(m);
-        if (m.qty() > 4) return true;
-        if (!(m.charaPQR() & oh.nd[aftTmpOrd])) return true; // 無支配型と交差なし
+        if (m.qty() > 4 + oh.jk) return true;
+        int nextOrder = b.nextOrder(m);
+        if (!(m.charaPQR() & oh.nd[nextOrder])) return true; // 無支配型と交差なし
         if (b.locksSuits(m)) { // スートロックの場合はまだ支配可能性あり
-            Cards zone = ORToGValidZone(aftTmpOrd, m.rank());
+            Cards zone = ORToGValidZone(nextOrder, m.rank());
             zone &= SuitsToCards(m.suits());
             return !canMakeGroup(oh.cards & zone, m.qty() - oh.jk);
         }
@@ -95,10 +95,8 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
     if (!b.isSeq() && b.qty() <= oh.jk) return false;
     
     if (!b.isSeq()) { // グループ
-        if (b.qty() > 4) return true;
-        Move m = Move(b);
-        Cards pqr = m.charaPQR();
-        if (!(pqr & oh.nd[b.order()])) return true; // 無支配型と交差なし
+        if (b.qty() > 4 + oh.jk) return true;
+        if (!(b.charaPQR() & oh.nd[b.order()])) return true; // 無支配型と交差なし
         if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
             Cards zone = ORToGValidZone(b.order(), b.rank());
             zone &= SuitsToCards(b.suits());

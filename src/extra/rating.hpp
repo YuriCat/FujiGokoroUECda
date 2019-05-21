@@ -36,7 +36,7 @@ void simulationThreadForRating(RateCalculationData *const pdst,
     while (pdst->trials++ < simulations)
     {
         Field tfield = *pfield;
-        tfield.setMoveBuffer(ptools->buf);
+        tfield.setMoveBuffer(ptools->mbuf);
         
         // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
         startAllSimulation(tfield, pshared, ptools);

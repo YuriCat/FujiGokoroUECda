@@ -60,7 +60,7 @@ const char* one_to_yes(int n) {
 std::string record_file = "";
 
 MatchRecord match_log;
-GameRecord<PlayRecord> game_log;
+ServerGameRecord game_log;
 SharedData shared;
 ThreadTools threadTools[N_THREADS];
 
@@ -845,7 +845,7 @@ int main(int argc, char *argv[]) {
                     default:
                         break;
                 }
-            } else if ((error==0)) {
+            } else if (error==0) {
                 switch (status_of_submitted_card[3]) {
                     case 1:
                         break;

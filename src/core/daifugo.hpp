@@ -354,12 +354,6 @@ inline BitCards pickHigher(BitCards c) {
 inline BitCards pickLower(BitCards c) {
     return allLowerBits(c);
 }
-inline BitCards pickHigher(BitCards c0, BitCards c1) {
-    return c0 & allHigherBits(c1);
-}
-inline BitCards pickLower(BitCards c0, BitCards c1) {
-    return c0 & allLowerBits(c1);
-}
 
 // ランク重合
 // ランクを１つずつ下げてandを取るのみ(ジョーカーとかその辺のことは何も考えない)
@@ -386,14 +380,6 @@ inline BitCards extractRanks(BitCards c) {
     return (c << ((N - 1) << 2)) | extractRanks<N - 1>(c);
 }
 template <> constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
-template <> inline BitCards extractRanks<4>(BitCards c) {
-    BitCards r = c | (c << 4);
-    return r | (r << 8);
-}
-template <> inline BitCards extractRanks<5>(BitCards c) {
-    BitCards r = c | (c << 4);
-    return r | (c << 8) | (r << 12);
-}
 inline BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
     while (--n) c = extractRanks<2>(c);
     return c;
@@ -413,7 +399,7 @@ inline BitCards polymRanksWithJOKER(BitCards c, int qty) {
             BitCards d = c & (c >> 4);
             BitCards f = (d & (c >> 12)) | (c & (d >> 8)); // 1 + 2パターン
             BitCards e = d & (c >> 8); // 3連パターン
-            if (e) { f |= e | (e >> 4); }
+            if (e) f |= e | (e >> 4);
             r = f;
         } break;
         case 5: {
@@ -423,9 +409,7 @@ inline BitCards polymRanksWithJOKER(BitCards c, int qty) {
             if (e) {
                 g |= (e & (c >> 16)) | (c & (e >> 8)); // 1 + 3パターン
                 BitCards f = e & (c >> 12);
-                if (f) {
-                    g |= (f | (f >> 4)); // 4連パターン
-                }
+                if (f) g |= (f | (f >> 4)); // 4連パターン
             }
             r = g;
         } break;
@@ -508,11 +492,6 @@ inline bool isValidSeqRank(int mvRank, int order, int bdRank, int qty) {
     else return mvRank <= bdRank - qty;
 }
 
-// 枚数オンリーによる許容包括
-inline BitCards seqExistableZone(int qty) {
-    return RankRangeToCards(RANK_IMG_MIN, RANK_IMG_MAX + 1 - qty);
-}
-
 /**************************カード集合表現(クラス版)**************************/
 
 struct CardsAsSet {
@@ -566,14 +545,7 @@ union Cards {
     constexpr Cards(const Cards& c): c_(c.c_) {}
     constexpr Cards(IntCard ic) = delete; // 混乱を避ける
 
-    Cards(const std::string& str) {
-        clear();
-        std::vector<std::string> v = split(str, ' ');
-        for (const std::string& s : v) {
-            IntCard ic = StringToIntCard(s);
-            if (ic != INTCARD_NONE) insert(ic);
-        }
-    }
+    Cards(const std::string& str);
     Cards(const char *cstr): Cards(std::string(cstr)) {}
  
     // 生のBitCards型への変換
@@ -684,13 +656,7 @@ union Cards {
         return joker_ <= N_JOKERS && examPlainCards(plain());
     }
 
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "{";
-        for (IntCard ic : *this) oss << " " << OutIntCard(ic);
-        oss << " }";
-        return oss.str();
-    }
+    std::string toString() const;
 };
 
 extern std::ostream& operator <<(std::ostream& out, const Cards& c);
@@ -969,17 +935,6 @@ extern CardsInitializer cardsInitializer;
 
 /**************************着手表現**************************/
 
-// 最小のMove構造
-union Move16 {
-    uint16_t m_;
-    struct {
-        unsigned s       : 4;
-        signed   r       : 4;
-        unsigned jks     : 4;
-        signed   jkr     : 4;
-    };
-};
-
 struct Move {
     unsigned s       : 4;
     unsigned r       : 4;
@@ -1041,8 +996,7 @@ struct Move {
     constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
     
     constexpr bool isEqualRankSuits(unsigned r, unsigned s) const {
-        // rank と スートが一致するか
-        return rank() == r && suits() == s;
+        return rank() == r && suits() == s; // ランクとスート一致
     }
 
     // 情報を得る
@@ -1092,14 +1046,14 @@ struct Move {
         // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
         if (isPASS()) return CARDS_NULL;
         if (isSingleJOKER()) return CARDS_JOKER;
-        Cards c = RankSuitsToCards(rank(), suits());
+        BitCards c = RankSuitsToCards(rank(), suits());
         if (isSeq()) c = extractRanks(c, qty());
         return c;
     }
     
     template <int QTY = 256>
     Cards charaPQR() const {
-        static_assert((QTY == 256 || (1 <= QTY && QTY <= 4)), "Move::charaPQR\n");
+        static_assert(QTY == 256 || (1 <= QTY && QTY <= 4), "");
         // 性質カードのPQRを返す
         // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
         // パスとシングルジョーカーも関係ないし、
@@ -1116,7 +1070,7 @@ struct Move {
                 return CARDS_NULL;
             }
         } else {
-            return Cards(1U << (qty() - 1)) << (rank() << 2);
+            return BitCards(1U << (qty() - 1)) << (rank() << 2);
         }
     }
 
@@ -1135,19 +1089,10 @@ struct MeldChar : public Move {
 };
 
 extern std::ostream& operator <<(std::ostream& out, const MeldChar& m);
-extern  std::ostream& operator <<(std::ostream& out, const Move& m);
+extern std::ostream& operator <<(std::ostream& out, const Move& m);
 extern std::string toRecordString(Move m);
 extern Move CardsToMove(const Cards chara, const Cards used);
 extern Move StringToMoveM(const std::string& str);
-
-// 生成関数
-inline Move IntCardToSingleMove(IntCard ic) {
-    // IntCard型から対応するシングル役に変換
-    // シングルジョーカー、ジョーカーS3は非対応
-    Move m = MOVE_NULL;
-    m.setSingle(IntCardToRank(ic), IntCardToSuits(ic));
-    return m;
-}
 
 template <class move_buf_t>
 int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move) {

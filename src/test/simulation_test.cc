@@ -37,7 +37,7 @@ int testSimulation(const MatchRecord& mrecord) {
             Field f = field;
             f.attractedPlayers.reset();
             f.addAttractedPlayer(field.turn());
-            f.setMoveBuffer(tools.buf);
+            f.setMoveBuffer(tools.mbuf);
             // 一致度計測
             for (int j = 0; j < 1; j++) {
                 cl.start();
