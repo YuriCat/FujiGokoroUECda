@@ -74,23 +74,24 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
         if (p != myPlayerNum) {
             int pos = positionOf(p);
             if (pos < best) {
-                ret = (1U << p);
+                ret = 1U << p;
                 best = pos;
             } else if (pos == best) {
-                ret |= (1U << p);
+                ret |= 1U << p;
             }
         }
     }
     assert(ret != 0U);
     return ret;
 }
+
 void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
     uint64_t dkey = CardsToHashKey(dc);
     
     // 全体の残り手札の更新
-    usedCards[tp] |= dc;
+    usedCards[tp] += dc;
     remCards -= dc;
     remQty -= dq;
     remKey = subCardKey(remKey, dkey);
@@ -105,10 +106,8 @@ void Field::procHand(int tp, Move m) {
 }
 
 void Field::makeChange(int from, int to, Cards dc, bool sendOnly) {
-    ASSERT(hand[from].exam(), cerr << hand[from] << endl;);
-    ASSERT(hand[to].exam(), cerr << hand[to] << endl;);
-    ASSERT(dc.exam(), cerr << dc << endl;);
-    ASSERT(hand[from].cards.holds(dc), cerr << hand[from] << " -> " << dc << endl;);
+    assert(hand[from].exam()); assert(hand[to].exam());
+    assert(dc.exam()); assert(hand[from].cards.holds(dc));
     int dq = dc.count();
     uint64_t dkey = CardsToHashKey(dc);
     hand[from].subtrAll(dc, dq, dkey);

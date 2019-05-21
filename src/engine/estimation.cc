@@ -337,9 +337,10 @@ bool RandomDealer::okForRejection() const {
     return true;
 }
 
-    // 採択棄却法のためのカード交換モデル
 Cards RandomDealer::change(const int p, const Cards cards, const int qty,
                            const SharedData& shared, ThreadTools *const ptools) const {
+    
+    // 採択棄却法のためのカード交換モデル
     Cards cand[78];
     int NCands = genChange(cand, cards, qty);
     Field field;
@@ -616,4 +617,38 @@ void RandomDealer::prepareSubjectiveInfo() {
         DERR << "cl:" << p << " p:" << (int)infoClassPlayer[p] << " Org:" << (int)NOrg[p] << " Own:" << (int)NOwn[p]
         << " Det:" << (int)NDet[p] << " Deal:" << (int)NDeal[p] << " " << detCards[p] << endl;
     }
+}
+
+double RandomDealer::onePlayLikelihood(const Field& field, Move move,
+                                       const SharedData& shared, ThreadTools *const ptools) const {
+    const int turn = field.turn();
+    const Board b = field.board;
+
+    MoveInfo *const mbuf = ptools->mbuf;
+    const int NMoves = genMove(mbuf, field.getCards(turn), b);
+    if (NMoves <= 1) return 1;
+
+    // 場の情報をまとめる
+    for (int i = 0; i < NMoves; i++) {
+        bool mate = checkHandMate(0, mbuf + NMoves, mbuf[i], field.hand[turn],
+                                  field.opsHand[turn], b, field.fieldInfo);
+        if (mate) mbuf[i].setMPMate();
+    }
+    // プレー尤度計算
+    int moveIndex = searchMove(mbuf, NMoves, [move](const MoveInfo& tmp)->bool{
+        return tmp == move;
+    });
+
+    // 自分の合法手生成では生成されない手が出された場合
+    if (moveIndex == -1) return 0.1 / double(NMoves + 1);
+
+    array<double, N_MAX_MOVES> score;
+    playPolicyScore(score.data(), mbuf, NMoves, field, shared.basePlayPolicy, 0);
+    // Mateの手のスコアを設定
+    double maxScore = *max_element(score.begin(), score.begin() + NMoves);
+    for (int i = 0; i < NMoves; i++) {
+        if (mbuf[i].isMate()) score[i] = maxScore + 4;
+    }
+    SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
+    return max(selector.prob(moveIndex), 1 / 256.0);
 }

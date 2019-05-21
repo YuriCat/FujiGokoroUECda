@@ -190,6 +190,23 @@ IntCard StringToIntCard(const string& str) {
     return RankSuitNumToIntCard(r, sn);
 }
 
+Cards::Cards(const string& str) {
+    clear();
+    vector<string> v = split(str, ' ');
+    for (const string& s : v) {
+        IntCard ic = StringToIntCard(s);
+        if (ic != INTCARD_NONE) insert(ic);
+    }
+}
+
+string Cards::toString() const {
+    ostringstream oss;
+    oss << "{";
+    for (IntCard ic : *this) oss << " " << OutIntCard(ic);
+    oss << " }";
+    return oss.str();
+}
+
 ostream& operator <<(ostream& out, const Cards& c) {
     out << c.toString();
     return out;

@@ -66,7 +66,7 @@ public:
         if (buckets > 1) {
             double lhs[BUCKET_MAX];
             for (int i = 0; i < buckets; i++) {
-                lhs[i] = calcPlayLikelihood(deal[i], record, shared, ptools);
+                lhs[i] = playLikelihood(deal[i], record, shared, ptools);
             }
             SoftmaxSelector<double> selector(lhs, buckets, 0.3);
             bestDeal = selector.select(ptools->dice.random());
@@ -130,6 +130,8 @@ private:
     bool dealWithChangeRejection(Cards *const dst,
                                  const SharedData& shared,
                                  ThreadTools *const ptools) const;
+    double onePlayLikelihood(const Field& field, Move move,
+                             const SharedData& shared, ThreadTools *const ptools) const;
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
@@ -137,13 +139,12 @@ private:
     Cards selectInWA(double urand) const;
 
     template <class gameRecord_t>
-    double calcPlayLikelihood(Cards *const c, const gameRecord_t& gLog,
-                              const SharedData& shared, ThreadTools *const ptools) const {
+    double playLikelihood(Cards *const c, const gameRecord_t& gLog,
+                          const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
         if (inChange) return 0;
         double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
-        MoveInfo *const mbuf = ptools->mbuf;
         for (int p = 0; p < N; p++) {
             orgCards[p] = c[p] + usedCards[infoClass[p]];
         }
@@ -153,46 +154,15 @@ private:
         // after change callback
         [](const Field& field)->void{},
         // play callback
-        [this, &playllh, &orgCards, mbuf, &shared]
-        (const Field& field, const Move chosen, uint32_t usedTime)->int{
-            const int tp = field.turn();
-            const Board b = field.board;
-            const Cards myCards = field.getCards(tp);
-
+        [this, &shared, ptools, &playllh]
+        (const Field& field, Move move, unsigned time)->int{
+            int turn = field.turn();
             if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
-            if (!holdsCards(myCards, chosen.cards())) return -1; // 終了(エラー)
+            if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
             // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-            if (!playFlag.test(tp)) return 0;
-            const int NMoves = genMove(mbuf, myCards, b);
-            if (NMoves <= 1) return 0;
-
-            // 場の情報をまとめる
-            for (int i = 0; i < NMoves; i++) {
-                bool mate = checkHandMate(0, mbuf + NMoves, mbuf[i], field.hand[tp],
-                                          field.opsHand[tp], b, field.fieldInfo);
-                if (mate) mbuf[i].setMPMate();
-            }
-
-            // フェーズ(空場0、通常場1、パス支配場2)
-            const int ph = b.isNull() ? 0 : (field.fieldInfo.isPassDom()? 2 : 1);
-            // プレー尤度計算
-            int chosenIdx = searchMove(mbuf, NMoves, [chosen](const MoveInfo& tmp)->bool{
-                return tmp == chosen;
-            });
-
-            if (chosenIdx == -1) { // 自分の合法手生成では生成されない手が出された
-                playllh += log(0.1 / (double)(NMoves + 1));
-            } else {
-                std::array<double, N_MAX_MOVES> score;
-                playPolicyScore(score.data(), mbuf, NMoves, field, shared.basePlayPolicy, 0);
-                // Mateの手のスコアを設定
-                double maxScore = *std::max_element(score.begin(), score.begin() + NMoves);
-                for (int i = 0; i < NMoves; i++) {
-                    if (mbuf[i].isMate()) score[i] = maxScore + 4;
-                }
-                SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
-                playllh += log(max(selector.prob(chosenIdx), 1 / 256.0));
-            }
+            if (!playFlag.test(turn)) return 0;
+            double lh = onePlayLikelihood(field, move, shared, ptools);
+            if (lh < 1) playllh += log(lh);
             return 0;
         });
         return playllh;

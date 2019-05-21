@@ -14,6 +14,15 @@ static SharedData shared;
 static ThreadTools tools[16];
 static Clock cl;
 
+
+uint64_t worldKey(const Field& f) {
+    uint64_t key = 0;
+    for (int p = 0; p < N_PLAYERS; p++) {
+        key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & f.hand[p].key;
+    }
+    return key;
+}
+
 void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     Field field;
 
@@ -30,8 +39,9 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     long long time = 0;
 
     long long perfect = 0; // 完全一致率
+    double total_entropy = 0, total_cross_entropy = 0;
 
-    double entropy = 0;
+    double entropy = 0, cross_entropy = 0;
     long long ecnt = 0;
 
     for (int i = 0; i < mrecord.games(); i++) {
@@ -66,13 +76,25 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
             // 多様性計測
             if (field.turnCount() == tc) {
                 ecnt++;
-                ImaginaryWorld worlds[256];
-                for (int i = 0; i < 256; i++) {
+                constexpr int N = 256;
+                ImaginaryWorld worlds[N];
+                map<uint64_t, double> worldKeyMap;
+                for (int i = 0; i < N; i++) {
                     estimator.create(&worlds[i], type, grecord, shared, &tools[0]);
+                    worldKeyMap[worlds[i].key]++;
                 }
-                // 局面の多様性を計算
+                // 全体の情報量をまとめる
+                double total_e = 0, total_ce = 0;
+                for (auto& val : worldKeyMap) {
+                    double prob = val.second / N;
+                    total_e += -prob * log2(prob);
+                    if (worlds[i].key == worldKey(field)) total_ce += -log2(prob);
+                }
+                total_entropy += total_e;
+                total_cross_entropy += total_ce;
+                // カードごとの配置確率をまとめる
                 int own[64][N_PLAYERS] = {0};
-                for (int i = 0; i < 256; i++) {
+                for (int i = 0; i < N; i++) {
                     for (int ic = 0; ic < 64; ic++) {
                         for (int p = 0; p < N_PLAYERS; p++) {
                             if (worlds[i].cards[p].contains(IntCard(ic))) {
@@ -82,18 +104,18 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                     }
                 }
                 // 各カードごとの情報量を計算
-                double e = 0;
+                double e = 0, ce = 0;
                 for (int ic = 0; ic < 64; ic++) {
                     int sum = 0;
                     for (int p = 0; p < N_PLAYERS; p++) sum += own[ic][p];
                     for (int p = 0; p < N_PLAYERS; p++) {
-                        if (own[ic][p] > 0) {
-                            double prob = own[ic][p] / double(sum);
-                            if (own[ic][p] > 0) e += -prob * log2(prob);
-                        }
+                        double prob = (own[ic][p] + 1.0 / N_PLAYERS) / double(sum + 1);
+                        e += -prob * log2(prob);
+                        if (field.getCards(p).contains(IntCard(ic))) ce += -log2(prob);
                     }
                 }
                 entropy += e;
+                cross_entropy += ce;
             }
             return 0;
         },
@@ -102,7 +124,8 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     cerr << "type " << type << ": ";
     cerr << perfect << " / " << cnt << " (" << double(perfect) / cnt << ") ";
     cerr << same << " / " << all << " (" << double(same) / all << ") ";
-    cerr << "entropy " << entropy / ecnt << " in " << time / cnt << " clock" << endl;
+    cerr << "entropy " << entropy / ecnt << " centropy " << cross_entropy / ecnt;
+    cerr << " in " << time / cnt << " clock" << endl;
 }
 
 bool EstimationTest(const vector<string>& recordFiles) {

@@ -28,7 +28,6 @@
 #define PROTOCOL_VERSION    20070       //プロトコルヴァージョンを表す整数
 #define DEFAULT_SERVER      "127.0.0.1" //デフォルトのサーバのアドレス 文字列で指定
 #define DEFAULT_PORT        42485       //デフォルトのポート番号 整数で指定
-#define DEFAULT_NAME        MY_NAME     //デフォルトのクライアント名 文字列で指定
 
 //using protocol_int_t = int; // デフォルトの通信設定
 using protocol_int_t = int32_t; // intの長さが矛盾する場合にはこちらを設定
@@ -51,8 +50,7 @@ static struct sockaddr_in g_client_addr;
 //接続するサーバ、ポートを格納する変数
 static char     server_name[256]= DEFAULT_SERVER;
 static uint16_t port            = DEFAULT_PORT;
-//サーバに通知するクライアント名
-static char     user_name[15]   = DEFAULT_NAME;
+static char     user_name[15] = {0};
 
 //テーブルを受信した回数をカウント
 static int table_count=0;
@@ -71,7 +69,11 @@ void outputTable(int table[8][15]) {
 
 
 //hostに接続し ゲームに参加する プレーヤー番号を返す
-int entryToGame(void) {
+int entryToGame(const char *name) {
+    if (strlen(user_name) == 0) {
+        strcpy(user_name, name);
+    }
+
     protocol_int_t my_playernum;  //プレイヤー番号を記憶する
 #if defined(_WIN32)
     // Windows 独自の設定

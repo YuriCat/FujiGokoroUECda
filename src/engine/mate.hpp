@@ -7,27 +7,6 @@
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
 
-inline bool judgeMate_1M_NF(const Hand& myHand) {
-    // 空場、1手詰み（つまり出して上がり,確実にPW）
-    // 8切り関係の3手詰み等も含めた高速化は別関数にて
-    if (myHand.qty <= 1) return true;
-    Cards pqr = myHand.pqr;
-    if (myHand.jk) { // ジョーカーあり
-        if (!any2Cards(pqr)) return true;
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
-        }
-    } else {
-        if (!any2Cards(pqr)) return true;
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakePlainSeq(myHand.cards, myHand.qty)) return true;
-        }
-    }
-    return false;
-}
-
 inline bool judgeMate_Easy_NF(const Hand& myHand) {
     // とりあえず高速でNF_Mateかどうか判断したい場合
     if (myHand.qty <= 1) return true;
@@ -48,7 +27,7 @@ inline bool judgeMate_Easy_NF(const Hand& myHand) {
 }
 
 inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
-                     const Cards *const nd, const Board& b) {
+                            const Cards *const nd, const Board& b) {
     // すでに支配的でない着手があることがわかっており、
     // それ以外が全て支配的かを確認するメソッド
     // 階段未対応
@@ -228,26 +207,6 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
                     DERR << "SEQ PW0 " << myHand.cards << " , " << opsHand.cards << endl;
                     return true;
                 }
-                
-                // 階段が支配的か判断
-                /*IntCard ic = CardsToLowestIntCard(myHand.seq);
-                int seqRank = IntCardToRank(ic);
-                uint32_t seqSuit = CardsRankToSuits(myHand.seq, seqRank);
-                Hand nextHand;
-                
-                if (isEightSeqRank(order, seqRank, 3)) { // 支配的
-                    // 出した後の場でもう一度必勝判定
-                    if (hand.p4 & hand.p8) { // プレーン階段
-                        makeMove1stHalf(hand, &nextHand, SequenceMove(3, r, seqSuit));
-                    } else {
-                        makeMove1stHalf(hand, &nextHand)
-                    }
-                } else { // 支配的でない
-                    // これを最後に出すとしてPPW判定
-                    
-                }*/
-                // シングルやグループで出しても支配出来るランクの階段を使う場合は難しい。
-                // 3階段1つ以外の場合、合法着手生成によって確かめる(暫定的処置)
             } else {
                 // ここから長いので、ジョーカーも革命も階段も無い場合(大部分)はさっさと帰る
                 if (!myHand.jk) {
@@ -441,19 +400,14 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo m
     FieldAddInfo nextFieldInfo;
     
     if (mv.isSingle()) {
-        if (mv.isSingleJOKER()) {
-            // シングルジョーカーは少なくともBNPWではない
-            return false;
-        }
+        // シングルジョーカーは少なくともBNPWではない
+        if (mv.isSingleJOKER()) return false;
         if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
-            if (ops8 && isValidGroupRank(RANK_8, curOrder, mv.rank())) {
-                // 相手に8切りで返される可能性があればだめ
-                return false;
-            }
-            if (myHand.qty == mv.qty() + 1) {
-                // 残り1枚がジョーカーなら勝ち
-                return true;
-            }
+            // 相手に8切りで返される可能性があればだめ
+            if (ops8 && isValidGroupRank(RANK_8, curOrder, mv.rank())) return false;
+            // 残り1枚がジョーカーなら勝ち
+            if (myHand.qty == mv.qty() + 1) return true;
+
             // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
             Hand nextHand;
             makeMove1stHalf(myHand, &nextHand, mv);
@@ -475,8 +429,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo m
                 }
             }
         }
-        // 他のシングルを検討
-        // 現時点のオーダーで最強の
+        // TODO: 他の役で検討
     }
     return false;
 }
