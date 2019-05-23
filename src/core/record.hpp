@@ -172,11 +172,10 @@ public:
     
     Cards getDealtCards(int p) const { return dealtCards[p]; }
     void setDealtCards(int p, Cards c) { dealtCards[p] = c; }
-    void addDealtCards(int p, Cards c) { dealtCards[p] |= c; }
     
     Cards getOrgCards(int p) const { return orgCards[p]; }
     void setOrgCards(int p, Cards c) { orgCards[p] = c; }
-    void addOrgCards(int p, Cards c) { orgCards[p] |= c; }
+    void addOrgCards(int p, Cards c) { orgCards[p] += c; }
 
     std::array<Cards, N_PLAYERS> dealtCards, orgCards;
 };
@@ -623,7 +622,7 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, Field *const dst
                 uint64_t dkey = CardsToHashKey(dc);
                 
                 // 全体の残り手札の更新
-                dst->usedCards[p] |= dc;
+                dst->usedCards[p] += dc;
                 dst->remCards -= dc;
                 dst->remQty -= dq;
                 dst->remKey = subCardKey(dst->remKey, dkey);
