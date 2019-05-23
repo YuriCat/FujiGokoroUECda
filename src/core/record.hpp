@@ -47,7 +47,6 @@ public:
     void initGame() {
         bd.init();
         ps.init();
-        infoSpecialPlayer.clear();
     }
     void setTurn(int p) { turn_ = p; }
     void setOwner(int p) { owner_ = p; }
@@ -76,7 +75,6 @@ public:
     char turn_, owner_, firstTurn_;
     Board bd;
     PlayersState ps;
-    BitArray32<4> infoSpecialPlayer;
     BitArray32<4, N_PLAYERS> infoNCards;
     Cards usedCards; // javaサーバは役表現と構成する手札表現が合わないことがある...
     uint32_t subjectiveTime;
