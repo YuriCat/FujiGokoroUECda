@@ -527,7 +527,7 @@ int iterateGameLogInGame
     // play
     for (int t = 0; t < turns; t++) {
         field.prepareForPlay();
-        const typename game_t::playLog_t& play = gLog.play(t);
+        const typename game_t::playLog_t& play = gLog.plays[t];
         int ret = playCallback(field, play.move, play.time);
         if (ret <= -2) {
             cerr << "error on play turn " << t << endl;
