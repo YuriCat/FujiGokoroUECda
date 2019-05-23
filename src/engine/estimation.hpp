@@ -138,16 +138,29 @@ private:
                  const SharedData& shared, ThreadTools *const ptools) const;
     Cards selectInWA(double urand) const;
 
+    void loadPlayLikelihood(std::pair<double, int> *plh) const;
+    void savePlayLikelihood(std::pair<double, int> *plh) const;
+
     template <class gameRecord_t>
     double playLikelihood(Cards *const c, const gameRecord_t& gLog,
                           const SharedData& shared, ThreadTools *const ptools) const {
         // 想定した手札配置から、試合進行がどの程度それっぽいか考える
         if (inChange) return 0;
-        double playllh = 0; // 対数尤度
         std::array<Cards, N> orgCards;
         for (int p = 0; p < N; p++) {
             orgCards[p] = c[p] + usedCards[infoClass[p]];
         }
+        auto playerPlayLikelihood = loadPlayLikelihood();
+        // テーブルに記録されているプレーヤーごとの尤度を調べる
+        for (int p = 0; p < N; p++) {
+            playerPlayLikelihood[p] = make_pair(1.0, turnCount);
+            if (!playFlag.test(p)) continue;
+            uint64_t key = CardsToHashKey(orgCards[p]) ^ p;
+            auto entry = playTT.read(key);
+            if (entry.prob <= 0 || entry.player != p) continue;
+            playerPlayLikelihood[p] = make_pair(entry.prob, entry.tcnt);
+        }
+        double 
         Field field;
         iterateGameLogInGame
         (field, gLog, gLog.plays(), orgCards,
@@ -157,14 +170,23 @@ private:
         [this, &shared, ptools, &playllh]
         (const Field& field, Move move, unsigned time)->int{
             int turn = field.turn();
-            if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
+            int tcnt = field.turnCount();
+            if (tcnt >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
             if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
             // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
             if (!playFlag.test(turn)) return 0;
+            // テーブルに記録されている場合は飛ばす
+            if (playerPlayLikelihood[turn].second >= tcnt) continue;
             double lh = onePlayLikelihood(field, move, shared, ptools);
             if (lh < 1) playllh += log(lh);
             return 0;
         });
-        return playllh;
+        double prod = 1;
+        for (auto lh : playerPlayLikelihood) {
+            prod *= lh.first;
+            // 更新できた分の尤度をテーブルに保存
+            if (turnCount > lh.second) playTT.regist()
+        }
+        return prod; // 尤度を返す
     }
 };

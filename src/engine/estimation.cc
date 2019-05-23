@@ -87,11 +87,12 @@ union PlayEntry {
     struct {
         float prob;
         struct {
-            unsigned tcnt: 8;
-            unsigned key: 24;
+            unsigned tcnt:   8;
+            unsigned player: 4;
+            unsigned key:   20;
         };
     };
-    static constexpr size_t vsize() { return 32 + 8; }
+    static constexpr size_t vsize() { return 32 + 8 + 4; }
 };
 
 template <class entry_t, size_t N>
@@ -100,10 +101,14 @@ public:
     void clear() { std::memset(entry_, 0, sizeof(entry_)); }
     PolicyTable() { clear(); }
     
-    float read(uint64_t key) {
+    entry_t read(uint64_t key) {
         entry_t e = entry_[key % N];
-        if (!e.key || e.key != (key >> entry_t::vsize())) return -1;
-        return e.prob;
+        if (!e.key || e.key != (key >> entry_t::vsize())) {
+            entry_t ne;
+            ne.data = 0;
+            return ne;
+        }
+        return e;
     }
     void set(uint64_t key, entry_t e) {
         e.key = key >> entry_t::vsize();
@@ -125,9 +130,10 @@ public:
 template <size_t N>
 class PlayTable : public PolicyTable <PlayEntry, N> {
 public:
-    void regist(uint64_t key, int tcnt, float prob) {
+    void regist(uint64_t key, int tcnt, int player, float prob) {
         PlayEntry e;
         e.tcnt = tcnt;
+        e.player = player;
         e.prob = prob;
         PolicyTable<PlayEntry, N>::set(key, e);
     }
@@ -355,13 +361,13 @@ double changeProb(const int p, const Cards cards, const int qty,
     uint64_t key0 = CardsToHashKey(cards);
     uint64_t key1 = CardsToHashKey(cc);
     uint64_t key = knitCardsCardsHashKey(key0, key1);
-    double prob = changeTT.read(key);
+    float prob = changeTT.read(key).prob;
     static int probed = 0;
     static int failed = 0;
-    if (prob >= 0) {
+    if (prob > 0) {
         //cerr << "probed " << cards << " -> " << cc << " " << prob;
         probed++;
-        cerr << probed << " " << failed << endl;
+        //cerr << probed << " " << failed << endl;
         return prob;
     } else failed++;
 
