@@ -8,76 +8,8 @@ struct PlayRecord { // 1つの着手の記録
 
     PlayRecord(): move(), time() {}
     PlayRecord(Move m, unsigned t): move(m), time(t) {}
-    void set(Move m, unsigned t) {
-        move = m; time = t;
-    }
+    void set(Move m, unsigned t) { move = m; time = t; }
     std::string toString() const;
-};
-
-class EnginePlayRecord : public PlayRecord {
-    // 思考エンジン用の着手記録
-    // ルールが微妙に違っても対処できるようにこのクラスが局面の一次情報クラスとして振舞う
-public:
-    int turn() const { return turn_; }
-    int owner() const { return owner_; }
-    int firstTurn() const { return firstTurn_; }
-    int getNCards(int p) const { return infoNCards[p]; }
-    void set(Move m, Cards dc, unsigned t, unsigned st) {
-        PlayRecord::set(m, t);
-        subjectiveTime = st;
-        usedCards = dc;
-    }
-    bool procByServer(Move move, Cards dc) {
-        // あがりの場合に1を返す
-        bool dead = false;
-        int tp = turn();
-        if (move.isPASS()) { // パス
-            ps.setAsleep(tp);
-        } else { // パスでない
-            bd.procExceptFlush(move);
-            infoNCards.sub(tp, countCards(dc));
-            if (getNCards(tp) <= 0) {//あがり
-                ps.setDead(tp);
-                dead = true;
-            }
-            setOwner(tp);
-        }
-        return dead;
-    }
-    void initGame() {
-        bd.init();
-        ps.init();
-    }
-    void setTurn(int p) { turn_ = p; }
-    void setOwner(int p) { owner_ = p; }
-    void setFirstTurn(int p) { firstTurn_ = p; }
-    void setNCards(int p, int n) {
-        infoNCards.assign(p, n);
-    }
-    void flush(BitArray32<4, N_PLAYERS> infoSeat) {
-        bd.flush();
-        ps.flush();
-        flushTurnPlayer(infoSeat);
-    }
-    void flushTurnPlayer(BitArray32<4, N_PLAYERS> infoSeat) {
-        int tp = owner();
-        if (ps.isAlive(tp)) setTurn(tp);
-        else rotateTurnPlayer(tp, infoSeat);
-    }
-    void rotateTurnPlayer(int tp, BitArray32<4, N_PLAYERS> infoSeat) {
-        BitArray32<4, N_PLAYERS> infoSeatPlayer = invert(infoSeat);
-        do {
-            tp = infoSeatPlayer[getNextSeat<N_PLAYERS>(infoSeat[tp])];
-        } while (!ps.isAwake(tp));
-        setTurn(tp);
-    }
-    
-    char turn_, owner_, firstTurn_;
-    Board bd;
-    PlayersState ps;
-    BitArray32<4, N_PLAYERS> infoNCards;
-    Cards usedCards; // javaサーバは役表現と構成する手札表現が合わないことがある...
-    uint32_t subjectiveTime;
 };
 
 struct ChangeRecord { // 交換の記録
@@ -86,13 +18,7 @@ struct ChangeRecord { // 交換の記録
     ChangeRecord(int f, int t, Cards c): from(f), to(t), cards(c) {}
 };
 
-template <class _playLog_t>
-class CommonGameRecord {
-public:
-    
-    using playLog_t = _playLog_t;
-    using change_t = ChangeRecord;
-    
+struct CommonGameRecord {
     void init() {
         changes_ = 0;
         plays_ = 0;
@@ -105,18 +31,18 @@ public:
     int plays() const { return plays_; }
     int changes() const { return changes_; }
     
-    const playLog_t& play(int t) const { return play_[t]; }
-    const change_t& change(int c) const { return change_[c]; }
+    const PlayRecord& play(int t) const { return play_[t]; }
+    const ChangeRecord& change(int c) const { return change_[c]; }
     
-    void push_change(const change_t& change) {
+    void push_change(const ChangeRecord& change) {
         if (changes_ < N_CHANGES) change_[changes_++] = change;
         else flags_.set(2);
     }
-    void push_play(const playLog_t& play) {
+    void push_play(const PlayRecord& splay) {
         if (plays_ < 128) play_[plays_++] = play;
         else flags_.set(3);
     }
-    
+
     void setTerminated() { flags_.set(0); }
     void setInitGame() { flags_.set(1); }
     void resetInitGame() { flags_.reset(0); }
@@ -144,26 +70,18 @@ public:
     void setPosition(int p, int pos) { infoPosition.assign(p, pos); }
     
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;
-    
-protected:
+
     static constexpr int N_CHANGES = (N_PLAYERS / 2) * 2; // TODO: まあ5人以下だからいいのか?
-    int changes_;
-    std::array<change_t, N_CHANGES> change_;
-    int plays_;
-    
+    boost::static_vector<ChangeRecord, N_CHANGES> change_;
     // 128手を超えることは滅多にないので強制打ち切り
     // ここをvectorとかにすると連続対戦棋譜がvector<vector>みたいになって死ぬ
-    std::array<playLog_t, 128> play_;
+    boost::static_vector<PlayRecord, 128> play_;
     std::bitset<32> flags_;
 };
 
-template <class _playLog_t>
-class GameRecord : public CommonGameRecord<_playLog_t> {
-protected:
-    using base = CommonGameRecord<_playLog_t>;
-public:
+struct GameRecord : public CommonGameRecord {
     void init() {
-        base::init();
+        CommonGameRecord::init();
         dealtCards.fill(CARDS_NULL);
         orgCards.fill(CARDS_NULL);
     }
@@ -181,8 +99,7 @@ public:
     std::array<Cards, N_PLAYERS> dealtCards, orgCards;
 };
 
-class ServerGameRecord : public GameRecord<PlayRecord> {
-public:
+struct ServerGameRecord : public GameRecord {
     std::string toString(int gn) const;
     int fadd(const std::string& fName, int g) {
         // ファイルに追加書き込み
@@ -193,33 +110,19 @@ public:
     }
 };
 
-class EngineGameRecord : public GameRecord<EnginePlayRecord> {
-public:
+struct EngineGameRecord : public GameRecord {
+    static constexpr bool isSubjective() { return true; }
     void init() {
-        GameRecord<EnginePlayRecord>::init();
+        GameRecord::init();
         infoNDealtCards.clear();
         infoNOrgCards.clear();
-        sentCards = recvCards = CARDS_NULL;
     }
-    
-    static constexpr bool isSubjective() { return true; }
-    
     void setNDealtCards(int p, int n) { infoNDealtCards.assign(p, n); }
     void setNOrgCards(int p, int n) { infoNOrgCards.assign(p, n); }
     void setSentCards(Cards c) { sentCards = c; }
     void setRecvCards(Cards c) { recvCards = c; }
-    
-    int getNOrgCards(int p) const { return infoNOrgCards[p]; }
-    int getNDealtCards(int p) const { return infoNDealtCards[p]; }
-    Cards getSentCards() const { return sentCards; }
-    Cards getRecvCards() const { return recvCards; }
-    
-    // 交換中かどうかの判定はオーバーロードしているので注意
-    bool isInChange() const {
-        return !GameRecord<EnginePlayRecord>::isInitGame() && sentCards == CARDS_NULL;
-    }
-    
-    BitArray32<4, N_PLAYERS> infoNDealtCards, infoNOrgCards;
+
+    std::array<int> numDealtCards, numOriginalCards;
     Cards sentCards, recvCards; // 本当はchangeにいれたいけど
     EnginePlayRecord current;
 };
