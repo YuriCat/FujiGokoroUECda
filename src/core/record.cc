@@ -113,8 +113,8 @@ string ServerGameRecord::toString(int gn) const {
     
     Cards changeCards[N_PLAYERS];
     for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
-    for (int c = 0; c < base::changes(); c++) {
-        changeCards[base::change(c).from] = base::change(c).cards;
+    for (auto change : base::changes) {
+        changeCards[change.from] = change.cards;
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << tolower(changeCards[p].toString()) << " ";
@@ -126,8 +126,8 @@ string ServerGameRecord::toString(int gn) const {
     }
     oss << endl;
     oss << "play ";
-    for (int t = 0; t < base::plays(); t++) {
-        oss << base::play(t).toString() << " ";
+    for (auto play : base::plays) {
+        oss << play.toString() << " ";
     }
     oss << endl;
     oss << "result ";

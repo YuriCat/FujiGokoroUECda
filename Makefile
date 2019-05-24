@@ -2,7 +2,7 @@ CXX      = g++
 CXXFLAGS = -std=c++11 -march=native -MMD -MP
 LDFLAGS  = -pthread
 LIBS     =
-INCLUDE  =
+INCLUDE  = -I/opt/include
 SRC_DIR  = ./src
 BLD_DIR  = ./out
 OBJ_DIR  = $(BLD_DIR)/obj

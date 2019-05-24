@@ -28,7 +28,7 @@ int testSimulation(const MatchRecord& mrecord) {
         const auto& grecord = mrecord.game(i);
         // 対局結果
         auto newClasses = grecord.infoNewClass;
-        int tc = dice() % grecord.plays();
+        int tc = dice() % grecord.plays.size();
         iterateGameLogAfterChange
         (field, grecord,
         [](const Field& field)->void{}, // first callback

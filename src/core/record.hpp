@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/container/static_vector.hpp>
 #include "daifugo.hpp"
 #include "field.hpp"
 
@@ -94,26 +95,20 @@ public:
     using change_t = ChangeRecord;
     
     void init() {
-        changes_ = 0;
-        plays_ = 0;
+        changes.clear();
+        plays.clear();
         flags_.reset();
         infoClass.clear();
         infoSeat.clear();
         infoNewClass.clear();
         infoPosition.clear();
     }
-    int plays() const { return plays_; }
-    int changes() const { return changes_; }
-    
-    const playLog_t& play(int t) const { return play_[t]; }
-    const change_t& change(int c) const { return change_[c]; }
-    
     void push_change(const change_t& change) {
-        if (changes_ < N_CHANGES) change_[changes_++] = change;
+        if (changes.size() < N_CHANGES) changes.push_back(change);
         else flags_.set(2);
     }
     void push_play(const playLog_t& play) {
-        if (plays_ < 128) play_[plays_++] = play;
+        if (plays.size() < 128) plays.push_back(play);
         else flags_.set(3);
     }
     
@@ -144,16 +139,12 @@ public:
     void setPosition(int p, int pos) { infoPosition.assign(p, pos); }
     
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;
-    
-protected:
+
     static constexpr int N_CHANGES = (N_PLAYERS / 2) * 2; // TODO: まあ5人以下だからいいのか?
-    int changes_;
-    std::array<change_t, N_CHANGES> change_;
-    int plays_;
-    
+    boost::container::static_vector<change_t, N_CHANGES> changes;
     // 128手を超えることは滅多にないので強制打ち切り
     // ここをvectorとかにすると連続対戦棋譜がvector<vector>みたいになって死ぬ
-    std::array<playLog_t, 128> play_;
+    boost::container::static_vector<playLog_t, 128> plays;
     std::bitset<32> flags_;
 };
 
@@ -439,8 +430,7 @@ int iterateGameLogBeforePlay
         field.hand[p].cards = tmp; // とりあえずcardsだけセットしておく
     }
     // 献上が先にある場合
-    for (int t = 0, tend = gLog.changes(); t < tend; t++) {
-        const typename game_t::change_t& change = gLog.change(t);
+    for (const auto& change : gLog.changes) {
         if (field.classOf(change.to) < HEIMIN) {
             Cards present = change.cards;
             field.hand[change.to].cards += present;
@@ -461,8 +451,7 @@ int iterateGameLogBeforePlay
     dealtCallback(field);
     
     // change
-    for (int t = 0; t < gLog.changes(); t++) {
-        const typename game_t::change_t& change = gLog.change(t);
+    for (const auto& change : gLog.changes) {
         int fromClass = field.classOf(change.from);
         if (fromClass < HEIMIN) {
             // 上位側の交換選択機会
@@ -514,10 +503,9 @@ int iterateGameLogInGame
             for (int p = 0; p < N_PLAYERS; p++) {
                 field.dealtCards[p] = gLog.dealtCards[p];
             }
-            for (int c = 0; c < gLog.changes(); c++) {
-                const auto& ch = gLog.change(c);
-                field.sentCards[ch.from] = ch.cards;
-                field.recvCards[ch.to] = ch.cards;
+            for (const auto& change : gLog.changes) {
+                field.sentCards[change.from] = change.cards;
+                field.recvCards[change.to] = change.cards;
             }
         }
         setFieldAfterChange(field, gLog, hand); // 交換後まで進める
@@ -549,7 +537,7 @@ int iterateGameLogAfterChange
  const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const Field&)->void{},
  bool initialized = false) {
-    int ret = iterateGameLogInGame(field, gLog, gLog.plays(), gLog.orgCards,
+    int ret = iterateGameLogInGame(field, gLog, gLog.plays.size(), gLog.orgCards,
                                    firstCallback, playCallback, initialized);
     if (ret <= -2) return ret; // この試合もう進めない
     for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, gLog.newClassOf(p));
@@ -611,35 +599,35 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, Field *const dst
         dst->sentCards[myPlayerNum] = gLog.getSentCards();
         dst->recvCards[myPlayerNum] = gLog.getRecvCards();
         dst->dealtCards[myPlayerNum] = gLog.getDealtCards(myPlayerNum);
-        
-        for (int t = 0; t < gLog.plays(); t++) {
-            const auto& pLog = gLog.play(t);
-            int p = pLog.turn();
-            
-            Cards dc = pLog.usedCards;
+ 
+        // 使用カードの処理
+        for (const auto& play : gLog.plays) {
+            int turn = play.turn();
+            Cards dc = play.usedCards;
             if (anyCards(dc)) {
                 uint32_t dq = countCards(dc);
                 uint64_t dkey = CardsToHashKey(dc);
                 
                 // 全体の残り手札の更新
-                dst->usedCards[p] += dc;
+                dst->usedCards[turn] += dc;
                 dst->remCards -= dc;
                 dst->remQty -= dq;
                 dst->remKey = subCardKey(dst->remKey, dkey);
                 // あがり処理
-                if (countCards(p) == pLog.getNCards(p)) {
-                    dst->setNewClassOf(p, pLog.ps.getBestClass());
+                if (countCards(turn) == play.getNCards(turn)) {
+                    dst->setNewClassOf(turn, play.ps.getBestClass());
                 }
             }
         }
         for (int p = 0; p < N_PLAYERS; p++) {
             dst->hand[p].qty = gLog.current.getNCards(p);
         }
-        
         DERR << "dc = " << gLog.getDealtCards(myPlayerNum) << endl;
         DERR << "oc = " << gLog.getOrgCards(myPlayerNum) << endl;
         DERR << "uc = " << dst->usedCards[myPlayerNum] << endl;
         DERR << "rc = " << dst->remCards << endl;
+
+        // 自分の手札を設定
         Cards myCards = gLog.getOrgCards(myPlayerNum) - dst->usedCards[myPlayerNum];
         uint32_t myQty = countCards(myCards);
         uint64_t myKey = CardsToHashKey(myCards);
@@ -651,10 +639,11 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, Field *const dst
             dst->opsHand[myPlayerNum].setAll(opsCards, dst->remQty - myQty,
                                              subCardKey(dst->remKey, myKey));
         }
+        // 現時点の盤面を設定
         dst->board = gLog.current.bd;
         dst->ps = gLog.current.ps;
 
-        dst->common.turnCount = gLog.plays();
+        dst->common.turnCount = gLog.plays.size();
         dst->common.turn = gLog.current.turn();
         dst->common.owner = gLog.current.owner();
         dst->common.firstTurn = gLog.current.firstTurn();
