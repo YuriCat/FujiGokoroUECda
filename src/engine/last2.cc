@@ -6,6 +6,9 @@ using namespace std;
 
 namespace L2 {
     TwoValueBook<(1 << 20) - 3> book;
+    void init() {
+        book.clear();
+    }
 }
 
 // L2局面表現
