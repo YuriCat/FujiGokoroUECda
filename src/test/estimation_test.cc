@@ -109,6 +109,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                     int sum = 0;
                     for (int p = 0; p < N_PLAYERS; p++) sum += own[ic][p];
                     for (int p = 0; p < N_PLAYERS; p++) {
+                        if (p == field.turn()) continue;
                         double prob = (own[ic][p] + 1.0 / N_PLAYERS) / double(sum + 1);
                         e += -prob * log2(prob);
                         if (field.getCards(p).contains(IntCard(ic))) ce += -log2(prob);
