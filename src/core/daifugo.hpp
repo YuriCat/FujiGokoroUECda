@@ -543,6 +543,7 @@ union Cards {
     constexpr Cards(): c_() {}
     constexpr Cards(BitCards c): c_(c) {}
     constexpr Cards(const Cards& c): c_(c.c_) {}
+    constexpr Cards(BitCards plain, int joker): plain_(plain), joker_(joker) {}
     constexpr Cards(IntCard ic) = delete; // 混乱を避ける
 
     Cards(const std::string& str);
@@ -570,6 +571,17 @@ union Cards {
         return joker_ >= c.joker_ && holdsCards(plain(), c.plain());
     }
     constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
+
+    Cards masked(Cards c) const {
+        return Cards(maskCards(plain_, c.plain_), max(0, joker_ - c.joker_));
+    }
+    Cards high(int n) const {
+        if (joker() >= n) return Cards(0, n);
+        else return Cards(pickHigh(plain_, n - joker_), joker_);
+    }
+    Cards common(Cards c) const {
+        return Cards(plain_ & c.plain_, min(joker_, c.joker_));
+    }
 
     // 指定されたランクのスート集合を得る
     constexpr unsigned int operator[] (int r) const { return (c_ >> (r * 4)) & 15; }

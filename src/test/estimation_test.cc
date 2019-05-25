@@ -47,7 +47,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     for (int i = 0; i < mrecord.games(); i++) {
         shared.initGame();
         const auto& grecord = mrecord.game(i);
-        int tc = dice() % grecord.plays();
+        int tc = dice() % grecord.plays.size();
         iterateGameLogAfterChange
         (field, grecord,
         [](const Field& field)->void{}, // first callback

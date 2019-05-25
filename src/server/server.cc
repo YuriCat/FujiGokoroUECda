@@ -60,7 +60,7 @@ const char* one_to_yes(int n) {
 std::string record_file = "";
 
 MatchRecord match_log;
-ServerGameRecord game_log;
+GameRecord game_log;
 SharedData shared;
 ThreadTools threadTools[N_THREADS];
 
@@ -1394,7 +1394,7 @@ int main(int argc, char *argv[]) {
         game_count++;
         
         //fprintf(logfile,"\n");
-        if (!game_log.play(game_log.plays()-1).move.isPASS()) {
+        if (!game_log.plays.back().move.isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);

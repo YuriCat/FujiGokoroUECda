@@ -133,8 +133,19 @@ struct PlayersState : public BitArray32<8, 4> {
 
 extern std::ostream& operator <<(std::ostream& out, const PlayersState& arg);
 
+struct Observation {
+    CommonStatus common;
+    Board board;
+    PlayersState ps;
+    std::array<Cards, N_PLAYERS> usedCards;
+    uint32_t remQty;
+    Cards remCards;
+    uint64_t remKey;
+};
+
+struct GameRecord;
+
 struct Field {
-    
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
     MoveInfo *mbuf = nullptr; // buffer of move
@@ -149,7 +160,7 @@ struct Field {
     CommonStatus common;
     Board board;
     PlayersState ps;
-    
+
     std::array<int8_t, N_PLAYERS> infoClass, infoClassPlayer;
     std::array<int8_t, N_PLAYERS> infoSeat, infoSeatPlayer;
     std::array<int8_t, N_PLAYERS> infoNewClass, infoNewClassPlayer;
@@ -163,8 +174,11 @@ struct Field {
     std::array<Hand, N_PLAYERS> hand, opsHand;
     // 手札情報
     std::array<Cards, N_PLAYERS> usedCards;
-    std::array<Cards, N_PLAYERS> sentCards, recvCards;
     std::array<Cards, N_PLAYERS> dealtCards;
+    std::array<Cards, N_PLAYERS> sentCards, recvCards;
+
+    bool isSubjective() const { return myPlayerNum >= 0; }
+    bool know(int p) const { return !isSubjective() || myPlayerNum == p; }
     
     bool isL2Situation() const { return getNAlivePlayers() == 2; }
     bool isEndGame() const { // 末端探索に入るべき局面かどうか。学習にも影響する
@@ -187,7 +201,6 @@ struct Field {
     
     bool isInitGame() const { return common.phase.test(PHASE_INIT_GAME); }
     bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
-    bool isSubjective() const { return myPlayerNum >= 0; }
     
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
@@ -327,12 +340,20 @@ struct Field {
     int proc(const Move m) { return proc(MoveInfo(m)); }
     int procSlowest(const Move m);
     
-    void makeChange(int from, int to, Cards dc, bool sendOnly = false);
+    void makeChange(int from, int to, int dq, Cards dc, bool sendOnly = false);
     void makePresents();
     void removePresentedCards();
     
     void setHand(int p, Cards c) { hand[p].setAll(c); }
     void setOpsHand(int p, Cards c) { opsHand[p].setAll(c); }
+    void setBothHand(int p, Cards c) {
+        hand[p].setAll(c);
+        opsHand[p].setAll(remCards - c, remQty - hand[p].qty, subCardKey(remKey, hand[p].key));
+    }
+    void setBothHandQty(int p, int qty) {
+        hand[p].qty = qty;
+        opsHand[p].qty = remQty - qty;
+    }
     void setRemHand(Cards c) {
         remCards = c;
         remQty = c.count();
@@ -347,6 +368,12 @@ struct Field {
 
     std::string toString() const;
     std::string toDebugString() const;
+
+    // recordが定義された時用
+    void setBeforeGame(const GameRecord& game, int playerNum);
+    void passChange(const GameRecord& game, int playerNum);
+    void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
+    void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
 };
 
 // copy Field arg to dst before playout

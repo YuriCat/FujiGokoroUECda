@@ -88,7 +88,7 @@ int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstT
     return 0;
 }
 
-string ServerGameRecord::toString(int gn) const {
+string GameRecord::toString(int gn) const {
     ostringstream oss;
     
     oss << "/* " << endl;
@@ -96,12 +96,12 @@ string ServerGameRecord::toString(int gn) const {
     oss << "score " << endl;
     oss << "class ";
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << base::classOf(p) << " ";
+        oss << classOf(p) << " ";
     }
     oss << endl;
     oss << "seat ";
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << base::seatOf(p) << " ";
+        oss << seatOf(p) << " ";
     }
     oss << endl;
     oss << "dealt ";
@@ -113,8 +113,8 @@ string ServerGameRecord::toString(int gn) const {
     
     Cards changeCards[N_PLAYERS];
     for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
-    for (int c = 0; c < base::changes(); c++) {
-        changeCards[base::change(c).from] = base::change(c).cards;
+    for (auto change : changes) {
+        changeCards[change.from] = change.cards;
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << tolower(changeCards[p].toString()) << " ";
@@ -126,13 +126,13 @@ string ServerGameRecord::toString(int gn) const {
     }
     oss << endl;
     oss << "play ";
-    for (int t = 0; t < base::plays(); t++) {
-        oss << base::play(t).toString() << " ";
+    for (auto play : plays) {
+        oss << play.toString() << " ";
     }
     oss << endl;
     oss << "result ";
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << base::newClassOf(p) << " ";
+        oss << newClassOf(p) << " ";
     }
     oss << endl;
     oss << "*/ " << endl;
@@ -337,3 +337,56 @@ END:;
 }
 #undef ToI
 #undef Foo
+
+void Field::setBeforeGame(const GameRecord& game, int playerNum) {
+    // 棋譜を読んでの初期設定
+    initGame();
+    myPlayerNum = playerNum;
+    setMoveBuffer(nullptr);
+    if (game.isInitGame()) setInitGame();
+    infoNewClass.fill(-1);
+    infoNewClassPlayer.fill(-1);
+    for (int p = 0; p < N_PLAYERS; p++) {
+        setClassOf(p, game.classOf(p));
+        setSeatOf(p, game.seatOf(p));
+        setPositionOf(p, game.positionOf(p));
+    }
+}
+
+void Field::passChange(const GameRecord& game, int playerNum, bool initialized) {
+    if (!initialized) setBeforeGame(game, playerNum);
+    // 初期手札の設定
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (know(p)) {
+            dealtCards[p] = game.dealtCards[p];
+            setBothHand(dealtCards[p]);
+        } else setBothHandQty(game.numDealtCards[p]);
+    }
+    // 交換の処理
+    for (const auto& change : game.changes) {
+        makeChange(change.from, change.to, change.qty, change.cards, change.already);
+    }
+}
+
+void Field::setAfterChange(const GameRecord& game,
+                           const array<Cards, N_PLAYERS>& cards) {
+    // カード交換が終わった後から棋譜を読み始める時の初期設定
+    // 全体初期化はされていると仮定する
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (!know(p)) setBothHand(p, cards[p]); // 手札不明だったプレーヤーのみ
+        addAttractedPlayer(p);
+    }
+    prepareAfterChange();
+}
+
+void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
+    passChange(game, playerNum);
+    if (tcnt < 0) { // tcnt < 0で交換中まで
+        setInChange();
+        return;
+    }
+    // 役提出の処理
+    common.turn = common.owner = common.firstTurn = game.firstTurn;
+    tcnt = min((int)game.plays.size(), tcnt);
+    for (int t = 0; t < tcnt; t++) field.procSlowest(game.plays[t].move);
+}

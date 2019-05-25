@@ -150,7 +150,7 @@ private:
         }
         Field field;
         iterateGameLogInGame
-        (field, gLog, gLog.plays(), orgCards,
+        (field, gLog, gLog.plays.size(), orgCards,
         // after change callback
         [](const Field& field)->void{},
         // play callback

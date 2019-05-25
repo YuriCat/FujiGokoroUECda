@@ -99,37 +99,50 @@ void Field::procHand(int tp, Move m) {
     // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) {
-            if (dq >= hand[tp].qty) hand[p].setAll(CARDS_NULL, 0, 0);
-            else hand[p].makeMoveAll(m, dc, dq, dkey);
-        } else if (isAlive(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
+            if (know(p)) {
+                if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
+                else hand[p].makeMoveAll(m, dc, dq, dkey);
+            } else hand[p].qty -= dq;
+        } else if (isAlive(p)) {
+            if (know(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
+            else opsHand[p].qty -= dq;
+        }
     }
 }
 
-void Field::makeChange(int from, int to, Cards dc, bool sendOnly) {
-    assert(hand[from].exam()); assert(hand[to].exam());
-    assert(dc.exam()); assert(hand[from].cards.holds(dc));
-    int dq = dc.count();
+void Field::makeChange(int from, int to, int dq, Cards dc, bool sendOnly) {
+    // sendOnly の時は受取側手札情報を更新しない
+    // 不完全情報のプレーヤーのとき、交換で動いた札が不明のときは枚数更新のみ
     uint64_t dkey = CardsToHashKey(dc);
-    hand[from].subtrAll(dc, dq, dkey);
-    opsHand[from].addAll(dc, dq, dkey);
-    if (sendOnly) {
-        // 送る側オンリーの時は相手側手札を更新しない
-        assert(hand[to].holds(dc));
+    if (dc.any() && know(from)) {
+        hand[from].subtrAll(dc, dq, dkey);
+        opsHand[from].addAll(dc, dq, dkey);
     } else {
-        hand[to].addAll(dc, dq, dkey);
-        opsHand[to].subtrAll(dc, dq, dkey);
+        hand[from].qty -= dq;
+        opsHand[from].qty += dq;
     }
-    sentCards[from] = dc;
-    recvCards[to] = dc;
+    if (!sendOnly) {
+        if (dc.any() && know(to)) {
+            hand[to].addAll(dc, dq, dkey);
+            opsHand[to].subtrAll(dc, dq, dkey);
+        } else {
+            hand[to].qty += dq;
+            opsHand[to].qty -= dq;
+        }
+    }
+    if (dc.any()) {
+        sentCards[from] = dc;
+        recvCards[to] = dc;
+    }
 }
 void Field::makePresents() {
     // 献上を一挙に行う
     for (int cl = 0; cl < MIDDLE; cl++) {
-        const int oppClass = getChangePartnerClass(cl);
-        const int from = classPlayer(oppClass);
-        const int to = classPlayer(cl);
-        const Cards presentCards = pickHigh(getCards(from), N_CHANGE_CARDS(cl));
-        makeChange(from, to, presentCards);
+        int oppClass = getChangePartnerClass(cl);
+        int from = classPlayer(oppClass), to = classPlayer(cl);
+        int qty = N_CHANGE_CARDS(cl);
+        const Cards presentCards = pickHigh(getCards(from), qty);
+        makeChange(from, to, qty, presentCards, false);
     }
 }
 void Field::removePresentedCards() {
