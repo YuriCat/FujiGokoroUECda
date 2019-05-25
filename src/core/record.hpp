@@ -138,10 +138,10 @@ public:
     int seatPlayer(int s) const { return invert(infoSeat)[s]; }
     int newClassPlayer(int ncl) const { return invert(infoNewClass)[ncl]; }
     
-    void setPlayerClass(int p, int cl) { infoClass.assign(p, cl); }
-    void setPlayerSeat(int p, int s) { infoSeat.assign(p, s); }
-    void setPlayerNewClass(int p, int ncl) { infoNewClass.assign(p, ncl); }
-    void setPosition(int p, int pos) { infoPosition.assign(p, pos); }
+    void setClassOf(int p, int cl) { infoClass.assign(p, cl); }
+    void setSeatOf(int p, int s) { infoSeat.assign(p, s); }
+    void setNewClassOf(int p, int ncl) { infoNewClass.assign(p, ncl); }
+    void setPositionOf(int p, int pos) { infoPosition.assign(p, pos); }
     
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;
     
@@ -183,13 +183,6 @@ public:
 class ServerGameRecord : public GameRecord<PlayRecord> {
 public:
     std::string toString(int gn) const;
-    int fadd(const std::string& fName, int g) {
-        // ファイルに追加書き込み
-        std::ofstream ofs(fName, std::ios::app);
-        if (!ofs) return -1;
-        ofs << toString(g);
-        return 0;
-    }
 };
 
 class EngineGameRecord : public GameRecord<EnginePlayRecord> {
@@ -247,19 +240,14 @@ public:
         return pos;
     }
     
-    void setPlayer(int p, const std::string& str) {
-        player_[p] = str;
-    }
-    
-    void reserveGames(std::size_t n) {
-        game_.reserve(n);
-    }
+    void setPlayer(int p, const std::string& str) { player_[p] = str; }
+    void reserveGames(std::size_t n) { game_.reserve(n); }
     void initGame() {
         game_.emplace_back(game_t());
         game_t& g = latestGame();
         g.init();
         for (int p = 0; p < N_PLAYERS; p++) {
-            g.setPosition(p, positionOf(p));
+            g.setPositionOf(p, positionOf(p));
         }
     }
     void closeGame() {

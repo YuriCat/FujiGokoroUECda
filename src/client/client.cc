@@ -94,8 +94,8 @@ int main(int argc, char* argv[]) { // for UECda
         startGame(recv_table); // 自分のカード、初期情報受け取り
 
         // 席順設定
-        for (int s = 0; s < N_PLAYERS; ++s)
-            gameRecord.setPlayerSeat(seatPlayer(recv_table, s), s);
+        for (int s = 0; s < N_PLAYERS; s++)
+            gameRecord.setSeatOf(seatPlayer(recv_table, s), s);
         
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
@@ -110,13 +110,14 @@ int main(int argc, char* argv[]) { // for UECda
             // init gameは全員平民としておく
             CERR << "main() : probed init game from table" << endl;
             gameRecord.setInitGame();
-            for (int p = 0; p < N_PLAYERS; ++p)
-                gameRecord.setPlayerClass(p, MIDDLE);
+            for (int p = 0; p < N_PLAYERS; p++) {
+                gameRecord.setClassOf(p, MIDDLE);
+            }
         } else {
             CERR << "main() : probed change game from table" << endl;
             gameRecord.resetInitGame();
-            for (int p = 0; p < N_PLAYERS; ++p)
-                gameRecord.setPlayerClass(p, classOf(recv_table, p));
+            for (int p = 0; p < N_PLAYERS; p++)
+                gameRecord.setClassOf(p, classOf(recv_table, p));
         }
         
         // カード枚数設定
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) { // for UECda
             isJava = false;
         }
         
-        for (int p = 0; p < N_PLAYERS; ++p) {
+        for (int p = 0; p < N_PLAYERS; p++) {
             int NCards = getNCards(recv_table, p);
             if (isJava) {
                 // javaサーバーでは献上分が加算されているので高位者は引く必要あり
@@ -214,7 +215,7 @@ int main(int argc, char* argv[]) { // for UECda
             
             if (firstTurn) { // 初手の特別な処理
                 // 局面をサーバーからの情報通りに設定する
-                for (int p = 0; p < N_PLAYERS; ++p)
+                for (int p = 0; p < N_PLAYERS; p++)
                     gameRecord.setNOrgCards(p, getNCards(recv_table, p));
                     
                 playRecord.setFirstTurn(turnPlayer);
@@ -269,7 +270,7 @@ int main(int argc, char* argv[]) { // for UECda
                 }
             }
             
-            for (int p = 0; p < N_PLAYERS; ++p)
+            for (int p = 0; p < N_PLAYERS; p++)
                 playRecord.setNCards(p, getNCards(recv_table, p));
             
 #ifdef BROADCAST
@@ -336,7 +337,7 @@ int main(int argc, char* argv[]) { // for UECda
             gameRecord.push_play(playRecord);
             if (playRecord.procByServer(serverMove, serverUsedCards)) {
                 // あがり処理
-                gameRecord.setPlayerNewClass(turnPlayer, playRecord.ps.getBestClass() - 1);
+                gameRecord.setNewClassOf(turnPlayer, playRecord.ps.getBestClass() - 1);
             }
             
 #ifdef BROADCAST
@@ -360,10 +361,10 @@ int main(int argc, char* argv[]) { // for UECda
         
         // 試合終了後処理
         int lastPlayer = playRecord.ps.searchL1Player();
-        gameRecord.setPlayerNewClass(lastPlayer, DAIHINMIN);
+        gameRecord.setNewClassOf(lastPlayer, DAIHINMIN);
         Field field;
         setFieldFromClientLog(gameRecord, myPlayerNum, &field);
-        for (int p = 0; p < N_PLAYERS; ++p) {
+        for (int p = 0; p < N_PLAYERS; p++) {
             gameRecord.setOrgCards(p, field.getUsedCards(p));
         }
         if (field.getNAlivePlayers() == 0) { // 先日手でなく通常の終了
