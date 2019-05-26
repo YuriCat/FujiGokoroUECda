@@ -418,9 +418,10 @@ void Field::setAfterChange(const GameRecord& game,
     // カード交換が終わった後から棋譜を読み始める時の初期設定
     // 全体初期化はされていると仮定する
     for (int p = 0; p < N_PLAYERS; p++) {
-        if (!know(p)) setBothHand(p, cards[p]); // 手札不明だったプレーヤーのみ
+        setBothHand(p, cards[p]);
         addAttractedPlayer(p);
     }
+    myPlayerNum = -1; // 全員の手札情報を得たので必ずサーバー視点
     prepareAfterChange();
 }
 
