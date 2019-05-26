@@ -1028,7 +1028,7 @@ struct Move {
             unsigned jks = jokerSuits();
             if (jks) {
                 c |= CARDS_JOKER;
-                if (jks != SUITS_CDHS) s -= jks; // クインタプル対策
+                if (jks != SUITS_ALL) s -= jks; // クインタプル対策
             }
             return c | RankSuitsToCards(r, s);
         } else {

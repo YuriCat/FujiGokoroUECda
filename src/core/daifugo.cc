@@ -340,7 +340,6 @@ string toRecordString(Move m) {
 Move CardsToMove(const Cards chara, const Cards used) {
     // 性質 chara 構成札 used のカードから着手への変換
     Move m = MOVE_NULL;
-    DERR << "pointer &m = " << (uint64_t)(&m) << endl << m << endl;
     if (chara == CARDS_NULL) return MOVE_PASS;
     if (chara == CARDS_JOKER) {
         m.setSingleJOKER();
@@ -352,13 +351,10 @@ Move CardsToMove(const Cards chara, const Cards used) {
     unsigned ps = used[r]; // ジョーカーなしのスート
     int q = countCards(chara);
     if (!polymRanks<2>(chara)) { // グループ系
-        if (q == 1) {
-            m.setSingle(r, s);
-        } else {
-            m.setGroup(q, r, s);
-            unsigned js = s - ps;
-            if (js) m.setJokerSuits(js);
-        }
+        m.setGroup(q, r, s);
+        unsigned js = s - ps;
+        if (q > 4) js = 15;
+        if (js) m.setJokerSuits(js);
     } else { // 階段系
         m.setSeq(q, r, s);
         if (containsJOKER(used)) {
@@ -368,7 +364,6 @@ Move CardsToMove(const Cards chara, const Cards used) {
             m.setJokerSuits(s);
         }
     }
-    DERR << "pointer &m = " << (uint64_t)(&m) << endl;
     DERR << "chara " << chara << " used " << used << " -> " << MeldChar(m) << endl;
     return m;
 }
