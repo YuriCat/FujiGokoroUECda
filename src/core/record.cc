@@ -426,6 +426,7 @@ void Field::setAfterChange(const GameRecord& game,
 }
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
+    myPlayerNum = game.myPlayerNum;
     if (tcnt < 0) { // tcnt < 0で交換中まで
         if (phase < PHASE_PRESENT) passPresent(game, playerNum);
         return;
