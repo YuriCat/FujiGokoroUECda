@@ -353,7 +353,7 @@ Move CardsToMove(const Cards chara, const Cards used) {
     if (!polymRanks<2>(chara)) { // グループ系
         m.setGroup(q, r, s);
         unsigned js = s - ps;
-        if (q == 5) js = SUITS_ALL;
+        if (q > 4) js = 15;
         if (js) m.setJokerSuits(js);
     } else { // 階段系
         m.setSeq(q, r, s);
