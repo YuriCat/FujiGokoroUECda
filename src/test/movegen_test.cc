@@ -16,7 +16,7 @@ static std::mt19937 mt;
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
 int moves = genLead(buffer, c);\
 cerr << moves << " moves were generated for " << c << endl;\
-for (int m = 0; m < moves; ++m) { cerr << buffer[m] << " "; }\
+for (int m = 0; m < moves; m++) { cerr << buffer[m] << " "; }\
 cerr << endl;}
 
 int outputGenerationResult() {
@@ -79,10 +79,10 @@ int testRecordMoves(const Record& record) {
     uint64_t genTime[2] = {0};
     uint64_t genCount[2] = {0};
     uint64_t genHolded[2] = {0};
-    Field field;
     
     // プリミティブ型での着手生成
     for (int i = 0; i < record.games(); i++) {
+        Field field;
         if (iterateGameLogAfterChange
         (field, record.game(i),
             [&](const Field& field) {}, // first callback

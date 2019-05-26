@@ -88,11 +88,10 @@ int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstT
     return 0;
 }
 
-string GameRecord::toString(int gn) const {
+string GameRecord::toString() const {
     ostringstream oss;
     
     oss << "/* " << endl;
-    oss << "game " << gn << " " << endl;
     oss << "score " << endl;
     oss << "class ";
     for (int p = 0; p < N_PLAYERS; p++) {
@@ -106,7 +105,7 @@ string GameRecord::toString(int gn) const {
     oss << endl;
     oss << "dealt ";
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << tolower(getDealtCards(p).toString()) << " ";
+        oss << tolower(dealtCards[p].toString()) << " ";
     }
     oss << endl;
     oss << "changed ";
@@ -122,7 +121,7 @@ string GameRecord::toString(int gn) const {
     oss << endl;
     oss << "original ";
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << tolower(getOrgCards(p).toString()) << " ";
+        oss << tolower(orgCards[p].toString()) << " ";
     }
     oss << endl;
     oss << "play ";
@@ -144,36 +143,23 @@ string GameRecord::toString(int gn) const {
 #define ToI(str) stoll(str)
 
 int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
-    
-    using game_t = typename MatchRecord::game_t;
-    using playLog_t = typename game_t::playLog_t;
-    using change_t = typename game_t::change_t;
-    
-    constexpr int N = N_PLAYERS;
-    
     Recorder::initCommandSet();
     
-    ifstream ifs;
-    
-    ifs.open(fName, ios::in);
-    
+    ifstream ifs(fName);
     if (!ifs) {
         cerr << "readMatchLogFile() : no log file." << endl;
         return -1;
     }
     
     pmLog->init();
-    
-    game_t gLog;
-    BitArray32<4, N> infoClass, infoSeat, infoNewClass;
-    map<int, change_t> cLogMap;
+    GameRecord game;
+    BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass;
+    map<int, ChangeRecord> changeMap;
     Move lastMove;
     
     bitset<32> flagGame, flagMatch;
     int startedGame = -1;
     int failedGames = 0;
-    
-    int t;
     
     queue<string> q;
     string str;
@@ -204,25 +190,23 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
                 cerr << "failed to read game " << (startedGame + failedGames) << endl;
                 failedGames += 1;
             }
-            startedGame = pmLog->games();
-            gLog.init();
+            startedGame = pmLog->games.size();
+            game.init();
             infoClass.clear();
             infoSeat.clear();
             infoNewClass.clear();
-            cLogMap.clear();
+            changeMap.clear();
             lastMove = MOVE_PASS;
             flagGame.reset();
         } else if (cmd == "*/") { // game終了合図
             // ログとして必要なデータが揃っているか確認
-            // if (!flagGame.test(0)) {}//ゲーム番号不明
-            // if (!flagGame.test(0)) {}//累積スコア不明
             if (!lastMove.isPASS()) {
-                gLog.setTerminated();
+                game.setTerminated();
             }
-            gLog.infoClass = infoClass;
-            gLog.infoSeat = infoSeat;
-            gLog.infoNewClass = infoNewClass;
-            pmLog->pushGame(gLog);
+            game.infoClass = infoClass;
+            game.infoSeat = infoSeat;
+            game.infoNewClass = infoNewClass;
+            pmLog->pushGame(game);
             startedGame = -1;
         } else if (cmd == "match") {
             const string& str = q.front();
@@ -230,11 +214,11 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
             q.pop();
             flagMatch.set(0);
         } else if (cmd == "player") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
                 DERR << "pname : " << str << endl;
-                pmLog->setPlayer(i, str);
+                pmLog->playerName[p] = str;
                 q.pop();
             }
             flagMatch.set(1);
@@ -247,62 +231,63 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
             q.pop();
             flagGame.set(0);
         } else if (cmd == "score") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
                 q.pop();
             }
             flagGame.set(1);
         } else if (cmd == "class") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
-                infoClass.assign(i, ToI(str));
+                infoClass.assign(p, ToI(str));
                 q.pop();
             }
             flagGame.set(2);
         } else if (cmd == "seat") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
-                infoSeat.assign(i, ToI(str));
+                infoSeat.assign(p, ToI(str));
                 q.pop();
             }
             flagGame.set(3);
         } else if (cmd == "dealt") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
-                gLog.setDealtCards(i, c);
+                game.dealtCards[p] = c;
                 DERR << c << endl;
             }
             flagGame.set(4);
         } else if (cmd == "changed") {
             bool anyChange = false;
-            BitArray32<4, N> infoClassPlayer = invert(infoClass);
-            
-            for (int i = 0; i < N; i++) {
+            auto infoClassPlayer = invert(infoClass);
+            for (int p = 0; p < N_PLAYERS; p++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
                 if (anyCards(c)) {
                     anyChange = true;
-                    change_t cLog(i, infoClassPlayer[getChangePartnerClass(infoClass[i])], c);
-                    
-                    cLogMap[-infoClass[i]] = cLog;
+                    ChangeRecord change;
+                    bool already = infoClass[p] > MIDDLE;
+                    change.set(p, infoClassPlayer[getChangePartnerClass(infoClass[p])],
+                               c.count(), c, already);
+                    changeMap[-infoClass[p]] = change;
                 }
             }
             if (!anyChange) {
-                gLog.setInitGame();
+                game.setInitGame();
                 DERR << "init game." << endl;
             } else {
-                for (auto c : cLogMap) gLog.push_change(c.second);
+                for (auto c : changeMap) game.pushChange(c.second);
             }
             flagGame.set(5);
         } else if (cmd == "original") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo(); 
-                gLog.setOrgCards(i, c);
+                game.orgCards[p] = c;
                 DERR << c << endl;
             }
             flagGame.set(6);
@@ -312,17 +297,18 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
                 if (StringToMoveTimeM(str, &mv, &time) < 0) Foo();
-                playLog_t pLog(mv, time);
-                gLog.push_play(pLog);
+                PlayRecord play;
+                play.set(mv, time);
+                game.pushPlay(play);
                 lastMove = mv;
                 q.pop();
             }
             flagGame.set(7);
         } else if (cmd == "result") {
-            for (int i = 0; i < N; i++) {
+            for (int p = 0; p < N_PLAYERS; p++) {
                 const string& str = q.front();
                 if (Recorder::isCommand(str)) Foo();
-                infoNewClass.assign(i, ToI(str));
+                infoNewClass.assign(p, ToI(str));
                 q.pop();
             }
             flagGame.set(8);
@@ -331,12 +317,58 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
     }
 END:;
     
-    cerr << pmLog->games() << " games were loaded." << endl;
+    cerr << pmLog->games.size() << " games were loaded." << endl;
     ifs.close();
     return 0;
 }
 #undef ToI
 #undef Foo
+
+string MatchRecord::toHeaderString() const {
+    // ヘッダ部分の出力
+    ostringstream oss;
+    oss << "player";
+    for (int p = 0; p < N_PLAYERS; p++) oss << " " << playerName[p];
+    oss << endl;
+    return oss.str();
+}
+int MatchRecord::fin(std::string path) {
+    // ファイルから読み込み
+    filePath = path;
+    return readMatchLogFile(filePath, this);
+}
+int MatchRecord::fout(std::string path) {
+    // ファイルに書き込み
+    filePath = path;
+    std::ofstream ofs(filePath, std::ios::out);
+    if (!ofs) return -1;
+    ofs << toHeaderString();
+    for (const auto& game : games) ofs << game.toString();
+    return 0;
+}
+
+int Record::fin(std::string path) {
+    // 棋譜ファイルを1つ読み込み
+    cerr << "using log file [ " << path << " ]" << endl;
+    match.resize(match.size() + 1);
+    int err = match.back().fin(path);
+    if (err < 0) {
+        cerr << "failed to read " << path << "." << endl;
+        match.resize(match.size() - 1);
+        return err;
+    }
+    // インデックスの準備
+    int g = match.back().games.size();
+    for (int i = 0; i < g; i++) rindex.push_back(startIndex.back() + i);
+    startIndex.push_back(startIndex.back() + g);
+    return 0;
+}
+int Record::fin(const std::vector<std::string>& paths) {
+    // 棋譜ファイルを複数読み込み
+    for (std::string path : paths) fin(path);
+    cerr << matches() << " matches were loaded." << endl;
+    return 0;
+}
 
 void Field::setBeforeGame(const GameRecord& game, int playerNum) {
     // 棋譜を読んでの初期設定
@@ -351,21 +383,34 @@ void Field::setBeforeGame(const GameRecord& game, int playerNum) {
         setSeatOf(p, game.seatOf(p));
         setPositionOf(p, game.positionOf(p));
     }
+    phase = PHASE_INIT;
 }
 
-void Field::passChange(const GameRecord& game, int playerNum, bool initialized) {
-    if (!initialized) setBeforeGame(game, playerNum);
+void Field::passPresent(const GameRecord& game, int playerNum) {
+    if (phase < PHASE_INIT) setBeforeGame(game, playerNum);
     // 初期手札の設定
     for (int p = 0; p < N_PLAYERS; p++) {
         if (know(p)) {
             dealtCards[p] = game.dealtCards[p];
-            setBothHand(dealtCards[p]);
-        } else setBothHandQty(game.numDealtCards[p]);
+            setBothHand(p, dealtCards[p]);
+        } else setBothHandQty(p, game.numDealtCards[p]);
     }
+    // 献上の処理
+    for (const auto& change : game.changes) {
+        if (change.already) {
+            makeChange(change.from, change.to, change.qty, change.cards, false, true);
+        }
+    }
+    phase = PHASE_PRESENT;
+}
+
+void Field::passChange(const GameRecord& game, int playerNum) {
+    if (phase < PHASE_PRESENT) passPresent(game, playerNum);
     // 交換の処理
     for (const auto& change : game.changes) {
         makeChange(change.from, change.to, change.qty, change.cards, change.already);
     }
+    phase = PHASE_CHANGE;
 }
 
 void Field::setAfterChange(const GameRecord& game,
@@ -380,13 +425,13 @@ void Field::setAfterChange(const GameRecord& game,
 }
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
-    passChange(game, playerNum);
     if (tcnt < 0) { // tcnt < 0で交換中まで
-        setInChange();
+        if (phase < PHASE_PRESENT) passPresent(game, playerNum);
         return;
     }
+    if (phase < PHASE_CHANGE) passChange(game, playerNum);
     // 役提出の処理
     common.turn = common.owner = common.firstTurn = game.firstTurn;
     tcnt = min((int)game.plays.size(), tcnt);
-    for (int t = 0; t < tcnt; t++) field.procSlowest(game.plays[t].move);
+    for (int t = 0; t < tcnt; t++) procSlowest(game.plays[t].move);
 }

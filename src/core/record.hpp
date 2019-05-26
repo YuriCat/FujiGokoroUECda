@@ -16,7 +16,7 @@ struct ChangeRecord { // 交換の記録
     bool already; // 既に手札が相手型に渡っている
     int qty; Cards cards;
 
-    void set(int f, int t, bool a, int q, Cards c) {
+    void set(int f, int t, int q, Cards c, bool a) {
         from = f; to = t;
         already = a;
         qty = q; cards = c;
@@ -24,7 +24,7 @@ struct ChangeRecord { // 交換の記録
 };
 
 struct GameRecord {
-    void init() {
+    void init(int playerNum = -1) {
         changes.clear();
         plays.clear();
         flags_.reset();
@@ -40,12 +40,13 @@ struct GameRecord {
         numOrgCards.fill(-1);
 
         firstTurn = -1;
+        myPlayerNum = playerNum;
     }
-    void push_change(const ChangeRecord& change) {
+    void pushChange(const ChangeRecord& change) {
         if (changes.size() < N_CHANGES) changes.push_back(change);
         else flags_.set(2);
     }
-    void push_play(const PlayRecord& play) {
+    void pushPlay(const PlayRecord& play) {
         if (plays.size() < 128) plays.push_back(play);
         else flags_.set(3);
     }
@@ -74,6 +75,7 @@ struct GameRecord {
     void setNewClassOf(int p, int ncl) { infoNewClass.assign(p, ncl); }
     void setPositionOf(int p, int pos) { infoPosition.assign(p, pos); }
     
+    int myPlayerNum;
     int firstTurn;
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;
     std::array<int8_t, N_PLAYERS> numDealtCards, numOrgCards;
@@ -86,23 +88,13 @@ struct GameRecord {
     boost::container::static_vector<PlayRecord, 128> plays;
     std::bitset<32> flags_;
 
-    std::string toString(int gn) const;
+    std::string toString() const;
 };
 
-template <class game_t_>
-class MatchRecordBase {
-public:
-    using game_t = game_t_;
-    
-    int games() const { return game_.size(); }
-    
-    const std::string& player(int p) const { return player_[p]; }
-    const std::string& fileName() const { return fileName_; }
-    const game_t& game(int g) const { return game_[g]; }
-    
-    const game_t& latestGame() const { return game_.back(); }
-    game_t& latestGame() { return game_.back(); }
-    int getLatestGameNum() const { return games() - 1; }
+struct MatchRecord {
+    const GameRecord& latestGame() const { return games.back(); }
+    GameRecord& latestGame() { return games.back(); }
+    int getLatestGameNum() const { return int(games.size()) - 1; }
     
     int getScore(int p) const { return score[p]; }
     int positionOf(int p) const { // score から順位を調べる
@@ -112,97 +104,54 @@ public:
         }
         return pos;
     }
-    
-    void setPlayer(int p, const std::string& str) {
-        player_[p] = str;
-    }
-    
-    void reserveGames(std::size_t n) {
-        game_.reserve(n);
+    void reserveGames(int n) {
+        games.reserve(n);
     }
     void initGame() {
-        game_.emplace_back(game_t());
-        game_t& g = latestGame();
-        g.init();
+        games.emplace_back(GameRecord());
+        auto& g = latestGame();
+        g.init(myPlayerNum);
         for (int p = 0; p < N_PLAYERS; p++) {
             g.setPositionOf(p, positionOf(p));
         }
     }
     void closeGame() {
-        const game_t& g = latestGame();
+        const auto& g = latestGame();
         for (int p = 0; p < N_PLAYERS; p++) {
             score[p] += REWARD(g.newClassOf(p));
         }
     }
-    void pushGame(const game_t& game) {
-        game_.emplace_back(game);
+    void pushGame(const GameRecord& game) {
+        games.emplace_back(game);
     }
-    void init() {
-        game_.clear();
-        player_.fill("");
+    void init(int playerNum = -1) {
+        myPlayerNum = playerNum;
+        games.clear();
+        playerName.fill("");
         score.fill(0);
     }
-    
-    std::string toHeaderString() const {
-        // ヘッダ部分の出力
-        std::ostringstream oss;
-        oss << "player";
-        for (int p = 0; p < N_PLAYERS; p++) oss << " " << player_[p];
-        oss << endl;
-        return oss.str();
+    std::string toHeaderString() const;
+    int fin(std::string path);
+    int fout(std::string path);
+    MatchRecord() { init(); }
+    MatchRecord(std::string path) {
+        init(); fin(path);
     }
-    int fin(std::string fName);
-    int fout(std::string fName) {
-        // ファイルに書き込み
-        fileName_ = fName;
-        std::ofstream ofs(fName, std::ios::out);
-        if (!ofs) return -1;
-        ofs << toHeaderString();
-        for (int i = 0; i < games(); i++) ofs << game(i).toString(i);
-        return 0;
-    }
-    int foutLast(std::string fName) {
-        // ファイルに最後の試合を書き込み
-        std::ofstream ofs(fName, std::ios::app);
-        if (!ofs) return -1;
-        int g = (int)games() - 1;
-        if (g < 0) return -1;
-        ofs << game(g).toString(g);
-        return 0;
-    }
-    MatchRecordBase() { init(); }
-    MatchRecordBase(const std::string& logFile) {
-        init(); fin(logFile);
-    }
-protected:
-    std::string fileName_;
-    std::array<std::string, N_PLAYERS> player_;
-    std::vector<game_t> game_;
+    int myPlayerNum = -1;
+    std::string filePath;
+    std::array<std::string, N_PLAYERS> playerName;
+    std::vector<GameRecord> games;
     std::array<int64_t, N_PLAYERS> score;
 };
 
-struct EngineMatchRecord : public MatchRecordBase<GameRecord> {
-    EngineMatchRecord() {
-        init();
-        myPlayerNum = -1;
-    }
-    int myPlayerNum;
-};
-
-template <class match_t_>
-struct MatchRecordAccessor { // ランダム順なアクセス
-    using match_t = match_t_;
-    using game_t = typename match_t::game_t;
-
-    std::deque<match_t> match;
+struct Record {
+    // MatchRecordのリストをランダム順なアクセス可能にしたもの
+    std::deque<MatchRecord> match;
     std::vector<int> rindex, startIndex;
     
-    MatchRecordAccessor() { init(); }
-    MatchRecordAccessor(std::string logFiles) {
-        init(); fin(logFiles);
-    }
-    MatchRecordAccessor(std::vector<std::string> logFiles) {
-        init(); fin(logFiles);
+    Record() { init(); }
+    Record(const std::vector<std::string>& paths) {
+        init(); fin(paths);
     }
     void init() {
         match.clear();
@@ -218,50 +167,16 @@ struct MatchRecordAccessor { // ランダム順なアクセス
     }
     template <class dice_t>
     void shuffle(dice_t& dice) { shuffle(0, rindex.size(), dice); }
-    const game_t game(int idx) const { return gameImpl(idx); }
-    const game_t& rgame(int idx) const { return gameImpl(rindex[idx]); }
-    const game_t& gameImpl(int idx) const {
+    const GameRecord& game(int idx) const { return gameImpl(idx); }
+    const GameRecord& rgame(int idx) const { return gameImpl(rindex[idx]); }
+    const GameRecord& gameImpl(int idx) const {
         auto itr = std::upper_bound(startIndex.begin(), startIndex.end(), idx); // 二分探索
         int midx = itr - startIndex.begin() - 1; // itrは超えた位置を指すので1引く
-        return match[midx].game(idx - startIndex[midx]);
+        return match[midx].games[idx - startIndex[midx]];
     }
-    int fin(const std::string& logFile) {
-        // 棋譜ファイルを1つ読み込み
-        cerr << "using log file [ " << logFile << " ]" << endl;
-        match.resize(match.size() + 1);
-        int err = match.back().fin(logFile);
-        if (err < 0) {
-            cerr << "failed to read " << logFile << "." << endl;
-            match.resize(match.size() - 1);
-            return err;
-        }
-        // インデックスの準備
-        int g = match.back().games();
-        for (int i = 0; i < g; i++) rindex.push_back(startIndex.back() + i);
-        startIndex.push_back(startIndex.back() + g);
-        return 0;
-    }
-    int fin(const std::vector<std::string>& logFiles, bool forced = false) {
-        // 棋譜ファイルを複数読み込み
-        for (int i = 0; i < logFiles.size(); i++) {
-            int err = fin(logFiles.at(i));
-            if (err < 0 && !forced) return err;
-        }
-        cerr << matches() << " matches were loaded." << endl;
-        return 0;
-    }
+    int fin(std::string path);
+    int fin(const std::vector<std::string>& paths);
 };
-
-using MatchRecord = MatchRecordBase<ServerGameRecord>;
-using Record = MatchRecordAccessor<MatchRecordBase<ServerGameRecord>>;
-
-extern int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog);
-
-template <> inline int MatchRecord::fin(std::string fName) {
-    // ファイルから読み込み
-    fileName_ = fName;
-    return readMatchLogFile(fName, this);
-}
 
 // ここから棋譜から局面を正方向に読む関数たち
 
@@ -281,10 +196,10 @@ int iterateGameLogBeforePlay
  const changeCallback_t& changeCallback = [](const Field&, const int, const int, const Cards)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const Field&)->void{},
  bool stopBeforeChange = false) {
+    field.phase = PHASE_UNINIT;
     field.setBeforeGame(game, -1);
     firstCallback(field);
-    field.passChange(game, -1);
-    field.setInChange();
+    field.passPresent(game, -1);
     if (stopBeforeChange) return -1;
     
     dealtCallback(field);
@@ -302,7 +217,6 @@ int iterateGameLogBeforePlay
         }
         field.makeChange(change.from, change.to, change.qty, change.cards, change.already);
     }
-    field.resetInChange();
     lastCallback(field);
     return 0;
 }
@@ -313,14 +227,10 @@ template <typename firstCallback_t, typename playCallback_t>
 int iterateGameLogInGame
 (Field& field, const GameRecord& game, int turns, const std::array<Cards, N_PLAYERS>& hand,
  const firstCallback_t& firstCallback = [](const Field&)->void{},
- const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
- bool initialized = false) {
-    if (!initialized) {
-        field.passChange(game, -1);
-        // 交換後の手札を配置
-        field.setAfterChange(game, hand);
-    }
-    field.prepareAfterChange();
+ const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; }) {
+    field.phase = PHASE_UNINIT;
+    field.passChange(game, game.myPlayerNum);
+    field.setAfterChange(game, hand); // 交換後の手札を配置
     firstCallback(field);
     // play
     for (int t = 0; t < turns; t++) {
@@ -338,16 +248,15 @@ int iterateGameLogInGame
     return 0;
 }
 
-template <class game_t,
-typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
+template <typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
 int iterateGameLogAfterChange
-(Field& field, const game_t& game,
+(Field& field, const GameRecord& game,
  const firstCallback_t& firstCallback = [](const Field&)->void{},
  const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const Field&)->void{},
- bool initialized = false) {
+ const lastCallback_t& lastCallback = [](const Field&)->void{}) {
+    field.phase = PHASE_UNINIT;
     int ret = iterateGameLogInGame(field, game, game.plays.size(), game.orgCards,
-                                   firstCallback, playCallback, initialized);
+                                   firstCallback, playCallback);
     if (ret <= -2) return ret; // この試合もう進めない
     for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, game.newClassOf(p));
     lastCallback(field);
@@ -365,9 +274,10 @@ int iterateGameLog
  const afterChangeCallback_t& afterChangeCallback = [](const Field&)->void{},
  const playCallback_t& playCallback = [](const Field&, const Move&, const uint64_t)->int{ return 0; },
  const lastCallback_t& lastCallback = [](const Field&)->void{}) {
+    field.phase = PHASE_UNINIT;
     // 交換
     int ret = iterateGameLogBeforePlay(field, game, firstCallback, dealtCallback, changeCallback);
     if (ret <= -2) return ret; // この試合もう進めない
     // 役提出
-    return iterateGameLogAfterChange(field, game, afterChangeCallback, playCallback, lastCallback, true);
+    return iterateGameLogAfterChange(field, game, afterChangeCallback, playCallback, lastCallback);
 }

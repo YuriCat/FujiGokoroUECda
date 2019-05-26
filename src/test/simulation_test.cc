@@ -13,9 +13,8 @@ static SharedData shared;
 static ThreadTools tools;
 static Clock cl;
 
-int testSimulation(const MatchRecord& mrecord) {
+int testSimulation(const MatchRecord& match) {
     // 棋譜を読んでシミュレーションを行う
-    Field field;
     tools.init(0);
     tools.dice.srand(1);
     mt19937 dice(0);
@@ -23,14 +22,14 @@ int testSimulation(const MatchRecord& mrecord) {
     long long matrix[N_PLAYERS][N_PLAYERS] = {0};
     long long time = 0;
 
-    for (int i = 0; i < mrecord.games(); i++) {
+    for (const auto& game : match.games) {
         shared.initGame();
-        const auto& grecord = mrecord.game(i);
         // 対局結果
-        auto newClasses = grecord.infoNewClass;
-        int tc = dice() % grecord.plays.size();
+        auto newClasses = game.infoNewClass;
+        int tc = dice() % game.plays.size();
+        Field field;
         iterateGameLogAfterChange
-        (field, grecord,
+        (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             // この局面からシミュレーションを行う

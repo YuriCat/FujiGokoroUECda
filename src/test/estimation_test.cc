@@ -23,10 +23,8 @@ uint64_t worldKey(const Field& f) {
     return key;
 }
 
-void testEstimationRate(const MatchRecord& mrecord, DealType type) {
-    Field field;
-
-    shared.initMatch();
+void testEstimationRate(const MatchRecord& match, DealType type) {
+    shared.initMatch(-1);
     for (int i = 0; i < 16; i++) {
         tools[i].init(i);
         tools[i].dice.srand(1 + i);
@@ -44,12 +42,12 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
     double entropy = 0, cross_entropy = 0;
     long long ecnt = 0;
 
-    for (int i = 0; i < mrecord.games(); i++) {
+    for (const auto& game : match.games) {
         shared.initGame();
-        const auto& grecord = mrecord.game(i);
-        int tc = dice() % grecord.plays.size();
+        int tc = dice() % game.plays.size();
+        Field field;
         iterateGameLogAfterChange
-        (field, grecord,
+        (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             if (field.getNAlivePlayers() <= 2) return 0;
@@ -60,7 +58,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
             ImaginaryWorld world;
             for (int j = 0; j < 2; j++) {
                 cl.start();
-                estimator.create(&world, type, grecord, shared, &tools[0]);
+                estimator.create(&world, type, game, shared, &tools[0]);
                 time += cl.stop();
                 cnt++;
                 int tsame = 0, tall = 0;
@@ -80,7 +78,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                 ImaginaryWorld worlds[N];
                 map<uint64_t, double> worldKeyMap;
                 for (int i = 0; i < N; i++) {
-                    estimator.create(&worlds[i], type, grecord, shared, &tools[0]);
+                    estimator.create(&worlds[i], type, game, shared, &tools[0]);
                     worldKeyMap[worlds[i].key]++;
                 }
                 // 全体の情報量をまとめる
@@ -88,7 +86,7 @@ void testEstimationRate(const MatchRecord& mrecord, DealType type) {
                 for (auto& val : worldKeyMap) {
                     double prob = val.second / N;
                     total_e += -prob * log2(prob);
-                    if (worlds[i].key == worldKey(field)) total_ce += -log2(prob);
+                    if (val.first == worldKey(field)) total_ce += -log2(prob);
                 }
                 total_entropy += total_e;
                 total_cross_entropy += total_ce;
@@ -135,11 +133,11 @@ bool EstimationTest(const vector<string>& recordFiles) {
     shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
 
     for (string rf : recordFiles) {
-        MatchRecord mrecord(rf);
-        testEstimationRate(mrecord, DealType::RANDOM);
-        testEstimationRate(mrecord, DealType::SBJINFO);
-        testEstimationRate(mrecord, DealType::BIAS);
-        testEstimationRate(mrecord, DealType::REJECTION);
+        MatchRecord match(rf);
+        testEstimationRate(match, DealType::RANDOM);
+        testEstimationRate(match, DealType::SBJINFO);
+        testEstimationRate(match, DealType::BIAS);
+        testEstimationRate(match, DealType::REJECTION);
     }
     
     return 0;

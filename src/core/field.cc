@@ -100,64 +100,50 @@ void Field::procHand(int tp, Move m) {
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) {
             if (know(p)) {
+                assert(hand[p].holds(dc));
                 if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
             } else hand[p].qty -= dq;
         } else if (isAlive(p)) {
-            if (know(p)) opsHand[p].makeMoveAll(m, dc, dq, dkey);
+            if (know(p)) {
+                assert(opsHand[p].holds(dc));
+                opsHand[p].makeMoveAll(m, dc, dq, dkey);
+            }
             else opsHand[p].qty -= dq;
         }
     }
 }
 
-void Field::makeChange(int from, int to, int dq, Cards dc, bool sendOnly) {
+void Field::makeChange(int from, int to, int dq, Cards dc,
+                       bool sendOnly, bool recvOnly) {
     // sendOnly の時は受取側手札情報を更新しない
     // 不完全情報のプレーヤーのとき、交換で動いた札が不明のときは枚数更新のみ
     uint64_t dkey = CardsToHashKey(dc);
-    if (dc.any() && know(from)) {
-        hand[from].subtrAll(dc, dq, dkey);
-        opsHand[from].addAll(dc, dq, dkey);
-    } else {
-        hand[from].qty -= dq;
-        opsHand[from].qty += dq;
+    if (!recvOnly) {
+        if (dc.any() && know(from)) {
+            assert(hand[from].holds(dc));
+            hand[from].subtrAll(dc, dq, dkey);
+            opsHand[from].addAll(dc, dq, dkey);
+            assert(opsHand[from].exam());
+        } else {
+            hand[from].qty -= dq;
+            opsHand[from].qty += dq;
+        }
     }
     if (!sendOnly) {
         if (dc.any() && know(to)) {
+            assert(opsHand[to].holds(dc));
             hand[to].addAll(dc, dq, dkey);
             opsHand[to].subtrAll(dc, dq, dkey);
+            assert(hand[to].exam());
         } else {
             hand[to].qty += dq;
             opsHand[to].qty -= dq;
         }
     }
     if (dc.any()) {
-        sentCards[from] = dc;
-        recvCards[to] = dc;
-    }
-}
-void Field::makePresents() {
-    // 献上を一挙に行う
-    for (int cl = 0; cl < MIDDLE; cl++) {
-        int oppClass = getChangePartnerClass(cl);
-        int from = classPlayer(oppClass), to = classPlayer(cl);
-        int qty = N_CHANGE_CARDS(cl);
-        const Cards presentCards = pickHigh(getCards(from), qty);
-        makeChange(from, to, qty, presentCards, false);
-    }
-}
-void Field::removePresentedCards() {
-    // UECdaにおいてdealt後の状態で献上カードが2重になっているので
-    // 献上元のカードを外しておく
-    for (int cl = 0; cl < MIDDLE; cl++) {
-        const int oppClass = getChangePartnerClass(cl);
-        const int from = classPlayer(oppClass);
-        const int to = classPlayer(cl);
-        const Cards dc = andCards(getCards(from), getCards(to));
-        uint64_t dkey = CardsToHashKey(dc);
-        int dq = N_CHANGE_CARDS(cl);
-        
-        hand[from].subtrAll(dc, dq, dkey);
-        opsHand[from].addAll(dc, dq, dkey);
+        if (!recvOnly) sentCards[from] = dc;
+        if (!sendOnly) recvCards[to] = dc;
     }
 }
 
@@ -231,7 +217,7 @@ void Field::prepareAfterChange() {
             break;
         }
     }
-    ASSERT(exam(), cerr << toDebugString() << endl;);
+    assert(exam());
 }
 
 
@@ -298,7 +284,7 @@ bool Field::exam() const {
                 return false;
             }
             
-            sum |= c;
+            sum += c;
             NSum += hand[p].qty;
         } else {
             // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
@@ -427,6 +413,8 @@ int Field::proc(const MoveInfo m) { return procImpl<true>(m); }
 int Field::procSlowest(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
 void copyField(const Field& arg, Field *const dst) {
+    dst->myPlayerNum = arg.myPlayerNum;
+    dst->phase = arg.phase;
     // playout result
     dst->infoReward = 0ULL;
 

@@ -8,10 +8,13 @@
 
 /**************************完全情報空間**************************/
 
-enum Phase {
-    PHASE_IN_CHANGE,
-    PHASE_IN_PLAY,
-    PHASE_INIT_GAME,
+enum GameFlag {
+    FLAG_INIT_GAME,
+};
+
+enum GamePhase {
+    PHASE_UNINIT, PHASE_INIT,
+    PHASE_PRESENT, PHASE_CHANGE, PHASE_PLAY,
 };
 
 // common information
@@ -20,12 +23,12 @@ struct CommonStatus {
     int turn;
     int firstTurn;
     int owner;
-    std::bitset<16> phase;
+    std::bitset<16> flag;
 
     void clear() {
         turnCount = 0;
         turn = firstTurn = owner = -1;
-        phase.reset();
+        flag.reset();
     }
 };
 
@@ -133,20 +136,11 @@ struct PlayersState : public BitArray32<8, 4> {
 
 extern std::ostream& operator <<(std::ostream& out, const PlayersState& arg);
 
-struct Observation {
-    CommonStatus common;
-    Board board;
-    PlayersState ps;
-    std::array<Cards, N_PLAYERS> usedCards;
-    uint32_t remQty;
-    Cards remCards;
-    uint64_t remKey;
-};
-
 struct GameRecord;
 
 struct Field {
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
+    int phase = PHASE_UNINIT;
     // tools for playout
     MoveInfo *mbuf = nullptr; // buffer of move
     
@@ -193,14 +187,10 @@ struct Field {
     bool isNull() const { return board.isNull(); }
     int turnCount() const  { return common.turnCount; }
     
-    void setInitGame() { common.phase.set(PHASE_INIT_GAME); }
-    void setInChange() { common.phase.set(PHASE_IN_CHANGE); }
-
-    void resetInitGame() { common.phase.reset(PHASE_INIT_GAME); }
-    void resetInChange() { common.phase.reset(PHASE_IN_CHANGE); }
-    
-    bool isInitGame() const { return common.phase.test(PHASE_INIT_GAME); }
-    bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
+    void setInitGame() { common.flag.set(FLAG_INIT_GAME); }
+    void resetInitGame() { common.flag.reset(FLAG_INIT_GAME); }
+    bool isInitGame() const { return common.flag.test(FLAG_INIT_GAME); }
+    bool isInChange() const { return phase == PHASE_PRESENT; }
     
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
@@ -340,9 +330,8 @@ struct Field {
     int proc(const Move m) { return proc(MoveInfo(m)); }
     int procSlowest(const Move m);
     
-    void makeChange(int from, int to, int dq, Cards dc, bool sendOnly = false);
-    void makePresents();
-    void removePresentedCards();
+    void makeChange(int from, int to, int dq, Cards dc,
+                    bool sendOnly = false, bool recvOnly = false);
     
     void setHand(int p, Cards c) { hand[p].setAll(c); }
     void setOpsHand(int p, Cards c) { opsHand[p].setAll(c); }
@@ -371,6 +360,7 @@ struct Field {
 
     // recordが定義された時用
     void setBeforeGame(const GameRecord& game, int playerNum);
+    void passPresent(const GameRecord& game, int playerNum);
     void passChange(const GameRecord& game, int playerNum);
     void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);

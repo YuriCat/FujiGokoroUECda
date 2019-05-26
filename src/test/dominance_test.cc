@@ -38,10 +38,10 @@ int testRecordMoveDominance(const Record& record) {
     uint64_t judgeTime[6] = {0};
     uint64_t judgeCount[4] = {0};
     uint64_t judgeMatrix[4][2][2] = {0};
-    Field field;
     
     // プリミティブ型での支配性判定
     for (int i = 0; i < record.games(); i++) {
+        Field field;
         iterateGameLogAfterChange
         (field, record.game(i),
         [&](const Field& field) {}, // first callback
@@ -75,6 +75,7 @@ int testRecordMoveDominance(const Record& record) {
     
     // より複雑な型での支配性判定
     for (int i = 0; i < record.games(); i++) {
+        Field field;
         iterateGameLogAfterChange
         (field, record.game(i),
         [&](const Field& field) {}, // first callback
@@ -101,6 +102,7 @@ int testRecordMoveDominance(const Record& record) {
     // 場からの判定
     // プリミティブ型での支配性判定
     for (int i = 0; i < record.games(); i++) {
+        Field field;
         iterateGameLogAfterChange
         (field, record.game(i),
         [&](const Field& field) {}, // first callback
@@ -128,6 +130,7 @@ int testRecordMoveDominance(const Record& record) {
     
     // より複雑な型での支配性判定
     for (int i = 0; i < record.games(); i++) {
+        Field field;
         iterateGameLogAfterChange
         (field, record.game(i),
         [&](const Field& field) {}, // first callback

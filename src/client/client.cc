@@ -58,9 +58,8 @@ int main(int argc, char* argv[]) { // for UECda
     string name = Settings::policyMode ? MY_POL_NAME : MY_NAME;
     CERR << name << " ver. " << MY_VERSION << endl;
     int myPlayerNum = entryToGame(name.c_str()); // ゲームに参加
-    
-    record.myPlayerNum = myPlayerNum;
-    engine.initMatch(); // ここで呼ばないとプレーヤー番号が反映されない 
+
+    engine.initMatch(myPlayerNum); // ここで呼ばないとプレーヤー番号が反映されない 
     if (seedSet) engine.setRandomSeed(seed); // シード指定
     engine.monitor = monitor;
     
@@ -233,7 +232,7 @@ int main(int argc, char* argv[]) { // for UECda
             if (serverMove.cards() == field.board.move().cards()) serverMove = MOVE_PASS;
             PlayRecord play;
             play.set(serverMove, playTime);
-            game.push_play(play);
+            game.pushPlay(play);
 
             int one_gameend_flag;
             switch (beGameEnd()) {

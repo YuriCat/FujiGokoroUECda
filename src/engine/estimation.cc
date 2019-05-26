@@ -163,6 +163,33 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
+void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
+                                     const SharedData& shared, ThreadTools *const ptools) {
+    // 採択棄却法メイン
+    Cards deal[BUCKET_MAX][N]; // カード配置候補
+    int bestDeal = 0;
+    for (int i = 0; i < buckets; i++) {
+        if (failed) {
+            dealWithBias(deal[i], ptools->dice);
+        } else {
+            bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            // 失敗の回数が一定値を超えた以降は逆関数法に移行
+            if (!ok && ++failures > 1) failed = true;
+        }
+    }
+    // 役提出の尤度を計算してし使用する手札配置を決定
+    if (buckets > 1) {
+        double lhs[BUCKET_MAX];
+        for (int i = 0; i < buckets; i++) {
+            lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+        }
+        SoftmaxSelector<double> selector(lhs, buckets, 0.3);
+        bestDeal = selector.select(ptools->dice.random());
+    }
+    for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+    checkDeal(dst);
+}
+
 void RandomDealer::set(const Field& field, int playerNum) {
     // 最初に繰り返し使う情報をセット
     detCards.fill(CARDS_NULL);
@@ -558,4 +585,33 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     }
     SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
+}
+
+double RandomDealer::playLikelihood(Cards *const c, const GameRecord& game,
+                                    const SharedData& shared, ThreadTools *const ptools) const {
+    // 想定した手札配置から、試合進行がどの程度それっぽいか考える
+    if (inChange) return 0;
+    double playllh = 0; // 対数尤度
+    std::array<Cards, N> orgCards;
+    for (int p = 0; p < N; p++) {
+        orgCards[p] = c[p] + usedCards[infoClass[p]];
+    }
+    Field field;
+    iterateGameLogInGame
+    (field, game, game.plays.size(), orgCards,
+    // after change callback
+    [](const Field& field)->void{},
+    // play callback
+    [this, &shared, ptools, &playllh]
+    (const Field& field, Move move, unsigned time)->int{
+        int turn = field.turn();
+        if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
+        if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
+        // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
+        if (!playFlag.test(turn)) return 0;
+        double lh = onePlayLikelihood(field, move, shared, ptools);
+        if (lh < 1) playllh += log(lh);
+        return 0;
+    });
+    return playllh;
 }

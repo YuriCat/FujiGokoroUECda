@@ -43,8 +43,7 @@ public:
         }
     }
     
-    void initMatch() {
-        // record にプレーヤー番号が入っている状態で呼ばれる
+    void initMatch(int playerNum) {
         // サイコロ初期化
         // シード指定の場合はこの後に再設定される
         setRandomSeed((uint32_t)time(NULL));
@@ -52,7 +51,7 @@ public:
         for (int th = 0; th < N_THREADS; th++) {
             threadTools[th].init(th);
         }
-
+        shared.initMatch(playerNum);
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
         
