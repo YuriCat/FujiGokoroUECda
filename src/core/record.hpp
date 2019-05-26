@@ -104,9 +104,7 @@ struct MatchRecord {
         }
         return pos;
     }
-    void reserveGames(int n) {
-        games.reserve(n);
-    }
+    void reserveGames(int n) { games.reserve(n); }
     void initGame() {
         games.emplace_back(GameRecord());
         auto& g = latestGame();

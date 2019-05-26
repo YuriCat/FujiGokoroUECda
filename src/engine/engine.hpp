@@ -192,7 +192,6 @@ public:
         const auto& game = shared.record.latestGame();
         
         Move playMove = MOVE_NONE;
-        
         RootInfo root;
         
         // ルート合法手生成バッファ
@@ -210,7 +209,6 @@ public:
         const Cards myCards = myHand.cards;
         const Cards opsCards = opsHand.cards;
         const Board b = field.board;
-        CERR << b << endl;
         FieldAddInfo& fieldInfo = field.fieldInfo;
         
         // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
