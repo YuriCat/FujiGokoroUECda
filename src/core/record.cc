@@ -397,7 +397,8 @@ void Field::passPresent(const GameRecord& game, int playerNum) {
     }
     // 献上の処理
     for (const auto& change : game.changes) {
-        if (change.already) {
+        // 自分が受け取る側では無い献上を処理
+        if (change.already && change.to != myPlayerNum) {
             makeChange(change.from, change.to, change.qty, change.cards, false, true);
         }
     }

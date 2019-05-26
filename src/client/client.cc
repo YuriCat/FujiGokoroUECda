@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) { // for UECda
                 int from = game.classPlayer(getChangePartnerClass(cl));
                 int to = game.classPlayer(cl);
                 change.set(from, to, N_CHANGE_CARDS(cl), CARDS_NULL, true);
+                game.pushChange(change);
             }
         }
         if (changeQty > 0) { // 交換要求があるとき
@@ -193,12 +194,13 @@ int main(int argc, char* argv[]) { // for UECda
                     // 上位から下位への交換の情報を追加する
                     for (int cl = DAIFUGO; cl < MIDDLE; cl++) {
                         ChangeRecord change;
-                        int from = game.classPlayer(getChangePartnerClass(cl));
-                        int to = game.classPlayer(cl);
+                        int from = game.classPlayer(cl);
+                        int to = game.classPlayer(getChangePartnerClass(cl));
                         Cards c = CARDS_NULL;
                         if (from == myPlayerNum) c = sentCards;
                         if (to == myPlayerNum) c = recvCards;
                         change.set(from, to, N_CHANGE_CARDS(cl), c, false);
+                        game.pushChange(change);
                     }
                     engine.afterChange();
                 }

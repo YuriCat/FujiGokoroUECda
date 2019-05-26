@@ -185,10 +185,10 @@ public:
         // 自分のプレーについての変数を更新
         ClockMicS clms;
         clms.start();
-        Move ret = playSub();
+        Move ret = playImpl();
         return ret;
     }
-    Move playSub() { // ここがプレー関数
+    Move playImpl() { // ここがプレー関数
         const auto& game = shared.record.latestGame();
         
         Move playMove = MOVE_NONE;
@@ -201,6 +201,7 @@ public:
         
         Field field;
         field.fromRecord(game, myPlayerNum);
+        if (monitor) cerr << field.toString() << endl;
         field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
         
