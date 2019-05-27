@@ -192,7 +192,6 @@ public:
         const auto& gameLog = shared.record.latestGame();
         
         Move playMove = MOVE_NONE;
-        
         RootInfo root;
         
         // ルート合法手生成バッファ
@@ -203,15 +202,13 @@ public:
         Field field;
         setFieldFromClientLog(gameLog, myPlayerNum, &field);
         field.setMoveBuffer(mbuf.data());
-        DERR << "tp = " << gameLog.current.turn() << endl;
-        ASSERT_EQ(field.turn(), myPlayerNum);
+        assert(field.turn() == myPlayerNum);
         
         const Hand& myHand = field.getHand(myPlayerNum);
         const Hand& opsHand = field.getOpsHand(myPlayerNum);
         const Cards myCards = myHand.cards;
         const Cards opsCards = opsHand.cards;
-        Board b = field.board;
-        CERR << b << endl;
+        Board& b = field.board;
         
         // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
         if (b.isInvalid()) return MOVE_PASS;

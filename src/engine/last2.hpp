@@ -7,11 +7,7 @@
 // ラスト二人探索
 
 namespace L2 {
-    // L2関連
-    extern TwoValueBook<(1 << 20) - 3> book;
-    inline void init() {
-        book.clear();
-    }
+    extern void init();
 }
 
 enum L2Result {
@@ -33,7 +29,7 @@ class L2Judge {
 private:
     const int NODE_LIMIT;
     
-    Move *const buf;
+    Move *const mbuf;
     
     // 統計情報
     int nodes, childs, failed;
@@ -44,7 +40,7 @@ public:
     }
     
     L2Judge(int nl, Move *const mb):
-    NODE_LIMIT(nl), buf(mb) { init(); }
+    NODE_LIMIT(nl), mbuf(mb) { init(); }
     ~L2Judge() {}
 
     // 再帰版

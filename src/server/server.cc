@@ -1,7 +1,3 @@
-/*
- server.cc
- */
-
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -60,7 +56,7 @@ const char* one_to_yes(int n) {
 std::string record_file = "";
 
 MatchRecord match_log;
-GameRecord<PlayRecord> game_log;
+ServerGameRecord game_log;
 SharedData shared;
 ThreadTools threadTools[N_THREADS];
 

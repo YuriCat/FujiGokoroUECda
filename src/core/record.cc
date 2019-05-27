@@ -21,6 +21,12 @@ namespace Recorder {
         for (string command : commandList) commandMap[command] = cnt++;
     }
 }
+
+string PlayRecord::toString() const {
+    ostringstream oss;
+    oss << toRecordString(move) << "[" << time << "]";
+    return oss.str();
+}
     
 int StringQueueToCardsM(queue<string>& q, Cards *const dst) {
     *dst = CARDS_NULL;
@@ -80,6 +86,58 @@ int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstT
     char *end;
     *dstTime = strtol(v[1].c_str(), &end, 10);
     return 0;
+}
+
+string ServerGameRecord::toString(int gn) const {
+    ostringstream oss;
+    
+    oss << "/* " << endl;
+    oss << "game " << gn << " " << endl;
+    oss << "score " << endl;
+    oss << "class ";
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << base::classOf(p) << " ";
+    }
+    oss << endl;
+    oss << "seat ";
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << base::seatOf(p) << " ";
+    }
+    oss << endl;
+    oss << "dealt ";
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << tolower(getDealtCards(p).toString()) << " ";
+    }
+    oss << endl;
+    oss << "changed ";
+    
+    Cards changeCards[N_PLAYERS];
+    for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
+    for (int c = 0; c < base::changes(); c++) {
+        changeCards[base::change(c).from] = base::change(c).cards;
+    }
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << tolower(changeCards[p].toString()) << " ";
+    }
+    oss << endl;
+    oss << "original ";
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << tolower(getOrgCards(p).toString()) << " ";
+    }
+    oss << endl;
+    oss << "play ";
+    for (int t = 0; t < base::plays(); t++) {
+        oss << base::play(t).toString() << " ";
+    }
+    oss << endl;
+    oss << "result ";
+    for (int p = 0; p < N_PLAYERS; p++) {
+        oss << base::newClassOf(p) << " ";
+    }
+    oss << endl;
+    oss << "*/ " << endl;
+    
+    return oss.str();
 }
 
 #define Foo() {DERR << "unexpected command : " << q.front() << endl; goto NEXT;}

@@ -11,11 +11,7 @@ struct PlayRecord { // 1つの着手の記録
     void set(Move m, unsigned t) {
         move = m; time = t;
     }
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << toRecordString(move) << "[" << time << "]";
-        return oss.str();
-    }
+    std::string toString() const;
 };
 
 class EnginePlayRecord : public PlayRecord {
@@ -51,7 +47,6 @@ public:
     void initGame() {
         bd.init();
         ps.init();
-        infoSpecialPlayer.clear();
     }
     void setTurn(int p) { turn_ = p; }
     void setOwner(int p) { owner_ = p; }
@@ -80,7 +75,6 @@ public:
     char turn_, owner_, firstTurn_;
     Board bd;
     PlayersState ps;
-    BitArray32<4> infoSpecialPlayer;
     BitArray32<4, N_PLAYERS> infoNCards;
     Cards usedCards; // javaサーバは役表現と構成する手札表現が合わないことがある...
     uint32_t subjectiveTime;
@@ -144,10 +138,10 @@ public:
     int seatPlayer(int s) const { return invert(infoSeat)[s]; }
     int newClassPlayer(int ncl) const { return invert(infoNewClass)[ncl]; }
     
-    void setPlayerClass(int p, int cl) { infoClass.assign(p, cl); }
-    void setPlayerSeat(int p, int s) { infoSeat.assign(p, s); }
-    void setPlayerNewClass(int p, int ncl) { infoNewClass.assign(p, ncl); }
-    void setPosition(int p, int pos) { infoPosition.assign(p, pos); }
+    void setClassOf(int p, int cl) { infoClass.assign(p, cl); }
+    void setSeatOf(int p, int s) { infoSeat.assign(p, s); }
+    void setNewClassOf(int p, int ncl) { infoNewClass.assign(p, ncl); }
+    void setPositionOf(int p, int pos) { infoPosition.assign(p, pos); }
     
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;
     
@@ -165,7 +159,7 @@ protected:
 
 template <class _playLog_t>
 class GameRecord : public CommonGameRecord<_playLog_t> {
-private:
+protected:
     using base = CommonGameRecord<_playLog_t>;
 public:
     void init() {
@@ -178,73 +172,17 @@ public:
     
     Cards getDealtCards(int p) const { return dealtCards[p]; }
     void setDealtCards(int p, Cards c) { dealtCards[p] = c; }
-    void addDealtCards(int p, Cards c) { dealtCards[p] |= c; }
     
     Cards getOrgCards(int p) const { return orgCards[p]; }
     void setOrgCards(int p, Cards c) { orgCards[p] = c; }
-    void addOrgCards(int p, Cards c) { orgCards[p] |= c; }
-    
-    std::string toString(int gn) const {
-        std::ostringstream oss;
-        
-        oss << "/* " << endl;
-        oss << "game " << gn << " " << endl;
-        oss << "score " << endl;
-        oss << "class ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::classOf(p) << " ";
-        }
-        oss << endl;
-        oss << "seat ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::seatOf(p) << " ";
-        }
-        oss << endl;
-        oss << "dealt ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(getDealtCards(p).toString()) << " ";
-        }
-        oss << endl;
-        oss << "changed ";
-        
-        Cards changeCards[N_PLAYERS];
-        for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
-        for (int c = 0; c < base::changes(); c++) {
-            changeCards[base::change(c).from] = base::change(c).cards;
-        }
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(changeCards[p].toString()) << " ";
-        }
-        oss << endl;
-        oss << "original ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << tolower(getOrgCards(p).toString()) << " ";
-        }
-        oss << endl;
-        oss << "play ";
-        for (int t = 0; t < base::plays(); t++) {
-            oss << base::play(t).toString() << " ";
-        }
-        oss << endl;
-        oss << "result ";
-        for (int p = 0; p < N_PLAYERS; p++) {
-            oss << base::newClassOf(p) << " ";
-        }
-        oss << endl;
-        oss << "*/ " << endl;
-        
-        return oss.str();
-    }
-    
-    int fadd(const std::string& fName, int g) {
-        // ファイルに追加書き込み
-        std::ofstream ofs(fName, std::ios::app);
-        if (!ofs) return -1;
-        ofs << toString(g);
-        return 0;
-    }
-    
+    void addOrgCards(int p, Cards c) { orgCards[p] += c; }
+
     std::array<Cards, N_PLAYERS> dealtCards, orgCards;
+};
+
+class ServerGameRecord : public GameRecord<PlayRecord> {
+public:
+    std::string toString(int gn) const;
 };
 
 class EngineGameRecord : public GameRecord<EnginePlayRecord> {
@@ -302,19 +240,14 @@ public:
         return pos;
     }
     
-    void setPlayer(int p, const std::string& str) {
-        player_[p] = str;
-    }
-    
-    void reserveGames(std::size_t n) {
-        game_.reserve(n);
-    }
+    void setPlayer(int p, const std::string& str) { player_[p] = str; }
+    void reserveGames(std::size_t n) { game_.reserve(n); }
     void initGame() {
         game_.emplace_back(game_t());
         game_t& g = latestGame();
         g.init();
         for (int p = 0; p < N_PLAYERS; p++) {
-            g.setPosition(p, positionOf(p));
+            g.setPositionOf(p, positionOf(p));
         }
     }
     void closeGame() {
@@ -441,8 +374,8 @@ struct MatchRecordAccessor { // ランダム順なアクセス
     }
 };
 
-using MatchRecord = MatchRecordBase<GameRecord<PlayRecord>>;
-using Record = MatchRecordAccessor<MatchRecordBase<GameRecord<PlayRecord>>>;
+using MatchRecord = MatchRecordBase<ServerGameRecord>;
+using Record = MatchRecordAccessor<MatchRecordBase<ServerGameRecord>>;
 
 extern int readMatchLogFile(const std::string& fName, MatchRecord *const pmLog);
 
@@ -677,7 +610,7 @@ void setFieldFromClientLog(const game_t& gLog, int myPlayerNum, Field *const dst
                 uint64_t dkey = CardsToHashKey(dc);
                 
                 // 全体の残り手札の更新
-                dst->usedCards[p] |= dc;
+                dst->usedCards[p] += dc;
                 dst->remCards -= dc;
                 dst->remQty -= dq;
                 dst->remKey = subCardKey(dst->remKey, dkey);
