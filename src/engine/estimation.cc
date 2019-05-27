@@ -202,7 +202,6 @@ void RandomDealer::set(const Field& field, int playerNum) {
     infoClass.fill(-1);
     failures = 0;
     failed = false;
-
     initGame = field.isInitGame();
     inChange = field.isInChange();
     turnCount = field.turnCount();
@@ -211,18 +210,24 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // 交換がない場合にはプレーヤー番号で代用する
     for (int p = 0; p < N; p++) {
         int cl = initGame ? p : field.classOf(p);
-
         infoClassPlayer[cl] = p;
         infoClass[p] = cl;
-
+    }
+    myNum = playerNum;
+    myCards = field.getCards(myNum);
+    myClass = infoClass[myNum];
+    firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
+    for (int p = 0; p < N; p++) {
+        int cl = infoClass[p];
         int org = field.getNCards(p) + field.getUsedCards(p).count();
         int own = field.getNCards(p);
 
-        if (inChange && cl == getChangePartnerClass(field.classOf(playerNum))) {
-            // 交換中なら自分の交換相手のカードの枚数は引いておく
+        if (inChange) {
             int nch = N_CHANGE_CARDS(cl);
-            org -= nch;
-            own -= nch;
+            if (cl == getChangePartnerClass(myClass)
+                || (cl < MIDDLE && cl != myClass)) {
+                org -= nch; own -= nch;
+            }
         }
 
         NOwn[cl] = NDeal[cl] = own;
@@ -231,13 +236,6 @@ void RandomDealer::set(const Field& field, int playerNum) {
         usedCards[cl] = field.getUsedCards(p);
         detCards[cl] += usedCards[cl]; // 既に使用されたカードは確定
     }
-
-    myNum = playerNum;
-    myCards = field.getCards(myNum);
-    // 交換無し時の階級の代用込みでの設定
-    myClass = infoClass[myNum];
-    firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
-
     // サーバー視点の場合はdealtとrecvが分かれて入っていて、
     // プレーヤー視点ではdealtに全て入っているので足す処理にする
     myDealtCards = field.getDealtCards(myNum) + field.getRecvCards(myNum);
@@ -496,7 +494,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     dealCards = remCards - myCards;
 
     // 自分
-    detCards[myClass] |= myCards;
+    detCards[myClass] += myCards;
     NDeal[myClass] = 0;
     NDet[myClass] = NOrg[myClass];
 
@@ -504,7 +502,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     if (!inChange
         && turnCount > 0
         && dealCards.contains(INTCARD_D3)) {
-        detCards[firstTurnClass] |= CARDS_D3;
+        detCards[firstTurnClass] += CARDS_D3;
         dealCards -= CARDS_D3;
         NDeal[firstTurnClass] -= 1;
         NDet[firstTurnClass] += 1;
@@ -512,16 +510,14 @@ void RandomDealer::prepareSubjectiveInfo() {
     if (!initGame && !inChange) {
         if (myClass < MIDDLE) { // 自分が上位のとき
             // 交換であげたカードのうちまだ確定扱いでないもの
-            if (!inChange) { // 交換時はまだ不明
-                Cards sCards = dealCards & sentCards;
-                if (sCards) {
-                    int nc = countCards(sCards);
-                    int myChangePartnerClass = getChangePartnerClass(myClass);
-                    detCards[myChangePartnerClass] |= sCards;
-                    dealCards -= sCards;
-                    NDeal[myChangePartnerClass] -= nc;
-                    NDet[myChangePartnerClass] += nc;
-                }
+            Cards sCards = dealCards & sentCards;
+            if (sCards) {
+                int nc = countCards(sCards);
+                int myChangePartnerClass = getChangePartnerClass(myClass);
+                detCards[myChangePartnerClass] += sCards;
+                dealCards -= sCards;
+                NDeal[myChangePartnerClass] -= nc;
+                NDet[myChangePartnerClass] += nc;
             }
         }
     }

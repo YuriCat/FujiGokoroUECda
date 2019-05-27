@@ -201,7 +201,7 @@ public:
         
         Field field;
         field.fromRecord(game, myPlayerNum);
-        if (monitor) cerr << field.toString() << endl;
+        if (monitor) cerr << field.toString();
         field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
         
