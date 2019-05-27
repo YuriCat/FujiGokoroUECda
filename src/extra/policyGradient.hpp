@@ -7,8 +7,8 @@
 namespace PolicyGradient {
     // 試合ログから方策勾配法で着手方策関数を棋譜の着手が選ばれやすいように近づける
     
-    template <class gameLog_t, class learningSpace_t>
-    int learnChangeParamsGame(const gameLog_t& gLog,
+    template <class learningSpace_t>
+    int learnChangeParamsGame(const GameRecord& gLog,
                               const std::bitset<32> flags,
                               learningSpace_t *const plearningSpace,
                               ThreadTools *const ptools) {
@@ -66,8 +66,8 @@ namespace PolicyGradient {
         return 0;
     }
     
-    template <int MODELING = 0, class gameLog_t, class learningSpace_t>
-    int learnPlayParamsGame(const gameLog_t& gLog,
+    template <int MODELING = 0, class learningSpace_t>
+    int learnPlayParamsGame(const GameRecord& gLog,
                             const std::bitset<32> flags,
                             learningSpace_t *const plearningSpace,
                             ThreadTools *const ptools) {
@@ -123,8 +123,8 @@ namespace PolicyGradient {
         return 0;
     }
 
-    template <class gameLog_t, class learningSpace_t>
-    int learnParamsGame(const gameLog_t& gLog,
+    template <class learningSpace_t>
+    int learnParamsGame(const GameRecord& gLog,
                         const std::bitset<32> flags,
                         learningSpace_t *const plearningSpace,
                         ThreadTools *const ptools,

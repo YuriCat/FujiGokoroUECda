@@ -22,8 +22,7 @@ public:
         set(f, turn);
     }
 
-    template <class gameRecord_t>
-    int create(ImaginaryWorld *const dst, DealType type, const gameRecord_t& record,
+    int create(ImaginaryWorld *const dst, DealType type, const GameRecord& game,
                const SharedData& shared, ThreadTools *const ptools) {
         Cards c[N_PLAYERS];
         // レベル指定からカード分配
@@ -35,7 +34,7 @@ public:
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る*/
                 dealWithBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
-                dealWithRejection(c, record, shared, ptools); break;
+                dealWithRejection(c, game, shared, ptools); break;
             default: UNREACHABLE; break;
         }
         dst->set(turnCount, c);
@@ -45,35 +44,8 @@ public:
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
     void dealWithBias(Cards *const dst, Dice& dice) const;
-    template <class gameRecord_t>
-    void dealWithRejection(Cards *const dst,
-                           const gameRecord_t& record,
-                           const SharedData& shared,
-                           ThreadTools *const ptools) {
-        // 採択棄却法メイン
-        Cards deal[BUCKET_MAX][N]; // カード配置候補
-        int bestDeal = 0;
-        for (int i = 0; i < buckets; i++) {
-            if (failed) {
-                dealWithBias(deal[i], ptools->dice);
-            } else {
-                bool ok = dealWithChangeRejection(deal[i], shared, ptools);
-                // 失敗の回数が一定値を超えた以降は逆関数法に移行
-                if (!ok && ++failures > 1) failed = true;
-            }
-        }
-        // 役提出の尤度を計算してし使用する手札配置を決定
-        if (buckets > 1) {
-            double lhs[BUCKET_MAX];
-            for (int i = 0; i < buckets; i++) {
-                lhs[i] = playLikelihood(deal[i], record, shared, ptools);
-            }
-            SoftmaxSelector<double> selector(lhs, buckets, 0.3);
-            bestDeal = selector.select(ptools->dice.random());
-        }
-        for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
-        checkDeal(dst);
-    }
+    void dealWithRejection(Cards *const dst, const GameRecord& game,
+                           const SharedData& shared, ThreadTools *const ptools);
 
 private:
     // 棋譜
@@ -130,63 +102,14 @@ private:
     bool dealWithChangeRejection(Cards *const dst,
                                  const SharedData& shared,
                                  ThreadTools *const ptools) const;
-    double onePlayLikelihood(const Field& field, Move move,
-                             const SharedData& shared, ThreadTools *const ptools) const;
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
                  const SharedData& shared, ThreadTools *const ptools) const;
     Cards selectInWA(double urand) const;
 
-    void loadPlayLikelihood(std::pair<double, int> *plh) const;
-    void savePlayLikelihood(std::pair<double, int> *plh) const;
-
-    template <class gameRecord_t>
-    double playLikelihood(Cards *const c, const gameRecord_t& gLog,
-                          const SharedData& shared, ThreadTools *const ptools) const {
-        // 想定した手札配置から、試合進行がどの程度それっぽいか考える
-        if (inChange) return 0;
-        std::array<Cards, N> orgCards;
-        for (int p = 0; p < N; p++) {
-            orgCards[p] = c[p] + usedCards[infoClass[p]];
-        }
-        auto playerPlayLikelihood = loadPlayLikelihood();
-        // テーブルに記録されているプレーヤーごとの尤度を調べる
-        for (int p = 0; p < N; p++) {
-            playerPlayLikelihood[p] = make_pair(1.0, turnCount);
-            if (!playFlag.test(p)) continue;
-            uint64_t key = CardsToHashKey(orgCards[p]) ^ p;
-            auto entry = playTT.read(key);
-            if (entry.prob <= 0 || entry.player != p) continue;
-            playerPlayLikelihood[p] = make_pair(entry.prob, entry.tcnt);
-        }
-        double 
-        Field field;
-        iterateGameLogInGame
-        (field, gLog, gLog.plays(), orgCards,
-        // after change callback
-        [](const Field& field)->void{},
-        // play callback
-        [this, &shared, ptools, &playllh]
-        (const Field& field, Move move, unsigned time)->int{
-            int turn = field.turn();
-            int tcnt = field.turnCount();
-            if (tcnt >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
-            if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
-            // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-            if (!playFlag.test(turn)) return 0;
-            // テーブルに記録されている場合は飛ばす
-            if (playerPlayLikelihood[turn].second >= tcnt) continue;
-            double lh = onePlayLikelihood(field, move, shared, ptools);
-            if (lh < 1) playllh += log(lh);
-            return 0;
-        });
-        double prod = 1;
-        for (auto lh : playerPlayLikelihood) {
-            prod *= lh.first;
-            // 更新できた分の尤度をテーブルに保存
-            if (turnCount > lh.second) playTT.regist()
-        }
-        return prod; // 尤度を返す
-    }
+    double onePlayLikelihood(const Field& field, Move move,
+                             const SharedData& shared, ThreadTools *const ptools) const;
+    double playLikelihood(Cards *const c, const GameRecord& game,
+                          const SharedData& shared, ThreadTools *const ptools) const;
 };
