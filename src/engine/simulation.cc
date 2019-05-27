@@ -46,7 +46,6 @@ int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
     while (1) {
-        DERR << field.toString() << "turn : " << field.turn() << endl;
         field.prepareForPlay();
 
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
