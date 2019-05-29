@@ -85,6 +85,20 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
     return ret;
 }
 
+int Field::flushLeadPlayer() const {
+    // 全員パスの際に誰から始まるか
+    if (isNull()) return turn();
+    int p = owner();
+    if (!isAlive(p)) { // すでにあがっている
+        // p ~ tp 間の残っているプレーヤーを探す
+        while (1) {
+            p = getNextSeatPlayer(p);
+            if (isAlive(p)) break;
+        }
+    }
+    return p;
+}
+
 void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
@@ -122,6 +136,7 @@ void Field::makeChange(int from, int to, Cards dc, bool sendOnly) {
     sentCards[from] = dc;
     recvCards[to] = dc;
 }
+
 void Field::makePresents() {
     // 献上を一挙に行う
     for (int cl = 0; cl < MIDDLE; cl++) {
@@ -132,6 +147,7 @@ void Field::makePresents() {
         makeChange(from, to, presentCards);
     }
 }
+
 void Field::removePresentedCards() {
     // UECdaにおいてdealt後の状態で献上カードが2重になっているので
     // 献上元のカードを外しておく
@@ -149,15 +165,31 @@ void Field::removePresentedCards() {
 }
 
 void Field::prepareForPlay() {
-    
+
     int tp = turn();
-    
     fieldInfo.init();
-    fieldInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
-    fieldInfo.setMinNCards(getOpsMinNCards(tp));
-    fieldInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
-    fieldInfo.setMaxNCards(getOpsMaxNCards(tp));
-    
+
+    // 相手手札枚数情報
+    int minNum = INT_MAX, maxNum = 0;
+    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (p == tp) continue;
+        int num = getNCards(p);
+        if (isAlive(p)) {
+            minNum = min(minNum, num);
+            maxNum = max(maxNum, num);
+            if (isAwake(p)) {
+                minNumAwake = min(minNumAwake, num);
+                maxNumAwake = max(maxNumAwake, num);
+            }
+        }
+    }
+    fieldInfo.setMinNCardsAwake(minNumAwake);
+    fieldInfo.setMinNCards(minNum);
+    fieldInfo.setMaxNCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNCards(maxNum);
+
+    // 場の特徴
     if (isNull()) {
         if (getNAlivePlayers() == getNAwakePlayers()) { // 空場パスがない
             fieldInfo.setFlushLead();
@@ -169,8 +201,7 @@ void Field::prepareForPlay() {
             if (ps.isSoloAwake()) { // SF ではないが LA
                 fieldInfo.setLastAwake();
             }
-            uint32_t fLPlayer = getFlushLeadPlayer();
-            if (fLPlayer == tp) { // 全員パスしたら自分から
+            if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
                 fieldInfo.setFlushLead();
                 if (fieldInfo.isLastAwake()) {
                 } else {

@@ -134,7 +134,7 @@ struct PlayersState : public BitArray32<8, 4> {
 extern std::ostream& operator <<(std::ostream& out, const PlayersState& arg);
 
 struct Field {
-    
+
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
     MoveInfo *mbuf = nullptr; // buffer of move
@@ -246,19 +246,7 @@ struct Field {
     Cards getSentCards(int p) const { return sentCards[p]; }
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
-    int getFlushLeadPlayer() const {
-        // 全員パスの際に誰から始まるか
-        if (isNull()) return turn();
-        int own = owner();
-        if (!isAlive(own)) { // すでにあがっている
-            // own~tp間のaliveなプレーヤーを探す
-            while (1) {
-                own = getNextSeatPlayer(own);
-                if (isAlive(own)) break;
-            }
-        }
-        return own;
-    }
+    int flushLeadPlayer() const;
     int getNextSeatPlayer(const int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
@@ -290,35 +278,6 @@ struct Field {
         flushState();
     }
 
-    unsigned getOpsMinNCards(int pn) const {
-        unsigned nc = N_CARDS;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p) && p != pn) nc = min(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMinNCardsAwake(int pn) const {
-        unsigned nc = N_CARDS;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAwake(p) && p != pn) nc = min(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMaxNCards(int pn) const {
-        unsigned nc = 0;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p) && p != pn) nc = max(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMaxNCardsAwake(int pn) const {
-        unsigned nc = 0;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAwake(p) && p != pn) nc = max(nc, getNCards(p));
-        }
-        return nc;
-    }
-
     void procHand(int tp, Move m);
 
     // 局面更新
@@ -339,10 +298,10 @@ struct Field {
         remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
 
-    void prepareForPlay();
     void initGame();
     void prepareAfterChange();
-    
+    void prepareForPlay();
+
     bool exam() const;
 
     std::string toString() const;
