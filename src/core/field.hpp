@@ -256,19 +256,18 @@ struct Field {
         } while (!isAwake(turn));
         setTurn(turn);
     }
-    
     void flushTurnPlayer() {
         int turn = owner();
         if (isAlive(turn)) setTurn(turn);
         else rotateTurnPlayer(turn);
     }
-    
+
     void setPlayerAsleep(const int p) { ps.setAsleep(p); }
     void setAllAsleep() { ps.setAllAsleep(); }
     void setPlayerDead(const int p) { ps.setDead(p); }
     void setPlayerAwake(const int p) { ps.setAwake(p); }
     void setPlayerAlive(const int p) { ps.setAlive(p); }
-    
+
     void flushState() { // 場を流す ただし b はすでに流れているとき
         ps.flush();
         flushTurnPlayer();
