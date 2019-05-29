@@ -410,8 +410,8 @@ int Field::procImpl(const MoveInfo m) {
     return turn();
 }
 
-int Field::proc(const MoveInfo m) { return procImpl<true>(m); }
-int Field::procSlowest(const Move m) { return procImpl<false>(MoveInfo(m)); }
+int Field::procFast(const MoveInfo m) { return procImpl<true>(m); }
+int Field::proceed(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
 void copyField(const Field& arg, Field *const dst) {
     // playout result

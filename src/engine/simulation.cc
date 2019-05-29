@@ -65,7 +65,7 @@ int simulation(Field& field,
         }
         // 手を選んで進める
         MoveInfo move = simulationMove(field, *pshared, ptools);
-        if (field.proc(move) < 0) break;
+        if (field.procFast(move) < 0) break;
     }
     // 後処理
     for (int p = 0; p < N_PLAYERS; p++) {
@@ -80,7 +80,7 @@ int startPlaySimulation(Field& field,
                         ThreadTools *const ptools) {
     DERR << field.toString();
     DERR << "turn : " << field.turn() << endl;
-    if (field.procSlowest(m) == -1) return 0;
+    if (field.proceed(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 

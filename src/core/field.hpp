@@ -323,9 +323,9 @@ struct Field {
 
     // 局面更新
     template <bool FAST> int procImpl(const MoveInfo m);
-    int proc(const MoveInfo m);
-    int proc(const Move m) { return proc(MoveInfo(m)); }
-    int procSlowest(const Move m);
+    int procFast(const MoveInfo m);
+    int procFast(const Move m) { return procFast(MoveInfo(m)); }
+    int proceed(const Move m);
     
     void makeChange(int from, int to, Cards dc, bool sendOnly = false);
     void makePresents();

@@ -524,7 +524,7 @@ int iterateGameLogInGame
             break;
         }
         // proceed field
-        field.procSlowest(play.move);
+        field.proceed(play.move);
     }
     return 0;
 }
