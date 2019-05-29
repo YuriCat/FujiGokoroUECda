@@ -936,20 +936,18 @@ extern CardsInitializer cardsInitializer;
 /**************************着手表現**************************/
 
 struct Move {
-    unsigned s       : 4;
     unsigned r       : 4;
-    unsigned jks     : 4;
     unsigned jkr     : 4;
+    unsigned s       : 6;
+    unsigned jks     : 6;
     unsigned q       : 4;
     unsigned t       : 2;
-    unsigned         : 1;
     unsigned invalid : 1;
     unsigned o       : 1;
     unsigned po      : 1;
     unsigned sl      : 1;
     unsigned rl      : 1;
     unsigned reverse : 1;
-    unsigned         : 3;
     unsigned flags   :32;
 
     uint32_t toInt() const {
@@ -1001,6 +999,7 @@ struct Move {
 
     // 情報を得る
     constexpr unsigned suits()      const { return s; }
+    constexpr unsigned plainSuits() const { return s & SUITS_ALL; }
     constexpr int qty()             const { return q; }
     constexpr int rank()            const { return r; }
     constexpr int jokerRank()       const { return jkr; }
@@ -1026,11 +1025,8 @@ struct Move {
         if (!isSeq()) {
             Cards c = CARDS_NULL;
             unsigned jks = jokerSuits();
-            if (jks) {
-                c |= CARDS_JOKER;
-                if (jks != SUITS_ALL) s -= jks; // クインタプル対策
-            }
-            return c | RankSuitsToCards(r, s);
+            int jk = jks ? countSuits(jks) : 0;
+            return Cards(RankSuitsToCards(r, s - jks), jk);
         } else {
             Cards c = RankSuitsToCards(r, s);
             c = extractRanks(c, qty());
