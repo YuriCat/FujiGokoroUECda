@@ -138,62 +138,59 @@ struct Field {
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     // tools for playout
     MoveInfo *mbuf = nullptr; // buffer of move
-    
-    // playout result
-    BitArray64<11, N_PLAYERS> infoReward; // rewards
-    
+
     // information for playout
     std::bitset<32> attractedPlayers; // players we want playout-result
     FieldAddInfo fieldInfo;
-    
+
     CommonStatus common;
     Board board;
     PlayersState ps;
-    
+
     std::array<int8_t, N_PLAYERS> infoClass, infoClassPlayer;
     std::array<int8_t, N_PLAYERS> infoSeat, infoSeatPlayer;
     std::array<int8_t, N_PLAYERS> infoNewClass, infoNewClassPlayer;
     std::array<int8_t, N_PLAYERS> infoPosition;
-    
+
     uint32_t remQty;
     Cards remCards;
     uint64_t remKey;
-    
+
     // 手札
     std::array<Hand, N_PLAYERS> hand, opsHand;
     // 手札情報
     std::array<Cards, N_PLAYERS> usedCards;
     std::array<Cards, N_PLAYERS> sentCards, recvCards;
     std::array<Cards, N_PLAYERS> dealtCards;
-    
+
     bool isL2Situation() const { return getNAlivePlayers() == 2; }
     bool isEndGame() const { // 末端探索に入るべき局面かどうか。学習にも影響する
         if (isL2Situation()) return true;
         return false;
     }
     uint32_t getRivalPlayersFlag(int myPlayerNum) const;
-    
+
     void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
     int turnCount() const  { return common.turnCount; }
-    
+
     void setInitGame() { common.phase.set(PHASE_INIT_GAME); }
     void setInChange() { common.phase.set(PHASE_IN_CHANGE); }
 
     void resetInitGame() { common.phase.reset(PHASE_INIT_GAME); }
     void resetInChange() { common.phase.reset(PHASE_IN_CHANGE); }
-    
+
     bool isInitGame() const { return common.phase.test(PHASE_INIT_GAME); }
     bool isInChange() const { return common.phase.test(PHASE_IN_CHANGE); }
     bool isSubjective() const { return myPlayerNum >= 0; }
-    
+
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
     unsigned getNAwakePlayers() const { return ps.getNAwake(); }
     unsigned getNAlivePlayers() const { return ps.getNAlive(); }
-    
+
     uint32_t searchOpsPlayer(const int p) const {
         return ps.searchOpsPlayer(p);
     }

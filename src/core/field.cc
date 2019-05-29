@@ -445,12 +445,9 @@ int Field::procFast(const MoveInfo m) { return procImpl<true>(m); }
 int Field::proceed(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
 void copyField(const Field& arg, Field *const dst) {
-    // playout result
-    dst->infoReward = 0ULL;
-
     // playout info
-    dst->attractedPlayers = arg.attractedPlayers;
     dst->mbuf = arg.mbuf;
+    dst->attractedPlayers = arg.attractedPlayers;
     
     // game info
     dst->board = arg.board;

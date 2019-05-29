@@ -191,7 +191,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
     
     // 新たに得た証拠分布
-    int myRew = field.infoReward[myPlayerNum];
+    int myRew = pshared->gameReward[field.newClassOf(myPlayerNum)];
     ASSERT(0 <= myRew && myRew <= bestReward, cerr << myRew << endl;);
     
     // 自分のシミュレーション結果を分布に変換

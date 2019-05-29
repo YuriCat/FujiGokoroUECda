@@ -67,10 +67,6 @@ int simulation(Field& field,
         MoveInfo move = simulationMove(field, *pshared, ptools);
         if (field.procFast(move) < 0) break;
     }
-    // 後処理
-    for (int p = 0; p < N_PLAYERS; p++) {
-        field.infoReward.assign(p, pshared->gameReward[field.newClassOf(p)]);
-    }
     return 0;
 }
 
