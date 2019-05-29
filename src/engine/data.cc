@@ -252,7 +252,6 @@ string RootInfo::toString(int num) const {
             // まず総合評価点を表示
             oss << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
             oss << "{mc: " << nrg << "} ";
-#ifdef DEFEAT_RIVAL_MC
             if (rivalPlayerNum >= 0) {
                 // 自分とライバルの評価点を表示
                 oss << child[i].myScore;
@@ -260,7 +259,6 @@ string RootInfo::toString(int num) const {
                 oss << child[i].rivalScore;
                 oss << " [rival's = ~" << (bestReward - (int)(child[i].rivalScore.mean() * (double)rewardGap)) << "] ";
             }
-#endif
         }
         oss << "prob = " << child[i].policyProb; // 方策関数の確率出力
         oss << " (pol = " << child[i].policyScore << ") "; // 方策関数のスコア
