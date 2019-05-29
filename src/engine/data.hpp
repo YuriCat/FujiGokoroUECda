@@ -26,7 +26,7 @@ struct BaseSharedData {
     std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDestination; // 階級到達回数
     std::array<std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS>, N_PLAYERS> classTransition; // 階級遷移回数
     
-    EngineMatchRecord record; // 主観的な対戦棋譜
+    MatchRecord record; // 主観的な対戦棋譜
 
     // クライアントの個人的スタッツ
     uint32_t playRejection, changeRejection; // リジェクト
@@ -37,8 +37,9 @@ struct BaseSharedData {
         classDestination[p][ncl] += 1;
         classTransition[p][cl][ncl] += 1;
     }
-    void initMatch() {
+    void initMatch(int playerNum) {
         // スタッツ初期化
+        record.init(playerNum);
         for (int p = 0; p < N_PLAYERS; p++) {
             classDestination[p].fill(0);
             for (int cl = 0; cl < N_PLAYERS; cl++) {
@@ -50,8 +51,7 @@ struct BaseSharedData {
     void initGame() {
         record.initGame();
     }
-    template <class gameRecord_t>
-    void closeGame(const gameRecord_t& g) {
+    void closeGame(const GameRecord& g) {
         // 試合順位の記録
         for (int p = 0; p < N_PLAYERS; p++) {
             feedResult(p, g.classOf(p), g.newClassOf(p));
@@ -105,8 +105,8 @@ struct SharedData : public BaseSharedData {
         }
     }
     
-    void initMatch() {
-        base_t::initMatch();
+    void initMatch(int playerNum) {
+        base_t::initMatch(playerNum);
         // スタッツ初期化
         for (auto& a : myMateResult) a.fill(0);
         for (auto& a : myL2Result) a.fill(0);

@@ -43,8 +43,7 @@ public:
         }
     }
     
-    void initMatch() {
-        // record にプレーヤー番号が入っている状態で呼ばれる
+    void initMatch(int playerNum) {
         // サイコロ初期化
         // シード指定の場合はこの後に再設定される
         setRandomSeed((uint32_t)time(NULL));
@@ -52,7 +51,7 @@ public:
         for (int th = 0; th < N_THREADS; th++) {
             threadTools[th].init(th);
         }
-
+        shared.initMatch(playerNum);
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
         
@@ -87,12 +86,12 @@ public:
         }
     }
     Cards change(unsigned changeQty) { // 交換関数
-        const auto& gr = record.latestGame();
+        const auto& game = record.latestGame();
         const int myPlayerNum = record.myPlayerNum;
         
         RootInfo root;
         Cards changeCards = CARDS_NULL;
-        const Cards myCards = gr.getDealtCards(myPlayerNum);
+        const Cards myCards = game.dealtCards[myPlayerNum];
         if (monitor) cerr << "My Cards : " << myCards << endl;
 
         // 手札レベルで枝刈りする場合
@@ -101,16 +100,16 @@ public:
             tmp = Heuristics::pruneCards(myCards, changeQty);
         }
         
-        if (countCards(tmp) == changeQty) return tmp;
+        if (tmp.count() == changeQty) return tmp;
 
         // 合法交換候補生成
         std::array<Cards, N_MAX_CHANGES> cand;
-        int NCands = genChange(cand.data(), tmp, changeQty);
-        if (NCands == 1) return cand[0];
-        std::shuffle(cand.begin(), cand.begin() + NCands, dice);
+        int numCands = genChange(cand.data(), tmp, changeQty);
+        if (numCands == 1) return cand[0];
+        std::shuffle(cand.begin(), cand.begin() + numCands, dice);
         
         // 必勝チェック&枝刈り
-        for (int i = 0; i < NCands; i++) {
+        for (int i = 0; i < numCands; i++) {
             // 交換後の自分のカード
             Cards restCards = myCards - cand[i];
 
@@ -134,26 +133,26 @@ public:
         }
 
         if (Settings::changeHeuristicsOnRoot) {
-            for (int i = 0; i < NCands; i++) {
+            for (int i = 0; i < numCands; i++) {
                 Cards restCards = myCards - cand[i];
                 // 残り札に革命が無い場合,Aもダメ
                 if (isNoRev(restCards)) {
-                    if (cand[i] & CARDS_A) std::swap(cand[i], cand[--NCands]);
+                    if (cand[i] & CARDS_A) std::swap(cand[i], cand[--numCands]);
                 }
-                if (NCands == 1) return cand[0];
+                if (numCands == 1) return cand[0];
             }
         }
 
         // ルートノード設定
         Field field;
-        setFieldFromClientLog(gr, myPlayerNum, &field);
-        int limitSimulations = std::min(10000, (int)(pow((double)NCands, 0.8) * 700));
-        root.setChange(cand.data(), NCands, field, shared, limitSimulations);
+        field.fromRecord(game, myPlayerNum, -1);
+        int limitSimulations = std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
+        root.setChange(cand.data(), numCands, field, shared, limitSimulations);
         
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), NCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
-        root.feedPolicyScore(score, NCands);
+        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
+        root.feedPolicyScore(score, numCands);
         
         // モンテカルロ法による評価
         if (!Settings::policyMode && changeCards == CARDS_NULL) {
@@ -185,11 +184,11 @@ public:
         // 自分のプレーについての変数を更新
         ClockMicS clms;
         clms.start();
-        Move ret = playSub();
+        Move ret = playImpl();
         return ret;
     }
-    Move playSub() { // ここがプレー関数
-        const auto& gameLog = shared.record.latestGame();
+    Move playImpl() { // ここがプレー関数
+        const auto& game = shared.record.latestGame();
         
         Move playMove = MOVE_NONE;
         RootInfo root;
@@ -200,7 +199,8 @@ public:
         const int myPlayerNum = record.myPlayerNum;
         
         Field field;
-        setFieldFromClientLog(gameLog, myPlayerNum, &field);
+        field.fromRecord(game, myPlayerNum);
+        if (monitor) cerr << field.toString();
         field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
         

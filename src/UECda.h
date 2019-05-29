@@ -114,7 +114,7 @@ namespace UECda {
     inline int getPrmOrder(const int table[8][15]) { return table[5][6] ? 1 : 0; } // 革命が起こっている
     inline int suitsLocked(const int table[8][15]) { return table[5][7]; }
     inline int isMyTurn(const int table[8][15]) { return table[5][2]; }
-    inline int turn(const int table[8][15]) { return table[5][3]; }
+    inline int turnOf(const int table[8][15]) { return table[5][3]; }
     inline int isNull(const int table[8][15]) { return table[5][4]; } // 空場
     inline int getNCards(const int table[8][15], int p) { return table[6][0 + p]; }
     inline int classOf(const int table[8][15], int p) { return table[6][5 + p]; }

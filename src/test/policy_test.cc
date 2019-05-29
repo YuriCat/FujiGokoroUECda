@@ -44,7 +44,7 @@ int outputParams() {
     return 0;
 }
 
-int testChangePolicyWithRecord(const MatchRecord& mrecord) {
+int testChangePolicyWithRecord(const MatchRecord& match) {
     // 棋譜中の交換との一致率計算
     // 棋譜ファイルは1つのみ受ける(相手が変わる場合には最初からなのでまたこの関数を呼ぶ)
 
@@ -55,9 +55,9 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
     cerr << "change policy : " << endl;
     
     Field field;
-    for (int i = 0; i < mrecord.games(); i++) {
+    for (const auto& game : match.games) {
         iterateGameLogBeforePlay
-        (field, mrecord.game(i),
+        (field, game,
         [](const Field& field)->void{}, // first callback
         [](const Field& field)->void{}, // dealt callback
         [&](const Field& field, int from, int to, Cards ch)->int{ // change callback
@@ -83,7 +83,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
         [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
-        cerr << mrecord.player(p);
+        cerr << match.playerName[p];
         double sum = 0;
         for (int i = 0; i < 2; i++) {
             double prob = sameCount[p][i] / (double)trials[p][i];
@@ -97,7 +97,7 @@ int testChangePolicyWithRecord(const MatchRecord& mrecord) {
     return 0;
 }
 
-int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
+int testPlayPolicyWithRecord(const MatchRecord& match) {
     // 棋譜中の役提出との一致率計算
     int sameCount[N_PLAYERS] = {0};
     int trials[N_PLAYERS] = {0};
@@ -106,9 +106,9 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
     cerr << "play policy : " << endl;
     
     Field field;
-    for (int i = 0; i < mrecord.games(); i++) {
+    for (const auto& game : match.games) {
         iterateGameLogAfterChange
-        (field, mrecord.game(i),
+        (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             int turn = field.turn();
@@ -127,7 +127,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
         [](const Field& field)->void{}); // last callback
     }
     for (int p = 0; p < N_PLAYERS; p++) {
-        cerr << mrecord.player(p);
+        cerr << match.playerName[p];
         double prob = sameCount[p] / (double)trials[p];
         cerr << " " << prob << " (" << sameCount[p] << " / " << trials[p] << ")";
         cerr << " in " << time[p] / (double)trials[p] << " clock" << endl;
@@ -135,7 +135,7 @@ int testPlayPolicyWithRecord(const MatchRecord& mrecord) {
     return 0;
 }
 
-int testSelector(const MatchRecord& mrecord) {
+int testSelector(const MatchRecord& match) {
     // 方策の最終段階の実験
     double sameProb[4][7][5] = {0}; // 確率ベースでの一致率
     double entropy[4][7][5] = {0}; // 方策エントロピー
@@ -144,9 +144,9 @@ int testSelector(const MatchRecord& mrecord) {
     cerr << "play policy with selector : " << endl;
     
     Field field;
-    for (int i = 0; i < mrecord.games(); i++) {
+    for (const auto& game : match.games) {
         iterateGameLogAfterChange
-        (field, mrecord.game(i),
+        (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
             Move play[N_MAX_MOVES];

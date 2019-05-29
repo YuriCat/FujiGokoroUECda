@@ -163,6 +163,33 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
+void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
+                                     const SharedData& shared, ThreadTools *const ptools) {
+    // 採択棄却法メイン
+    Cards deal[BUCKET_MAX][N]; // カード配置候補
+    int bestDeal = 0;
+    for (int i = 0; i < buckets; i++) {
+        if (failed) {
+            dealWithBias(deal[i], ptools->dice);
+        } else {
+            bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            // 失敗の回数が一定値を超えた以降は逆関数法に移行
+            if (!ok && ++failures > 1) failed = true;
+        }
+    }
+    // 役提出の尤度を計算してし使用する手札配置を決定
+    if (buckets > 1) {
+        double lhs[BUCKET_MAX];
+        for (int i = 0; i < buckets; i++) {
+            lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+        }
+        SoftmaxSelector<double> selector(lhs, buckets, 0.3);
+        bestDeal = selector.select(ptools->dice.random());
+    }
+    for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+    checkDeal(dst);
+}
+
 void RandomDealer::set(const Field& field, int playerNum) {
     // 最初に繰り返し使う情報をセット
     detCards.fill(CARDS_NULL);
@@ -175,7 +202,6 @@ void RandomDealer::set(const Field& field, int playerNum) {
     infoClass.fill(-1);
     failures = 0;
     failed = false;
-
     initGame = field.isInitGame();
     inChange = field.isInChange();
     turnCount = field.turnCount();
@@ -184,18 +210,24 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // 交換がない場合にはプレーヤー番号で代用する
     for (int p = 0; p < N; p++) {
         int cl = initGame ? p : field.classOf(p);
-
         infoClassPlayer[cl] = p;
         infoClass[p] = cl;
-
+    }
+    myNum = playerNum;
+    myCards = field.getCards(myNum);
+    myClass = infoClass[myNum];
+    firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
+    for (int p = 0; p < N; p++) {
+        int cl = infoClass[p];
         int org = field.getNCards(p) + field.getUsedCards(p).count();
         int own = field.getNCards(p);
 
-        if (inChange && cl == getChangePartnerClass(field.classOf(playerNum))) {
-            // 交換中なら自分の交換相手のカードの枚数は引いておく
+        if (inChange) {
             int nch = N_CHANGE_CARDS(cl);
-            org -= nch;
-            own -= nch;
+            if (cl == getChangePartnerClass(myClass)
+                || (cl < MIDDLE && cl != myClass)) {
+                org -= nch; own -= nch;
+            }
         }
 
         NOwn[cl] = NDeal[cl] = own;
@@ -204,13 +236,6 @@ void RandomDealer::set(const Field& field, int playerNum) {
         usedCards[cl] = field.getUsedCards(p);
         detCards[cl] += usedCards[cl]; // 既に使用されたカードは確定
     }
-
-    myNum = playerNum;
-    myCards = field.getCards(myNum);
-    // 交換無し時の階級の代用込みでの設定
-    myClass = infoClass[myNum];
-    firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
-
     // サーバー視点の場合はdealtとrecvが分かれて入っていて、
     // プレーヤー視点ではdealtに全て入っているので足す処理にする
     myDealtCards = field.getDealtCards(myNum) + field.getRecvCards(myNum);
@@ -469,7 +494,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     dealCards = remCards - myCards;
 
     // 自分
-    detCards[myClass] |= myCards;
+    detCards[myClass] += myCards;
     NDeal[myClass] = 0;
     NDet[myClass] = NOrg[myClass];
 
@@ -477,7 +502,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     if (!inChange
         && turnCount > 0
         && dealCards.contains(INTCARD_D3)) {
-        detCards[firstTurnClass] |= CARDS_D3;
+        detCards[firstTurnClass] += CARDS_D3;
         dealCards -= CARDS_D3;
         NDeal[firstTurnClass] -= 1;
         NDet[firstTurnClass] += 1;
@@ -485,16 +510,14 @@ void RandomDealer::prepareSubjectiveInfo() {
     if (!initGame && !inChange) {
         if (myClass < MIDDLE) { // 自分が上位のとき
             // 交換であげたカードのうちまだ確定扱いでないもの
-            if (!inChange) { // 交換時はまだ不明
-                Cards sCards = dealCards & sentCards;
-                if (sCards) {
-                    int nc = countCards(sCards);
-                    int myChangePartnerClass = getChangePartnerClass(myClass);
-                    detCards[myChangePartnerClass] |= sCards;
-                    dealCards -= sCards;
-                    NDeal[myChangePartnerClass] -= nc;
-                    NDet[myChangePartnerClass] += nc;
-                }
+            Cards sCards = dealCards & sentCards;
+            if (sCards) {
+                int nc = countCards(sCards);
+                int myChangePartnerClass = getChangePartnerClass(myClass);
+                detCards[myChangePartnerClass] += sCards;
+                dealCards -= sCards;
+                NDeal[myChangePartnerClass] -= nc;
+                NDet[myChangePartnerClass] += nc;
             }
         }
     }
@@ -558,4 +581,33 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     }
     SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
+}
+
+double RandomDealer::playLikelihood(Cards *const c, const GameRecord& game,
+                                    const SharedData& shared, ThreadTools *const ptools) const {
+    // 想定した手札配置から、試合進行がどの程度それっぽいか考える
+    if (inChange) return 0;
+    double playllh = 0; // 対数尤度
+    std::array<Cards, N> orgCards;
+    for (int p = 0; p < N; p++) {
+        orgCards[p] = c[p] + usedCards[infoClass[p]];
+    }
+    Field field;
+    iterateGameLogInGame
+    (field, game, game.plays.size(), orgCards,
+    // after change callback
+    [](const Field& field)->void{},
+    // play callback
+    [this, &shared, ptools, &playllh]
+    (const Field& field, Move move, unsigned time)->int{
+        int turn = field.turn();
+        if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
+        if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
+        // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
+        if (!playFlag.test(turn)) return 0;
+        double lh = onePlayLikelihood(field, move, shared, ptools);
+        if (lh < 1) playllh += log(lh);
+        return 0;
+    });
+    return playllh;
 }

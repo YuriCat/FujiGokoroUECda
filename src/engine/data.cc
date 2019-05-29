@@ -12,39 +12,6 @@ namespace Settings {
 
 void BaseSharedData::closeMatch() {
     // 共通スタッツ表示
-#ifdef MY_MANE
-    cerr << endl << "---" << MY_NAME << "'s seiseki happyou!!!---" << endl;
-    cerr << "R*NR";
-    for (int cl = 0; cl < N_PLAYERS; cl++) {
-        cerr << " " << cl << " ";
-    }
-    cerr << " total" << endl;
-    for (int cl = 0; cl < N_PLAYERS; cl++) {
-        cerr << "  " << cl << "  ";
-        for (int ncl = 0; ncl < N_PLAYERS; ncl++) {
-            cerr << classTransition[getMyPlayerNum()][cl][ncl] << "  ";
-        }
-        cerr << classDestination[getMyPlayerNum()][cl] << endl;
-    }
-    cerr << "Other Players" << endl;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p != (int)getMyPlayerNum()) {
-            cerr << "Player " << p << " :" << endl;
-            cerr << "R*NR";
-            for (int cl = 0; cl < N_PLAYERS; cl++) {
-                cerr << " " << cl << " ";
-            }
-            cerr << " total" << endl;
-            for (int cl = 0; cl < N_PLAYERS; cl++) {
-                cerr << "  " << cl << "  ";
-                for (int ncl = 0; ncl < N_PLAYERS; ncl++) {
-                    cerr << classTransition[p][cl][ncl] << "  ";
-                }
-                cerr << classDestination[p][cl] << endl;
-            }
-        }
-    }
-#else
     cerr << "Players Stats" << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << "Player " << p << " :" << endl;
@@ -57,7 +24,6 @@ void BaseSharedData::closeMatch() {
             cerr << classDestination[p][cl] << endl;
         }
     }
-#endif
 }
 
 void SharedData::closeMatch() {
@@ -191,7 +157,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
     
     // 新たに得た証拠分布
-    int myRew = field.infoReward[myPlayerNum];
+    int myRew = pshared->gameReward[field.newClassOf(myPlayerNum)];
     ASSERT(0 <= myRew && myRew <= bestReward, cerr << myRew << endl;);
     
     // 自分のシミュレーション結果を分布に変換
@@ -286,7 +252,6 @@ string RootInfo::toString(int num) const {
             // まず総合評価点を表示
             oss << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
             oss << "{mc: " << nrg << "} ";
-#ifdef DEFEAT_RIVAL_MC
             if (rivalPlayerNum >= 0) {
                 // 自分とライバルの評価点を表示
                 oss << child[i].myScore;
@@ -294,7 +259,6 @@ string RootInfo::toString(int num) const {
                 oss << child[i].rivalScore;
                 oss << " [rival's = ~" << (bestReward - (int)(child[i].rivalScore.mean() * (double)rewardGap)) << "] ";
             }
-#endif
         }
         oss << "prob = " << child[i].policyProb; // 方策関数の確率出力
         oss << " (pol = " << child[i].policyScore << ") "; // 方策関数のスコア

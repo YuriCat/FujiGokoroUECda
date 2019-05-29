@@ -46,7 +46,6 @@ int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
     while (1) {
-        DERR << field.toString() << "turn : " << field.turn() << endl;
         field.prepareForPlay();
 
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
@@ -66,11 +65,7 @@ int simulation(Field& field,
         }
         // 手を選んで進める
         Move move = simulationMove(field, *pshared, ptools);
-        if (field.proc(move) < 0) break;
-    }
-    // 後処理
-    for (int p = 0; p < N_PLAYERS; p++) {
-        field.infoReward.assign(p, pshared->gameReward[field.newClassOf(p)]);
+        if (field.procFast(move) < 0) break;
     }
     return 0;
 }
@@ -81,7 +76,7 @@ int startPlaySimulation(Field& field,
                         ThreadTools *const ptools) {
     DERR << field.toString();
     DERR << "turn : " << field.turn() << endl;
-    if (field.procSlowest(m) == -1) return 0;
+    if (field.proceed(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 
@@ -91,7 +86,7 @@ int startChangeSimulation(Field& field,
                           ThreadTools *const ptools) {
     
     int changePartner = field.classPlayer(getChangePartnerClass(field.classOf(p)));
-    field.makeChange(p, changePartner, c);
+    field.makeChange(p, changePartner, c.count(), c, false);
     field.prepareAfterChange();
     return simulation(field, pshared, ptools);
 }
@@ -101,21 +96,16 @@ int startAllSimulation(Field& field,
                        ThreadTools *const ptools) {
     // 試合全部行う
     if (!field.isInitGame()) {
-        // 献上
-        // 棋譜読みのdealtCallbackで呼び出すためすでに献上が行われているため、
-        // このタイミングで献上元から献上札を抜いておく
-        field.removePresentedCards();
-        // 交換
-        Cards change[N_MAX_CHANGES];
+        // 既に献上済み
         for (int cl = 0; cl < MIDDLE; cl++) {
-            const int from = field.classPlayer(cl);
-            const int to = field.classPlayer(getChangePartnerClass(cl));
-            const int changes = genChange(change, field.getCards(from), N_CHANGE_CARDS(cl));
-            
-            int index = changeWithPolicy(change, changes,
-                                         field.getCards(from), N_CHANGE_CARDS(cl),
+            int from = field.classPlayer(cl);
+            int to = field.classPlayer(getChangePartnerClass(cl));
+            int qty = N_CHANGE_CARDS(cl);
+            Cards change[N_MAX_CHANGES];
+            const int changes = genChange(change, field.getCards(from), qty);
+            int index = changeWithPolicy(change, changes, field.getCards(from), qty,
                                          field, pshared->baseChangePolicy, ptools->dice);
-            field.makeChange(from, to, change[index]);
+            field.makeChange(from, to, qty, change[index], false);
         }
     }
     field.prepareAfterChange();

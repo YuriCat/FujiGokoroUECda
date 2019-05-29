@@ -56,7 +56,7 @@ const char* one_to_yes(int n) {
 std::string record_file = "";
 
 MatchRecord match_log;
-ServerGameRecord game_log;
+GameRecord game_log;
 SharedData shared;
 ThreadTools threadTools[N_THREADS];
 
@@ -432,7 +432,7 @@ int main(int argc, char *argv[]) {
                 player_name[i][14]='\0';
                 printf("NAME: %s\n", player_name[i]);
                 
-                match_log.setPlayer(i,player_name[i]);
+                match_log.playerName[i] = player_name[i];
                 
                 break;
         }
@@ -498,7 +498,7 @@ int main(int argc, char *argv[]) {
         
         for (int p = 0; p < N_PLAYERS; ++p) {
             Cards c = TableToCards(players_card[p]);
-            game_log.setDealtCards(p, c);
+            game_log.dealtCards[p] = c;
         }
         
         for (i=0;i<N_PLAYERS;i++) {
@@ -569,13 +569,17 @@ int main(int argc, char *argv[]) {
             //search change cards
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 1]]);
-                c=pickHigh(c,2);
-                game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 1],mibun[0],c));
+                c = pickHigh(c, 2);
+                ChangeRecord change;
+                change.set(mibun[N_PLAYERS - 1], mibun[0], 2, c, true);
+                game_log.pushChange(change);
             }
             {
                 Cards c = TableToCards(players_card[mibun[N_PLAYERS - 2]]);
-                c=pickHigh(c,2);
-                game_log.push_change(ChangeRecord(mibun[N_PLAYERS - 2],mibun[1],c));
+                c = pickHigh(c, 1);
+                ChangeRecord change;
+                change.set(mibun[N_PLAYERS - 2], mibun[1], 1, c, true);
+                game_log.pushChange(change);
             }
             
             for (int cl = 0; cl <= FUGO; ++cl) { //search strong card
@@ -624,7 +628,9 @@ int main(int argc, char *argv[]) {
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(ChangeRecord(mibun[0],mibun[N_PLAYERS - 1],c));
+            ChangeRecord change;
+            change.set(mibun[0], mibun[N_PLAYERS - 1], c.count(), c, false);
+            game_log.pushChange(change);
             
         }// fi
         if (debug) {printf("change daihugou - OK\n");} //DEBUG
@@ -645,7 +651,8 @@ int main(int argc, char *argv[]) {
             } // fi
             
             Cards c = TableToCards(work_card);
-            game_log.push_change(ChangeRecord(mibun[1], mibun[N_PLAYERS - 2], c));
+            ChangeRecord change;
+            change.set(mibun[1], mibun[N_PLAYERS - 2], c.count(), c, false);
             
         }// fi
         if (debug) {printf("change hugou - OK\n");} //DEBUG
@@ -707,7 +714,7 @@ int main(int argc, char *argv[]) {
         
         //original cards
         for (int p=0;p<N_PLAYERS;++p) {
-            game_log.setOrgCards(p, TableToCards(players_card[p]));
+            game_log.orgCards[p] = TableToCards(players_card[p]);
         }
         
         // player statistics
@@ -1003,7 +1010,9 @@ int main(int argc, char *argv[]) {
             }
             
             //CERR<<mv<<endl;
-            game_log.push_play(PlayRecord(mv, tmpTime));
+            PlayRecord play;
+            play.set(mv, tmpTime);
+            game_log.pushPlay(play);
             
             //convert status to table
             work_card[5][0] = 0;
@@ -1390,7 +1399,7 @@ int main(int argc, char *argv[]) {
         game_count++;
         
         //fprintf(logfile,"\n");
-        if (!game_log.play(game_log.plays()-1).move.isPASS()) {
+        if (!game_log.plays.back().move.isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);
