@@ -12,39 +12,6 @@ namespace Settings {
 
 void BaseSharedData::closeMatch() {
     // 共通スタッツ表示
-#ifdef MY_MANE
-    cerr << endl << "---" << MY_NAME << "'s seiseki happyou!!!---" << endl;
-    cerr << "R*NR";
-    for (int cl = 0; cl < N_PLAYERS; cl++) {
-        cerr << " " << cl << " ";
-    }
-    cerr << " total" << endl;
-    for (int cl = 0; cl < N_PLAYERS; cl++) {
-        cerr << "  " << cl << "  ";
-        for (int ncl = 0; ncl < N_PLAYERS; ncl++) {
-            cerr << classTransition[getMyPlayerNum()][cl][ncl] << "  ";
-        }
-        cerr << classDestination[getMyPlayerNum()][cl] << endl;
-    }
-    cerr << "Other Players" << endl;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p != (int)getMyPlayerNum()) {
-            cerr << "Player " << p << " :" << endl;
-            cerr << "R*NR";
-            for (int cl = 0; cl < N_PLAYERS; cl++) {
-                cerr << " " << cl << " ";
-            }
-            cerr << " total" << endl;
-            for (int cl = 0; cl < N_PLAYERS; cl++) {
-                cerr << "  " << cl << "  ";
-                for (int ncl = 0; ncl < N_PLAYERS; ncl++) {
-                    cerr << classTransition[p][cl][ncl] << "  ";
-                }
-                cerr << classDestination[p][cl] << endl;
-            }
-        }
-    }
-#else
     cerr << "Players Stats" << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << "Player " << p << " :" << endl;
@@ -57,7 +24,6 @@ void BaseSharedData::closeMatch() {
             cerr << classDestination[p][cl] << endl;
         }
     }
-#endif
 }
 
 void SharedData::closeMatch() {
