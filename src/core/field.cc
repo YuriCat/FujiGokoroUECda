@@ -4,7 +4,8 @@
 
 using namespace std;
 
-bool PlayersState::exam_alive() const {
+bool PlayersState::exam() const {
+    // 各要素
     if (getNAlive() <= 0 || N < getNAlive()) {
         cerr << "PlayersState : illegal NAlive " << getNAlive() << endl;
         return false;
@@ -13,9 +14,6 @@ bool PlayersState::exam_alive() const {
         cerr << "PlayersState : NAlive != count()" << endl;
         return false;
     }
-    return true;
-}
-bool PlayersState::exam_awake() const {
     if (getNAwake() <= 0 || N < getNAwake()) {
         cerr << "PlayersState : illegal NAwake " << getNAwake() << endl;
         return false;
@@ -24,14 +22,8 @@ bool PlayersState::exam_awake() const {
         cerr << "PlayersState : NAwake != count()" << endl;
         return false;
     }
-    return true;
-}
-bool PlayersState::exam() const {
-    //各要素
-    if (!exam_alive()) return false;
-    if (!exam_awake()) return false;
-    
-    //awakeとaliveの関係
+
+    // awakeとaliveの関係
     if (getNAlive() < getNAwake()) {
         cerr << "PlayersState : NAlive < NAwake" << endl;
         return false;
@@ -41,14 +33,6 @@ bool PlayersState::exam() const {
         return false;
     }
     return true;
-}
-bool PlayersState::examNF() const {
-    // awake情報とalive情報が同じはず
-    if (data() >> 16 != (data() & ((1U << 16) - 1))) return false;
-    return true;
-}
-bool PlayersState::examSemiNF() const {
-    return exam();
 }
 
 ostream& operator <<(ostream& out, const PlayersState& arg) { // 出力
@@ -253,10 +237,6 @@ bool Field::exam() const {
     
     if (!ps.exam()) {
         cerr << "Field::exam() illegal PlayersState" << endl;
-        cerr << ps << endl; return false;
-    }
-    if (board.isNull() && !ps.examSemiNF()) {
-        cerr << "Field::exam() illegal PlayersState on NullField" << endl;
         cerr << ps << endl; return false;
     }
     // 置換列
