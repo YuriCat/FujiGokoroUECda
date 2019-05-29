@@ -200,13 +200,11 @@ void Field::prepareForPlay() {
             }
             if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
                 fieldInfo.setFlushLead();
-                if (fieldInfo.isLastAwake()) {
-                } else {
-                    if (dominatesHand(board, opsHand[tp])) {
-                        // 場が全員を支配しているので、パスをすれば自分から
-                        fieldInfo.setBDO();
-                        fieldInfo.setPassDom(); // fl && bdo ならパス支配
-                    }
+                if (!fieldInfo.isLastAwake()
+                    && dominatesHand(board, opsHand[tp])) {
+                    // 場が全員を支配しているので、パスをすれば自分から
+                    fieldInfo.setBDO();
+                    fieldInfo.setPassDom(); // fl && bdo ならパス支配
                 }
             }
         }
