@@ -436,5 +436,5 @@ void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
     // 役提出の処理
     common.turn = common.owner = common.firstTurn = game.firstTurn;
     tcnt = min((int)game.plays.size(), tcnt);
-    for (int t = 0; t < tcnt; t++) procSlowest(game.plays[t].move);
+    for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move);
 }

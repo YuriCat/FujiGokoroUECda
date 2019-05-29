@@ -85,6 +85,20 @@ uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
     return ret;
 }
 
+int Field::flushLeadPlayer() const {
+    // 全員パスの際に誰から始まるか
+    if (isNull()) return turn();
+    int p = owner();
+    if (!isAlive(p)) { // すでにあがっている
+        // p ~ tp 間の残っているプレーヤーを探す
+        while (1) {
+            p = getNextSeatPlayer(p);
+            if (isAlive(p)) break;
+        }
+    }
+    return p;
+}
+
 void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
@@ -148,15 +162,31 @@ void Field::makeChange(int from, int to, int dq, Cards dc,
 }
 
 void Field::prepareForPlay() {
-    
+
     int tp = turn();
-    
     fieldInfo.init();
-    fieldInfo.setMinNCardsAwake(getOpsMinNCardsAwake(tp));
-    fieldInfo.setMinNCards(getOpsMinNCards(tp));
-    fieldInfo.setMaxNCardsAwake(getOpsMaxNCardsAwake(tp));
-    fieldInfo.setMaxNCards(getOpsMaxNCards(tp));
-    
+
+    // 相手手札枚数情報
+    int minNum = INT_MAX, maxNum = 0;
+    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (p == tp) continue;
+        int num = getNCards(p);
+        if (isAlive(p)) {
+            minNum = min(minNum, num);
+            maxNum = max(maxNum, num);
+            if (isAwake(p)) {
+                minNumAwake = min(minNumAwake, num);
+                maxNumAwake = max(maxNumAwake, num);
+            }
+        }
+    }
+    fieldInfo.setMinNCardsAwake(minNumAwake);
+    fieldInfo.setMinNCards(minNum);
+    fieldInfo.setMaxNCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNCards(maxNum);
+
+    // 場の特徴
     if (isNull()) {
         if (getNAlivePlayers() == getNAwakePlayers()) { // 空場パスがない
             fieldInfo.setFlushLead();
@@ -168,8 +198,7 @@ void Field::prepareForPlay() {
             if (ps.isSoloAwake()) { // SF ではないが LA
                 fieldInfo.setLastAwake();
             }
-            uint32_t fLPlayer = getFlushLeadPlayer();
-            if (fLPlayer == tp) { // 全員パスしたら自分から
+            if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
                 fieldInfo.setFlushLead();
                 if (fieldInfo.isLastAwake()) {
                 } else {
@@ -409,18 +438,16 @@ int Field::procImpl(const MoveInfo m) {
     return turn();
 }
 
-int Field::proc(const MoveInfo m) { return procImpl<true>(m); }
-int Field::procSlowest(const Move m) { return procImpl<false>(MoveInfo(m)); }
+int Field::procFast(const MoveInfo m) { return procImpl<true>(m); }
+int Field::proceed(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
 void copyField(const Field& arg, Field *const dst) {
     dst->myPlayerNum = arg.myPlayerNum;
     dst->phase = arg.phase;
-    // playout result
-    dst->infoReward = 0ULL;
 
     // playout info
-    dst->attractedPlayers = arg.attractedPlayers;
     dst->mbuf = arg.mbuf;
+    dst->attractedPlayers = arg.attractedPlayers;
     
     // game info
     dst->board = arg.board;

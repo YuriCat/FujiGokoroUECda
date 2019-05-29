@@ -143,14 +143,11 @@ struct Field {
     int phase = PHASE_UNINIT;
     // tools for playout
     MoveInfo *mbuf = nullptr; // buffer of move
-    
-    // playout result
-    BitArray64<11, N_PLAYERS> infoReward; // rewards
-    
+
     // information for playout
     std::bitset<32> attractedPlayers; // players we want playout-result
     FieldAddInfo fieldInfo;
-    
+
     CommonStatus common;
     Board board;
     PlayersState ps;
@@ -159,11 +156,11 @@ struct Field {
     std::array<int8_t, N_PLAYERS> infoSeat, infoSeatPlayer;
     std::array<int8_t, N_PLAYERS> infoNewClass, infoNewClassPlayer;
     std::array<int8_t, N_PLAYERS> infoPosition;
-    
+
     uint32_t remQty;
     Cards remCards;
     uint64_t remKey;
-    
+
     // 手札
     std::array<Hand, N_PLAYERS> hand, opsHand;
     // 手札情報
@@ -173,30 +170,30 @@ struct Field {
 
     bool isSubjective() const { return myPlayerNum >= 0; }
     bool know(int p) const { return !isSubjective() || myPlayerNum == p; }
-    
+
     bool isL2Situation() const { return getNAlivePlayers() == 2; }
     bool isEndGame() const { // 末端探索に入るべき局面かどうか。学習にも影響する
         if (isL2Situation()) return true;
         return false;
     }
     uint32_t getRivalPlayersFlag(int myPlayerNum) const;
-    
+
     void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
     int turnCount() const  { return common.turnCount; }
-    
+
     void setInitGame() { common.flag.set(FLAG_INIT_GAME); }
     void resetInitGame() { common.flag.reset(FLAG_INIT_GAME); }
     bool isInitGame() const { return common.flag.test(FLAG_INIT_GAME); }
     bool isInChange() const { return phase == PHASE_PRESENT; }
-    
+
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
     unsigned getNAwakePlayers() const { return ps.getNAwake(); }
     unsigned getNAlivePlayers() const { return ps.getNAlive(); }
-    
+
     uint32_t searchOpsPlayer(const int p) const {
         return ps.searchOpsPlayer(p);
     }
@@ -249,19 +246,7 @@ struct Field {
     Cards getSentCards(int p) const { return sentCards[p]; }
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
-    int getFlushLeadPlayer() const {
-        // 全員パスの際に誰から始まるか
-        if (isNull()) return turn();
-        int own = owner();
-        if (!isAlive(own)) { // すでにあがっている
-            // own~tp間のaliveなプレーヤーを探す
-            while (1) {
-                own = getNextSeatPlayer(own);
-                if (isAlive(own)) break;
-            }
-        }
-        return own;
-    }
+    int flushLeadPlayer() const;
     int getNextSeatPlayer(const int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
@@ -293,42 +278,13 @@ struct Field {
         flushState();
     }
 
-    unsigned getOpsMinNCards(int pn) const {
-        unsigned nc = N_CARDS;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p) && p != pn) nc = min(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMinNCardsAwake(int pn) const {
-        unsigned nc = N_CARDS;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAwake(p) && p != pn) nc = min(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMaxNCards(int pn) const {
-        unsigned nc = 0;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAlive(p) && p != pn) nc = max(nc, getNCards(p));
-        }
-        return nc;
-    }
-    unsigned getOpsMaxNCardsAwake(int pn) const {
-        unsigned nc = 0;
-        for (int p = 0; p < N_PLAYERS; p++) {
-            if (isAwake(p) && p != pn) nc = max(nc, getNCards(p));
-        }
-        return nc;
-    }
-
     void procHand(int tp, Move m);
 
     // 局面更新
     template <bool FAST> int procImpl(const MoveInfo m);
-    int proc(const MoveInfo m);
-    int proc(const Move m) { return proc(MoveInfo(m)); }
-    int procSlowest(const Move m);
+    int procFast(const MoveInfo m);
+    int procFast(const Move m) { return procFast(MoveInfo(m)); }
+    int proceed(const Move m);
     
     void makeChange(int from, int to, int dq, Cards dc,
                     bool sendOnly = false, bool recvOnly = false);
@@ -349,10 +305,10 @@ struct Field {
         remKey = subCardKey(HASH_CARDS_ALL, CardsToHashKey(CARDS_ALL - c));
     }
 
-    void prepareForPlay();
     void initGame();
     void prepareAfterChange();
-    
+    void prepareForPlay();
+
     bool exam() const;
 
     std::string toString() const;

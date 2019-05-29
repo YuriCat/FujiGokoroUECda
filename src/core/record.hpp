@@ -241,7 +241,7 @@ int iterateGameLogInGame
         }
         if (ret == -1) break;
         // proceed field
-        field.procSlowest(play.move);
+        field.proceed(play.move);
     }
     return 0;
 }
