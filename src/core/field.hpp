@@ -326,14 +326,7 @@ struct ImaginaryWorld {
     uint64_t cardKey[N_PLAYERS];
     uint64_t key;
 
-    void set(int turnCount, const Cards c[]) {
-        for (int p = 0; p < N_PLAYERS; p++) {
-            cards[p] = c[p];
-            cardKey[p] = CardsToHashKey(c[p]);
-        }
-        key = cross64<N_PLAYERS>(cardKey);
-        builtTurn = turnCount;
-    }
+    void set(int turnCount, const Cards *c);
 };
 
 // set estimated information
