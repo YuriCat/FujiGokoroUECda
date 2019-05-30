@@ -151,7 +151,7 @@ public:
         
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, field, shared.baseChangePolicy, 0);
+        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy, 0);
         root.feedPolicyScore(score, numCands);
         
         // モンテカルロ法による評価

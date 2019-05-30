@@ -9,10 +9,6 @@
 #include "mate.hpp"
 #include "policy.hpp"
 
-namespace Settings {
-    const double estimationTemperaturePlay = 1.1;
-}
-
 class RandomDealer {
     // ランダムに手札配置を作る
     // 基本的に連続分配を想定しているので、異なるプレーヤーが互いに分配するような状況ではインスタンスを複数作るべき
@@ -76,17 +72,12 @@ private:
     bool failed;
     unsigned failures;
     
-    // 採択棄却法時の棄却回数限度
-    static constexpr int MAX_REJECTION = 800;
-    
     // 自分が上位のときに献上された最小の札の確率
     int candidatesInWA;
     double thresholdInWA[16];
     Cards dealCardsUnderInWA[16];
     Cards dealCardsOverInWA[16];
-    
-    // 進行得点関連
-    static constexpr int BUCKET_MAX = 32;
+
     int buckets;
     
     // 着手について検討の必要があるプレーヤーフラグ
@@ -97,7 +88,7 @@ private:
     void setWeightInWA();
     void prepareSubjectiveInfo();
 
-    void checkDeal(Cards *const dst, bool sbj = true) const;
+    void checkDeal(const Cards *dst, bool sbj = true) const;
     bool okForRejection() const;
     bool dealWithChangeRejection(Cards *const dst,
                                  const SharedData& shared,
@@ -110,6 +101,6 @@ private:
 
     double onePlayLikelihood(const Field& field, Move move,
                              const SharedData& shared, ThreadTools *const ptools) const;
-    double playLikelihood(Cards *const c, const GameRecord& game,
+    double playLikelihood(const Cards *c, const GameRecord& game,
                           const SharedData& shared, ThreadTools *const ptools) const;
 };

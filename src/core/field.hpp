@@ -122,15 +122,8 @@ struct PlayersState : public BitArray32<8, 4> {
     void init() {
         base_t::data_ = (REALPMASK << 0) | (N << 8) | (REALPMASK << 16) | (N << 24);
     }
-    
-    bool exam_alive() const;
-    bool exam_awake() const;
+
     bool exam() const;
-    bool examNF() const;
-    bool examSemiNF() const;
-    
-    constexpr PlayersState() : base_t() {}
-    constexpr PlayersState(const PlayersState& arg) : base_t(arg) {}
 };
 
 extern std::ostream& operator <<(std::ostream& out, const PlayersState& arg);
@@ -328,14 +321,7 @@ struct ImaginaryWorld {
     uint64_t cardKey[N_PLAYERS];
     uint64_t key;
 
-    void set(int turnCount, const Cards c[]) {
-        for (int p = 0; p < N_PLAYERS; p++) {
-            cards[p] = c[p];
-            cardKey[p] = CardsToHashKey(c[p]);
-        }
-        key = cross64<N_PLAYERS>(cardKey);
-        builtTurn = turnCount;
-    }
+    void set(int turnCount, const Cards *c);
 };
 
 // set estimated information

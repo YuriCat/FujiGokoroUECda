@@ -104,7 +104,7 @@ int startAllSimulation(Field& field,
             Cards change[N_MAX_CHANGES];
             const int changes = genChange(change, field.getCards(from), qty);
             int index = changeWithPolicy(change, changes, field.getCards(from), qty,
-                                         field, pshared->baseChangePolicy, ptools->dice);
+                                         pshared->baseChangePolicy, ptools->dice);
             field.makeChange(from, to, qty, change[index], false);
         }
     }

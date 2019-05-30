@@ -7,6 +7,12 @@ using namespace std;
 // Walker's Alias Method はこちらを参考に
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
+namespace Settings {
+    const double estimationTemperaturePlay = 1.1;
+    const int maxRejection = 800; // 採択棄却法時の棄却回数限度
+    constexpr int BUCKET_MAX = 32;
+}
+
 namespace Deal {
     constexpr uint64_t AfterChangeWeight[INTCARD_MAX + 1][5] =
     {
@@ -166,7 +172,7 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
-    Cards deal[BUCKET_MAX][N]; // カード配置候補
+    Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
@@ -179,7 +185,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
     }
     // 役提出の尤度を計算してし使用する手札配置を決定
     if (buckets > 1) {
-        double lhs[BUCKET_MAX];
+        double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
             lhs[i] = playLikelihood(deal[i], game, shared, ptools);
         }
@@ -256,7 +262,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
     } else failed = true;
 }
 
-void RandomDealer::checkDeal(Cards *const dst, bool sbj) const {
+void RandomDealer::checkDeal(const Cards *dst, bool sbj) const {
     for (int p = 0; p < N; p++) DERR << dst[p] << endl;
     for (int r = 0; r < N; r++) {
         ASSERT(countCards(dst[infoClassPlayer[r]]) == NOwn[r],
@@ -304,11 +310,10 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
                            const SharedData& shared, ThreadTools *const ptools) const {
     
     // 採択棄却法のためのカード交換モデル
-    Cards cand[78];
+    // 交換方策に従った交換を行う
+    Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
-    Field field;
-    // 交換方策によって交換してみる
-    int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, ptools->dice);
+    int index = changeWithPolicy(cand, NCands, cards, qty, shared.baseChangePolicy, ptools->dice);
     return cand[index];
 }
 
@@ -327,7 +332,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
 
     BitCards R[N] = {0};
 
-    for (int t = 0; t < MAX_REJECTION; t++) {
+    for (int t = 0; t < Settings::maxRejection; t++) {
         int ptClass = getChangePartnerClass(myClass);
         if (myClass < MIDDLE) {
             // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
@@ -527,22 +532,22 @@ void RandomDealer::prepareSubjectiveInfo() {
     ASSERT(NdealCards == accumulate(NDeal.begin(), NDeal.begin() + N, 0),
            cerr << NdealCards << " " << NDeal << " " << accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
 
+    buckets = 1;
     if (!inChange && turnCount > 0) {
         // 他人が使用したカード枚数から採択棄却の際の候補数を設定
         unsigned NOppUsedCards = Cards(CARDS_ALL - remCards - usedCards[myClass]).count();
         // 1 -> ... -> max -> ... -> 1 と台形に変化
-        int line1 = (BUCKET_MAX - 1) * NOppUsedCards / 4 + 1;
-        int line2 = BUCKET_MAX;
-        int line3 = (BUCKET_MAX - 1) * NdealCards / 16 + 1;
+        int line2 = Settings::BUCKET_MAX;
+        int line1 = (line2 - 1) * NOppUsedCards / 4 + 1;
+        int line3 = (line2 - 1) * NdealCards / 16 + 1;
         buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
         // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
         playFlag.reset();
         for (int p = 0; p < N; p++) {
             if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
         }
-    } else {
-        buckets = 1;
     }
+
     for (int p = 0; p < N; p++) {
         DERR << "cl:" << p << " p:" << (int)infoClassPlayer[p] << " Org:" << (int)NOrg[p] << " Own:" << (int)NOwn[p]
         << " Det:" << (int)NDet[p] << " Deal:" << (int)NDeal[p] << " " << detCards[p] << endl;
@@ -583,7 +588,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 
-double RandomDealer::playLikelihood(Cards *const c, const GameRecord& game,
+double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
                                     const SharedData& shared, ThreadTools *const ptools) const {
     // 想定した手札配置から、試合進行がどの程度それっぽいか考える
     if (inChange) return 0;

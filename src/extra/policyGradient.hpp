@@ -50,7 +50,7 @@ namespace PolicyGradient {
                     if (flags.test(1)) plearner->feedUnfoundFeatureValue(ph);
                     if (flags.test(2)) plearner->feedObjValue(idx, ph); // test
                 } else {
-                    if (!changePolicyScore(score, change, NChanges, myCards, changeQty, field, *plearner, 1)) {
+                    if (!changePolicyScore(score, change, NChanges, myCards, changeQty, *plearner, 1)) {
                         if (flags.test(1)) plearner->feedFeatureValue(ph);
                         if (flags.test(0)) { // learn
                             plearner->feedSupervisedActionIndex(idx, ph);
