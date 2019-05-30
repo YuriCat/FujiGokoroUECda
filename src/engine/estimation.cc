@@ -310,11 +310,10 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
                            const SharedData& shared, ThreadTools *const ptools) const {
     
     // 採択棄却法のためのカード交換モデル
-    Cards cand[78];
+    // 交換方策に従った交換を行う
+    Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
-    Field field;
-    // 交換方策によって交換してみる
-    int index = changeWithPolicy(cand, NCands, cards, qty, field, shared.baseChangePolicy, ptools->dice);
+    int index = changeWithPolicy(cand, NCands, cards, qty, shared.baseChangePolicy, ptools->dice);
     return cand[index];
 }
 

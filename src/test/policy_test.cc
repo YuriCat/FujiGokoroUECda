@@ -70,7 +70,7 @@ int testChangePolicyWithRecord(const MatchRecord& match) {
                 
                 Clock clock;
                 clock.start();
-                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, field, changePolicy, dice);
+                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, changePolicy, dice);
                 time[from][cl] += clock.stop();
                 
                 Cards p = change[index];
