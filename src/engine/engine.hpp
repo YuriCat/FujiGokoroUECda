@@ -97,7 +97,9 @@ public:
         // 手札レベルで枝刈りする場合
         Cards tmp = myCards;
         if (Settings::changeHeuristicsOnRoot) {
-            tmp = Heuristics::pruneCards(myCards, changeQty);
+            tmp.mask(CARDS_8 | CARDS_2 | CARDS_JOKER | CARDS_D3);
+            if (myCards.joker() > 0) tmp.mask(CARDS_S3);
+            if (tmp.count() < changeQty) tmp = myCards; // キャンセル
         }
         
         if (tmp.count() == changeQty) return tmp;
