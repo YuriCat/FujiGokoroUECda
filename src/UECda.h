@@ -95,15 +95,15 @@ namespace UECda {
     
     // 基本通信型。手札兼着手兼エントリー時情報送信
     inline void clearAll(int table[8][15]) {
-        for (int i = 0; i < 8; ++i) {
-            for (int j = 0 ; j < 15; ++j) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0 ; j < 15; j++) {
                 table[i][j] = 0;
             }
         }
     }
     inline void clearCards(int table[8][15]) {
-        for (int i = 0; i < 5; ++i) {
-            for (int j = 0; j < 15; ++j) {
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 15; j++) {
                 table[i][j] = 0;
             }
         }
@@ -161,7 +161,7 @@ namespace UECda {
             if (table[4][w]) c.insertJOKER();
         }
         // ジョーカー1枚使用の場合には chara もジョーカーに変更
-        if (jk && countCards(c) == 1) c = CARDS_JOKER;
+        if (jk && c.count() == 1) c = CARDS_JOKER;
         return c;
     }
     
@@ -219,19 +219,10 @@ namespace UECda {
         return CardsToMove(chara, used);
     }
     
-    /*static Board TableToBoard(const int table[8][15]) {
-        Move mv = TableToMove(table);
-        Board bd = MoveToBoard(mv);
-        if (suitsLocked(table)) { bd.lockSuits(); }
-        bd.setPrmOrder(getPrmOrder(table));
-        bd.setTmpOrder(getTmpOrder(table));
-        return bd;
-    }*/
-    
     static std::string toString(const int table[8][15]) { // 出力
         std::ostringstream oss;
-        for (int i = 0; i < 8; ++i) {
-            for (int j = 0; j < 15; ++j) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 15; j++) {
                 oss << std::setw(2) << table[i][j];
             }
             oss << std::endl;

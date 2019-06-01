@@ -234,8 +234,8 @@ extern int changePolicyScore(double *const dst, const Cards *const change, const
                              const Cards myCards, const int NChangeCards,
                              ChangePolicyLearner<policy_value_t>& pol, int mode = 1);
 
-template <int STOCK = 0, class policy_t, class dice_t>
-int playWithPolicy(Move *const mbuf, const int NMoves, const policy_t& pol, dice_t& dice,
+template <int STOCK = 0, class policy_t>
+int playWithPolicy(Move *const mbuf, const int NMoves, const policy_t& pol, Dice& dice,
                    double *const pentropy = nullptr) {
     double score[N_MAX_MOVES];
     playPolicyScore(score, mbuf, NMoves, pol, STOCK ? 2 : 0);
@@ -244,19 +244,19 @@ int playWithPolicy(Move *const mbuf, const int NMoves, const policy_t& pol, dice
     return selector.select(dice.random());
 }
 
-template <class policy_t, class dice_t>
+template <class policy_t>
 int changeWithPolicy(Cards *const cbuf, const int NChanges,
                      const Cards myCards, const int NChangeCards,
-                     const policy_t& pol, dice_t& dice) {
+                     const policy_t& pol, Dice& dice) {
     double score[N_MAX_CHANGES];
     changePolicyScore(score, cbuf, NChanges, myCards, NChangeCards, pol, 0);
     SoftmaxSelector<double> selector(score, NChanges, pol.temperature());
     return selector.select(dice.random());
 }
-template <class policy_t, class dice_t>
+template <class policy_t>
 int changeWithBestPolicy(const Cards *const cbuf, const int NChanges,
                          const Cards myCards, const int NChangeCards,
-                         const policy_t& pol, dice_t& dice) {
+                         const policy_t& pol, Dice& dice) {
     double score[N_MAX_CHANGES + 1];
     changePolicyScore(score, cbuf, NChanges, myCards, NChangeCards, pol, 0);
     int bestIndex[N_MAX_CHANGES];
@@ -276,8 +276,8 @@ int changeWithBestPolicy(const Cards *const cbuf, const int NChanges,
     if (NBestMoves <= 1) return bestIndex[0];
     else return bestIndex[dice() % NBestMoves];
 }
-template <int STOCK = 0, class policy_t, class dice_t>
-int playWithBestPolicy(MoveInfo *const mbuf, const int NMoves, const Field& field, const policy_t& pol, dice_t& dice) {
+template <int STOCK = 0, class policy_t>
+int playWithBestPolicy(MoveInfo *const mbuf, const int NMoves, const Field& field, const policy_t& pol, Dice& dice) {
     double score[N_MAX_MOVES + 1];
     playPolicyScore(score, mbuf, NMoves, field, pol, STOCK ? 2 : 0);
     int bestIndex[N_MAX_MOVES];

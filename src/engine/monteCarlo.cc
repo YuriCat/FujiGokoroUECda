@@ -9,8 +9,7 @@ namespace Settings {
     const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6); 
 }
 
-template <class dice_t>
-static int selectBanditAction(const RootInfo& root, dice_t& dice) {
+int selectBanditAction(const RootInfo& root, Dice& dice) {
     // バンディット手法により次に試す行動を選ぶ
     int actions = root.candidates;
     const auto& a = root.child;
@@ -41,8 +40,7 @@ static int selectBanditAction(const RootInfo& root, dice_t& dice) {
     }
 }
 
-template <class dice_t>
-static bool finishCheck(const RootInfo& root, double simuTime, dice_t& dice) {
+bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
     // Regretによる打ち切り判定
 
     const int candidates = root.candidates; // 候補数
