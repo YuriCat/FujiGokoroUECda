@@ -181,14 +181,12 @@ struct RootInfo {
     BetaDistribution monteCarloAllScore;
     uint64_t allSimulations;
 
-#ifdef MULTI_THREADING
+    // 排他処理
     SpinLock<int> lock_;
+
     void lock() { lock_.lock(); }
     void unlock() { lock_.unlock(); }
-#else
-    void lock() const {}
-    void unlock() const {}
-#endif
+
     void setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim);
     void setChange(const Cards *const a, int num,
                    const Field& field, const SharedData& shared, int limSim = -1);
