@@ -10,7 +10,6 @@
 #include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
-#include "heuristics.hpp"
 #include "policy.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
@@ -337,37 +336,19 @@ public:
         // 以下必勝を判定したときのみ
         if (fieldInfo.isMate()) {
             int next = root.candidates;
-            // 1. 必勝判定で勝ちのものに限定
+            // 必勝判定で勝ちのものに限定
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMate(); });
             assert(next > 0);
-            // 2. 即上がり
+            // 即上がり
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isFinal(); });
-            // 3. 完全勝利
+            // 完全勝利
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
-            // 4. 多人数判定による勝ち
+            // 多人数判定による勝ち
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMPMate(); });
-#ifdef DEFEAT_RIVAL_MATE
-            if (next > 1 && !isNoRev(myCards)) {
-                // 5. ライバルに不利になるように革命を起こすかどうか
-                int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
-                if (prefRev > 0) { // 革命優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? 2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
-                    });
-                }
-                if (prefRev < 0) { // 革命しないことを優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? -2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
-                    });
-                }
-            }
-#endif
             // 必勝時の出し方の見た目をよくする
             if (fieldInfo.isUnrivaled()) {
-                // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
-                //    そうでなければパスを優先
+                // 独断場のとき最小分割数が減るのであればパスでないものを優先
+                // そうでなければパスを優先
                 int division = divisionCount(searchBuffer, myCards);
                 for (int i = 0; i < NMoves; i++) {
                     Cards nextCards = myCards - root.child[i].move.cards();
@@ -378,11 +359,11 @@ public:
                     next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPASS(); });
                 }
             }
-            // 7. 枚数が大きいものを優先
+            // 枚数が大きいものを優先
             next = root.sort(next, [](const RootAction& a) { return a.move.qty(); });
-            // 8. 即切り役を優先
+            // 即切り役を優先
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
-            // 9. 自分を支配していないものを優先
+            // 自分を支配していないものを優先
             next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
             
             playMove = root.child[0].move; // 必勝手から選ぶ
