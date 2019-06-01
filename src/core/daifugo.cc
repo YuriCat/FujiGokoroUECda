@@ -1,5 +1,6 @@
 #include <map>
 #include "daifugo.hpp"
+#include "../UECda.h"
 
 using namespace std;
 
@@ -502,3 +503,50 @@ bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q) {
     }
     return true;
 }
+
+string toInfoString(Move m, Board b) {
+    ostringstream oss;
+    // 勝敗
+    if (m.isL2Mate()) oss << " -L2MATE";
+    else if (m.isMate()) oss << " -MATE";
+
+    if (m.isL2GiveUp()) oss << " -L2GIVEUP";
+    else if (m.isGiveUp()) oss << " -GIVEUP";
+
+    // 後場
+    if (b.nextOrder(m) != 0) oss << " -TREV";
+    if (b.locksSuits(m)) oss << " -SLOCK";
+
+    // 支配
+    if (m.dominatesAll()) oss<< " -DALL";
+    else {
+        if (m.dominatesOthers()) oss << " -DO";
+        if (m.dominatesMe()) oss << " -DM";
+    }
+    return oss.str();
+}
+
+string toInfoString(Board b) {
+    ostringstream oss;
+    oss << "Field :";
+
+    if (b.isL2Mate()) oss << " -L2MATE";
+    else if (b.isMate()) oss << " -MATE";
+
+    if (b.isL2GiveUp()) oss << " -L2GIVEUP";
+    else if (b.isGiveUp()) oss << " -GIVEUP";
+    
+    if (b.isSelfFollow()) oss << " -SFOL";
+    if (b.isUnrivaled()) oss << " -UNRIV";
+    if (b.isLastAwake()) oss << " -LA";
+    if (b.isFlushLead()) oss << " -FLEAD";
+    if (b.isNonPassDom()) oss << " -NPD";
+    if (b.isPassDom()) oss << " -PD";
+    
+    if (b.isBDALL()) oss << " -BDALL";
+    else {
+        if (b.isBDO()) oss << " -BDO";
+        if (b.isBDM()) oss << " -BDM";
+    }
+    return oss.str();
+};
