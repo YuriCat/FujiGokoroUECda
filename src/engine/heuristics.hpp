@@ -22,7 +22,7 @@ namespace Heuristics {
         }
         if (numRivals > 0) { // ライバルプレーヤーがもういないときはどうでも良い
             // 革命優先かの判断
-            int rivalBetter = (rivalClassSum * field.getNAlivePlayers()
+            int rivalBetter = (rivalClassSum * field.numPlayersAlive()
                                < allClassSum * numRivals) ? 1 : 0;
             
             // オーダー通常 & RPが良い階級　またはその逆の時革命優先

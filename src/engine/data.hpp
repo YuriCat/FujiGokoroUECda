@@ -133,7 +133,6 @@ struct SharedData : public BaseSharedData {
 struct RootAction {
     Move move;
     Cards changeCards;
-    bool pruned;
     int nextDivision;
     
     // 方策関数出力
@@ -165,8 +164,7 @@ struct RootAction {
 /**************************ルートの全体の情報**************************/
 
 struct RootInfo {
-    std::array<RootAction, N_MAX_MOVES + 64> child;
-    int actions; // 全候補行動数
+    std::array<RootAction, N_MAX_MOVES> child;
     int candidates; // 選択の候補とする数
     bool isChange;
     bool policyAdded = false;
@@ -183,26 +181,23 @@ struct RootInfo {
     BetaDistribution monteCarloAllScore;
     uint64_t allSimulations;
 
-#ifdef MULTI_THREADING
+    // 排他処理
     SpinLock<int> lock_;
+
     void lock() { lock_.lock(); }
     void unlock() { lock_.unlock(); }
-#else
-    void lock() const {}
-    void unlock() const {}
-#endif
+
     void setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim);
     void setChange(const Cards *const a, int num,
                    const Field& field, const SharedData& shared, int limSim = -1);
     void setPlay(const Move *const a, int num,
                  const Field& field, const SharedData& shared, int limSim = -1);
-    
-    void prune(int m);
+
     void addPolicyScoreToMonteCarloScore();
     void feedPolicyScore(const double *const score, int num);
 
     void feedSimulationResult(int triedIndex, const Field& field, SharedData *const pshared);
-    
+
     void sort();
 
     template <class callback_t>
@@ -241,7 +236,7 @@ struct RootInfo {
     }
     
     RootInfo() {
-        actions = candidates = -1;
+        candidates = -1;
         monteCarloAllScore.set(0, 0);
         allSimulations = 0;
         rivalPlayerNum = -1;

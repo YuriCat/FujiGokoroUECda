@@ -5,7 +5,6 @@ using namespace std;
 namespace Settings {
     const double rootPlayPriorCoef = 4;
     const double rootPlayPriorExponent = 0.6;
-    
     const double rootChangePriorCoef = 4;
     const double rootChangePriorExponent = 0.6;
 }
@@ -29,7 +28,6 @@ void BaseSharedData::closeMatch() {
 void SharedData::closeMatch() {
     // 自己スタッツ表示
     cerr << "My Stats" << endl;
-    
     cerr << "change rejection by server : " << SharedData::changeRejection << endl;
     cerr << "play rejection by server : " << SharedData::playRejection << endl;
     cerr << "L2 result : " << endl;
@@ -43,7 +41,6 @@ void SharedData::closeMatch() {
         cerr << endl;
     }
     cerr << endl;
-
     base_t::closeMatch();
 }
 
@@ -63,7 +60,6 @@ void RootAction::clear() {
     rivalScore.set(1, 1);
     policyScore = 0;
     policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
-    pruned = false;
 }
 
 string RootAction::toString() const {
@@ -75,14 +71,14 @@ string RootAction::toString() const {
 }
 
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
-    actions = candidates = num;
-    for (int i = 0; i < actions; i++) {
+    candidates = num;
+    for (int i = 0; i < candidates; i++) {
         monteCarloAllScore += child[i].monteCarloScore;
     }
     myPlayerNum = shared.record.myPlayerNum;
     rivalPlayerNum = -1;
-    bestClass = field.getBestClass();
-    worstClass = field.getWorstClass();
+    bestClass = field.bestClass();
+    worstClass = field.worstClass();
     bestReward = shared.gameReward[bestClass];
     worstReward = shared.gameReward[worstClass];
     rewardGap = bestReward - worstReward;
@@ -106,12 +102,6 @@ void RootInfo::setPlay(const Move *const a, int num,
     isChange = false;
     for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
     setCommonInfo(num, field, shared, limSim);
-}
-
-void RootInfo::prune(int m) {
-    // m番目の候補を除外し、空いた位置に末尾の候補を代入
-    swap(child[m], child[--candidates]);
-    child[candidates].pruned = true;
 }
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {
@@ -141,8 +131,8 @@ void RootInfo::addPolicyScoreToMonteCarloScore() {
 
 void RootInfo::feedPolicyScore(const double *const score, int num) {
     // 方策関数の出力得点と選択確率を記録
-    assert(num <= actions && actions > 0 && num > 0);
-    double tscore[N_MAX_MOVES + 64];
+    assert(num <= candidates && candidates > 0 && num > 0);
+    double tscore[N_MAX_MOVES];
     for (int i = 0; i < num; i++) {
         child[i].policyScore = tscore[i] = score[i];
     }
@@ -211,28 +201,25 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
 }
 
 void RootInfo::sort() { // 評価が高い順に候補行動をソート
-    stable_sort(child.begin(), child.begin() + actions,
-                     [&](const RootAction& a, const RootAction& b)->bool{
-                         // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
-                         // ただしルートで方策の点を使わないときにはそうではない
-                         // いちおう除外されたものに方策の点がついた場合にはその中で並べ替える
-                         if (a.pruned && !b.pruned) return false;
-                         if (!a.pruned && b.pruned) return true;
-                         if (a.mean() > b.mean()) return true;
-                         if (a.mean() < b.mean()) return false;
-                         if (a.policyProb > b.policyProb) return true;
-                         if (a.policyProb < b.policyProb) return false;
-                         return a.policyScore > b.policyScore;
-                     });
+    stable_sort(child.begin(), child.begin() + candidates,
+                [&](const RootAction& a, const RootAction& b)->bool{
+                    // モンテカルロが同点(またはモンテカルロをやっていない)なら方策の点で選ぶ
+                    // ただしルートで方策の点を使わないときにはそうではない
+                    if (a.mean() > b.mean()) return true;
+                    if (a.mean() < b.mean()) return false;
+                    if (a.policyProb > b.policyProb) return true;
+                    if (a.policyProb < b.policyProb) return false;
+                    return a.policyScore > b.policyScore;
+                });
 }
 
 string RootInfo::toString(int num) const {
-    if (num == -1)num = actions; // numで表示最大数を設定
+    if (num == -1) num = candidates; // numで表示最大数を設定
     ostringstream oss;
     // 先にソートしておく必要あり
     oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
     oss << allSimulations << " trials." << endl;
-    for (int i = 0; i < min(actions, num); i++) {
+    for (int i = 0; i < min(candidates, num); i++) {
         const int rg = (int)(child[i].mean() * rewardGap);
         const int rew = rg + worstReward;
         const int nrg = (int)(child[i].naive_mean() * rewardGap);
@@ -245,7 +232,6 @@ string RootInfo::toString(int num) const {
         
         if (isChange) oss << child[i].changeCards;
         else oss << child[i].move;
-        
         oss << " : ";
         
         if (child[i].simulations > 0) {

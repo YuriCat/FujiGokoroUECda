@@ -51,28 +51,26 @@ bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
     double line = -1600.0 * double(2 * simuTime * Settings::valuePerSec) / rewardScale;
     
     // regret check
-    Dist d[N_MAX_MOVES + 64];
-    for (int m = 0; m < candidates; m++) {
-        d[m].reg = 0.0;
-        d[m].mean = child[m].mean();
-        d[m].sem = sqrt(child[m].mean_var()); // 推定平均値の分散
+    Dist d[N_MAX_MOVES];
+    for (int i = 0; i < candidates; i++) {
+        d[i] = {child[i].mean(), sqrt(child[i].mean_var()), 0};
     }
     for (int t = 0; t < 1600; t++) {
         double tmpBest = -1.0;
-        double tmpScore[256];
-        for (int m = 0; m < candidates; m++) {
-            const Dist& tmpD = d[m];
+        double tmpScore[N_MAX_MOVES];
+        for (int i = 0; i < candidates; i++) {
+            const Dist& tmpD = d[i];
             std::normal_distribution<double> nd(tmpD.mean, tmpD.sem);
             double tmpDBL = nd(dice);
-            tmpScore[m] = tmpDBL;
+            tmpScore[i] = tmpDBL;
             if (tmpDBL > tmpBest) tmpBest = tmpDBL;
         }
-        for (int m = 0; m < candidates; m++) {
-            d[m].reg += tmpScore[m] - tmpBest;
+        for (int i = 0; i < candidates; i++) {
+            d[i].reg += tmpScore[i] - tmpBest;
         }
     }
-    for (int m = 0; m < candidates; m++) {
-        if (d[m].reg > line) return true;
+    for (int i = 0; i < candidates; i++) {
+        if (d[i].reg > line) return true;
     }
     return false;
 }
@@ -83,7 +81,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     const int myPlayerNum = proot->myPlayerNum;
     auto& dice = ptools->dice;
 
-    int numSimulations[256] = {0};
+    int numSimulations[N_MAX_MOVES] = {0};
     int numSimulationsSum = 0;
 
     int numWorlds = 0; // 作成した世界の数

@@ -18,10 +18,6 @@ const std::string MY_VERSION = "20190514";
 //#define BROADCAST // 試合進行実況
 //#define DEBUG // デバッグ出力。プレイアウトの内容も出力するので、重すぎて試合にならない。バグチェック用
 
-// 試合に必要でないリッチ設定 本番用では自動オフ
-
-#define CHECK_ALL_MOVES // 自分のプレイにて、必勝や諦めの判定がなされた後も生成された全ての着手を検討する
-
 //#define FIXED_N_PLAYOUTS (2000) // プレイアウト回数を固定(デバッグ、実験用)
 
 // 戦略設定
@@ -113,8 +109,3 @@ extern ConfigReader configReader;
 #endif
 
 #endif // MINIMUM
-
-// スレッド数として2以上が指定された場合は、マルチスレッドフラグを立てる
-#if N_THREADS >= (2)
-#define MULTI_THREADING
-#endif

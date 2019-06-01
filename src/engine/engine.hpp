@@ -192,7 +192,7 @@ public:
         RootInfo root;
         
         // ルート合法手生成バッファ
-        std::array<Move, N_MAX_MOVES + 256> mbuf;
+        std::array<Move, N_MAX_MOVES> mbuf;
         
         const int myPlayerNum = record.myPlayerNum;
         
@@ -225,7 +225,7 @@ public:
                 else cerr << "no chance. PASS" << endl;
             }
             if (!mbuf[0].isPASS()) {
-                shared.setMyMate(field.getBestClass()); // 上がり
+                shared.setMyMate(field.bestClass()); // 上がり
                 shared.setMyL2Result(1);
             }
             return mbuf[0];
@@ -264,7 +264,7 @@ public:
                 }
             }
             if (Settings::L2SearchOnRoot) {
-                if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
+                if (field.numPlayersAlive() == 2) { // 残り2人の場合はL2判定
                     L2Judge lj(Settings::policyMode ? 200000 : 2000000, searchBuffer);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b);
                     if (l2Result == L2_WIN) { // 勝ち
@@ -281,7 +281,7 @@ public:
         
         // 判定結果を報告
         if (Settings::L2SearchOnRoot) {
-            if (field.getNAlivePlayers() == 2) {
+            if (field.numPlayersAlive() == 2) {
                 // L2探索の結果MATEが立っていれば勝ち
                 // 立っていなければ判定失敗か負け
                 if (b.isL2Mate()) {
@@ -295,7 +295,7 @@ public:
             }
         }
         if (Settings::MateSearchOnRoot) {
-            if (b.isMate() && !b.isL2Mate()) shared.setMyMate(field.getBestClass());
+            if (b.isMate() && !b.isL2Mate()) shared.setMyMate(field.bestClass());
         }
 
         if (monitor) {
@@ -312,7 +312,7 @@ public:
         root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
-        double score[N_MAX_MOVES + 256];
+        double score[N_MAX_MOVES];
         playPolicyScore(score, mbuf.data(), NMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, NMoves);
 

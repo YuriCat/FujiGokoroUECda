@@ -6,25 +6,25 @@ using namespace std;
 
 bool PlayersState::exam() const {
     // 各要素
-    if (getNAlive() <= 0 || N < getNAlive()) {
-        cerr << "PlayersState : illegal NAlive " << getNAlive() << endl;
+    if (numAlive() <= 0 || N < numAlive()) {
+        cerr << "PlayersState : illegal NAlive " << numAlive() << endl;
         return false;
     }
-    if (getNAlive() != countNAlive()) {
+    if (numAlive() != countNAlive()) {
         cerr << "PlayersState : NAlive != count()" << endl;
         return false;
     }
-    if (getNAwake() <= 0 || N < getNAwake()) {
-        cerr << "PlayersState : illegal NAwake " << getNAwake() << endl;
+    if (numAwake() <= 0 || N < numAwake()) {
+        cerr << "PlayersState : illegal NAwake " << numAwake() << endl;
         return false;
     }
-    if (getNAwake() != countNAwake()) {
+    if (numAwake() != countNAwake()) {
         cerr << "PlayersState : NAwake != count()" << endl;
         return false;
     }
 
     // awakeとaliveの関係
-    if (getNAlive() < getNAwake()) {
+    if (numAlive() < numAwake()) {
         cerr << "PlayersState : NAlive < NAwake" << endl;
         return false;
     }
@@ -172,14 +172,14 @@ void Field::prepareForPlay() {
 
     // 場の特徴
     if (isNull()) {
-        if (getNAlivePlayers() == getNAwakePlayers()) { // 空場パスがない
+        if (numPlayersAlive() == numPlayersAwake()) { // 空場パスがない
             board.setFlushLead();
         }
     } else {
         if (owner() == tp) { // セルフフォロー
             board.setSelfFollow();
         } else {
-            if (ps.isSoloAwake()) { // SF ではないが LA
+            if (numPlayersAwake() == 1) { // SF ではないが LA
                 board.setLastAwake();
             }
             if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
@@ -350,10 +350,10 @@ int Field::procImpl(const Move m) {
     assert(exam());
     const int tp = turn();
     if (m.isPASS()) {
-        if (ps.isSoloAwake()) {
+        if (numPlayersAwake() == 1) {
             flush();
         } else {
-            setPlayerAsleep(tp);
+             ps.setAsleep(tp);
             rotateTurnPlayer(tp);
         }
     } else {
@@ -362,21 +362,21 @@ int Field::procImpl(const Move m) {
             if (FAST) {
                 if (isOnlyValue(attractedPlayers, tp)) {
                     // 結果が欲しいプレーヤーがすべて上がったので終了
-                    setNewClassOf(tp, getBestClass());
+                    setNewClassOf(tp, bestClass());
                     return -1;
-                } else if (getNAlivePlayers() == 2) {
+                } else if (numPlayersAlive() == 2) {
                     // ゲーム終了
-                    setNewClassOf(tp, getBestClass());
-                    setNewClassOf(ps.searchOpsPlayer(tp), getBestClass() + 1);
+                    setNewClassOf(tp, bestClass());
+                    setNewClassOf(ps.searchOpsPlayer(tp), bestClass() + 1);
                     return -1;
                 }
             }
             // 通常の上がり処理
             if (agari) { // 即上がり
-                setNewClassOf(tp, getBestClass());
+                setNewClassOf(tp, bestClass());
                 ps.setDead(tp);
-                if (!FAST && ps.isSoloAlive()) {
-                    setNewClassOf(ps.searchL1Player(), getBestClass());
+                if (!FAST && numPlayersAlive() == 1) {
+                    setNewClassOf(ps.searchL1Player(), bestClass());
                     return -1;
                 }
                 attractedPlayers.reset(tp);
@@ -395,15 +395,15 @@ int Field::procImpl(const Move m) {
                 } else { // 他人だけ支配
                     if (isAwake(tp)) {
                         // 自分以外全員をasleepにして自分の手番
-                        setAllAsleep();
-                        setPlayerAwake(tp);
+                        ps.setAllAsleep();
+                        ps.setAwake(tp);
                     } else {
                         // 流れる
                         flush();
                     }
                 }
             } else { // 支配なし
-                if (ps.anyAwake()) {
+                if (numPlayersAwake() > 0) {
                     rotateTurnPlayer(tp);
                 } else {
                     flush();

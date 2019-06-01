@@ -70,7 +70,6 @@ struct PlayersState : public BitArray32<8, 4> {
         assert(!isAwake(p)); assert(!isAlive(p));
         base_t::data_ += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
     }
-    
     void setAllAsleep() {
         base_t::data_ &= (PMASK << 0) | (NMASK << 8);
     }
@@ -89,24 +88,18 @@ struct PlayersState : public BitArray32<8, 4> {
     uint32_t searchOpsPlayer(int p) const {
         // p以外でaliveなプレーヤーを1人挙げる
         // pがaliveであることは保証される
-        assert(isAlive(p)); assert(getNAlive() >= 2);
+        assert(isAlive(p)); assert(numAlive() >= 2);
         return bsf32(data() ^ (BMASK << p));
     }
     
-    constexpr data_t getNAlive() const { return (*this)[1]; }
-    constexpr data_t getNAwake() const { return (*this)[3]; }
+    constexpr data_t numAlive() const { return (*this)[1]; }
+    constexpr data_t numAwake() const { return (*this)[3]; }
     
     unsigned countNAlive() const { return popcnt(part(0)); }
     unsigned countNAwake() const { return popcnt(part(2)); }
-    
-    constexpr data_t anyAlive() const { return data() & (PMASK <<  0); }
-    constexpr data_t anyAwake() const { return data() & (PMASK << 16); }
-    
-    bool isSoloAlive() const { return part(1)  == (1U <<  8); }
-    bool isSoloAwake() const { return part(3)  == (1U << 24); }
-    
-    constexpr data_t getBestClass() const { return N - getNAlive(); } // 最高の階級 = 全員 - 残っている人数
-    constexpr data_t getWorstClass() const { return N - 1; } // 最低の階級 = 全員の最後
+
+    constexpr data_t bestClass() const { return N - numAlive(); } // 最高の階級 = 全員 - 残っている人数
+    constexpr data_t worstClass() const { return N - 1; } // 最低の階級 = 全員の最後
     
     uint32_t searchL1Player() const {
         // 最後に残ったプレーヤーを探す
@@ -133,9 +126,10 @@ struct GameRecord;
 struct Field {
     int myPlayerNum = -1; // 主観的局面表現として使用する宣言を兼ねる
     int phase = PHASE_UNINIT;
-    // tools for playout
-    Move *mbuf = nullptr; // buffer of move
-    std::bitset<32> attractedPlayers; // players we want playout-result
+
+    // シミュレーション用
+    Move *mbuf = nullptr;
+    std::bitset<32> attractedPlayers; // 結果を知りたいプレイヤー集合
 
     CommonStatus common;
     Board board;
@@ -146,13 +140,12 @@ struct Field {
     std::array<int8_t, N_PLAYERS> infoNewClass, infoNewClassPlayer;
     std::array<int8_t, N_PLAYERS> infoPosition;
 
-    uint32_t remQty;
+    // 手札情報
     Cards remCards;
+    uint32_t remQty;
     uint64_t remKey;
 
-    // 手札
     std::array<Hand, N_PLAYERS> hand, opsHand;
-    // 手札情報
     std::array<Cards, N_PLAYERS> usedCards;
     std::array<Cards, N_PLAYERS> dealtCards;
     std::array<Cards, N_PLAYERS> sentCards, recvCards;
@@ -160,7 +153,7 @@ struct Field {
     bool isSubjective() const { return myPlayerNum >= 0; }
     bool know(int p) const { return !isSubjective() || myPlayerNum == p; }
 
-    bool isL2Situation() const { return getNAlivePlayers() == 2; }
+    bool isL2Situation() const { return numPlayersAlive() == 2; }
     bool isEndGame() const { // 末端探索に入るべき局面かどうか。学習にも影響する
         if (isL2Situation()) return true;
         return false;
@@ -180,14 +173,14 @@ struct Field {
 
     bool isAlive(const int p) const { return ps.isAlive(p); }
     bool isAwake(const int p) const { return ps.isAwake(p); }
-    unsigned getNAwakePlayers() const { return ps.getNAwake(); }
-    unsigned getNAlivePlayers() const { return ps.getNAlive(); }
+    unsigned numPlayersAwake() const { return ps.numAwake(); }
+    unsigned numPlayersAlive() const { return ps.numAlive(); }
 
     uint32_t searchOpsPlayer(const int p) const {
         return ps.searchOpsPlayer(p);
     }
-    int getBestClass() const { return ps.getBestClass(); }
-    int getWorstClass() const { return ps.getWorstClass(); }
+    int bestClass() const { return ps.bestClass(); }
+    int worstClass() const { return ps.worstClass(); }
 
     void setClassOf(int p, int cl) {
         infoClass[p] = cl;
@@ -250,13 +243,6 @@ struct Field {
         if (isAlive(turn)) setTurn(turn);
         else rotateTurnPlayer(turn);
     }
-
-    void setPlayerAsleep(const int p) { ps.setAsleep(p); }
-    void setAllAsleep() { ps.setAllAsleep(); }
-    void setPlayerDead(const int p) { ps.setDead(p); }
-    void setPlayerAwake(const int p) { ps.setAwake(p); }
-    void setPlayerAlive(const int p) { ps.setAlive(p); }
-
     void flushState() { // 場を流す ただし b はすでに流れているとき
         ps.flush();
         flushTurnPlayer();
@@ -309,7 +295,7 @@ struct Field {
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
 };
 
-// copy Field arg to dst before playout
+// シミュレーション時の状態コピー
 extern void copyField(const Field& arg, Field *const dst);
 
 /**************************仮想世界**************************/

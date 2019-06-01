@@ -244,7 +244,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 if (!b.isRev() && m.isRev()) {
                     int relativeClass;
                     if (field.isInitGame()) {
-                        relativeClass = (field.getNAlivePlayers() - 1) / 2;
+                        relativeClass = (field.numPlayersAlive() - 1) / 2;
                     } else {
                         relativeClass = field.classOf(tp);
                         for (int r = 0; r < (int)field.classOf(tp); r++) {
@@ -290,7 +290,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 constexpr int base = FEA_IDX(FEA_PASS_NAWAKE_OWNER);
                 if (m.isPASS() && owner != tp) {
                     if (field.isAlive(owner)) {
-                        int key = base + (field.getNAwakePlayers() - 2) * 8 + min(field.getNCards(owner), 8U) - 1;
+                        int key = base + (field.numPlayersAwake() - 2) * 8 + min(field.getNCards(owner), 8U) - 1;
                         Foo(key)
                     }
                 }

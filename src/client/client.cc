@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) { // for UECda
             game.setNewClassOf(p, field.newClassOf(p));
             game.orgCards[p] = field.usedCards[p];
         }
-        if (field.getNAlivePlayers() == 0) { // 先日手でなく通常の終了
+        if (field.numPlayersAlive() == 0) { // 先日手でなく通常の終了
             game.orgCards[lastPlayer] += field.remCards;
             game.setTerminated();
         }
