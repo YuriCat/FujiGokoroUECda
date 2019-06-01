@@ -147,8 +147,8 @@ void initSuits() {
 
     map<array<int, ipow(2, 3) - 3>, int> s1ssMap;
     for (unsigned s0 = 1; s0 < 16; s0 <<= 1) {
-        for (unsigned s1 = 0; s1 < 16; ++s1) {
-            for (unsigned s2 = 0; s2 < 16; ++s2) {
+        for (unsigned s1 = 0; s1 < 16; s1++) {
+            for (unsigned s2 = 0; s2 < 16; s2++) {
                 unsigned s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
                 unsigned s012 = s0 & s1 & s2;
                 int c1 = popcnt(s1), c2 = popcnt(s2);
