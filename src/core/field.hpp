@@ -71,7 +71,6 @@ struct PlayersState : public BitArray32<8, 4> {
         assert(!isAwake(p)); assert(!isAlive(p));
         base_t::data_ += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
     }
-    
     void setAllAsleep() {
         base_t::data_ &= (PMASK << 0) | (NMASK << 8);
     }
@@ -99,13 +98,7 @@ struct PlayersState : public BitArray32<8, 4> {
     
     unsigned countNAlive() const { return popcnt(part(0)); }
     unsigned countNAwake() const { return popcnt(part(2)); }
-    
-    constexpr data_t anyAlive() const { return data() & (PMASK <<  0); }
-    constexpr data_t anyAwake() const { return data() & (PMASK << 16); }
-    
-    bool isSoloAlive() const { return part(1)  == (1U <<  8); }
-    bool isSoloAwake() const { return part(3)  == (1U << 24); }
-    
+
     constexpr data_t bestClass() const { return N - numAlive(); } // 最高の階級 = 全員 - 残っている人数
     constexpr data_t worstClass() const { return N - 1; } // 最低の階級 = 全員の最後
     

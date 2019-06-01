@@ -179,7 +179,7 @@ void Field::prepareForPlay() {
         if (owner() == tp) { // セルフフォロー
             fieldInfo.setSelfFollow();
         } else {
-            if (ps.isSoloAwake()) { // SF ではないが LA
+            if (numPlayersAwake() == 1) { // SF ではないが LA
                 fieldInfo.setLastAwake();
             }
             if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
@@ -350,7 +350,7 @@ int Field::procImpl(const MoveInfo m) {
     assert(exam());
     const int tp = turn();
     if (m.isPASS()) {
-        if (ps.isSoloAwake()) {
+        if (numPlayersAwake() == 1) {
             flush();
         } else {
              ps.setAsleep(tp);
@@ -375,7 +375,7 @@ int Field::procImpl(const MoveInfo m) {
             if (agari) { // 即上がり
                 setNewClassOf(tp, bestClass());
                 ps.setDead(tp);
-                if (!FAST && ps.isSoloAlive()) {
+                if (!FAST && numPlayersAlive() == 1) {
                     setNewClassOf(ps.searchL1Player(), bestClass());
                     return -1;
                 }
@@ -403,7 +403,7 @@ int Field::procImpl(const MoveInfo m) {
                     }
                 }
             } else { // 支配なし
-                if (ps.anyAwake()) {
+                if (numPlayersAwake() > 0) {
                     rotateTurnPlayer(tp);
                 } else {
                     flush();
