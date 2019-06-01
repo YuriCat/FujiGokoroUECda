@@ -28,17 +28,13 @@ public:
     constexpr static int N_PARAMS_ = _N_PARAMS_; // パラメータの数
     constexpr static int N_PHASES_ = _N_PHASES_; // ドメインの数(複数のドメインに同じパラメータを使い回す場合)
     constexpr static int N_STAGES_ = _N_STAGES_; // 第1分岐の数(パラメータを分ける)
-    
-    double T_; // temperature
-    
+
     real_t param_[N_STAGES_ * N_PARAMS_];
     
     constexpr static int params()noexcept{ return N_PARAMS_; }
     constexpr static int phases()noexcept{ return N_PHASES_; }
     constexpr static int stages()noexcept{ return N_STAGES_; }
-    
-    real_t temperature()const noexcept{ return T_; }
-    
+
     real_t param(int i, int st = 0)const{
         assert_index(i); assert_stage(st);
         return param_[st * params() + i];
@@ -144,22 +140,14 @@ public:
             param_[i] = nd(dice);
         }
     }
-    
-    void setTemperature(double at)noexcept{
-        T_ = at;
-    }
-    
-    SoftmaxClassifier(const real_t* ap):
-    T_(1.0)
-    {
+
+    SoftmaxClassifier(const real_t* ap) {
         for(int i = 0; i < N_STAGES_ * N_PARAMS_; ++i){
             param_[i] = ap[i];
         }
     }
     
-    SoftmaxClassifier():
-    T_(1.0)
-    {
+    SoftmaxClassifier() {
         for(int i = 0; i < N_STAGES_ * N_PARAMS_; ++i){
             param_[i] = 0;
         }
@@ -168,9 +156,6 @@ public:
     bool exam()const noexcept{
         // nan, inf
         auto valid = [](real_t d)->bool{ return !std::isnan(d) && !std::isinf(d); };
-        if(!valid(T_)){
-            return false;
-        }
         for(int i = 0; i < N_STAGES_ * N_PARAMS_; ++i){
             if(!valid(param_[i])){
                 return false;

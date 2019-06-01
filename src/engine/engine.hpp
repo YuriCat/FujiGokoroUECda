@@ -57,10 +57,6 @@ public:
         
         shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
         shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-
-        // 方策の温度
-        shared.basePlayPolicy.setTemperature(Settings::simulationTemperaturePlay);
-        shared.baseChangePolicy.setTemperature(Settings::simulationTemperatureChange);
     }
     void initGame() {
         // 汎用変数の設定

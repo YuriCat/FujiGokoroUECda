@@ -9,6 +9,7 @@ using namespace std;
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace Settings {
+    const double estimationTemperatureChange = 1.0;
     const double estimationTemperaturePlay = 1.1;
     const int maxRejection = 800; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 32;
@@ -314,7 +315,8 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     // 交換方策に従った交換を行う
     Cards cand[N_MAX_CHANGES];
     int NCands = genChange(cand, cards, qty);
-    int index = changeWithPolicy(cand, NCands, cards, qty, shared.baseChangePolicy, ptools->dice);
+    int index = changeWithPolicy(cand, NCands, cards, qty, shared.baseChangePolicy,
+                                 Settings::estimationTemperatureChange, ptools->dice);
     return cand[index];
 }
 

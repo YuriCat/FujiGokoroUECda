@@ -7,6 +7,15 @@
 
 using namespace std;
 
+namespace Settings {
+    const bool L2SearchInSimulation = true;
+    const bool MateSearchInSimulation = true;
+    const double simulationTemperatureChange = 1.0;
+    const double simulationTemperaturePlay = 1.1;
+    const double simulationAmplifyCoef = 0.22;
+    const double simulationAmplifyExponent = 2;
+}
+
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools) {
     int turn = field.turn();
@@ -99,7 +108,7 @@ int startAllSimulation(Field& field,
             Cards change[N_MAX_CHANGES];
             const int changes = genChange(change, field.getCards(from), qty);
             int index = changeWithPolicy(change, changes, field.getCards(from), qty,
-                                         pshared->baseChangePolicy, ptools->dice);
+                                         pshared->baseChangePolicy, Settings::simulationTemperatureChange, ptools->dice);
             field.makeChange(from, to, qty, change[index], false);
         }
     }

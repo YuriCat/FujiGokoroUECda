@@ -196,7 +196,7 @@ int testSelector(const MatchRecord& match) {
                         
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
-                        double rate = Settings::simulationAmplifyExponent;
+                        double rate = 2; // エンジン設定が変化した場合注意
                         
                         BiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, rate);
                         if (recordIndex >= 0) {

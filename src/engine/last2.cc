@@ -46,92 +46,83 @@ L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
     f.b = b;
     return f;
 }
-L2Field procAndFlushL2Field(const L2Field& cur, const Move mv) {
+L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
     L2Field f;
     f.b = cur.b;
     f.info = cur.info;
     f.info.init();
-    f.b.procAndFlush(mv);
+    f.b.procAndFlush(m);
     return f;
 }
-int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo mi) {
-    pnext->b = cur.b;
-    pnext->info = cur.info;
+int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
+    *pnext = cur;
     pnext->info.init();
-#ifdef DEBUG
-    pnext->p = cur.p;
-#endif
-    const Move mv = mi;
-    
     if (cur.isUnrivaled()) { // 独壇場
-        if (mv.isPASS()) {
+        if (m.isPASS()) {
             pnext->b.flush();
-        } else if (mi.dominatesMe()) {
+        } else if (m.dominatesMe()) {
             // 自己支配がかかるので、流れて自分から
-            pnext->b.procAndFlush(mv);
+            pnext->b.procAndFlush(m);
         } else {
             // 流れなければSFが続く
-            pnext->b.proc(mv);
+            pnext->b.proc(m);
             if (!pnext->b.isNull()) {
                 pnext->setSelfFollow();
             }
         }
-    } else { // 独壇場でない
-        if (cur.isNull()) {
-            if (mi.dominatesAll()) {
-                pnext->b.procAndFlush(mv);
-            } else if (mi.dominatesOthers()) {
-                pnext->b.proc(mv);
-                if (!pnext->b.isNull()) {
-                    pnext->setSelfFollow();
-                }
-            } else {
-                pnext->b.proc(mv);
-                if (!pnext->b.isNull()) {
+    } else if (cur.isNull()) {
+        if (m.dominatesAll()) {
+            pnext->b.procAndFlush(m);
+        } else if (m.dominatesOthers()) {
+            pnext->b.proc(m);
+            if (!pnext->b.isNull()) {
+                pnext->setSelfFollow();
+            }
+        } else {
+            pnext->b.proc(m);
+            if (!pnext->b.isNull()) {
+                pnext->flipTurnPlayer(); return 1;
+            }
+        }
+    } else { // 独壇場でない通常場
+        if (m.isPASS()) { // pass
+            if (cur.isLastAwake()) {
+                pnext->b.flush();
+                // ここがFlushLeadになるのは探索入り口のみ
+                if (!cur.isFlushLead()) {
                     pnext->flipTurnPlayer(); return 1;
                 }
-            }
-        } else { // 通常場
-            if (mv.isPASS()) { // pass
-                if (cur.isLastAwake()) {
-                    pnext->b.flush();
-                    // ここがFlushLeadになるのは探索入り口のみ
-                    if (!cur.isFlushLead()) {
-                        pnext->flipTurnPlayer();
-                        return 1;
-                    }
-                } else {
-                    pnext->setLastAwake();
-                    if (!cur.isFlushLead()) {
-                        pnext->setFlushLead();
-                    }
-                    pnext->flipTurnPlayer();
-                    return 1;
+            } else {
+                pnext->setLastAwake();
+                if (!cur.isFlushLead()) {
+                    pnext->setFlushLead();
                 }
-            } else { // not pass
-                if (cur.isLastAwake()) {
-                    if (mi.dominatesMe()) {
-                        // 自己支配がかかるので、流れて自分から
-                        pnext->b.procAndFlush(mv);
-                    } else {
-                        pnext->b.proc(mv);
-                        if (!pnext->b.isNull()) {
-                            pnext->setSelfFollow();
-                        }
+                pnext->flipTurnPlayer();
+                return 1;
+            }
+        } else { // not pass
+            if (cur.isLastAwake()) {
+                if (m.dominatesMe()) {
+                    // 自己支配がかかるので、流れて自分から
+                    pnext->b.procAndFlush(m);
+                } else {
+                    pnext->b.proc(m);
+                    if (!pnext->b.isNull()) {
+                        pnext->setSelfFollow();
+                    }
+                }
+            } else {
+                if (m.dominatesAll()) {
+                    pnext->b.procAndFlush(m);
+                } else if (m.dominatesOthers()) {
+                    pnext->b.proc(m);
+                    if (!pnext->b.isNull()) {
+                        pnext->setSelfFollow();
                     }
                 } else {
-                    if (mi.dominatesAll()) {
-                        pnext->b.procAndFlush(mv);
-                    } else if (mi.dominatesOthers()) {
-                        pnext->b.proc(mv);
-                        if (!pnext->b.isNull()) {
-                            pnext->setSelfFollow();
-                        }
-                    } else {
-                        pnext->b.proc(mv);
-                        if (!pnext->b.isNull()) {
-                            pnext->flipTurnPlayer(); return 1;
-                        }
+                    pnext->b.proc(m);
+                    if (!pnext->b.isNull()) {
+                        pnext->flipTurnPlayer(); return 1;
                     }
                 }
             }
@@ -290,15 +281,13 @@ int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b,
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ
-    int res = judge<1, 1024>(0, mbuf, myHand, opsHand, field);
-    return res;
+    return judge<1, 1024>(0, mbuf, myHand, opsHand, field);
 }
 
-int L2Judge::start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
+int L2Judge::start_check(const MoveInfo m, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo info) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     init();
     L2Field field = convL2Field(b, info); // L2型へのチェンジ
-    MoveInfo tmp = mi;
-    int res = check(0, mbuf, tmp, myHand, opsHand, field);
-    return res;
+    MoveInfo tm = m;
+    return check(0, mbuf, tm, myHand, opsHand, field);
 }
