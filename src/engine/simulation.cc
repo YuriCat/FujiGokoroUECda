@@ -7,8 +7,17 @@
 
 using namespace std;
 
+namespace Settings {
+    const bool L2SearchInSimulation = true;
+    const bool MateSearchInSimulation = true;
+    const double simulationTemperatureChange = 1.0;
+    const double simulationTemperaturePlay = 1.1;
+    const double simulationAmplifyCoef = 0.22;
+    const double simulationAmplifyExponent = 2;
+}
+
 Move simulationMove(Field& field, const SharedData& shared,
-                    ThreadTools *const ptools) {
+                        ThreadTools *const ptools) {
     int turn = field.turn();
     int NMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
     if (NMoves == 1) return field.mbuf[0];
@@ -70,21 +79,16 @@ int simulation(Field& field,
     return 0;
 }
 
-int startPlaySimulation(Field& field,
-                        Move m,
+int startPlaySimulation(Field& field, Move m,
                         SharedData *const pshared,
                         ThreadTools *const ptools) {
-    DERR << field.toString();
-    DERR << "turn : " << field.turn() << endl;
     if (field.proceed(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 
-int startChangeSimulation(Field& field,
-                          int p, Cards c,
+int startChangeSimulation(Field& field, int p, Cards c,
                           SharedData *const pshared,
                           ThreadTools *const ptools) {
-    
     int changePartner = field.classPlayer(getChangePartnerClass(field.classOf(p)));
     field.makeChange(p, changePartner, c.count(), c, false);
     field.prepareAfterChange();
@@ -104,7 +108,7 @@ int startAllSimulation(Field& field,
             Cards change[N_MAX_CHANGES];
             const int changes = genChange(change, field.getCards(from), qty);
             int index = changeWithPolicy(change, changes, field.getCards(from), qty,
-                                         pshared->baseChangePolicy, ptools->dice);
+                                         pshared->baseChangePolicy, Settings::simulationTemperatureChange, ptools->dice);
             field.makeChange(from, to, qty, change[index], false);
         }
     }

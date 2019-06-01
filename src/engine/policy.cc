@@ -507,7 +507,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             }
             FASSERT(s,);
         }
-        pol.feedCandidateScore(i, exp(s / pol.temperature()));
+        pol.feedCandidateScore(i, exp(s));
         
         if (!M || dst != nullptr) dst[i] = s;
     }
@@ -666,7 +666,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 Foo(base + Index::get(rank, RANK_JOKER, afterPqr[rank]));
             }
         }
-        pol.feedCandidateScore(i, exp(s / pol.temperature()));
+        pol.feedCandidateScore(i, exp(s));
         if (!M || dst != nullptr) dst[i] = s;
     }
     pol.finishCalculatingScore();
