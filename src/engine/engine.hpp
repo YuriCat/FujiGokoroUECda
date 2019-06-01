@@ -24,13 +24,8 @@ namespace Settings {
 
 class WisteriaEngine {
 private:
-    ThreadTools threadTools[N_THREADS];
-    
-    // 0番スレッドのサイコロをメインサイコロとして使う
-    decltype(threadTools[0].dice)& dice = threadTools[0].dice;
-    // 先読み用バッファはスレッド0のもの
-    MoveInfo *const searchBuffer = threadTools[0].mbuf;
-    
+    ThreadTools rootTools;
+    std::vector<ThreadTools> threadTools;
 public:
     SharedData shared;
     decltype(shared.record)& record = shared.record;
@@ -38,9 +33,7 @@ public:
     
     void setRandomSeed(uint64_t s) {
         // 乱数系列を初期化
-        for (int th = 0; th < N_THREADS; th++) {
-            threadTools[th].dice.srand(s + th);
-        }
+        rootTools.dice.srand(s);
     }
     
     void initMatch(int playerNum) {
@@ -67,14 +60,19 @@ public:
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
+        // 1スレッドの場合は関数で、そうでなければスレッドで開く
         if (numThreads > 1) {
+            // スレッド数に合わせたThreadToolsを準備
+            if ((int)threadTools.size() < numThreads - 1) threadTools.resize(numThreads - 1);
+            for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.srand(rootTools.dice() + i);
             std::vector<std::thread> threads;
             for (int i = 0; i < numThreads; i++) {
-                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared, &threadTools[i]));
+                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared,
+                                     i == 0 ? &rootTools : &threadTools[i - 1]));
             }
             for (auto& t : threads) t.join();
         } else {
-            MonteCarloThread(0, 1, &root, &field, &shared, &threadTools[0]);
+            MonteCarloThread(0, 1, &root, &field, &shared, &rootTools);
         }
     }
     Cards change(unsigned changeQty) { // 交換関数
@@ -100,7 +98,7 @@ public:
         std::array<Cards, N_MAX_CHANGES> cand;
         int numCands = genChange(cand.data(), tmp, changeQty);
         if (numCands == 1) return cand[0];
-        std::shuffle(cand.begin(), cand.begin() + numCands, dice);
+        std::shuffle(cand.begin(), cand.begin() + numCands, rootTools.dice);
         
         // 必勝チェック&枝刈り
         for (int i = 0; i < numCands; i++) {
@@ -120,7 +118,7 @@ public:
                 Hand mine, ops;
                 mine.set(restCards);
                 ops.set(CARDS_ALL - restCards);
-                if (judgeHandMate(1, searchBuffer, mine, ops, b, fieldInfo)) {
+                if (judgeHandMate(1, rootTools.mbuf, mine, ops, b, fieldInfo)) {
                     CERR << "CHANGE MATE!" << endl;
                     return cand[i]; // 必勝
                 }
@@ -238,7 +236,7 @@ public:
                 NMoves += genJokerGroup(mbuf.data() + NMoves, myCards, opsCards, b);
             }
         }
-        std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, dice);
+        std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, rootTools.dice);
         
         // 場の情報をまとめる
         field.prepareForPlay();
@@ -257,13 +255,13 @@ public:
                 move.setDM(); // 自己支配
             }
             if (Settings::MateSearchOnRoot) { // 多人数必勝判定
-                if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b, fieldInfo)) {
+                if (checkHandMate(1, rootTools.mbuf, move, myHand, opsHand, b, fieldInfo)) {
                     move.setMPMate(); fieldInfo.setMPMate();
                 }
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.numPlayersAlive() == 2) { // 残り2人の場合はL2判定
-                    L2Judge lj(Settings::policyMode ? 200000 : 2000000, searchBuffer);
+                    L2Judge lj(Settings::policyMode ? 200000 : 2000000, rootTools.mbuf);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                     if (l2Result == L2_WIN) { // 勝ち
                         DERR << "l2win!" << endl;
@@ -360,10 +358,10 @@ public:
             if (fieldInfo.isUnrivaled()) {
                 // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                 //    そうでなければパスを優先
-                int division = divisionCount(searchBuffer, myCards);
+                int division = divisionCount(rootTools.mbuf, myCards);
                 for (int i = 0; i < NMoves; i++) {
                     Cards nextCards = myCards - root.child[i].move.cards();
-                    root.child[i].nextDivision = divisionCount(searchBuffer, nextCards);
+                    root.child[i].nextDivision = divisionCount(rootTools.mbuf, nextCards);
                 }
                 next = root.sort(next, [](const RootAction& a) { return a.nextDivision; });
                 if (root.child[0].nextDivision < division) {
