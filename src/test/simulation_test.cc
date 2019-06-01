@@ -15,7 +15,6 @@ static Clock cl;
 
 int testSimulation(const MatchRecord& match) {
     // 棋譜を読んでシミュレーションを行う
-    tools.init(0);
     tools.dice.srand(1);
     mt19937 dice(0);
 

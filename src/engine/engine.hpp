@@ -47,10 +47,6 @@ public:
         // サイコロ初期化
         // シード指定の場合はこの後に再設定される
         setRandomSeed((uint32_t)time(NULL));
-        // スレッドごとのデータ初期化
-        for (int th = 0; th < N_THREADS; th++) {
-            threadTools[th].init(th);
-        }
         shared.initMatch(playerNum);
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
@@ -400,7 +396,6 @@ public:
         shared.closeGame();
     }
     void closeMatch() {
-        for (int th = 0; th < N_THREADS; th++) threadTools[th].close();
         shared.closeMatch();
     }
     ~WisteriaEngine() {
