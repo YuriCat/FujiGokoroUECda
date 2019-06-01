@@ -82,6 +82,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     bestReward = shared.gameReward[bestClass];
     worstReward = shared.gameReward[worstClass];
     rewardGap = bestReward - worstReward;
+#ifdef DEFEAT_RIVAL_MC
     uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
     if (popcnt(rivals) == 1) {
         int rnum = bsf(rivals);
@@ -89,6 +90,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
             rivalPlayerNum = rnum;
         }
     }
+#endif
     limitSimulations = limSim < 0 ? 100000 : limSim;
 }
 void RootInfo::setChange(const Cards *const a, int num,
