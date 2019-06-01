@@ -227,7 +227,7 @@ public:
                 else cerr << "no chance. PASS" << endl;
             }
             if (!mbuf[0].isPASS()) {
-                shared.setMyMate(field.getBestClass()); // 上がり
+                shared.setMyMate(field.bestClass()); // 上がり
                 shared.setMyL2Result(1);
             }
             return mbuf[0];
@@ -266,7 +266,7 @@ public:
                 }
             }
             if (Settings::L2SearchOnRoot) {
-                if (field.getNAlivePlayers() == 2) { // 残り2人の場合はL2判定
+                if (field.numPlayersAlive() == 2) { // 残り2人の場合はL2判定
                     L2Judge lj(Settings::policyMode ? 200000 : 2000000, searchBuffer);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                     if (l2Result == L2_WIN) { // 勝ち
@@ -284,7 +284,7 @@ public:
         
         // 判定結果を報告
         if (Settings::L2SearchOnRoot) {
-            if (field.getNAlivePlayers() == 2) {
+            if (field.numPlayersAlive() == 2) {
                 // L2探索の結果MATEが立っていれば勝ち
                 // 立っていなければ判定失敗か負け
                 if (fieldInfo.isL2Mate()) {
@@ -298,7 +298,7 @@ public:
             }
         }
         if (Settings::MateSearchOnRoot) {
-            if (fieldInfo.isMPMate()) shared.setMyMate(field.getBestClass());
+            if (fieldInfo.isMPMate()) shared.setMyMate(field.bestClass());
         }
 
         if (monitor) {

@@ -100,7 +100,7 @@ int testRecordL2(const Record& record) {
         [&](const Field& field) {}, // first callback
         [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
             
-            if (field.getNAlivePlayers() == 2) {
+            if (field.numPlayersAlive() == 2) {
                 const int turnPlayer = field.turn();
                 const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
                 const Hand& myHand = field.getHand(turnPlayer);

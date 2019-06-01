@@ -81,8 +81,8 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     }
     myPlayerNum = shared.record.myPlayerNum;
     rivalPlayerNum = -1;
-    bestClass = field.getBestClass();
-    worstClass = field.getWorstClass();
+    bestClass = field.bestClass();
+    worstClass = field.worstClass();
     bestReward = shared.gameReward[bestClass];
     worstReward = shared.gameReward[worstClass];
     rewardGap = bestReward - worstReward;

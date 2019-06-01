@@ -50,7 +50,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
         (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
-            if (field.getNAlivePlayers() <= 2) return 0;
+            if (field.numPlayersAlive() <= 2) return 0;
             //cerr << field.toDebugString() << endl;
             // この手の前までの情報から手札推定を行う
             RandomDealer estimator(field, field.turn());

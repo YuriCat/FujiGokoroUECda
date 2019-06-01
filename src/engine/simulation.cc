@@ -67,8 +67,8 @@ int simulation(Field& field,
             int l2Result = l2.start_judge(field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
             if (l2Result == L2_WIN || l2Result == L2_LOSE) {
                 int winner = l2Result == L2_WIN ? 0 : 1;
-                field.setNewClassOf(p[winner],     field.getBestClass());
-                field.setNewClassOf(p[1 - winner], field.getBestClass() + 1);
+                field.setNewClassOf(p[winner],     field.bestClass());
+                field.setNewClassOf(p[1 - winner], field.bestClass() + 1);
                 break;
             }
         }
