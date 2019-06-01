@@ -38,15 +38,6 @@ constexpr int N_REWARD_CALCULATED_GAMES = 32;
 // 方策の計算設定
 using policy_value_t = float;
 
-// シミュレーション中の選び方のアルゴリズム
-enum Selector {
-    NAIVE, THRESHOLD, POLY_BIASED, EXP_BIASED,
-};
-// 相手の手札の配り方のアルゴリズム
-enum DealType {
-    RANDOM, SBJINFO, BIAS, REJECTION,
-};
-
 // プレーヤー人数
 #define N_NORMAL_PLAYERS (5)
 
@@ -64,6 +55,8 @@ struct ConfigReader {
     ConfigReader(std::string cfile);
 };
 extern ConfigReader configReader;
+
+#define Dice XorShift64
 
 /**************************以下は直接変更しない**************************/
 

@@ -6,6 +6,10 @@
 #include "../core/prim2.hpp"
 #include "../base/softmaxClassifier.hpp"
 
+enum Selector {
+    NAIVE, THRESHOLD, POLY_BIASED, EXP_BIASED,
+};
+
 namespace PlayPolicySpace {
     enum {
         // 後場パラメータ
