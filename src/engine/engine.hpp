@@ -193,7 +193,7 @@ public:
         RootInfo root;
         
         // ルート合法手生成バッファ
-        std::array<MoveInfo, N_MAX_MOVES + 256> mbuf;
+        std::array<MoveInfo, N_MAX_MOVES> mbuf;
         
         const int myPlayerNum = record.myPlayerNum;
         
@@ -315,7 +315,7 @@ public:
         root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
-        double score[N_MAX_MOVES + 256];
+        double score[N_MAX_MOVES];
         playPolicyScore(score, mbuf.data(), NMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, NMoves);
 
