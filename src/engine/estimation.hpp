@@ -1,13 +1,8 @@
 #pragma once
 
-// 相手手札を推定して配布
-
 #include "../core/field.hpp"
 #include "../core/record.hpp"
-#include "../core/action.hpp"
 #include "data.hpp"
-#include "mate.hpp"
-#include "policy.hpp"
 
 class RandomDealer {
     // ランダムに手札配置を作る

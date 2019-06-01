@@ -70,21 +70,16 @@ int simulation(Field& field,
     return 0;
 }
 
-int startPlaySimulation(Field& field,
-                        MoveInfo m,
+int startPlaySimulation(Field& field, MoveInfo m,
                         SharedData *const pshared,
                         ThreadTools *const ptools) {
-    DERR << field.toString();
-    DERR << "turn : " << field.turn() << endl;
     if (field.proceed(m) == -1) return 0;
     return simulation(field, pshared, ptools);
 }
 
-int startChangeSimulation(Field& field,
-                          int p, Cards c,
+int startChangeSimulation(Field& field, int p, Cards c,
                           SharedData *const pshared,
                           ThreadTools *const ptools) {
-    
     int changePartner = field.classPlayer(getChangePartnerClass(field.classOf(p)));
     field.makeChange(p, changePartner, c.count(), c, false);
     field.prepareAfterChange();

@@ -1,3 +1,4 @@
+#include "../core/action.hpp"
 #include "mate.hpp"
 #include "policy.hpp"
 #include "estimation.hpp"
@@ -265,7 +266,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
 void RandomDealer::checkDeal(const Cards *dst, bool sbj) const {
     for (int p = 0; p < N; p++) DERR << dst[p] << endl;
     for (int r = 0; r < N; r++) {
-        ASSERT(countCards(dst[infoClassPlayer[r]]) == NOwn[r],
+        ASSERT(dst[infoClassPlayer[r]].count() == NOwn[r],
                cerr << "class = " << r << " NOwn = " << (int)NOwn[r];
                cerr << " cards = " << dst[infoClassPlayer[r]] << endl;);
     }
@@ -433,7 +434,7 @@ void RandomDealer::setWeightInWA() {
     vector<double> probs;
     const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
     if (T == 0) return; // どうしようもない
-    const int NMyDC = countCards(myDealtCards);
+    const int NMyDC = myDealtCards.count();
 
     // 相手の献上後の所持カードで判明しているもの
     const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
@@ -528,7 +529,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     }
 
     // 結局配る枚数
-    NdealCards = countCards(dealCards);
+    NdealCards = dealCards.count();
     ASSERT(NdealCards == accumulate(NDeal.begin(), NDeal.begin() + N, 0),
            cerr << NdealCards << " " << NDeal << " " << accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
 
