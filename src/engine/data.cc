@@ -86,9 +86,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
     if (popcnt(rivals) == 1) {
         int rnum = bsf(rivals);
-        if (field.isAlive(rnum)) {
-            rivalPlayerNum = rnum;
-        }
+        if (field.isAlive(rnum)) rivalPlayerNum = rnum;
     }
 #endif
     limitSimulations = limSim < 0 ? 100000 : limSim;
