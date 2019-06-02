@@ -142,8 +142,7 @@ public:
         // ルートノード設定
         Field field;
         field.fromRecord(game, myPlayerNum, -1);
-        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
-                               : std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
+        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount : 100000;
         root.setChange(cand.data(), numCands, field, shared, limitSimulations);
         
         // 方策関数による評価
@@ -309,8 +308,7 @@ public:
         }
         
         // ルートノード設定
-        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
-                               : std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
+        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount : 100000;
         root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)

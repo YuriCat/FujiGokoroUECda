@@ -7,6 +7,7 @@ namespace Settings {
     const double valuePerClock = 5.0 / (THINKING_LEVEL * THINKING_LEVEL) / pow(10.0, 8);
     // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
     const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6); 
+    const double simulationFault = 4;
 }
 
 int selectBanditAction(const RootInfo& root, Dice& dice) {
@@ -42,35 +43,39 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
 
 bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
     // Regretによる打ち切り判定
+    if (root.allSimulations < 30 * pow(root.candidates, 0.7)) return false;
 
     const int candidates = root.candidates; // 候補数
     auto& child = root.child;
     double rewardScale = root.rewardGap;
 
     struct Dist { double mean, sem, reg; };
-    double line = -1600.0 * double(2 * simuTime * Settings::valuePerSec) / rewardScale;
+    double line = double(Settings::simulationFault + 2 * simuTime * Settings::valuePerSec) / rewardScale;
     
     // regret check
-    Dist d[N_MAX_MOVES];
+    Dist dist[N_MAX_MOVES];
     for (int i = 0; i < candidates; i++) {
-        d[i] = {child[i].mean(), sqrt(child[i].mean_var()), 0};
+        dist[i] = {child[i].mean(), sqrt(child[i].mean_var()), 0};
     }
     for (int t = 0; t < 1600; t++) {
-        double tmpBest = -1.0;
-        double tmpScore[N_MAX_MOVES];
+        double bestValue = -100;
+        double realValue[N_MAX_MOVES];
         for (int i = 0; i < candidates; i++) {
-            const Dist& tmpD = d[i];
-            std::normal_distribution<double> nd(tmpD.mean, tmpD.sem);
-            double tmpDBL = nd(dice);
-            tmpScore[i] = tmpDBL;
-            if (tmpDBL > tmpBest) tmpBest = tmpDBL;
+            const Dist& d = dist[i];
+            // 現在の推定から収束値を予測
+            std::normal_distribution<double> nd0(d.mean, d.sem);
+            double limit = nd0(dice);
+            // 収束値から真の値を予測
+            std::normal_distribution<double> nd1(limit, Settings::simulationFault / rewardScale);
+            realValue[i] = nd1(dice);
+            bestValue = max(bestValue, realValue[i]);
         }
         for (int i = 0; i < candidates; i++) {
-            d[i].reg += tmpScore[i] - tmpBest;
+            dist[i].reg += bestValue - realValue[i];
         }
     }
     for (int i = 0; i < candidates; i++) {
-        if (d[i].reg > line) return true;
+        if (dist[i].reg < 1600 * line) return true;
     }
     return false;
 }
