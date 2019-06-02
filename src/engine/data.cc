@@ -77,10 +77,8 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     }
     myPlayerNum = shared.record.myPlayerNum;
     rivalPlayerNum = -1;
-    bestClass = field.bestClass();
-    worstClass = field.worstClass();
-    bestReward = shared.gameReward[bestClass];
-    worstReward = shared.gameReward[worstClass];
+    bestReward = shared.gameReward[field.bestClass()];
+    worstReward = shared.gameReward[field.worstClass()];
     rewardGap = bestReward - worstReward;
     if (Settings::maximizePosition) {
         uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
