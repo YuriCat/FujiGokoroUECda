@@ -190,12 +190,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     
     // 以下参考にする統計量
     child[triedIndex].turnSum += field.turnCount();
-    
-#ifdef FIXED_N_PLAYOUTS
-    if (allSimulations >= FIXED_N_PLAYOUTS) exitFlag = true;
-#else
     if (allSimulations >= limitSimulations) exitFlag = true;
-#endif
     unlock();
 }
 

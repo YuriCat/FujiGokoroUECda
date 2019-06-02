@@ -53,6 +53,9 @@ int main(int argc, char* argv[]) { // for UECda
             int numThreads = atoi(argv[c + 1]);
             Settings::numPlayThreads = numThreads;
             Settings::numChangeThreads = max(1, numThreads / 2);
+        } else if (arg == "-sc") { // fixed simulation count
+            int simulationCount = atoi(argv[c + 1]);
+            Settings::fixedSimulationCount = simulationCount;
         }
     }
     

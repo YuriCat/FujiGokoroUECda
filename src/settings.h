@@ -12,10 +12,6 @@ const std::string MY_NAME = "lilovyy";
 const std::string MY_POL_NAME = "maLilovyy";
 const std::string MY_VERSION = "20190514";
 
-// 重要な設定
-
-//#define FIXED_N_PLAYOUTS (2000) // プレイアウト回数を固定(デバッグ、実験用)
-
 // 戦略設定
 
 // 思考レベル(0~＋∞)
@@ -40,6 +36,7 @@ namespace Settings {
     extern bool policyMode;
     extern int numPlayThreads;
     extern int numChangeThreads;
+    extern int fixedSimulationCount;
 }
 
 extern std::string DIRECTORY_PARAMS_IN;
@@ -57,6 +54,7 @@ extern ConfigReader configReader;
 
 // 教師用ビルドでは1スレッドでルートでの方策の利用はなし
 #ifdef TEACHER
+
 #ifdef N_THREADS
 #undef N_THREADS
 #endif
@@ -67,10 +65,6 @@ extern ConfigReader configReader;
 
 #ifdef USE_POLICY_TO_ROOT
 #undef USE_POLICY_TO_ROOT
-#endif
-
-#ifdef FIXED_N_PLAYOUTS
-#undef FIXED_N_PLAYOUTS
 #endif
 
 #endif

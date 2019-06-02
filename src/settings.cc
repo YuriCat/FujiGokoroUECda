@@ -10,6 +10,8 @@ namespace Settings {
 
     int numPlayThreads = max(1, N_THREADS);
     int numChangeThreads = max(1, (numPlayThreads + 1) / 2);
+
+    int fixedSimulationCount = -1;
 }
 
 string DIRECTORY_PARAMS_IN = "";
