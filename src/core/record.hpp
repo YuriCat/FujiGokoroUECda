@@ -100,7 +100,7 @@ struct MatchRecord {
     int positionOf(int p) const { // score から順位を調べる
         int pos = 0;
         for (int pp = 0; pp < N_PLAYERS; pp++) {
-            if (score[pp] < score[p]) pos += 1;
+            if (score[p] < score[pp]) pos += 1;
         }
         return pos;
     }

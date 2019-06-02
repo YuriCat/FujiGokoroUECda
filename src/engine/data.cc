@@ -159,9 +159,8 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
         lock();
         child[triedIndex].monteCarloScore += mySc;
         monteCarloAllScore += mySc;
-    } else {
-        // ライバルの結果も考えるとき
-        int rivalRew = field.infoReward[rivalPlayerNum];
+    } else { // ライバルの結果も考えるとき
+        int rivalRew = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
         ASSERT(0 <= rivalRew && rivalRew <= bestReward, cerr << rivalRew << endl;);
         
         BetaDistribution rivalSc = BetaDistribution((rivalRew - worstReward) / (double)rewardGap,
@@ -170,7 +169,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
         
         lock();
-        child[triedIndex].myScore += mySc);
+        child[triedIndex].myScore += mySc;
         child[triedIndex].rivalScore += rivalSc;
         
         mySc *= 1 - RIVAL_RATE;
