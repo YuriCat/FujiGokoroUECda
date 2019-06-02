@@ -19,7 +19,8 @@ namespace Settings {
     const bool changeHeuristicsOnRoot = true;
     const bool addPolicyOnRoot = true;
     const bool L2SearchOnRoot = true;
-    const bool MateSearchOnRoot = true;
+    const bool mateSearchOnRoot = true;
+    const bool defeatRivalMate = true;
 }
 
 class WisteriaEngine {
@@ -108,7 +109,7 @@ public:
             Cards restCards = myCards - cand[i];
 
             // D3を持っている場合、自分からなので必勝チェック
-            if (containsD3(restCards)) {
+            if (Settings::mateSearchOnRoot && containsD3(restCards)) {
                 const Board b = OrderToNullBoard(0); // 通常オーダーの空場
                 FieldAddInfo fieldInfo;
                 fieldInfo.init();
@@ -256,7 +257,7 @@ public:
                 || dominatesCards(move, myCards - move.cards(), b)) {
                 move.setDM(); // 自己支配
             }
-            if (Settings::MateSearchOnRoot) { // 多人数必勝判定
+            if (Settings::mateSearchOnRoot) { // 多人数必勝判定
                 if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b, fieldInfo)) {
                     move.setMPMate(); fieldInfo.setMPMate();
                 }
@@ -293,7 +294,7 @@ public:
                 }
             }
         }
-        if (Settings::MateSearchOnRoot) {
+        if (Settings::mateSearchOnRoot) {
             if (fieldInfo.isMPMate()) shared.setMyMate(field.bestClass());
         }
 
@@ -338,24 +339,24 @@ public:
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
             // 4. 多人数判定による勝ち
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMPMate(); });
-#ifdef DEFEAT_RIVAL_MATE
-            if (next > 1 && !isNoRev(myCards)) {
-                // 5. ライバルに不利になるように革命を起こすかどうか
-                int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
-                if (prefRev > 0) { // 革命優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? 2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
-                    });
-                }
-                if (prefRev < 0) { // 革命しないことを優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? -2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
-                    });
+            if (Settings::defeatRivalMate) {
+                if (next > 1 && !isNoRev(myCards)) {
+                    // 5. ライバルに不利になるように革命を起こすかどうか
+                    int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
+                    if (prefRev > 0) { // 革命優先
+                        next = root.sort(next, [myCards](const RootAction& a) {
+                            return a.move.isRev() ? 2 :
+                            (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
+                        });
+                    }
+                    if (prefRev < 0) { // 革命しないことを優先
+                        next = root.sort(next, [myCards](const RootAction& a) {
+                            return a.move.isRev() ? -2 :
+                            (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
+                        });
+                    }
                 }
             }
-#endif
             // 必勝時の出し方の見た目をよくする
             if (fieldInfo.isUnrivaled()) {
                 // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
