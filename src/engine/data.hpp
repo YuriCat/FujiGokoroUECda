@@ -171,7 +171,6 @@ struct RootInfo {
     int myPlayerNum = -1, rivalPlayerNum = -1;
     int bestReward, worstReward;
     int rewardGap;
-    int bestClass, worstClass;
     
     // モンテカルロ用の情報
     bool exitFlag;
