@@ -23,9 +23,6 @@ const std::string MY_VERSION = "20190514";
 // 末端報酬を階級リセットから何試合前まで計算するか
 constexpr int N_REWARD_CALCULATED_GAMES = 32;
 
-// 自分以外で通算順位の最高のプレーヤーの結果も考慮
-//#define DEFEAT_RIVAL_MC // MCにて
-
 // 方策の計算設定
 using policy_value_t = float;
 
@@ -37,6 +34,7 @@ namespace Settings {
     extern int numPlayThreads;
     extern int numChangeThreads;
     extern int fixedSimulationCount;
+    extern bool maximizePosition;
 }
 
 extern std::string DIRECTORY_PARAMS_IN;

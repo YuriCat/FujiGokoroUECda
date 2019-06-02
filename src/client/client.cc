@@ -56,6 +56,8 @@ int main(int argc, char* argv[]) { // for UECda
         } else if (arg == "-sc") { // fixed simulation count
             int simulationCount = atoi(argv[c + 1]);
             Settings::fixedSimulationCount = simulationCount;
+        } else if (arg == "-mp") { // maximize position
+            Settings::maximizePosition = true;
         }
     }
     
