@@ -142,16 +142,15 @@ void MonteCarloThread(const int threadId, const int numThreads,
         
         simuTime += clock.restart();
         
-#ifndef FIXED_N_PLAYOUTS
         // 終了判定
-        if (threadId == 0
-            && numSimulationsSum % max(4, 32 / N_THREADS) == 0
+        if (Settings::fixedSimulationCount > 0
+            && threadId == 0
+            && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
             if (finishCheck(*proot, double(simuTime) / pow(10, 6), dice)) {
                 proot->exitFlag = 1;
                 return;
             }
         }
-#endif // FIXED_N_PLAYOUTS
     }
 }

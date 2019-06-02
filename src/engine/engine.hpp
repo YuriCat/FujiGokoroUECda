@@ -19,7 +19,8 @@ namespace Settings {
     const bool changeHeuristicsOnRoot = true;
     const bool addPolicyOnRoot = true;
     const bool L2SearchOnRoot = true;
-    const bool MateSearchOnRoot = true;
+    const bool mateSearchOnRoot = true;
+    const bool defeatRivalMate = true;
 }
 
 class WisteriaEngine {
@@ -47,10 +48,6 @@ public:
         // サイコロ初期化
         // シード指定の場合はこの後に再設定される
         setRandomSeed((uint32_t)time(NULL));
-        // スレッドごとのデータ初期化
-        for (int th = 0; th < N_THREADS; th++) {
-            threadTools[th].init(th);
-        }
         shared.initMatch(playerNum);
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
@@ -112,7 +109,7 @@ public:
             Cards restCards = myCards - cand[i];
 
             // D3を持っている場合、自分からなので必勝チェック
-            if (containsD3(restCards)) {
+            if (Settings::mateSearchOnRoot && containsD3(restCards)) {
                 Board b = OrderToNullBoard(0); // 通常オーダーの空場
                 b.initInfo();
                 b.setFlushLead();
@@ -144,7 +141,8 @@ public:
         // ルートノード設定
         Field field;
         field.fromRecord(game, myPlayerNum, -1);
-        int limitSimulations = std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
+        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
+                               : std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
         root.setChange(cand.data(), numCands, field, shared, limitSimulations);
         
         // 方策関数による評価
@@ -258,7 +256,7 @@ public:
                 || dominatesCards(move, myCards - move.cards(), b)) {
                 move.setDM(); // 自己支配
             }
-            if (Settings::MateSearchOnRoot) { // 多人数必勝判定
+            if (Settings::mateSearchOnRoot) { // 多人数必勝判定
                 if (checkHandMate(1, searchBuffer, move, myHand, opsHand, b)) {
                     move.setMate(); b.setMate();
                 }
@@ -294,7 +292,7 @@ public:
                 }
             }
         }
-        if (Settings::MateSearchOnRoot) {
+        if (Settings::mateSearchOnRoot) {
             if (b.isMate() && !b.isL2Mate()) shared.setMyMate(field.bestClass());
         }
 
@@ -308,7 +306,8 @@ public:
         }
         
         // ルートノード設定
-        int limitSimulations = std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
+        int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
+                               : std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
         root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
         
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
@@ -339,24 +338,24 @@ public:
             //next = root.binary_sort(next, [](const RootAction& a) { return a.move.isPW(); });
             // 4. 多人数判定による勝ち
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.isMate() && !a.move.isL2Mate(); });
-#ifdef DEFEAT_RIVAL_MATE
-            if (next > 1 && !isNoRev(myCards)) {
-                // 5. ライバルに不利になるように革命を起こすかどうか
-                int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
-                if (prefRev > 0) { // 革命優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? 2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
-                    });
-                }
-                if (prefRev < 0) { // 革命しないことを優先
-                    next = root.sort(next, [myCards](const RootAction& a) {
-                        return a.move.isRev() ? -2 :
-                        (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
-                    });
+            if (Settings::defeatRivalMate) {
+                if (next > 1 && !isNoRev(myCards)) {
+                    // 5. ライバルに不利になるように革命を起こすかどうか
+                    int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
+                    if (prefRev > 0) { // 革命優先
+                        next = root.sort(next, [myCards](const RootAction& a) {
+                            return a.move.isRev() ? 2 :
+                            (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : 1);
+                        });
+                    }
+                    if (prefRev < 0) { // 革命しないことを優先
+                        next = root.sort(next, [myCards](const RootAction& a) {
+                            return a.move.isRev() ? -2 :
+                            (isNoRev(maskCards(myCards, a.move.cards())) ? 0 : -1);
+                        });
+                    }
                 }
             }
-#endif
             // 必勝時の出し方の見た目をよくする
             if (b.isUnrivaled()) {
                 // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
@@ -397,7 +396,6 @@ public:
         shared.closeGame();
     }
     void closeMatch() {
-        for (int th = 0; th < N_THREADS; th++) threadTools[th].close();
         shared.closeMatch();
     }
     ~WisteriaEngine() {

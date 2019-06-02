@@ -12,14 +12,12 @@
 
 struct ThreadTools {
     // 各スレッドの持ち物
-    int threadIndex; // スレッド番号
-    XorShift64 dice; // サイコロ
+    Dice dice; // サイコロ
     Move mbuf[8192]; // 着手生成バッファ
-    void init(int index) {
-        threadIndex = index;
+    ThreadTools() {
+        dice.srand(0);
         memset(mbuf, 0, sizeof(mbuf));
     }
-    void close() {}
 };
 
 struct BaseSharedData {

@@ -402,8 +402,6 @@ public:
     XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
 };
 
-using Dice = XorShift64;
-
 static double dFactorial(int n) {
     double ans = 1;
     while (n > 1) ans *= n--;

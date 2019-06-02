@@ -4,6 +4,10 @@
 #include "../core/record.hpp"
 #include "data.hpp"
 
+enum DealType {
+    RANDOM, SBJINFO, BIAS, REJECTION,
+};
+
 class RandomDealer {
     // ランダムに手札配置を作る
     // 基本的に連続分配を想定しているので、異なるプレーヤーが互いに分配するような状況ではインスタンスを複数作るべき

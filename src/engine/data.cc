@@ -82,11 +82,11 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     bestReward = shared.gameReward[bestClass];
     worstReward = shared.gameReward[worstClass];
     rewardGap = bestReward - worstReward;
-    uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
-    if (popcnt(rivals) == 1) {
-        int rnum = bsf(rivals);
-        if (field.isAlive(rnum)) {
-            rivalPlayerNum = rnum;
+    if (Settings::maximizePosition) {
+        uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
+        if (popcnt(rivals) == 1) {
+            int rnum = bsf(rivals);
+            if (field.isAlive(rnum)) rivalPlayerNum = rnum;
         }
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
@@ -153,15 +153,14 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 自分のシミュレーション結果を分布に変換
     BetaDistribution mySc = BetaDistribution((myRew - worstReward) / (double)rewardGap,
                                              (bestReward - myRew) / (double)rewardGap);
-    
-#ifdef DEFEAT_RIVAL_MC
+
     if (rivalPlayerNum < 0) { // 自分の結果だけ考えるとき
         lock();
         child[triedIndex].monteCarloScore += mySc;
+        child[triedIndex].naiveScore += mySc;
         monteCarloAllScore += mySc;
-    } else {
-        // ライバルの結果も考えるとき
-        int rivalRew = field.infoReward[rivalPlayerNum];
+    } else { // ライバルの結果も考えるとき
+        int rivalRew = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
         ASSERT(0 <= rivalRew && rivalRew <= bestReward, cerr << rivalRew << endl;);
         
         BetaDistribution rivalSc = BetaDistribution((rivalRew - worstReward) / (double)rewardGap,
@@ -170,33 +169,23 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
         
         lock();
-        child[triedIndex].myScore += mySc);
+        child[triedIndex].myScore += mySc;
         child[triedIndex].rivalScore += rivalSc;
         
         mySc *= 1 - RIVAL_RATE;
         rivalSc.mul(RIVAL_RATE).rev();
         
         child[triedIndex].monteCarloScore += mySc + rivalSc;
+        child[triedIndex].naiveScore += mySc + rivalSc;
         monteCarloAllScore += mySc + rivalSc;
     }
-#else
-    lock();
-    child[triedIndex].monteCarloScore += mySc;
-    child[triedIndex].naiveScore += mySc;
-    monteCarloAllScore += mySc;
-#endif
-    
+
     child[triedIndex].simulations += 1;
     allSimulations += 1;
-    
-    // 以下参考にする統計量
+
+    // 参考にする統計量
     child[triedIndex].turnSum += field.turnCount();
-    
-#ifdef FIXED_N_PLAYOUTS
-    if (allSimulations >= FIXED_N_PLAYOUTS) exitFlag = true;
-#else
     if (allSimulations >= limitSimulations) exitFlag = true;
-#endif
     unlock();
 }
 
@@ -220,12 +209,10 @@ string RootInfo::toString(int num) const {
     oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
     oss << allSimulations << " trials." << endl;
     for (int i = 0; i < min(candidates, num); i++) {
-        const int rg = (int)(child[i].mean() * rewardGap);
-        const int rew = rg + worstReward;
-        const int nrg = (int)(child[i].naive_mean() * rewardGap);
-        const int nrew = nrg + worstReward;
+        int rew = worstReward + child[i].mean() * rewardGap;
+        int nrew = worstReward + child[i].naive_mean() * rewardGap;
         double sem = sqrt(child[i].mean_var());
-        const int rewZone[2] = {rew - (int)(sem * rewardGap), rew + (int)(sem * rewardGap)};
+        double rewZone[2] = {rew - sem * rewardGap, rew + sem * rewardGap};
         
         if (i == 0) oss << "\033[1m";
         oss << i << " ";
@@ -236,14 +223,12 @@ string RootInfo::toString(int num) const {
         
         if (child[i].simulations > 0) {
             // まず総合評価点を表示
-            oss << rew << " ( " << rewZone[0] << " ~ " << rewZone[1] << " ) ";
-            oss << "{mc: " << nrg << "} ";
+            oss << rew << " ( " << (int)rewZone[0] << " ~ " << (int)rewZone[1] << " ) ";
+            oss << "{mc: " << nrew << "} ";
             if (rivalPlayerNum >= 0) {
                 // 自分とライバルの評価点を表示
-                oss << child[i].myScore;
-                oss << " [mine = " << (worstReward + (int)(child[i].myScore.mean() * (double)rewardGap)) << "] ";
-                oss << child[i].rivalScore;
-                oss << " [rival's = ~" << (bestReward - (int)(child[i].rivalScore.mean() * (double)rewardGap)) << "] ";
+                oss << " [mine = " << int(worstReward + child[i].myScore.mean() * rewardGap) << "] ";
+                oss << " [rival = " << int(worstReward + child[i].rivalScore.mean() * rewardGap) << "] ";
             }
         }
         oss << "prob = " << child[i].policyProb; // 方策関数の確率出力

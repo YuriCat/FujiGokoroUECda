@@ -26,7 +26,6 @@ uint64_t worldKey(const Field& f) {
 void testEstimationRate(const MatchRecord& match, DealType type) {
     shared.initMatch(-1);
     for (int i = 0; i < 16; i++) {
-        tools[i].init(i);
         tools[i].dice.srand(1 + i);
     }
     mt19937 dice(0);

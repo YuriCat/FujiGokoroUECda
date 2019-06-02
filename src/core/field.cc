@@ -76,7 +76,7 @@ int Field::flushLeadPlayer() const {
     if (!isAlive(p)) { // すでにあがっている
         // p ~ tp 間の残っているプレーヤーを探す
         while (1) {
-            p = getNextSeatPlayer(p);
+            p = nextSeatPlayer(p);
             if (isAlive(p)) break;
         }
     }

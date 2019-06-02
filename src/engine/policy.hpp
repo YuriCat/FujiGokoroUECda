@@ -5,6 +5,10 @@
 #include "../core/daifugo.hpp"
 #include "../base/softmaxClassifier.hpp"
 
+enum Selector {
+    NAIVE, THRESHOLD, POLY_BIASED, EXP_BIASED,
+};
+
 namespace PlayPolicySpace {
     enum {
         // 後場パラメータ

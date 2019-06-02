@@ -36,9 +36,9 @@ struct CommonStatus {
 struct PlayersState : public BitArray32<8, 4> {
     // Boardと合わせて、場の状態を表す
     // 0-7   Alive
-    // 8-15   NAlive
-    // 16-23  Awake
-    // 24-31 Nawake
+    // 8-15  numAlive
+    // 16-23 Awake
+    // 24-31 numAwake
     using base_t = BitArray32<8, 4>;
     using data_t = typename base_t::data_type;
     constexpr static int N = N_PLAYERS;
@@ -56,26 +56,13 @@ struct PlayersState : public BitArray32<8, 4> {
         assert(isAwake(p)); assert(isAlive(p)); // 現在AliveかつAwakeの必要
         base_t::data_ -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
     }
-    void setDeadOnly(const int p) {
-        // プレーヤーがあがった
-        assert(isAlive(p)); // 現在Aliveの必要
-        base_t::data_ -= (BMASK << 8) + ((1U << 0) << p);
-    }
     void setAwake(const int p) {
         assert(!isAwake(p));
         base_t::data_ += (BMASK << 24) + ((BMASK << 16) << p);
     }
-    void setAlive(const int p) {
-        // プレーヤー復活
-        assert(!isAwake(p)); assert(!isAlive(p));
-        base_t::data_ += (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
-    }
     void setAllAsleep() {
         base_t::data_ &= (PMASK << 0) | (NMASK << 8);
     }
-    
-    void setNAlive(const int n) { assign(1, n); }
-    void setNAwake(const int n) { assign(3, n); }
 
     constexpr data_t isAlive(int p) const { return data() & ((BMASK << 0) << p); }
     constexpr data_t isAwake(int p) const { return data() & ((BMASK << 16) << p); }
@@ -229,12 +216,12 @@ struct Field {
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
     int flushLeadPlayer() const;
-    int getNextSeatPlayer(const int p) const {
+    int nextSeatPlayer(const int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
     void rotateTurnPlayer(int turn) {
         do {
-            turn = getNextSeatPlayer(turn);
+            turn = nextSeatPlayer(turn);
         } while (!isAwake(turn));
         setTurn(turn);
     }
@@ -310,5 +297,5 @@ struct ImaginaryWorld {
     void set(int turnCount, const Cards *c);
 };
 
-// set estimated information
+// 状態表現に世界情報を設定
 extern void setWorld(const ImaginaryWorld& world, Field *const dst);

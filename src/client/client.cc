@@ -34,23 +34,30 @@ int main(int argc, char* argv[]) { // for UECda
     bool seedSet = false;
     int seed = -1;
     bool monitor = false;
-    
+
+    vector<string> args(argv, argv + argc);
     for (int c = 1; c < argc; c++) {
-        if (!strcmp(argv[c], "-i")) { // input directory
+        string arg = args[c];
+        if (arg == "-i") { // input directory
             DIRECTORY_PARAMS_IN = string(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-o")) { // output directory
+        } else if (arg == "-o") { // output directory
             DIRECTORY_PARAMS_OUT = string(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-s")) { // random seed
+        } else if (arg == "-s") { // random seed
             seedSet = true;
             seed = atoi(argv[c + 1]);
-        } else if (!strcmp(argv[c], "-m")) { // output
+        } else if (arg == "-m") { // output
             monitor = true;
-        } else if (!strcmp(argv[c], "-pol")) { // policy mode
+        } else if (arg == "-pol") { // policy mode
             Settings::policyMode = true;
-        } else if (!strcmp(argv[c], "-th")) { // num of threads
-            int NThreads = atoi(argv[c + 1]);
-            Settings::numPlayThreads = NThreads;
-            Settings::numChangeThreads = max(1, NThreads / 2);
+        } else if (arg == "-th") { // num of threads
+            int numThreads = atoi(argv[c + 1]);
+            Settings::numPlayThreads = numThreads;
+            Settings::numChangeThreads = max(1, numThreads / 2);
+        } else if (arg == "-sc") { // fixed simulation count
+            int simulationCount = atoi(argv[c + 1]);
+            Settings::fixedSimulationCount = simulationCount;
+        } else if (arg == "-mp") { // maximize position
+            Settings::maximizePosition = true;
         }
     }
     
