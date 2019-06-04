@@ -116,9 +116,9 @@ struct SharedData : public BaseSharedData {
     }
     
     void closeGame() {
-        const auto& gameLog = record.latestGame();
-        base_t::closeGame(gameLog);
-        int myNewClass = gameLog.newClassOf(record.myPlayerNum);
+        const auto& game = record.latestGame();
+        base_t::closeGame(game);
+        int myNewClass = game.newClassOf(record.myPlayerNum);
 
         // 自己スタッツ更新
         feedResult(myNewClass);
@@ -141,8 +141,7 @@ struct RootAction {
     BetaDistribution naiveScore;
     
     // モンテカルロの詳細な結果
-    BetaDistribution myScore;
-    BetaDistribution rivalScore;
+    BetaDistribution myScore, rivalScore;
     uint64_t simulations;
     std::array<std::array<int64_t, N_CLASSES>, N_PLAYERS> classDistribution;
     uint64_t turnSum;
@@ -225,12 +224,6 @@ struct RootInfo {
     }
     
     std::string toString(int num = -1) const;
-
-    int getExpReward(int idx) const {
-        const int rg = (int)(child[idx].mean() * (double)rewardGap);
-        const int rew = rg + worstReward;
-        return rew;
-    }
     
     RootInfo() {
         candidates = -1;
