@@ -4,30 +4,21 @@
 
 using namespace std;
 
-double rankScore(Cards pqr, int jk, int ord) {
+double pqrRankScore(Cards pqr, int jk, int ord) {
     // 階級平均点を計算
     int r = 0;
-    int cnt = 0;
-    if (ord == 0) {
-        for (IntCard ic : pqr) {
-            r += IntCardToRank(ic);
-            cnt++;
-        }
-    } else {
-        for (IntCard ic : pqr) {
-            r += RANK_3 + RANK_2 - IntCardToRank(ic);
-            cnt++;
-        }
-    }
+    int cnt = countCards(pqr);
+    for (IntCard ic : pqr) r += IntCardToRank(ic);
+    if (ord != 0) r = (RANK_3 + RANK_2) * cnt - r; 
     if (jk) {
         r += RANK_2 + 1;
-        cnt++;
+        cnt += 1;
     }
     return r / (double)cnt;
 }
 
-#define Foo(f) { s += pol.param(f); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
-#define FooX(f, x) { s += pol.param(f) * (x); FASSERT(x,); if (M) { pol.feedFeatureScore(i, (f), (x)); }}
+#define Foo(f) { s += pol.param(f); FASSERT(s,); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
+#define FooX(f, x) { s += pol.param(f) * (x); FASSERT(x,); FASSERT(s,); if (M) { pol.feedFeatureScore(i, (f), (x)); }}
 
 // M = 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存
 template <int M = 1, class policy_t>
@@ -56,7 +47,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
     const int myHR = IntCardToRank(pickIntCardHigh(myCards));
     
     const int order = b.order();
-    const double nowRS = rankScore(curPqr, myCards.joker(), order);
+    const double rankScore = pqrRankScore(curPqr, myCards.joker(), order);
     
     // 場役主から自分が何人目か数える
     int distanceToOwner = 0;
@@ -149,7 +140,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // joker, s3 bonus
             {
@@ -158,15 +148,13 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 else if (containsS3(afterCards) && containsJOKER(opsCards)) Foo(base + 1)
                 else if (containsS3(opsCards) && containsJOKER(afterCards)) Foo(base + 2)
             }
-            FASSERT(s,);
             
             // avg pqr rank
             {
                 constexpr int base = FEA_IDX(FEA_HAND_PQR_RANK);
-                double rs = rankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
-                FooX(base, (((double)oq) * log (max(rs / nowRS, 0.000001))))
+                double rs = pqrRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
+                FooX(base, oq * log(max(rs / rankScore, 0.000001)))
             }
-            FASSERT(s,);
             
             // nf min party
             {
@@ -174,22 +162,19 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 if (b.isNull()) FooX(base, divisionCount(mbuf + NMoves, afterCards) - NParty)
                 else FooX(base + 1, divisionCount(mbuf + NMoves, afterCards) - NParty)
             }
-            FASSERT(s,);
             
             // after hand joker - p8
             if (polymJump(maskJOKER(afterCards)) && containsJOKER(afterCards)) {
                 const int base = FEA_IDX(FEA_HAND_P8_JOKER);
                 Foo(base)
             }
-            FASSERT(s,);
-            
+
             // qty
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_QTY);
                 if (b.isNull()) Foo(base + q4 - 1)
             }
-            FASSERT(s,);
-            
+
             //same qr
             {
                 constexpr int base = FEA_IDX(FEA_SAME_QR);
@@ -203,8 +188,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
-            
+
             // suit lock
             {
                 constexpr int base = FEA_IDX(FEA_SUITLOCK_EFFECT);
@@ -237,7 +221,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // rev(only normal order)
             {
@@ -255,8 +238,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(base + relativeClass)
                 }
             }
-            FASSERT(s,);
-            
+
             // pass(game phase)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_PHASE);
@@ -265,7 +247,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            FASSERT(s,);
             
             // pass(unrivaled)
             {
@@ -277,14 +258,12 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // pass(owner distance)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_OWNER_DISTANCE);
                 if (m.isPASS() && !fieldInfo.isUnrivaled()) Foo(base + (distanceToOwner - 1));
             }
-            FASSERT(s,);
             
             // pass nawake and qty
             {
@@ -296,7 +275,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // s3(move)
             {
@@ -306,7 +284,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            FASSERT(s,);
             
             // joker against S3
             {
@@ -319,7 +296,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            FASSERT(s,);
             
             // sequence
             {
@@ -333,7 +309,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     if (b.isSeq()) Foo(base + 1)
                 }
             }
-            FASSERT(s,);
             
             // rf group break
             {
@@ -357,7 +332,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // NF_Dominance Move On PassDom
             {
@@ -368,7 +342,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // NF_EIGHT
             if (b.isNull()) {
@@ -384,7 +357,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            FASSERT(s,);
             
             // eight
             {
@@ -395,7 +367,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     FooX(key, oq - m.qty())
                 }
             }
-            FASSERT(s,);
             
             // min rank
             {
@@ -403,7 +374,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 if (b.order() == 0 && m.rank() == myLR) Foo(base)
                 else if (b.order() != 0 && m.rank() == myHR) Foo(base + 1)
             }
-            FASSERT(s,);
 
             // MCパターン
             if (!m.isPASS()) {
@@ -454,7 +424,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                         Foo(key)
                     }
                 }
-                FASSERT(s,);
                 
                 // MOパターン
                 if (!m.isSeq()) {
@@ -504,9 +473,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                         Foo(key);
                     }
                 }
-                FASSERT(s,);
             }
-            FASSERT(s,);
         }
         pol.feedCandidateScore(i, exp(s));
         
