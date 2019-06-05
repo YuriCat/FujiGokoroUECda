@@ -572,12 +572,9 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
                                   field.opsHand[turn], b);
         if (mate) mbuf[i].setMate();
     }
-    // プレー尤度計算
-    int moveIndex = searchMove(mbuf, NMoves, [move](const Move& tmp)->bool{
-        return tmp == move;
-    });
 
-    // 自分の合法手生成では生成されない手が出された場合
+    // 選ばれた手が生成されているか調べる
+    int moveIndex = searchMove(mbuf, NMoves, move);
     if (moveIndex == -1) return 0.1 / double(NMoves + 1);
 
     array<double, N_MAX_MOVES> score;

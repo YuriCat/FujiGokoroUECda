@@ -213,36 +213,6 @@ ostream& operator <<(ostream& out, const Cards& c) {
     return out;
 }
 
-ostream& operator <<(ostream& out, const OutCardTables& arg) {
-    // テーブル形式で見やすく
-    // ２つを横並びで表示
-    for (int i = 0; i < (int)arg.cv.size(); i++) {
-        out << " ";
-        for (int r = RANK_3; r <= RANK_2; r++) out << " " << OutRank(r);
-        out << " X    ";
-    }
-    out << endl;
-    for (int sn = 0; sn < N_SUITS; sn++) {
-        for (Cards c : arg.cv) {
-            out << OutSuitNum(sn) << " ";
-            for (int r = RANK_3; r <= RANK_2; r++) {
-                IntCard ic = RankSuitNumToIntCard(r, sn);
-                if (c.contains(ic)) out << "O ";
-                else out << ". ";
-            }
-            if (sn == 0) {
-                if (containsJOKER(c)) out << "O ";
-                else out << ". ";
-                out << "   ";
-            } else {
-                out << "     ";
-            }
-        }
-        out << endl;
-    }
-    return out;
-} 
-
 BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
 uint64_t HASH_CARDS_ALL;
 
@@ -359,7 +329,7 @@ Move CardsToMove(const Cards chara, const Cards used) {
     } else { // 階段系
         m.setSeq(q, r, s);
         if (containsJOKER(used)) {
-            IntCard jic = Cards(subtrCards(chara, used.plain())).lowest();
+            IntCard jic = Cards(chara - used.plain()).lowest();
             int jr = IntCardToRank(jic);
             m.setJokerRank(jr);
             m.setJokerSuits(s);
@@ -486,9 +456,7 @@ bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q) {
                 if (b.suits() != mv.suits()) return false;
             }
         } else {
-            if (b.isSingleJOKER()) {
-                return mv.isS3();
-            }
+            if (b.isSingleJOKER()) return mv.isS3();
             if (mv.isSingleJOKER()) {
                 if (!b.isSingle()) return false;
             } else {

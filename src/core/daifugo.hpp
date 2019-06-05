@@ -208,9 +208,7 @@ constexpr BitCards CARDS_HORIZONRANK = 15ULL; // 基準の最低ランクのカ�
 constexpr BitCards CARDS_HORIZONSUIT = 0x0111111111111111; // 基準の最小スートのカード全て
 
 // IntCard型との互換
-constexpr BitCards IntCardToCards(IntCard ic) {
-    return BitCards(CARDS_HORIZON << ic);
-}
+constexpr BitCards IntCardToCards(IntCard ic) { return BitCards(CARDS_HORIZON << ic); }
 
 // 定数
 constexpr BitCards CARDS_MIN = CARDS_HORIZON << INTCARD_MIN;
@@ -247,9 +245,8 @@ constexpr BitCards CARDS_O  = 0x0F00000000000000;
 constexpr BitCards CARDS_JOKER_RANK = 0xF000000000000000;
 
 // あるランクのカード全て
-constexpr BitCards RankToCards(int r) {
-    return CARDS_HORIZONRANK << (r << 2);
-}
+constexpr BitCards RankToCards(int r) { return CARDS_HORIZONRANK << (r << 2); }
+
 // ランク間（両端含む）のカード全て
 constexpr BitCards RankRangeToCards(int r0, int r1) {
     return ~((CARDS_HORIZON << (r0 << 2)) - 1ULL)
@@ -274,24 +271,11 @@ constexpr BitCards CARDS_CHS  = 0x0DDDDDDDDDDDDDDD;
 constexpr BitCards CARDS_DHS  = 0x0EEEEEEEEEEEEEEE;
 constexpr BitCards CARDS_CDHS = 0x0FFFFFFFFFFFFFFF;
 
-// スートの指定からカード集合を生成する
-constexpr BitCards SuitsToCards(unsigned s) {
-    return CARDS_HORIZONSUIT * s; // あるスートのカード全て
-}
-// ランクとスートの指定からカード集合を生成する
-// スートは集合として用いる事が出来る
-constexpr BitCards RankSuitsToCards(int r, unsigned s) {
-    return BitCards(s) << (r << 2);
-}
+// あるスート集合のカード全て
+constexpr BitCards SuitsToCards(unsigned s) { return CARDS_HORIZONSUIT * s; }
 
-// Cards型基本演算
-
-// 追加
-constexpr BitCards addCards(BitCards c0, BitCards c1) { return c0 | c1; }
-constexpr BitCards addIntCard(BitCards c, IntCard ic) { return addCards(c, IntCardToCards(ic)); }
-
-// 限定
-constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
+// ランクとスート集合の指定からのカード集合の生成
+constexpr BitCards RankSuitsToCards(int r, unsigned s) { return BitCards(s) << (r << 2); }
 
 // 削除（オーバーを引き起こさない）
 // maskは指定以外とのandをとることとしている。
@@ -299,26 +283,18 @@ constexpr BitCards andCards(BitCards c0, BitCards c1) { return c0 & c1; }
 constexpr BitCards maskCards(BitCards c0, BitCards c1) { return c0 & ~c1; }
 constexpr BitCards maskJOKER(BitCards c) { return maskCards(c, CARDS_JOKER_RANK); }
 
-// カード減算
-// 現在では整数としての引き算処理
-constexpr BitCards subtrCards(BitCards c0, BitCards c1) { return c0 - c1; }
-constexpr BitCards subtrJOKER(BitCards c) { return subtrCards(c, CARDS_JOKER); }
-
 // 要素数
-constexpr unsigned countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
 inline unsigned countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
+constexpr unsigned countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
 constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
 
 // 排他性
 constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
 
 // 包含関係
-constexpr BitCards containsCard(BitCards c0, BitCards c1) { return andCards(c0, c1); } // 単体に対してはandでok
-constexpr BitCards containsIntCard(BitCards c, IntCard ic) { return containsCard(c, IntCardToCards(ic)); }
-constexpr BitCards containsJOKER(BitCards c) { return andCards(c, CARDS_JOKER); }
-constexpr BitCards containsS3(BitCards c) { return andCards(c, CARDS_S3); }
-constexpr BitCards containsD3(BitCards c) { return andCards(c, CARDS_D3); }
-constexpr BitCards contains8(BitCards c) { return andCards(c, CARDS_8); }
+constexpr BitCards containsJOKER(BitCards c) { return c & CARDS_JOKER_RANK; }
+constexpr BitCards containsS3(BitCards c) { return c & CARDS_S3; }
+constexpr BitCards containsD3(BitCards c) { return c & CARDS_D3; }
 constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
 
 // 空判定
@@ -327,8 +303,6 @@ constexpr BitCards anyCards(BitCards c) { return c; }
 // validation
 constexpr bool examPlainCards(BitCards c) { return holdsCards(CARDS_PLAIN_ALL, c); }
 constexpr bool examImaginaryPlainCards(BitCards c) { return holdsCards(CARDS_IMG_PLAIN_ALL, c); }
-
-// Cards型特殊演算
 
 // 特定順序の要素を選ぶ（元のデータは変えない）
 inline BitCards pickLow(const BitCards c, int n) {
@@ -341,19 +315,12 @@ inline BitCards pickHigh(const BitCards c, int n) {
 }
 
 // IntCard型で1つ取り出し
-inline IntCard pickIntCardLow(const BitCards c) {
-    return (IntCard)bsf64(c);
-}
-inline IntCard pickIntCardHigh(const BitCards c) {
-    return (IntCard)bsr64(c);
-}
+inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf64(c); }
+inline IntCard pickIntCardHigh(const BitCards c) { return (IntCard)bsr64(c); }
+
 // 基準cより高い、低い(同じは含まず)もの
-inline BitCards pickHigher(BitCards c) {
-    return allHigherBits(c);
-}
-inline BitCards pickLower(BitCards c) {
-    return allLowerBits(c);
-}
+inline BitCards pickHigher(BitCards c) { return allHigherBits(c); }
+inline BitCards pickLower(BitCards c) { return allLowerBits(c); }
 
 // ランク重合
 // ランクを１つずつ下げてandを取るのみ(ジョーカーとかその辺のことは何も考えない)
@@ -555,9 +522,8 @@ union Cards {
     constexpr bool empty() const { return !anyCards(c_); }
     constexpr bool any() const { return anyCards(c_); }
     constexpr bool any2() const { return any2Cards(c_); }
-    
-    constexpr bool anyJOKER() const { return containsJOKER(c_); }
-    constexpr bool contains(IntCard ic) const { return containsIntCard(c_, ic); }
+
+    constexpr bool contains(IntCard ic) const { return c_ & IntCardToCards(ic); }
 
     constexpr unsigned joker() const { return joker_; }
     constexpr Cards plain() const { return plain_; }
@@ -573,7 +539,7 @@ union Cards {
     constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
 
     Cards masked(Cards c) const {
-        return Cards(maskCards(plain_, c.plain_), max(0, joker_ - c.joker_));
+        return Cards(plain_ & ~c.plain_, max(0, joker_ - c.joker_));
     }
     Cards high(int n) const {
         if (joker() >= n) return Cards(0, n);
@@ -593,8 +559,8 @@ union Cards {
     Cards& operator -=(BitCards c) { c_ -= c; return *this; }
     Cards& operator <<=(int i) { c_ <<= i; return *this; }
     Cards& operator >>=(int i) { c_ >>= i; return *this; }
-    Cards& operator <<=(unsigned int i) { c_ <<= i; return *this; }
-    Cards& operator >>=(unsigned int i) { c_ >>= i; return *this; }
+    Cards& operator <<=(unsigned i) { c_ <<= i; return *this; }
+    Cards& operator >>=(unsigned i) { c_ >>= i; return *this; }
 
     Cards& clear() { c_ = 0; return *this; }
     Cards& fill() { c_ = CARDS_ALL; return *this; }
@@ -648,8 +614,7 @@ union Cards {
             return pclass_ != itr.pclass_ || c_ != itr.c_;
         }
         const_iterator& operator ++() {
-            // 下1ビットのみ消す
-            c_ &= c_ - 1;
+            c_ &= c_ - 1; // 下1ビットのみ消す
             return *this;
         }
     protected:
@@ -676,17 +641,9 @@ extern std::ostream& operator <<(std::ostream& out, const Cards& c);
 struct CardArray : public BitArray64<4, 16> {
     constexpr CardArray(): BitArray64<4, 16>() {}
     constexpr CardArray(BitCards c): BitArray64<4, 16>(c) {}
-    constexpr CardArray(const BitArray64<4, 16>& a): BitArray64<4, 16>(a) {}
     constexpr CardArray(const Cards& c): BitArray64<4, 16>(c.c_) {}
     operator BitCards() const { return BitCards(data()); }
 };
-
-struct OutCardTables {
-    std::vector<Cards> cv;
-    OutCardTables(const std::vector<Cards>& c): cv(c) {}
-};
-
-extern std::ostream& operator <<(std::ostream& out, const OutCardTables& arg);
 
 inline BitCards canMakeSeq(Cards c, int qty) {
     int joker = c.joker();
@@ -893,7 +850,6 @@ inline bool canMakeGroup(BitCards c, int n) {
 constexpr uint64_t HASH_CARDS_NULL = 0ULL;
 constexpr uint64_t cardsHashKeyTable[64] = {
     // インデックスがIntCard番号に対応
-    // generated by SFMT
     0x15cc5ec4cae423e2, 0xa1373ceae861f22a, 0x7b60ee1280de0951, 0x970b602e9f0a831a,
     0x9c2d0e84fa38fd7b, 0xf8e8f5de24c6613c, 0x59e1e0ec5c2dcf0f, 0xee5236f6cc5ecd7c,
     0x955cdae1107b0a6f, 0x664c969fef782110, 0x131d24cfbc6cc542, 0x4747206ff1446e2c,
@@ -911,6 +867,7 @@ constexpr uint64_t cardsHashKeyTable[64] = {
     0xb048124c6ef48ff5, 0x65978b47dbc1debb, 0x925e60277ee19bbf, 0xed776c6b664087e8,
     0x29bf249af2b02a7b, 0xc64ed74ce9ea7c77, 0xc05774752bed93f3, 0x5fc31db82af16d07,
 };
+
 constexpr uint64_t IntCardToHashKey(IntCard ic) {
     return cardsHashKeyTable[ic];
 }
@@ -1019,11 +976,10 @@ struct Move {
     constexpr bool isGroup() const { return t == 1; }
     constexpr bool isSeq() const { return t == 2; }
     constexpr bool isSingle() const { return isGroup() && qty() == 1; }
-    constexpr bool isQuintuple() const {
-        return isGroup() && q == 5;
-    }
+    constexpr bool isQuintuple() const { return isGroup() && q == 5; }
+
     constexpr bool containsJOKER() const { return jks || jkr; }
-    
+
     constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
     
@@ -1179,10 +1135,10 @@ extern Move CardsToMove(const Cards chara, const Cards used);
 extern Move StringToMoveM(const std::string& str);
 
 template <class move_buf_t>
-int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& move) {
+int searchMove(const move_buf_t *const buf, const int moves, const Move& move) {
     // 同じ着手の探索
-    for (int m = 0; m < moves; m++) {
-        if (buf[m]== move) return m;
+    for (int i = 0; i < moves; i++) {
+        if (buf[i] == move) return i;
     }
     return -1;
 }
@@ -1190,8 +1146,8 @@ int searchMove(const move_buf_t *const buf, const int moves, const move_buf_t& m
 template <class move_buf_t, typename callback_t>
 int searchMove(const move_buf_t *const buf, const int moves, const callback_t& callback) {
     // callback を条件とする着手の探索
-    for (int m = 0; m < moves; m++) {
-        if (callback(buf[m])) return m;
+    for (int i = 0; i < moves; i++) {
+        if (callback(buf[i])) return i;
     }
     return -1;
 }
@@ -1199,8 +1155,7 @@ int searchMove(const move_buf_t *const buf, const int moves, const callback_t& c
 /**************************場表現**************************/
 
 // 各プレーヤーの情報を持たない場表現
-// 32ビット着手表現と同一の系列で扱えるようにする
-// ジョーカー情報などを残すかは難しいが、現在はほとんどの情報を残したまま
+// 着手表現と同一の系列
 
 struct Board : public Move {
     
@@ -1214,10 +1169,8 @@ struct Board : public Move {
     void flipPrmOrder() { Move::po ^= 1; }
     
     void resetDom() { Move::invalid = 0; }
-    
-    // 2体情報をメンバ関数で返す関数
-    // 半マスク化みたいな感じ
-    constexpr bool domInevitably() const { return invalid; }
+
+    // 場 x 提出役 の効果
     bool domConditionally(Move m) const;
     
     bool locksSuits(Move m) const;
@@ -1241,12 +1194,10 @@ struct Board : public Move {
     constexpr bool isNull() const { return type() == 0; }
     constexpr bool suitsLocked() const { return Move::sl; }
     constexpr bool rankLocked() const { return Move::rl; }
+    constexpr bool isRev() const { return Move::po; }
     
-    constexpr bool isRev() const { return po; }
-    
-    bool isInvalid() const {
-        return Move::invalid;
-    }
+    bool isInvalid() const { return Move::invalid; }
+
     // 進行
     void procOrder(Move m) {
         if (m.isRev()) {
@@ -1270,7 +1221,6 @@ struct Board : public Move {
         }
     }
     void lockSuits() { Move::sl = 1; }
-    void procPASS() {} //何もしない
 
     void setMeld (Move m) {
         Move::s = m.s;
@@ -1282,16 +1232,14 @@ struct Board : public Move {
     }
     
     void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
-        if (m.isPASS()) procPASS();
-        else {
-            if (m.domInevitably() || domConditionally(m)) { // 無条件完全支配
-                if (m.isRev()) flipPrmOrder();
-                flush();
-            } else {
-                procOrder(m);
-                if (locksSuits(m)) lockSuits();
-                setMeld(m);
-            }
+        if (m.isPASS()) return;
+        if (m.domInevitably() || domConditionally(m)) { // 無条件完全支配
+            if (m.isRev()) flipPrmOrder();
+            flush();
+        } else {
+            procOrder(m);
+            if (locksSuits(m)) lockSuits();
+            setMeld(m);
         }
     }
     
@@ -1299,17 +1247,6 @@ struct Board : public Move {
         // 局面を更新し、強引に場を流す
         if (m.isRev()) flipPrmOrder();
         flush(info);
-    }
-    
-    void procExceptFlush(Move m) {
-        // 局面を更新するが場を流さない
-        procOrder(m);
-        // スートロック
-        if (locksSuits(m)) lockSuits();
-        setMeld(m);
-        if (m.domInevitably() || domConditionally(m)) {
-            invalid = 1;
-        }
     }
 };
 
@@ -1335,10 +1272,6 @@ inline uint64_t BoardToHashKey(Board bd) {
 // 完全情報局面なのでシンプルな後退ハッシュ値
 // 先手、後手の順番でカード集合ハッシュ値をクロスして場のハッシュ値を線形加算
 // ただしNFでない場合パスと場主も考慮が必要なので、現在はやってない
-
-constexpr uint64_t L2PassHashKeyTable[2] = {
-    0x9a257a985d22921b, 0xe8237fa57f5d50ed,
-};
 
 inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
     return CardsCardsToHashKey(c0, c1) ^ NullBoardToHashKey(bd);

@@ -12,7 +12,7 @@ struct Hand {
     Cards cards; // 通常型
     uint32_t qty; // 総枚数
     uint32_t jk; // ジョーカー枚数
-    Cards seq; // 3枚階段型
+    BitCards seq; // 3枚階段型
     
     CardArray qr; // ランク枚数型
     Cards pqr; // ランク枚数位置型
@@ -77,26 +77,26 @@ struct Hand {
 
     // カード集合単位(役の形をなしていない)の場合
     void add(Cards dc, const int dq) {
-        set(addCards(cards, dc), qty + dq);
+        set(cards + dc, qty + dq);
     }
     void add(Cards dc) {
         add(dc, dc.count());
     }
     void addAll(Cards dc, const int dq, const uint64_t dk) {
-        setAll(addCards(cards, dc), qty + dq, addCardKey(key, dk));
+        setAll(cards + dc, qty + dq, addCardKey(key, dk));
     }
     void addAll(Cards dc) {
         addAll(dc, dc.count(), CardsToHashKey(dc));
     }
     
     void subtr(Cards dc, const int dq) {
-        set(subtrCards(cards, dc), qty - dq);
+        set(cards - dc, qty - dq);
     }
     void subtr(Cards dc) {
         subtr(dc, dc.count());
     }
     void subtrAll(Cards dc, const int dq, const uint64_t dk) {
-        setAll(subtrCards(cards, dc), qty - dq, subCardKey(key, dk));
+        setAll(cards - dc, qty - dq, subCardKey(key, dk));
     }
     void subtrAll(Cards dc) {
         subtrAll(dc, dc.count(), CardsToHashKey(dc));
@@ -290,7 +290,7 @@ inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_
     int djk = dc.joker();
     int r = m.rank();
     
-    dst->cards = subtrCards(arg.cards, dc); // 通常型は引けば良い
+    dst->cards = arg.cards - dc; // 通常型は引けば良い
     dst->qty = arg.qty - dq; // 枚数進行
     dst->jk = arg.jk - djk; // ジョーカー枚数進行
     
