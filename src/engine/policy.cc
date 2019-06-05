@@ -20,8 +20,8 @@ double pqrRankScore(Cards pqr, int jk, int ord) {
 #define Foo(f) { s += pol.param(f); FASSERT(s,); if (M) { pol.feedFeatureScore(i, (f), 1.0); }}
 #define FooX(f, x) { s += pol.param(f) * (x); FASSERT(x,); FASSERT(s,); if (M) { pol.feedFeatureScore(i, (f), (x)); }}
 
-// M = 0 通常系計算, 1 学習のため特徴ベクトル記録, 2 強化学習のためデータ保存
-template <int M = 1, class policy_t>
+// M = 0 通常系計算, 1 学習のため特徴ベクトル記録
+template <int M, class policy_t>
 int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     const Field& field, policy_t& pol) { // learnerとして呼ばれうるため const なし
     
@@ -484,7 +484,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
     return 0;
 }
 
-template <int M = 1, class policy_t>
+template <int M, class policy_t>
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       policy_t& pol) { // learnerとして呼ばれうるため const なし
@@ -640,26 +640,22 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
                     const Field& field, const PlayPolicy<policy_value_t>& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
-    else if (mode == 1) return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
-    else return playPolicyScore<2>(dst, mbuf, numMoves, field, pol);
+    else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
                     const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
-    else if (mode == 1) return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
-    else return playPolicyScore<2>(dst, mbuf, numMoves, field, pol);
+    else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       const ChangePolicy<policy_value_t>& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else if (mode == 1) return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else return changePolicyScore<2>(dst, change, NChanges, myCards, NChangeCards, pol);                          
+    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);                         
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       ChangePolicyLearner<policy_value_t>& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else if (mode == 1) return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else return changePolicyScore<2>(dst, change, NChanges, myCards, NChangeCards, pol);                          
+    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);                       
 }
