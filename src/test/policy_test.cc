@@ -157,7 +157,7 @@ int testSelector(const MatchRecord& match) {
             
             playPolicyScore(score, play, moves, field, playPolicy, 0);
             
-            int recordIndex = searchMove(play, moves, MoveInfo(pl));
+            int recordIndex = searchMove(play, moves, pl);
             
             // ここから条件を少しずつ変更
             for (int i = 0; i < 7; i++) {

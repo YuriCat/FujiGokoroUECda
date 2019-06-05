@@ -103,7 +103,7 @@ int testRecordMoves(const Record& record) {
                 }
                 
                 // 棋譜の着手が生成されているかチェック
-                if (searchMove(buffer, moves, MoveInfo(move)) < 0) {
+                if (searchMove(buffer, moves, move) < 0) {
                     cerr << "ungenerated record move " << move;
                     cerr << " " << std::hex << move.toInt() << std::dec;
                     cerr << " by " << cards << " on " << bd << endl;

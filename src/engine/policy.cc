@@ -291,7 +291,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 if (m.isSingleJOKER()) {
                     int key;
                     if (containsS3(afterCards)) key = base; // 自分でS3を被せられる
-                    else if (fieldInfo.isLastAwake() || !containsCard(opsCards, CARDS_S3)) key = base + 1; // safe
+                    else if (fieldInfo.isLastAwake() || !(opsCards & CARDS_S3)) key = base + 1; // safe
                     else key = base + 2; // dangerous
                     Foo(key)
                 }
@@ -560,22 +560,15 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
         
         { // D3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_D3);
-            if (containsCard(afterCards, CARDS_D3)) {
-                Foo(base);
-            }
+            if (afterCards & CARDS_D3) Foo(base);
         }
         
         { // JOKER_S3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_JOKER_S3);
-            if (containsCard(afterCards, CARDS_S3)) {
-                if (containsCard(afterCards, CARDS_JOKER)) { // mine
-                    Foo(base);
-                } else { // ops
-                    Foo(base + 1);
-                }
-            } else if (containsCard(afterCards, CARDS_JOKER)) {
-                Foo(base + 2);
-            }
+            if (afterCards & CARDS_S3) {
+                if (afterCards.joker()) Foo(base) // mine
+                else Foo(base + 1) // ops
+            } else if (afterCards.joker()) Foo(base + 2)
         }
         
         { // MAX, MIN RANK
