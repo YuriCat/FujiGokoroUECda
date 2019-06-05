@@ -290,7 +290,7 @@ extern void copyField(const Field& arg, Field *const dst);
 
 /**************************仮想世界**************************/
 
-struct ImaginaryWorld {
+struct World {
     // 仮想世界
     int builtTurn; // この世界がセットされたターン
     Cards cards[N_PLAYERS];
@@ -301,4 +301,4 @@ struct ImaginaryWorld {
 };
 
 // 状態表現に世界情報を設定
-extern void setWorld(const ImaginaryWorld& world, Field *const dst);
+extern void setWorld(const World& world, Field *const dst);

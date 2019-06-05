@@ -85,7 +85,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     int numSimulationsSum = 0;
 
     int numWorlds = 0; // 作成した世界の数
-    std::array<ImaginaryWorld, 128> worlds;
+    std::array<World, 128> worlds;
 
     // 世界生成のためのクラスを初期化
     const auto& record = pshared->record.latestGame();
@@ -116,7 +116,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
         } else if (numThreads * numWorlds + threadId < (int)worlds.size()) {
             // 新しい世界を作成
             simuTime += clock.restart();
-            estimator.create(&worlds[numWorlds], DealType::REJECTION, record, *pshared, ptools);
+            worlds[numWorlds] = estimator.create(DealType::REJECTION, record, *pshared, ptools);
             estTime += clock.restart();
             world = numWorlds++;
         } else {

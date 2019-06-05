@@ -454,7 +454,7 @@ void copyField(const Field& arg, Field *const dst) {
     dst->remKey = arg.remKey;
 }
 
-void ImaginaryWorld::set(int turnCount, const Cards *c) {
+void World::set(int turnCount, const Cards *c) {
     for (int p = 0; p < N_PLAYERS; p++) {
         cards[p] = c[p];
         cardKey[p] = CardsToHashKey(c[p]);
@@ -464,7 +464,7 @@ void ImaginaryWorld::set(int turnCount, const Cards *c) {
 }
 
 // set estimated information
-void setWorld(const ImaginaryWorld& world, Field *const dst) {
+void setWorld(const World& world, Field *const dst) {
     Cards remCards = dst->remCards;
     uint64_t remKey = dst->remKey;
     for (int p = 0; p < N_PLAYERS; p++) {

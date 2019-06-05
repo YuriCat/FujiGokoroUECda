@@ -76,7 +76,6 @@ enum { SUIT_X = 16 };
 
 // スート集合 (スートの和集合)
 enum {
-    
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
@@ -305,14 +304,8 @@ constexpr bool examPlainCards(BitCards c) { return holdsCards(CARDS_PLAIN_ALL, c
 constexpr bool examImaginaryPlainCards(BitCards c) { return holdsCards(CARDS_IMG_PLAIN_ALL, c); }
 
 // 特定順序の要素を選ぶ（元のデータは変えない）
-inline BitCards pickLow(const BitCards c, int n) {
-    assert(n > 0 && (int)countCards(c) >= n);
-    return lowestNBits(c, n);
-}
-inline BitCards pickHigh(const BitCards c, int n) {
-    assert(n > 0 && (int)countCards(c) >= n);
-    return highestNBits(c, n);
-}
+inline BitCards pickLow(const BitCards c, int n) { return lowestNBits(c, n); }
+inline BitCards pickHigh(const BitCards c, int n) { return highestNBits(c, n); }
 
 // IntCard型で1つ取り出し
 inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf64(c); }

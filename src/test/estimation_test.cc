@@ -54,10 +54,9 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
             // この手の前までの情報から手札推定を行う
             RandomDealer estimator(field, field.turn());
             // 一致度計測
-            ImaginaryWorld world;
             for (int j = 0; j < 2; j++) {
                 cl.start();
-                estimator.create(&world, type, game, shared, &tools[0]);
+                World world = estimator.create(type, game, shared, &tools[0]);
                 time += cl.stop();
                 cnt++;
                 int tsame = 0, tall = 0;
@@ -74,10 +73,10 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
             if (field.turnCount() == tc) {
                 ecnt++;
                 constexpr int N = 256;
-                ImaginaryWorld worlds[N];
+                World worlds[N];
                 map<uint64_t, double> worldKeyMap;
                 for (int i = 0; i < N; i++) {
-                    estimator.create(&worlds[i], type, game, shared, &tools[0]);
+                    worlds[i] = estimator.create(type, game, shared, &tools[0]);
                     worldKeyMap[worlds[i].key]++;
                 }
                 // 全体の情報量をまとめる

@@ -264,6 +264,66 @@ void RandomDealer::set(const Field& field, int playerNum) {
     } else failed = true;
 }
 
+void RandomDealer::prepareSubjectiveInfo() {
+    // 自分以外の未使用カード
+    dealCards = remCards - myCards;
+
+    // 自分
+    detCards[myClass] += myCards;
+    NDeal[myClass] = 0;
+    NDet[myClass] = NOrg[myClass];
+
+    // 初手がすでに済んでいる場合、初手プレーヤーにD3
+    if (!inChange
+        && turnCount > 0
+        && dealCards.contains(INTCARD_D3)) {
+        detCards[firstTurnClass] += CARDS_D3;
+        dealCards -= CARDS_D3;
+        NDeal[firstTurnClass] -= 1;
+        NDet[firstTurnClass] += 1;
+    }
+    if (!initGame && !inChange) {
+        if (myClass < MIDDLE) { // 自分が上位のとき
+            // 交換であげたカードのうちまだ確定扱いでないもの
+            Cards sCards = dealCards & sentCards;
+            if (sCards) {
+                int nc = countCards(sCards);
+                int myChangePartnerClass = getChangePartnerClass(myClass);
+                detCards[myChangePartnerClass] += sCards;
+                dealCards -= sCards;
+                NDeal[myChangePartnerClass] -= nc;
+                NDet[myChangePartnerClass] += nc;
+            }
+        }
+    }
+
+    // 結局配る枚数
+    NdealCards = dealCards.count();
+    ASSERT(NdealCards == accumulate(NDeal.begin(), NDeal.begin() + N, 0),
+           cerr << NdealCards << " " << NDeal << " " << accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
+
+    buckets = 1;
+    if (!inChange && turnCount > 0) {
+        // 他人が使用したカード枚数から採択棄却の際の候補数を設定
+        unsigned NOppUsedCards = Cards(CARDS_ALL - remCards - usedCards[myClass]).count();
+        // 1 -> ... -> max -> ... -> 1 と台形に変化
+        int line2 = Settings::BUCKET_MAX;
+        int line1 = (line2 - 1) * NOppUsedCards / 4 + 1;
+        int line3 = (line2 - 1) * NdealCards / 16 + 1;
+        buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
+        // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
+        playFlag.reset();
+        for (int p = 0; p < N; p++) {
+            if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
+        }
+    }
+
+    for (int p = 0; p < N; p++) {
+        DERR << "cl:" << p << " p:" << (int)infoClassPlayer[p] << " Org:" << (int)NOrg[p] << " Own:" << (int)NOwn[p]
+        << " Det:" << (int)NDet[p] << " Deal:" << (int)NDeal[p] << " " << detCards[p] << endl;
+    }
+}
+
 void RandomDealer::checkDeal(const Cards *dst, bool sbj) const {
     for (int p = 0; p < N; p++) DERR << dst[p] << endl;
     for (int r = 0; r < N; r++) {
@@ -495,66 +555,6 @@ void RandomDealer::setWeightInWA() {
         thresholdInWA[l] = 1;
     }
     candidatesInWA = probs.size();
-}
-
-void RandomDealer::prepareSubjectiveInfo() {
-    // 自分以外の未使用カード
-    dealCards = remCards - myCards;
-
-    // 自分
-    detCards[myClass] += myCards;
-    NDeal[myClass] = 0;
-    NDet[myClass] = NOrg[myClass];
-
-    // 初手がすでに済んでいる場合、初手プレーヤーにD3
-    if (!inChange
-        && turnCount > 0
-        && dealCards.contains(INTCARD_D3)) {
-        detCards[firstTurnClass] += CARDS_D3;
-        dealCards -= CARDS_D3;
-        NDeal[firstTurnClass] -= 1;
-        NDet[firstTurnClass] += 1;
-    }
-    if (!initGame && !inChange) {
-        if (myClass < MIDDLE) { // 自分が上位のとき
-            // 交換であげたカードのうちまだ確定扱いでないもの
-            Cards sCards = dealCards & sentCards;
-            if (sCards) {
-                int nc = countCards(sCards);
-                int myChangePartnerClass = getChangePartnerClass(myClass);
-                detCards[myChangePartnerClass] += sCards;
-                dealCards -= sCards;
-                NDeal[myChangePartnerClass] -= nc;
-                NDet[myChangePartnerClass] += nc;
-            }
-        }
-    }
-
-    // 結局配る枚数
-    NdealCards = dealCards.count();
-    ASSERT(NdealCards == accumulate(NDeal.begin(), NDeal.begin() + N, 0),
-           cerr << NdealCards << " " << NDeal << " " << accumulate(NDeal.begin(), NDeal.begin() + N, 0) << endl;);
-
-    buckets = 1;
-    if (!inChange && turnCount > 0) {
-        // 他人が使用したカード枚数から採択棄却の際の候補数を設定
-        unsigned NOppUsedCards = Cards(CARDS_ALL - remCards - usedCards[myClass]).count();
-        // 1 -> ... -> max -> ... -> 1 と台形に変化
-        int line2 = Settings::BUCKET_MAX;
-        int line1 = (line2 - 1) * NOppUsedCards / 4 + 1;
-        int line3 = (line2 - 1) * NdealCards / 16 + 1;
-        buckets = NOppUsedCards > 0 ? min(min(line1, line2), line3) : 1;
-        // 全てのカードが明らかになっていないプレーヤーは着手を検討する必要があるのでフラグを立てる
-        playFlag.reset();
-        for (int p = 0; p < N; p++) {
-            if (p != myNum && NDeal[infoClass[p]] > 0) playFlag.set(p);
-        }
-    }
-
-    for (int p = 0; p < N; p++) {
-        DERR << "cl:" << p << " p:" << (int)infoClassPlayer[p] << " Org:" << (int)NOrg[p] << " Own:" << (int)NOwn[p]
-        << " Det:" << (int)NDet[p] << " Deal:" << (int)NDeal[p] << " " << detCards[p] << endl;
-    }
 }
 
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
