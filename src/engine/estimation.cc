@@ -212,7 +212,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
     failed = false;
     initGame = field.isInitGame();
     inChange = field.isInChange();
-    turnCount = field.turnCount();
+    turnCount = inChange ? -1 : field.turnCount();
 
     // 交換ありの場合には配列のインデックスは階級を基本とする
     // 交換がない場合にはプレーヤー番号で代用する
@@ -274,26 +274,17 @@ void RandomDealer::prepareSubjectiveInfo() {
     NDet[myClass] = NOrg[myClass];
 
     // 初手がすでに済んでいる場合、初手プレーヤーにD3
-    if (!inChange
-        && turnCount > 0
+    if (!inChange && turnCount > 0
         && dealCards.contains(INTCARD_D3)) {
-        detCards[firstTurnClass] += CARDS_D3;
-        dealCards -= CARDS_D3;
-        NDeal[firstTurnClass] -= 1;
-        NDet[firstTurnClass] += 1;
+        addDetedtedCards(firstTurnClass, CARDS_D3);
     }
     if (!initGame && !inChange) {
         if (myClass < MIDDLE) { // 自分が上位のとき
             // 交換であげたカードのうちまだ確定扱いでないもの
-            Cards sCards = dealCards & sentCards;
-            if (sCards) {
-                int nc = countCards(sCards);
-                int myChangePartnerClass = getChangePartnerClass(myClass);
-                detCards[myChangePartnerClass] += sCards;
-                dealCards -= sCards;
-                NDeal[myChangePartnerClass] -= nc;
-                NDet[myChangePartnerClass] += nc;
-            }
+            int changePartner = getChangePartnerClass(myClass);
+            Cards sent = sentCards;
+            sent.mask(detCards[changePartner]);
+            if (sent) addDetedtedCards(changePartner, sent);
         }
     }
 
@@ -370,14 +361,13 @@ bool RandomDealer::okForRejection() const {
 
 Cards RandomDealer::change(const int p, const Cards cards, const int qty,
                            const SharedData& shared, ThreadTools *const ptools) const {
-    
     // 採択棄却法のためのカード交換モデル
     // 交換方策に従った交換を行う
-    Cards cand[N_MAX_CHANGES];
-    int NCands = genChange(cand, cards, qty);
-    int index = changeWithPolicy(cand, NCands, cards, qty, shared.baseChangePolicy,
+    Cards change[N_MAX_CHANGES];
+    int numChanges = genChange(change, cards, qty);
+    int index = changeWithPolicy(change, numChanges, cards, qty, shared.baseChangePolicy,
                                  Settings::estimationTemperatureChange, ptools->dice);
-    return cand[index];
+    return change[index];
 }
 
 bool RandomDealer::dealWithChangeRejection(Cards *const dst,

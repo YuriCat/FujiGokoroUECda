@@ -88,6 +88,13 @@ private:
     void prepareSubjectiveInfo();
     void setWeightInWA();
 
+    void addDetedtedCards(int dstClass, Cards c) {
+        detCards[dstClass] += c;
+        dealCards -= c;
+        int n = c.count();
+        NDeal[dstClass] -= n;
+        NDet[dstClass] += n;
+    }
     void checkDeal(const Cards *dst, bool sbj = true) const;
     bool okForRejection() const;
     bool dealWithChangeRejection(Cards *const dst,
