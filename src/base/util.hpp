@@ -529,6 +529,9 @@ struct BetaDistribution {
         b *= h_s;
         return *this;
     }
+    BetaDistribution reversed() const {
+        return BetaDistribution(b, a);
+    }
     
     bool exam() const;
     std::string toString() const;

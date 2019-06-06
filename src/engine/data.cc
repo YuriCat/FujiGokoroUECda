@@ -145,37 +145,29 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
     
     // 新たに得た証拠分布
-    int myRew = pshared->gameReward[field.newClassOf(myPlayerNum)];
-    ASSERT(0 <= myRew && myRew <= bestReward, cerr << myRew << endl;);
+    BetaDistribution myScore, rivalScore, totalScore;
     
-    // 自分のシミュレーション結果を分布に変換
-    BetaDistribution mySc = BetaDistribution((myRew - worstReward) / (double)rewardGap,
-                                             (bestReward - myRew) / (double)rewardGap);
+    int myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
+    myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
+    if (rivalPlayerNum >= 0) {
+        int rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
+        rivalScore.set((rivalReward - worstReward) / rewardGap, (bestReward - rivalReward) / rewardGap);
 
-    if (rivalPlayerNum < 0) { // 自分の結果だけ考えるとき
-        lock();
-        child[triedIndex].monteCarloScore += mySc;
-        child[triedIndex].naiveScore += mySc;
-        monteCarloAllScore += mySc;
-    } else { // ライバルの結果も考えるとき
-        int rivalRew = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
-        ASSERT(0 <= rivalRew && rivalRew <= bestReward, cerr << rivalRew << endl;);
-        
-        BetaDistribution rivalSc = BetaDistribution((rivalRew - worstReward) / (double)rewardGap,
-                                                    (bestReward - rivalRew) / (double)rewardGap);
-        
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
-        
-        lock();
-        child[triedIndex].myScore += mySc;
-        child[triedIndex].rivalScore += rivalSc;
-        
-        mySc *= 1 - RIVAL_RATE;
-        rivalSc.mul(RIVAL_RATE).rev();
-        
-        child[triedIndex].monteCarloScore += mySc + rivalSc;
-        child[triedIndex].naiveScore += mySc + rivalSc;
-        monteCarloAllScore += mySc + rivalSc;
+        totalScore = myScore * (1 - RIVAL_RATE) + rivalScore.reversed() * RIVAL_RATE;
+    } else {
+        totalScore = myScore;
+    }
+
+    lock();
+
+    child[triedIndex].monteCarloScore += totalScore;
+    child[triedIndex].naiveScore += totalScore;
+    monteCarloAllScore += totalScore;
+
+    if (rivalPlayerNum >= 0) {
+        child[triedIndex].myScore += myScore;
+        child[triedIndex].rivalScore += rivalScore;
     }
 
     child[triedIndex].simulations += 1;
@@ -184,6 +176,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 参考にする統計量
     child[triedIndex].turnSum += field.turnCount();
     if (allSimulations >= limitSimulations) exitFlag = true;
+
     unlock();
 }
 
