@@ -169,10 +169,10 @@ struct RootInfo {
     // 雑多な情報
     int myPlayerNum = -1, rivalPlayerNum = -1;
     int bestReward, worstReward;
-    int rewardGap;
+    double rewardGap;
     
     // モンテカルロ用の情報
-    bool exitFlag;
+    std::atomic<bool> exitFlag;
     uint64_t limitSimulations;
     BetaDistribution monteCarloAllScore;
     uint64_t allSimulations;
