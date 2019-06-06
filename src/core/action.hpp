@@ -5,49 +5,15 @@
 
 extern int genChange(Cards *const pc0, const Cards myCards, const int changeQty);
 
-extern int genAllSeqWithJoker(Move *const mv0, const Cards x);
-extern int genAllPlainSeq(Move *const mv0, const Cards x);
+extern int genAllSeq(Move *const mv, const Cards c);
 
-inline int genAllSeq(Move *const mv, const Cards c) {
-    if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
-    else return genAllSeqWithJoker(mv, c);
-}
-
-extern int genFollowPlainSeq(Move *const mv0, Cards c, Board b);
-extern int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b);
-
-inline int genFollowSeq(Move *const mv, const Cards c, const Board b) {
-    if (!containsJOKER(c)) return genFollowPlainSeq(mv, c, b);
-    else return genFollowSeqWithJoker(mv, c, b);
-}
-
-extern int genFollowSingle(Move *const mv0, const Cards myCards, const Board b);
-extern int genFollowDouble(Move *const mv0, const Cards c, const Board b);
-extern int genFollowTriple(Move *const mv0, const Cards c, const Board b);
-extern int genFollowQuadruple(Move *const mv0, const Cards c, const Board b);
-extern int genAllSingle(Move *const mv0, Cards c);
 extern int genLead(Move *const mv0, const Cards c);
 extern int genLegalLead(Move *const mv0, const Cards c);
 
 extern int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b);
 
 extern int genGroupDebug(Move *const mv0, Cards c, Board b);
-
-inline int genFollowExceptPASS(Move *const mv, const Cards c, const Board b) {
-    // 返り値は、生成した手の数
-    if (!b.isSeq()) {
-        int cnt;
-        switch (b.qty()) {
-            case 0: cnt = 0; break;
-            case 1: cnt = genFollowSingle(mv, c, b); break;
-            case 2: cnt = genFollowDouble(mv, c, b); break;
-            case 3: cnt = genFollowTriple(mv, c, b); break;
-            case 4: cnt = genFollowQuadruple(mv, c, b); break;
-            default: cnt = 0; break;
-        }
-        return cnt;
-    } else return genFollowSeq(mv, c, b);
-}
+extern int genFollowExceptPASS(Move *const mv, const Cards c, const Board b);
 
 inline int genFollow(Move *const mv, const Cards c, const Board b) {
     // 返り値は、生成した手の数
