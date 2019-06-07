@@ -63,7 +63,7 @@ struct SharedData : public BaseSharedData {
     // 全体で共通のデータ
 
     // 毎回報酬テーブルから持ってこなくてもいいようにこの試合の報酬を置いておくテーブル
-    uint16_t gameReward[N_CLASSES];
+    std::array<double, N_PLAYERS> gameReward;
     
     // 基本方策
     ChangePolicy<policy_value_t> baseChangePolicy;
@@ -168,7 +168,7 @@ struct RootInfo {
     
     // 雑多な情報
     int myPlayerNum = -1, rivalPlayerNum = -1;
-    int bestReward, worstReward;
+    double bestReward, worstReward;
     double rewardGap;
     
     // モンテカルロ用の情報

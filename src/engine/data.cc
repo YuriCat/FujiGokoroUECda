@@ -200,8 +200,8 @@ string RootInfo::toString(int num) const {
     oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
     oss << allSimulations << " trials." << endl;
     for (int i = 0; i < min(candidates, num); i++) {
-        int rew = worstReward + child[i].mean() * rewardGap;
-        int nrew = worstReward + child[i].naive_mean() * rewardGap;
+        double rew = worstReward + child[i].mean() * rewardGap;
+        double nrew = worstReward + child[i].naive_mean() * rewardGap;
         double sem = sqrt(child[i].mean_var());
         double rewZone[2] = {rew - sem * rewardGap, rew + sem * rewardGap};
         
@@ -213,13 +213,14 @@ string RootInfo::toString(int num) const {
         oss << " : ";
         
         if (child[i].simulations > 0) {
-            // まず総合評価点を表示
-            oss << rew << " ( " << (int)rewZone[0] << " ~ " << (int)rewZone[1] << " ) ";
-            oss << "{mc: " << nrew << "} ";
+            const int K = 100;
+            // 総合評価点を表示
+            oss << int(K * rew) << " ( " << int(K * rewZone[0]) << " ~ " << int(K * rewZone[1]) << " ) ";
+            oss << "{mc: " << int(K * nrew) << "} ";
             if (rivalPlayerNum >= 0) {
                 // 自分とライバルの評価点を表示
-                oss << " [mine = " << int(worstReward + child[i].myScore.mean() * rewardGap) << "] ";
-                oss << " [rival = " << int(worstReward + child[i].rivalScore.mean() * rewardGap) << "] ";
+                oss << " [mine = " << int(K * worstReward + child[i].myScore.mean() * rewardGap) << "] ";
+                oss << " [rival = " << int(K * worstReward + child[i].rivalScore.mean() * rewardGap) << "] ";
             }
         }
         oss << "prob = " << child[i].policyProb; // 方策関数の確率出力

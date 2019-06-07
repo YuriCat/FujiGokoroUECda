@@ -295,7 +295,7 @@ constexpr int getChangePartnerClass(int acl) {
     return N_CLASSES - 1 - acl;
 }
 
-constexpr int getNGamesForClassInitGame(int gn) {
+constexpr int numGamesBeforeClassInit(int gn) {
     // 試合番号から、階級初期化ゲームへの残り試合数に変換
     return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
 }
