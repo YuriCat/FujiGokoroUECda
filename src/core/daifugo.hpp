@@ -967,17 +967,6 @@ struct Move {
     constexpr int jokerRank()       const { return jkr; }
     constexpr unsigned jokerSuits() const { return jks; }
     constexpr int type()            const { return t; }
-
-    int typeNum() const {
-        int q = qty();
-        if (isSeq()) {
-            if (q >= 6) return 8;
-            return 2 + q;
-        } else {
-            if (q >= 5) return 8;
-            return q;
-        }
-    }
     
     Cards cards() const { // 構成するカード集合を得る
         if (isPASS()) return CARDS_NULL;
@@ -1002,6 +991,7 @@ struct Move {
             return c;
         }
     }
+
     Cards charaCards() const {
         // 性質カードを返す
         // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
@@ -1011,28 +1001,10 @@ struct Move {
         if (isSeq()) c = extractRanks(c, qty());
         return c;
     }
-    
-    template <int QTY = 256>
+
     Cards charaPQR() const {
-        static_assert(QTY == 256 || (1 <= QTY && QTY <= 4), "");
-        // 性質カードのPQRを返す
-        // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
-        // パスとシングルジョーカーも関係ないし、
-        // 階段にも今の所対応していない(意味が無さそう)
-        if (QTY == 0) {
-            return CARDS_NULL;
-        } else if (QTY == 1) {
-            return CARDS_HORIZON << (rank() << 2);
-        } else if (QTY != 256) {
-            constexpr int sft = (QTY - 1) >= 0 ? ((QTY - 1) < 32 ? (QTY - 1) : 31) : 0; // warningに引っかからないように...
-            if (1 <= QTY && QTY <= 4) {
-                return Cards(1U << sft) << (rank() << 2);
-            } else {
-                return CARDS_NULL;
-            }
-        } else {
-            return BitCards(1U << (qty() - 1)) << (rank() << 2);
-        }
+        // 性質カードのPQRを返す (グループ限定)
+        return BitCards(1U << (qty() - 1)) << (rank() << 2);
     }
 
     bool domInevitably() const;

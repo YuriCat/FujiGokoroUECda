@@ -83,11 +83,10 @@ namespace Deal {
 }
 
 // 拘束条件分割
-template <class dice64_t>
 bool dist2Rest_64(int numRest,
                   uint64_t *const goal0, uint64_t *const goal1,
                   const uint64_t arg, int N0, int N1,
-                  const uint64_t rest0, const uint64_t rest1, dice64_t& dice) {   
+                  const uint64_t rest0, const uint64_t rest1, Dice& dice) {   
     // 0が交換上手側、1が下手側
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
