@@ -256,33 +256,21 @@ inline bool Board::locksRank(Move m) const { return false; }
 
 inline bool Move::exam() const {
     // 変な値でないかチェック
-    int q = qty();
-    int r = rank();
-    uint32_t s = suits();
     if (isPASS()) {
-        if (q != 0) return false;
-    } else if (isSeq()) {
-        if (q < SEQ_MIN_QTY) return false;
-        if (countSuits(s) != 1) return false;
+        if (qty() != 0) return false;
+    } else if (isSingleJOKER()) {
+        if (qty() != 1) return false;
+        if (!isGroup()) return false;
     } else {
-        if (!isQuintuple()) {
-            if (q != countSuits(s)) return false;
+        int suitCount = countSuits(extendedSuits());
+        if (isSeq()) {
+            if (qty() < SEQ_MIN_QTY) return false;
+            if (suitCount != 1) return false;
+        } else {
+            if (suitCount != qty()) return false;
         }
     }
     return true;
-}
-
-constexpr bool isNoBack(const Cards mine, const Cards ops) {
-    return true; // イレブンバックはUECdaにはない
-}
-constexpr bool isNoBack(const Cards mine) {
-    return true; // イレブンバックはUECdaにはない
-}
-
-inline bool isNoRev(const Cards mine, const Cards ops) {
-    // 無革命性の証明
-    return !groupCards(ops, 4) && !canMakeSeq(ops, 5)
-            && !groupCards(mine, 4) && !canMakeSeq(mine, 5);
 }
 
 inline bool isNoRev(const Cards mine) {

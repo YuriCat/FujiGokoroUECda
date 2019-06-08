@@ -200,7 +200,7 @@ ostream& operator <<(ostream& ost, const Cards& c) {
     return ost;
 }
 
-BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
+BitCards ORQ_NDTable[2][16][4]; // (order, rank, qty - 1)
 uint64_t HASH_CARDS_ALL;
 
 void initCards() {
@@ -208,23 +208,11 @@ void initCards() {
     HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
     // nd計算に使うテーブル
     for (int r = 0; r < 16; r++) {
-        // オーダー通常
-        ORQ_NDTable[0][r][0] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1;
-        ORQ_NDTable[0][r][1] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_12;
-        ORQ_NDTable[0][r][2] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_123;
-        ORQ_NDTable[0][r][3] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
+        for (int q = 0; q < 4; q++) {
+            BitCards mask = PQRToSC(PQR_1 << q);
+            ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & mask;
+            ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & mask;
         }
-        // オーダー逆転
-        ORQ_NDTable[1][r][0] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1;
-        ORQ_NDTable[1][r][1] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_12;
-        ORQ_NDTable[1][r][2] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_123;
-        ORQ_NDTable[1][r][3] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        }
-        // 複数ジョーカーには未対応
     }
 }
 
@@ -238,22 +226,8 @@ ostream& operator <<(ostream& ost, const MeldChar& m) { // MeldChar出力
     } else if (m.isSingleJOKER()) {
         ost << "JOKER";
     } else {
-        // スート
-        if (m.isQuintuple()) { // クインタ特別
-            ost << OutSuits(SUITS_CDHSX);
-        } else {
-            ost << OutSuits(m.suits());
-        }
-        ost << "-";
-        
-        // ランク
-        int r = m.rank();
-        if (m.isSeq()) {
-            int q = m.qty();
-            ost << RankRange(r, r + q - 1);
-        } else {
-            ost << rankChar[r];
-        }
+        ost << OutSuits(m.extendedSuits());
+        ost << "-" << m.ranks();
     }
     return ost;
 }
@@ -270,25 +244,16 @@ string toRecordString(Move m) {
     } else if (m.isSingleJOKER()) {
         oss << "JK";
     } else {
-        int r = m.rank();
+        oss << OutSuits(m.extendedSuits());
+        oss << "-" << m.ranks();
+        // ジョーカー
         if (m.isSeq()) {
-            oss << OutSuits(m.suits());
-            oss << "-";
-            int q = m.qty();
-            oss << RankRange(r, r + q - 1);
-            // ジョーカー
             if (m.containsJOKER()) {
                 oss << "(" << rankChar[m.jokerRank()] << ")";
             }
         } else {
-            if (m.isQuintuple()) oss << OutSuits(SUITS_CDHSX);
-            else oss << OutSuits(m.suits());
-            oss << "-" << rankChar[r];
-            if (m.containsJOKER()) {
-                unsigned jks = m.jokerSuits();
-                if (jks == SUITS_CDHS) jks = SUIT_X;
-                oss << "(" << OutSuits(jks) << ")";
-            }
+            unsigned jks = m.extendedJokerSuits();
+            if (jks) oss << "(" << OutSuits(jks) << ")";
         }
     }
     return tolower(oss.str());
