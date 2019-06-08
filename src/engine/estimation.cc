@@ -276,7 +276,7 @@ void RandomDealer::prepareSubjectiveInfo() {
     // 初手がすでに済んでいる場合、初手プレーヤーにD3
     if (!inChange && turnCount > 0
         && dealCards.contains(INTCARD_D3)) {
-        addDetedtedCards(firstTurnClass, CARDS_D3);
+        addDetectedCards(firstTurnClass, CARDS_D3);
     }
     if (!initGame && !inChange) {
         if (myClass < MIDDLE) { // 自分が上位のとき
@@ -284,7 +284,7 @@ void RandomDealer::prepareSubjectiveInfo() {
             int changePartner = getChangePartnerClass(myClass);
             Cards sent = sentCards;
             sent.mask(detCards[changePartner]);
-            if (sent) addDetedtedCards(changePartner, sent);
+            if (sent) addDetectedCards(changePartner, sent);
         }
     }
 

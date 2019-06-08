@@ -88,7 +88,7 @@ private:
     void prepareSubjectiveInfo();
     void setWeightInWA();
 
-    void addDetedtedCards(int dstClass, Cards c) {
+    void addDetectedCards(int dstClass, Cards c) {
         detCards[dstClass] += c;
         dealCards -= c;
         int n = c.count();
