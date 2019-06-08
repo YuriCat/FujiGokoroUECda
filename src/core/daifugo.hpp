@@ -933,29 +933,29 @@ struct Move {
     }
     
     // True or False
-    constexpr bool isPASS() const { return t == 0; }
-    constexpr bool isGroup() const { return t == 1; }
-    constexpr bool isSeq() const { return t == 2; }
-    constexpr bool isSingle() const { return isGroup() && qty() == 1; }
-    constexpr bool isQuintuple() const { return isGroup() && q == 5; }
+    bool isPASS() const { return t == 0; }
+    bool isGroup() const { return t == 1; }
+    bool isSeq() const { return t == 2; }
+    bool isSingle() const { return isGroup() && qty() == 1; }
+    bool isQuintuple() const { return isGroup() && q == 5; }
 
-    constexpr bool containsJOKER() const { return jks || jkr; }
+    bool containsJOKER() const { return jks || jkr; }
 
-    constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
-    constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
+    bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
+    bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
     
-    constexpr bool isEqualRankSuits(unsigned r, unsigned s) const {
+    bool isEqualRankSuits(unsigned r, unsigned s) const {
         return rank() == r && suits() == s; // ランクとスート一致
     }
 
     // 情報を得る
-    constexpr unsigned suits()      const { return s; }
-    constexpr int qty()             const { return q; }
-    constexpr int rank()            const { return r; }
-    constexpr int jokerRank()       const { return jkr; }
-    constexpr unsigned jokerSuits() const { return jks; }
-    constexpr int type()            const { return t; }
-    
+    unsigned suits()      const { return s; }
+    int qty()             const { return q; }
+    int rank()            const { return r; }
+    int jokerRank()       const { return jkr; }
+    unsigned jokerSuits() const { return jks; }
+    int type()            const { return t; }
+
     Cards cards() const { // 構成するカード集合を得る
         if (isPASS()) return CARDS_NULL;
         if (isSingleJOKER()) return CARDS_JOKER;
@@ -1063,19 +1063,19 @@ struct Board : public Move {
     int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
     }
-    constexpr bool afterSuitsLocked(Move m) const {
+    bool afterSuitsLocked(Move m) const {
         return suitsLocked() || locksSuits(m);
     }
     
     // get
-    constexpr int prmOrder()   const { return Move::po; }
-    constexpr int order()      const { return Move::o; }
+    int prmOrder()   const { return Move::po; }
+    int order()      const { return Move::o; }
     
     // true or false
-    constexpr bool isNull() const { return type() == 0; }
-    constexpr bool suitsLocked() const { return Move::sl; }
-    constexpr bool rankLocked() const { return Move::rl; }
-    constexpr bool isRev() const { return Move::po; }
+    bool isNull() const { return type() == 0; }
+    bool suitsLocked() const { return Move::sl; }
+    bool rankLocked() const { return Move::rl; }
+    bool isRev() const { return Move::po; }
     
     bool isInvalid() const { return Move::invalid; }
 
@@ -1136,7 +1136,7 @@ extern bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q);
 // L2局面ハッシュ値
 // 空場
 // 空場のときは、場の変数はオーダー関連だけである事が多いのでそのまま
-constexpr uint64_t NullBoardToHashKey(Board bd) {
+inline uint64_t NullBoardToHashKey(Board bd) {
     return bd.order();
 }
 inline uint64_t BoardToHashKey(Board bd) {
