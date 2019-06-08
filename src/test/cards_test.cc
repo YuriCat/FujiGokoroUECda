@@ -181,7 +181,7 @@ int testRankCards() {
         time[1] += cl.stop();
         if (test != ans) {
             cerr << "inconsistent Rank -> Cards conversion!" << endl;
-            cerr << OutRank(r) << " : " << test << " <-> " << ans << endl;
+            cerr << rankChar[r] << " : " << test << " <-> " << ans << endl;
             return -1;
         }
     }
@@ -194,7 +194,7 @@ int testRankCards() {
             ans |= rankCardsTable[rr];
             if (test != ans) {
                 cerr << "inconsistent [Rank, Rank] -> Cards conversion!" << endl;
-                cerr << "[" << OutRank(r) << ", " << OutRank(rr) << "]";
+                cerr << "[" << rankChar[r] << ", " << rankChar[rr] << "]";
                 cerr << " : " << test << " <-> " << ans << endl;
                 return -1;
             }

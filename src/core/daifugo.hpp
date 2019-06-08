@@ -32,18 +32,12 @@ enum {
     RANK_NONE = -1
 };
 
-// 出力
-struct OutRank {
-    int r;
-    constexpr OutRank(int arg): r(arg) {}
-};
 struct RankRange { // 連続ランク
     int r0, r1;
     constexpr RankRange(int arg0, int arg1): r0(arg0), r1(arg1) {}
 };
 
 extern const std::string rankChar;
-extern std::ostream& operator <<(std::ostream& out, const OutRank& arg);
 extern std::ostream& operator <<(std::ostream& ost, const RankRange& arg);
 extern int CharToRank(char c);
 
@@ -59,14 +53,8 @@ enum {
 };
 
 constexpr int N_SUITS = 4;
-    
-struct OutSuitNum {
-    int sn;
-    constexpr OutSuitNum(int arg): sn(arg) {}
-};
 
 extern const std::string suitNumChar;
-extern std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg);
 extern int CharToSuitNum(char c);
 
 /**************************スート**************************/
@@ -104,7 +92,7 @@ struct OutSuits {
     constexpr OutSuits(unsigned arg): s(arg) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const OutSuits& arg);
+extern std::ostream& operator <<(std::ostream& ost, const OutSuits& arg);
 
 // (スート, スート)のパターン
 extern uint8_t sSIndex[16][16];
@@ -192,7 +180,7 @@ struct OutIntCard {
     constexpr OutIntCard(const IntCard& arg): ic(arg) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const OutIntCard& arg);
+extern std::ostream& operator <<(std::ostream& ost, const OutIntCard& arg);
 extern IntCard StringToIntCard(const std::string& str);
 
 /**************************カード集合**************************/
@@ -629,7 +617,7 @@ union Cards {
     std::string toString() const;
 };
 
-extern std::ostream& operator <<(std::ostream& out, const Cards& c);
+extern std::ostream& operator <<(std::ostream& ost, const Cards& c);
 
 struct CardArray : public BitArray64<4, 16> {
     constexpr CardArray(): BitArray64<4, 16>() {}
@@ -1021,8 +1009,8 @@ struct MeldChar : public Move {
     MeldChar(Move m): Move(m) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const MeldChar& m);
-extern std::ostream& operator <<(std::ostream& out, const Move& m);
+extern std::ostream& operator <<(std::ostream& ost, const MeldChar& m);
+extern std::ostream& operator <<(std::ostream& ost, const Move& m);
 extern std::string toRecordString(Move m);
 extern Move CardsToMove(const Cards chara, const Cards used);
 extern Move StringToMoveM(const std::string& str);
@@ -1142,7 +1130,7 @@ inline Board OrderToNullBoard(int o) {
     return b;
 }
 
-extern std::ostream& operator <<(std::ostream& out, const Board& b);
+extern std::ostream& operator <<(std::ostream& ost, const Board& b);
 extern bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q);
 
 // L2局面ハッシュ値
