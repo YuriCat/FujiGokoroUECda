@@ -403,7 +403,7 @@ inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
         case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
         case 2: res = RankRangeToCards(RANK_MIN, RANK_MAX) - RankToCards(rank); break;
-        default: UNREACHABLE; res = CARDS_NULL; break;
+        default: assert(0); res = CARDS_NULL; break;
     }
     return res;
 }
@@ -415,7 +415,7 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
         case 2: res = RankRangeToCards(RANK_MIN, rank - 1)
                       | RankRangeToCards(rank + qty, RANK_MAX); break;
-        default: UNREACHABLE; res = CARDS_NULL; break;
+        default: assert(0); res = CARDS_NULL; break;
     }
     return res;
 }
@@ -698,7 +698,7 @@ inline BitCards CardsToNR(BitCards c, int q) {
         case 2: nr = CardsTo2R(c); break;
         case 3: nr = CardsTo3R(c); break;
         case 4: nr = CardsToFR(c); break;
-        default: UNREACHABLE; nr = CARDS_NULL; break;
+        default: assert(0); nr = CARDS_NULL; break;
     }
     return nr;
 }

@@ -80,19 +80,15 @@ constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
 
 // 出力
 #ifdef DEBUG
-#define DOUT std::cout
 #define DERR std::cerr
 #else
 #define DERR 0 && std::cerr
-#define DOUT 0 && std::cout
 #endif
 
 #ifndef MINIMUM
-#define COUT cout
-#define CERR cerr
+#define CERR std::cerr
 #else
-#define CERR 0 && cerr
-#define COUT 0 && cout
+#define CERR 0 && std::cerr
 #endif
 
 static double internal_clock_sec() {
@@ -478,7 +474,7 @@ struct BetaDistribution {
         b *= m;
         return *this;
     }
-    BetaDistribution& operator/=(const double d){
+    BetaDistribution& operator/=(const double d) {
         (*this) *= 1 / d;
         return *this;
     }
