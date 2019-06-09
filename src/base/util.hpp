@@ -462,29 +462,18 @@ struct BetaDistribution {
     double log_dens(double x) const {
         return log_relative_dens(x) - log_beta(a, b);
     }
-    
-    BetaDistribution& add(const BetaDistribution& arg)noexcept{
-        a += arg.a;
-        b += arg.b;
-        return *this;
-    }
-    BetaDistribution& subtr(const BetaDistribution& arg)noexcept{
-        a -= arg.a;
-        b -= arg.b;
-        return *this;
-    }
-    
-    BetaDistribution& operator+=(const BetaDistribution& rhs)noexcept{
+
+    BetaDistribution& operator+=(const BetaDistribution& rhs) {
         a += rhs.a;
         b += rhs.b;
         return *this;
     }
-    BetaDistribution& operator-=(const BetaDistribution& rhs)noexcept{
+    BetaDistribution& operator-=(const BetaDistribution& rhs) {
         a -= rhs.a;
         b -= rhs.b;
         return *this;
     }
-    BetaDistribution& operator*=(const double m)noexcept{
+    BetaDistribution& operator*=(const double m) {
         a *= m;
         b *= m;
         return *this;
@@ -493,40 +482,18 @@ struct BetaDistribution {
         (*this) *= 1 / d;
         return *this;
     }
-    BetaDistribution& mul(const double m)noexcept{
-        a *= m;
-        b *= m;
-        return *this;
-    }
-    
-    BetaDistribution& rev()noexcept{
-        std::swap(a, b);
-        return *this;
-    }
-    
-    BetaDistribution& set(const double aa, const double ab)noexcept{
+
+    BetaDistribution& set(const double aa, const double ab) {
         a = aa;
         b = ab;
         return *this;
     }
-    BetaDistribution& set_by_mean(double m, double size)noexcept{
+    BetaDistribution& set_by_mean(double m, double size) {
         set(m * size, (1 - m) * size);
         return *this;
     }
-    BetaDistribution& set_by_rate(double r, double size)noexcept{
+    BetaDistribution& set_by_rate(double r, double size) {
         set_by_mean(r / (1 + r), size);
-        return *this;
-    }
-    
-    BetaDistribution& resize(double h){
-        // サイズをhにする
-        double s = size();
-        
-        assert(s);
-        
-        double h_s = h / s;
-        a *= h_s;
-        b *= h_s;
         return *this;
     }
     BetaDistribution reversed() const {
@@ -542,13 +509,13 @@ struct BetaDistribution {
     a(aa), b(ab){}
 };
 
-inline BetaDistribution operator+(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+inline BetaDistribution operator+(const BetaDistribution& lhs, const BetaDistribution& rhs) {
     return BetaDistribution(lhs.a + rhs.a, lhs.b + rhs.b);
 }
-inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistribution& rhs) {
     return BetaDistribution(lhs.a - rhs.a, lhs.b - rhs.b);
 }
-inline BetaDistribution operator*(const BetaDistribution& lhs, const double m)noexcept{
+inline BetaDistribution operator*(const BetaDistribution& lhs, const double m) {
     return BetaDistribution(lhs.a * m, lhs.b * m);
 }
 extern std::ostream& operator<<(std::ostream& out, const BetaDistribution& b);
