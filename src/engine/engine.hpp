@@ -6,7 +6,7 @@
 #include <thread>
 #include "../settings.h"
 #include "data.hpp"
-#include "value.hpp"
+#include "reward.hpp"
 #include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
@@ -54,10 +54,8 @@ public:
         // 報酬設定
         // ランク初期化まで残り何試合か
         // 公式には未定だが、多くの場合100試合だろうから100試合としておく
-        const int gamesForCIG = getNGamesForClassInitGame(record.getLatestGameNum());
-        for (int cl = 0; cl < N_PLAYERS; cl++) {
-            shared.gameReward[cl] = int(standardReward(gamesForCIG, cl) * 100);
-        }
+        const int gbci = numGamesBeforeClassInit(record.getLatestGameNum());
+        shared.gameReward = standardReward(min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {

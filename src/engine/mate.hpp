@@ -7,20 +7,20 @@
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
 
-inline bool judgeMate_Easy_NF(const Hand& myHand) {
+inline bool judgeMate_Easy_NF(const Hand& mh) {
     // とりあえず高速でNF_Mateかどうか判断したい場合
-    if (myHand.qty <= 1) return true;
-    Cards pqr = myHand.pqr;
+    if (mh.qty <= 1) return true;
+    Cards pqr = mh.pqr;
     if (!any2Cards(maskCards(pqr, CARDS_8 | CARDS_JOKER))) return true;
-    if (myHand.jk) { // ジョーカーあり
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
+    if (mh.jk) { // ジョーカーあり
+        if (mh.seq) {
+            if (mh.qty == 3) return true;
+            if (canMakeJokerSeq(mh.cards.plain(), mh.jk, mh.qty)) return true;
         }
     } else {
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakePlainSeq(myHand.cards, myHand.qty)) return true;
+        if (mh.seq) {
+            if (mh.qty == 3) return true;
+            if (canMakePlainSeq(mh.cards, mh.qty)) return true;
         }
     }
     return false;
@@ -31,304 +31,216 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
     // すでに支配的でない着手があることがわかっており、
     // それ以外が全て支配的かを確認するメソッド
     // 階段未対応
-    
-    // 使用...mine - jk, pqr, ops - nd
-    
-    // ただし、
-    // クアドラを2つ以上
-    // トリプルを3つ以上
-    // クアドラ1つ以上 && トリプル2つ以上
-    // といった稀な場合には高確率で誤判定する
-    
+
     assert(pqr == CardsToPQR(cards));
     const int ord = b.order();
+#define PPW(s) { DERR << "PPW" << s << " " << cards << endl; return true; }
     
     const Cards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
+
     if (!ndpqr) {
-        // 革命を返される可能性のみ考慮しておく。
-        if (pqr & PQR_4 & ~CARDS_8) {
-            Cards quad = pqr & PQR_4 & ~CARDS_8 & ~ndpqr;
-            if (quad) {
-                // このとき8以外の革命でターンをとる予定
-                if (quad & nd[flipOrder(ord)]) {
-                    // 革命でターンが取れない。
-                    if (!jk) {
-                        return false;
-                    } else {
-                        // 革命にジョーカーを加えれば良い。
-                        // 革命2つの場合には間違い
-                    }
-                }
-            }
+        // 革命を返される可能性のみ考慮
+        Cards ndquad = pqr & PQR_4 & ~CARDS_8 & ~ndpqr & nd[flipOrder(ord)];
+        // 支配できない革命が無い
+        if (!ndquad) PPW("0(NO-NDQUAD)");
+        // ジョーカーがあるとき革命にジョーカーを加えて大体大丈夫
+        // （革命複数の場合にはアウト）
+        if (jk) PPW("0(QUAD+JK)");
+        return false;
+    }
+
+    if (!any2Cards(ndpqr)) {
+        // ndpqrが1ビット
+        // ジョーカーを加えて必勝になるか確かめる
+        if (jk) {
+            // 5枚グループにして勝ち
+            if (ndpqr & PQR_4) PPW("1(QUIN)");
+            // ndと交差しなければ勝ち
+            if (!((ndpqr << 1) & nd[ord])) PPW("1(+JK)");
+            // スペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
+            if (ndpqr == (CARDS_3 & PQR_1) && containsS3(cards)) PPW("1(JK-S3)");
         }
-        DERR << "PPW " << cards << endl;
-        return true;
-    } else {
-        Cards ndpqr_m = ndpqr & (ndpqr - 1ULL);
-        if (!ndpqr_m) {
-            // ndpqrが1ビット
-            // ジョーカーを加えて必勝になるか確かめる
-            if (jk) {
-                if (ndpqr & PQR_4) {
-                    // 5枚出しで勝てる
-                    DERR << "PPW (QUIN) " << cards << endl;
-                    return true;
-                } else {
-                    // ndと交差しなければ勝ち
-                    if (!((ndpqr << 1) & nd[ord])) {
-                        DERR << "PPW (+JK) " << cards << endl;
-                        return true;
-                    }
-                    // スペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
-                    if (ndpqr == CARDS_MIN && containsS3(cards)) {
-                        DERR << "PPW (JK-S3) " << cards << endl;
-                        return true;
-                    }
-                }
-            }
-        }
-        // 革命によって勝てないか考える
-        if (pqr & PQR_4) {
-            // ジョーカーを使わない革命あり。
-            Cards quad = pqr & PQR_4;
-            Cards ndpqr_new = ndpqr & ~quad & nd[flipOrder(ord)];
-            
-            if (jk) {
-                if (!ndpqr_new) {
-                    // 革命がだめでも5枚出しがある。勝ち
-                    DERR << "PPW (QUIN) " << cards << endl;
-                    return true;
-                } else {
-                    if (!(ndpqr_new & (ndpqr_new - 1ULL))) {
-                        // 1つ残し
-                        // 革命でターンが取れるならジョーカーは残っているのでジョーカーを使うことを考える
-                        // 革命でターンが取れない場合は5枚出しをする必要があったのでもうジョーカーは無い
-                        if (!(quad & nd[flipOrder(ord)] & ~CARDS_8)) {
-                            // 革命でターンがとれる
-                            // このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                            // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
-                            
-                            // いずれかのオーダーのndと交差しなければ勝ち
-                            if ((!((ndpqr_new << 1) & nd[ord]))
-                               || (!((ndpqr_new << 1) & nd[flipOrder(ord)]))) {
-                                DERR << "NJ_QUAD PPW (+JK) " << cards << endl;
-                                return true;
-                            }
-                            // このときスペ3は通常か逆のいずれかで必ず支配的なはずなので、スペ3判定必要なし。
-                        }
-                    }
-                }
-            } else {
-                //ジョーカーが無いので、革命が支配的かつ他のも全て支配的が必須
-                if (!ndpqr_new && !(quad & nd[flipOrder(ord)] & ~CARDS_8)) {
-                    DERR << "NJ_QUAD PPW " << cards << endl;
-                    return true;
-                }
-            }
-        } else if (jk && (pqr & PQR_3)) {
-            //ジョーカーを使えば革命あり。
-            //ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
-            //まず、この革命がターンを取れるか
-            Cards quad = (pqr & PQR_3) << 1;
-            //トリプルが2つあるのは結構あるだろう。少なくとも1つで支配出来れば良い
-            Cards tmp = quad & nd[flipOrder(ord)] & ~CARDS_8;
-            if (quad != tmp) {
-                //革命でターンがとれる
-                //このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & nd[flipOrder(ord)];//革命の分も消しとく
-                if (!ndpqr_new) {
-                    //全部支配できた場合のみOK
-                    DERR << "J_QUAD PPW " << cards << endl;
-                    return true;
+    }
+
+    // 革命によって勝てないか考える
+    if (pqr & PQR_4) {
+        // ジョーカーを使わない革命あり
+        Cards quad = pqr & PQR_4;
+        Cards ndpqr_new = ndpqr & ~quad & nd[flipOrder(ord)];
+
+        // 革命が支配的かつ他の役も全て支配的なら勝ち
+        bool qdom = !(quad & nd[flipOrder(ord)] & ~CARDS_8);
+        if (!ndpqr_new && qdom) PPW("2(NJ_QUAD)");
+        if (jk) {
+            // 革命がだめでも5枚出しがあるなら勝ち
+            if (!ndpqr_new) PPW("2(QUIN)");
+            if (!any2Cards(ndpqr_new)) {
+                // 1つ残し
+                // 革命でターンが取れるならジョーカーは残っているのでジョーカーを使うことを考える
+                // 革命でターンが取れない場合は5枚出しをする必要があったのでもうジョーカーは無い
+                if (qdom) {
+                    // 革命でターンがとれる
+                    // このとき、まだターンが取れていなかったやつを逆オーダーで考える
+                    // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければ勝ち
+                    // いずれかのオーダーのndと交差しなければ勝ち
+                    // このときスペ3は通常か逆のいずれかで必ず支配的なはずなので、スペ3判定必要なし
+                    Cards ndpqr_jk = ndpqr_new << 1;
+                    if (!(ndpqr_jk & nd[ord]) || !(ndpqr_jk & nd[flipOrder(ord)])) PPW("2(NJ_QUAD +JK)");
                 }
             }
         }
     }
+    
+    if (jk && (pqr & PQR_3)) {
+        // ジョーカーを使えば革命あり
+        // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
+        Cards quad = (pqr & PQR_3) << 1;
+        // トリプルが2つあるのは結構あるだろう。少なくとも1つで支配出来れば良い
+        Cards tmp = quad & nd[flipOrder(ord)] & ~CARDS_8;
+        if (quad != tmp) {
+            // 革命でターンがとれる
+            // このとき、まだターンが取れていなかったやつを逆オーダーで考える
+            Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & nd[flipOrder(ord)]; // 革命の分も消しとく
+            // 全部支配できた場合のみOK
+            if (!ndpqr_new) PPW("2(J_QUAD)");
+        }
+    }
+
+#undef PPW
     return false;
 }
 
-inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board& b) {
-    // 合法着手生成を用いずに判定出来る場合
-    
-    // ただし、
+inline bool judgeHandPW_NF(const Hand& mh, const Hand& oh, const Board& b) {
+    // 合法着手生成を用いずに必勝判定
+    // ただし
     // クアドラを2つ以上
     // トリプルを3つ以上
     // クアドラ1つ以上 && トリプル2つ以上
     // といった稀な場合には高確率で誤判定する
-    
-    assert(myHand.exam_jk());
-    assert(myHand.exam_seq());
-    assert(myHand.exam_pqr());
-    assert(opsHand.exam_jk());
-    assert(opsHand.exam_seq());
-    assert(opsHand.exam_nd());
-    
+
+    assert(mh.exam1stHalf() && oh.exam_nd());
     const int ord = b.order();
-    
-    const Cards ndpqr = myHand.pqr & opsHand.nd[ord] & ~CARDS_8; // 支配出来ていないpqr
+#define PW(s) { DERR << "PPW" << s << " " << mh.cards << ", " << oh.cards << endl; return true; }
+
+    const Cards ndpqr = mh.pqr & oh.nd[ord] & ~CARDS_8; // 支配出来ていないpqr
+
     if (!ndpqr) {
-        // このときほぼ必勝なのだが、一応4枚グループが2つある場合にはそうでないことがある
-        DERR << "PW0 " << myHand.cards << " , " << opsHand.cards << endl;
-        Cards pqr4 = myHand.pqr & PQR_4;
-        if (!any2Cards(pqr4)) return true; // ４枚グループが1つ以下
-        //以下4枚グループ2つ。ほぼないので適当で良い。
-        if (myHand.jk) return true; //革命のうち1つにジョーカーを加えれば勝ち
-        if (!any2Cards(pqr4 & opsHand.nd[ord])) return true;
+        // このときほぼ必勝なのだが、一応4枚グループが複数ある場合にはそうでないことがある
+        Cards quad = mh.pqr & PQR_4;
+        // 4枚グループが1つ以下
+        if (!any2Cards(quad)) PW("0(U1QUAD)"); 
+        // 以下4枚グループ2つ以上 誤りを許容
+        // 革命のうち1つにジョーカーを加えれば勝ち
+        if (mh.jk) PW("0(2QUAD+JK)"); 
+        if (!any2Cards(quad & ~CARDS_8 & oh.nd[ord])) PW("0(U1NDQUAD)");
         return false;
+    }
+
+    const Cards ndpqr_m = popLsb(ndpqr);
+
+    if (!ndpqr_m) {
+        // ndpqrが1ビットだけ
+        // 革命を返される可能性のみ考慮
+        Cards ndquad = mh.pqr & PQR_4 & ~CARDS_8 & ~ndpqr & oh.nd[flipOrder(ord)];
+        if (!ndquad) PW("1(NO-NDQUAD)");
+        // （革命複数の場合にはアウト）
+        if (mh.jk) PW("1(QUAD+JK)");
+        return false;
+    }
+
+    // 支配出来ない部分が2つ以上
+    if (mh.seq) { // 階段である場合がある
+        if (mh.qty == 3) PW("0(SEQ3)"); // 3階段1つ
+        if (mh.qty == 4 && polymRanks(mh.seq, 2 + mh.jk)) PW("0(SEQ4)"); // 4階段1つ
     } else {
-        Cards ndpqr_m = ndpqr & (ndpqr - 1ULL);
-        
-        if (!ndpqr_m) {
-            // ndpqrが1ビットだけ
-            // このときも基本的に必勝。
-            // 革命を返される可能性のみ考慮しておく。
-            if (myHand.pqr & PQR_4 & ~CARDS_8) {
-                Cards quad = myHand.pqr & PQR_4 & ~CARDS_8 & ~ndpqr;
-                if (quad) {
-                    // このとき8以外の革命でターンをとる予定
-                    if (quad & opsHand.nd[flipOrder(ord)]) {
-                        // 革命でターンが取れない。
-                        if (!myHand.jk) {
-                            return false;
-                        } else {
-                            // 革命にジョーカーを加えれば良い。
-                            // 革命2つの場合には間違い
-                        }
-                    }
-                }
-            }
-            // 一応OKとする
-            DERR << "PW1 " << myHand.cards << " , " << opsHand.cards << endl;
-            return true;
-        } else {
-            // 支配出来ない部分が2つ以上
-            if (myHand.seq) { // 階段である場合がある。
-                if (myHand.qty == 3) { // 3階段1つ
-                    DERR << "SEQ PW0 " << myHand.cards << " , " << opsHand.cards << endl;
-                    return true;
-                }
-            } else {
-                // ここから長いので、ジョーカーも革命も階段も無い場合(大部分)はさっさと帰る
-                if (!myHand.jk) {
-                    if (!(myHand.pqr & PQR_4)) return false;
-                }
-            }
+        // ここから長いので、ジョーカーも革命も階段も無い場合(大部分)はさっさと帰る
+        if (!mh.jk && !(mh.pqr & PQR_4)) return false;
+    }
+
+    if (!any2Cards(ndpqr_m)) {
+        // 2ビットのみ
+        // いずれかにジョーカーを加えて必勝になるか確かめる
+        if (mh.jk) {
+            // 5枚出しで勝てる
+            if (ndpqr & PQR_4) PW("1(QUAD+JK)");
+
+            Cards l = ndpqr.divide().lowest();
+            Cards h = ndpqr - l;
+            // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
+            bool jh = (h << 1) & oh.nd[(h & PQR_3) ? (1 - ord) : ord];
+            bool jl = (l << 1) & oh.nd[(l & PQR_3) ? (1 - ord) : ord];
+            if (!jh || !jl) PW("1(+JK)");
             
-            if (!(ndpqr_m & (ndpqr_m - 1ULL))) {
-                // 2ビットのみ。
-                // いずれかにジョーカーを加えて必勝になるか確かめる
-                if (myHand.jk) {
-                    if (ndpqr & PQR_4) {
-                        // 5枚出しで勝てる
-                        DERR << "PW1 (QUAD+JK) " << myHand.cards << " , " << opsHand.cards << endl;
-                        return true;
-                    } else {
-                        Cards l = ndpqr.divide().lowest();
-                        Cards h = ndpqr - l;
-                        // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
-                        bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? (1 - ord) : ord];
-                        bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? (1 - ord) : ord];
-                        if (!jh || !jl) {
-                            DERR << "PW1 (+JK) " << myHand.cards << " , " << opsHand.cards << endl;
-                            return true;
-                        }
-                        
-                        // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
-                        if (l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)) {
-                            // 3はランク最低なのでlだろう
-                            DERR << "PW1 (JK-S3) " << myHand.cards << " , " << opsHand.cards << endl;
-                            return true;
-                        }
-                    }
-                }
-            }
-            
-            // 革命によって勝てないか考える
-            if (myHand.pqr & PQR_4) {
-                // ジョーカーを使わない革命あり。
-                Cards quad = myHand.pqr & PQR_4;
-                //Cards nd_quad = ndpqr & quad & opsHand.nd[flipOrder(ord)];
-                Cards ndpqr_new = ndpqr & ~quad & opsHand.nd[flipOrder(ord)];
-                
-                if (!ndpqr_new) {
-                    // 全部支配できた。勝ち
-                    DERR << "NJ_QUAD PW0~1 " << myHand.cards << " , " << opsHand.cards << endl;
-                    return true;
-                }
-                Cards ndpqr_new_m = ndpqr_new & (ndpqr_new - 1ULL);
-                if (myHand.jk) {
-                    if (!ndpqr_new_m) {
-                        // 1つ残し。5枚出しすればよい。勝ち
-                        DERR << "NJ_QUIN PW1 " << myHand.cards << " , " << opsHand.cards << endl;
-                        return true;
-                    } else {
-                        // 2つ以上残っている。
-                        if (!(ndpqr_new_m & (ndpqr_new_m - 1ULL))) {
-                            // 2つだけ
-                            // 革命でターンが取れるならジョーカーは残っているのでジョーカーを使うことを考える
-                            // 革命でターンが取れない場合は5枚出しをする必要があったのでもうジョーカーは無い
-                            if (!(quad & opsHand.nd[flipOrder(ord)] & ~CARDS_8)) {
-                                // 革命でターンがとれる
-                                // このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                                
-                                // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
-                                Cards l = ndpqr_new.divide().lowest();
-                                Cards h = ndpqr_new - l;
-                                // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
-                                if (!((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
-                                   || !((l << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[flipOrder(ord)])) {
-                                    DERR << "NJ_QUAD PW1 (+JK) " << myHand.cards << " , " << opsHand.cards << endl;
-                                    return true;
-                                }
-                                
-                                // このときスペ3は通常か逆のいずれかで必ず支配的なはずなので、スペ3判定必要なし。
-                                // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
-                                /*if ( l == CARDS_C3 && containsS3( myHand.cards )) {
-                                 //3はランク最低なのでlだろう
-                                 DERR<<"NJ_QUAD PW1 (JK-S3)"<<endl;
-                                 return true;
-                                 }*/
-                            }
-                        }
-                    }
-                } else {
-                    if (!ndpqr_new_m) {
-                        // 1つ残し。革命でターンが取れるなら勝ち。
-                        if (!(quad & opsHand.nd[flipOrder(ord)] & ~CARDS_8)) {
-                            DERR << "NJ_QUAD PW1 " << myHand.cards << " , " << opsHand.cards << endl;
-                            return true;
-                        }
-                    }
-                }
-            } else if (myHand.jk && (myHand.pqr & PQR_3)) {
-                // ジョーカーを使えば革命あり。
-                // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
-                // まず、この革命がターンを取れるか
-                Cards quad = (myHand.pqr & PQR_3) << 1;
-                // トリプルが2つあるのは結構あるだろう。少なくとも1つで支配出来れば良い
-                Cards tmp = quad & opsHand.nd[flipOrder(ord)] & ~CARDS_8;
-                if (quad != tmp) {
+            // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
+            // 3はランク最低なのでlだろう
+            if (l == (CARDS_3 & PQR_1) && containsS3(mh.cards)) PW("1(JK-S3)");
+        }
+    }
+    
+    // 革命によって勝てないか考える
+    if (mh.pqr & PQR_4) {
+        // ジョーカーを使わない革命あり。
+        Cards quad = mh.pqr & PQR_4;
+        Cards ndpqr_new = ndpqr & ~quad & oh.nd[flipOrder(ord)];
+
+        // 全部支配できたら勝ち
+        if (!ndpqr_new) PW("2(NJ_QUAD)");
+
+        Cards ndpqr_new_m = ndpqr_new & (ndpqr_new - 1ULL);
+        if (mh.jk) {
+            // 1つ残し。5枚出しすればよい。勝ち
+            if (!ndpqr_new_m) PW("2(NJ_QUIN)");
+
+            // 2つ以上残っている
+            if (!any2Cards(ndpqr_new_m)) {
+                // 2つだけ
+                // 革命でターンが取れるならジョーカーは残っているのでジョーカーを使うことを考える
+                // 革命でターンが取れない場合は5枚出しをする必要があったのでもうジョーカーは無い
+                if (!(quad & oh.nd[flipOrder(ord)] & ~CARDS_8)) {
                     // 革命でターンがとれる
                     // このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                    Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & opsHand.nd[flipOrder(ord)]; // 革命の分も消しとく
                     
-                    if (!ndpqr_new) {
-                        //全部支配できた。勝ち
-                        DERR << "J_QUAD PW0 " << myHand.cards << " , " << opsHand.cards << endl;
-                        return true;
-                    } else {
-                        Cards ndpqr_new_m = ndpqr_new & (ndpqr_new - 1ULL);
-                        if (!ndpqr_new_m) {
-                            // 1つ残し。勝ち
-                            DERR << "J_QUAD PW1 " << myHand.cards << " , " << opsHand.cards << endl;
-                            return true;
-                        }
-                        // 2つ以上残っている。ジョーカーを既に使ってしまったので勝てない。
+                    // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
+                    Cards l = ndpqr_new.divide().lowest();
+                    Cards h = ndpqr_new - l;
+                    // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
+                    if (   !((h << 1) & oh.nd[ord]) || !((h << 1) & oh.nd[flipOrder(ord)])
+                        || !((l << 1) & oh.nd[ord]) || !((l << 1) & oh.nd[flipOrder(ord)])) {
+                        PW("2NJ_QUAD(+JK)");
                     }
+                    // このときスペ3は通常か逆のいずれかで必ず支配的なはずなので、スペ3判定必要なし
                 }
+            }
+        } else {
+            if (!ndpqr_new_m) {
+                // 1つ残し。革命でターンが取れるなら勝ち
+                if (!(quad & oh.nd[flipOrder(ord)] & ~CARDS_8)) PW("2(NJ_QUAD 1)");
             }
         }
     }
+    
+    if (mh.jk && (mh.pqr & PQR_3)) {
+        // ジョーカーを使えば革命あり。
+        // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
+        // まず、この革命がターンを取れるか
+        Cards quad = (mh.pqr & PQR_3) << 1;
+        // トリプルが2つあるのは結構あるだろう。少なくとも1つで支配出来れば良い
+        Cards tmp = quad & oh.nd[flipOrder(ord)] & ~CARDS_8;
+
+        if (quad != tmp) {
+            // 革命でターンがとれる
+            // このとき、まだターンが取れていなかったやつを逆オーダーで考える
+            Cards ndpqr_new = ndpqr & ~((quad ^ tmp) >> 1) & oh.nd[flipOrder(ord)]; // 革命の分も消しとく
+
+            // 全部支配できたら勝ち
+            if (!ndpqr_new) PW("2(J_QUAD 0)");
+            // 1つ残しで勝ち
+            if (!any2Cards(ndpqr_new)) PW("2(J_QUAD 1)");
+            // 2つ以上残っている。ジョーカーを既に使ってしまったので勝てない
+        }
+    }
+
+#undef PW
     return false;
 }
     
@@ -338,16 +250,12 @@ inline int searchHandMate(const int, Move *const, const int,
 
 inline bool judgeHandMate(const int depth, Move *const mbuf,
                           const Hand& mh, const Hand& oh, const Board& b) {
-    // 簡単詰み
-    if (b.isNull() && judgeMate_Easy_NF(mh)) return true;
-    // 中程度詰み
-    if (b.isNull() && judgeHandPW_NF(mh, oh, b)) return true;
+    if (b.isNull()) {
+        if (judgeMate_Easy_NF(mh)) return true;
+        if (judgeHandPW_NF(mh, oh, b)) return true;
+    }
 
-    if (!b.isNull() || depth > 0) {
-        // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
-        const int NMoves = genMove(mbuf, mh, b);
-        if (searchHandMate(depth, mbuf, NMoves, mh, oh, b) != -1) return true;
-    } else {
+    if (b.isNull() && depth == 0) {
         // 階段パターンのみ検討
         // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
         if (mh.seq) {
@@ -358,14 +266,11 @@ inline bool judgeHandMate(const int depth, Move *const mbuf,
                 
                 Hand nmh;
                 makeMove1stHalf(mh, &nmh, m);
-                if (!depth && m.qty() > 4) {
+                if (!depth && m.qty() > 4) { // 5枚以上の階段は支配としておく
                     Board nb = b;
                     nb.procOrder(m);
-                    // 5枚以上の階段は支配としとく
-                    if (judgeHandPW_NF(nmh, oh, b) || judgeHandPW_NF(nmh, oh, nb)) {
-                        // いずれかのオーダーで必勝ならOK
-                        return true;
-                    }
+                    // いずれかのオーダーで必勝ならOK
+                    if (judgeHandPW_NF(nmh, oh, b) || judgeHandPW_NF(nmh, oh, nb)) return true;
                 } else {
                     if (dominatesHand(m, oh, b)) {
                         if (judgeHandPW_NF(nmh, oh, b)) return true;
@@ -376,6 +281,10 @@ inline bool judgeHandMate(const int depth, Move *const mbuf,
                 }
             }
         }
+    } else {
+        // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
+        const int NMoves = genMove(mbuf, mh, b);
+        if (searchHandMate(depth, mbuf, NMoves, mh, oh, b) != -1) return true;
     }
     return false;
 }

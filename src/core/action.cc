@@ -142,6 +142,11 @@ int genAllPlainSeq(Move *const mv0, const Cards x) {
     return mv - mv0;
 }
 
+int genAllSeq(Move *const mv, const Cards c) {
+    if (!containsJOKER(c)) return genAllPlainSeq(mv, c);
+    else return genAllSeqWithJoker(mv, c);
+}
+
 int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
     int r = b.rank();
     unsigned q = b.qty();
@@ -277,7 +282,12 @@ int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
 #undef GEN
 #undef GEN_J
 
-// フォロー生成
+int genFollowSeq(Move *const mv, const Cards c, const Board b) {
+    if (!containsJOKER(c)) return genFollowPlainSeq(mv, c, b);
+    else return genFollowSeqWithJoker(mv, c, b);
+}
+
+// フォローグループ生成
 
 inline BitCards genNRankInGenFollowGroup(BitCards c, BitCards valid, int q) {
     BitCards vc = c & valid;
@@ -798,4 +808,20 @@ int genGroupDebug(Move *const mv0, Cards c, Board b) {
         }
     }
     return mv - mv0;
+}
+
+int genFollowExceptPASS(Move *const mv, const Cards c, const Board b) {
+    // 返り値は、生成した手の数
+    if (!b.isSeq()) {
+        int cnt;
+        switch (b.qty()) {
+            case 0: cnt = 0; break;
+            case 1: cnt = genFollowSingle(mv, c, b); break;
+            case 2: cnt = genFollowDouble(mv, c, b); break;
+            case 3: cnt = genFollowTriple(mv, c, b); break;
+            case 4: cnt = genFollowQuadruple(mv, c, b); break;
+            default: cnt = 0; break;
+        }
+        return cnt;
+    } else return genFollowSeq(mv, c, b);
 }

@@ -5,13 +5,7 @@
 using namespace std;
 
 // ランク
-
 const string rankChar  = "-3456789TJQKA2+:";
-
-ostream& operator <<(ostream& out, const OutRank& arg) {
-    out << rankChar[arg.r];
-    return out;
-}
 
 ostream& operator <<(ostream& ost, const RankRange& arg) {
     for (int r = arg.r0; r <= arg.r1; r++) ost << rankChar[r];
@@ -27,13 +21,7 @@ int CharToRank(char c) {
 }
 
 // スート
-
 const string suitNumChar  = "CDHSX";
-    
-ostream& operator <<(ostream& ost, const OutSuitNum& arg) {
-    ost << suitNumChar[arg.sn];
-    return ost;
-}
 
 int CharToSuitNum(char c) {
     int sn = suitNumChar.find(c);
@@ -43,13 +31,13 @@ int CharToSuitNum(char c) {
     return SUITNUM_NONE;
 }
 
-ostream& operator <<(ostream& out, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
+ostream& operator <<(ostream& ost, const OutSuits& arg) { // 出力の時だけ第５のスートは16として対応している
     for (int sn = 0; sn < N_SUITS + 1; sn++) {
         if (arg.s & SuitNumToSuits(sn)) {
-            out << suitNumChar[sn];
+            ost << suitNumChar[sn];
         }
     }
-    return out;
+    return ost;
 }
 
 // (スート, スート)のパターン
@@ -173,13 +161,13 @@ SuitsInitializer suitsInitializer;
 
 // カード
 
-ostream& operator <<(ostream& out, const OutIntCard& arg) {
+ostream& operator <<(ostream& ost, const OutIntCard& arg) {
     if (arg.ic == INTCARD_JOKER) {
-        out << "JO";
+        ost << "JO";
     } else {
-        out << OutSuitNum(IntCardToSuitNum(arg.ic)) << OutRank(IntCardToRank(arg.ic));
+        ost << suitNumChar[IntCardToSuitNum(arg.ic)] << rankChar[IntCardToRank(arg.ic)];
     }
-    return out;
+    return ost;
 }
 
 IntCard StringToIntCard(const string& str) {
@@ -208,12 +196,12 @@ string Cards::toString() const {
     return oss.str();
 }
 
-ostream& operator <<(ostream& out, const Cards& c) {
-    out << c.toString();
-    return out;
+ostream& operator <<(ostream& ost, const Cards& c) {
+    ost << c.toString();
+    return ost;
 }
 
-BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
+BitCards ORQ_NDTable[2][16][4]; // (order, rank, qty - 1)
 uint64_t HASH_CARDS_ALL;
 
 void initCards() {
@@ -221,23 +209,11 @@ void initCards() {
     HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
     // nd計算に使うテーブル
     for (int r = 0; r < 16; r++) {
-        // オーダー通常
-        ORQ_NDTable[0][r][0] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1;
-        ORQ_NDTable[0][r][1] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_12;
-        ORQ_NDTable[0][r][2] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_123;
-        ORQ_NDTable[0][r][3] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & PQR_1234;
+        for (int q = 0; q < 4; q++) {
+            BitCards mask = PQRToSC(PQR_1 << q);
+            ORQ_NDTable[0][r][q] = RankRangeToCards(RANK_IMG_MIN, r) & mask;
+            ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & mask;
         }
-        // オーダー逆転
-        ORQ_NDTable[1][r][0] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1;
-        ORQ_NDTable[1][r][1] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_12;
-        ORQ_NDTable[1][r][2] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_123;
-        ORQ_NDTable[1][r][3] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        for (int q = 4; q < 8; q++) {
-            ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & PQR_1234;
-        }
-        // 複数ジョーカーには未対応
     }
 }
 
@@ -245,35 +221,21 @@ CardsInitializer cardsInitializer;
 
 // 着手
 
-ostream& operator <<(ostream& out, const MeldChar& m) { // MeldChar出力
+ostream& operator <<(ostream& ost, const MeldChar& m) { // MeldChar出力
     if (m.isPASS()) {
-        out << "PASS";
+        ost << "PASS";
     } else if (m.isSingleJOKER()) {
-        out << "JOKER";
+        ost << "JOKER";
     } else {
-        // スート
-        if (m.isQuintuple()) { // クインタ特別
-            out << OutSuits(SUITS_CDHSX);
-        } else {
-            out << OutSuits(m.suits());
-        }
-        out << "-";
-        
-        // ランク
-        int r = m.rank();
-        if (m.isSeq()) {
-            int q = m.qty();
-            out << RankRange(r, r + q - 1);
-        } else {
-            out << OutRank(r);
-        }
+        ost << OutSuits(m.extendedSuits());
+        ost << "-" << m.ranks();
     }
-    return out;
+    return ost;
 }
 
-ostream& operator <<(ostream& out, const Move& m) { // Move出力
-    out << MeldChar(m) << m.cards();
-    return out;
+ostream& operator <<(ostream& ost, const Move& m) { // Move出力
+    ost << MeldChar(m) << m.cards();
+    return ost;
 }
 
 string toRecordString(Move m) {
@@ -283,26 +245,16 @@ string toRecordString(Move m) {
     } else if (m.isSingleJOKER()) {
         oss << "JK";
     } else {
-        int r = m.rank();
+        oss << OutSuits(m.extendedSuits());
+        oss << "-" << m.ranks();
+        // ジョーカー
         if (m.isSeq()) {
-            oss << OutSuits(m.suits());
-            oss << "-";
-            int q = m.qty();
-            oss << RankRange(r, r + q - 1);
-            // ジョーカー
             if (m.containsJOKER()) {
-                oss << "(" << OutRank(m.jokerRank()) << ")";
+                oss << "(" << rankChar[m.jokerRank()] << ")";
             }
         } else {
-            if (m.isQuintuple()) oss << OutSuits(SUITS_CDHSX);
-            else oss << OutSuits(m.suits());
-            oss << "-";
-            oss << OutRank(r);
-            if (m.containsJOKER()) {
-                unsigned jks = m.jokerSuits();
-                if (jks == SUITS_CDHS) jks = SUIT_X;
-                oss << "(" << OutSuits(jks) << ")";
-            }
+            unsigned jks = m.extendedJokerSuits();
+            if (jks) oss << "(" << OutSuits(jks) << ")";
         }
     }
     return tolower(oss.str());
@@ -364,8 +316,8 @@ Move StringToMoveM(const string& str) {
             CERR << "illegal suit number" << endl;
             return MOVE_NONE;
         }
-        if (sn != SUITNUM_X) s |= SuitNumToSuits(sn);
-        else jk = true; // クインタプル
+        if (sn < N_SUITS) s |= SuitNumToSuits(sn);
+        else jk = true; // 拡張スート分
         ns++;
     }
     // rank
@@ -387,7 +339,6 @@ Move StringToMoveM(const string& str) {
     if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
     // seq or group?
     if (nr > 1) mv.setSeq(nr, rank, s);
-    else if (ns == 1) mv.setSingle(rank, s);
     else  mv.setGroup(ns, rank, s);
     // joker
     if (jk) {
@@ -403,7 +354,7 @@ Move StringToMoveM(const string& str) {
                 }
                 jks |= SuitNumToSuits(sn);
             }
-            if (jks == SUITS_NULL || (jks & SUIT_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
+            if (jks == SUITS_NULL || (jks & SUITS_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
             mv.setJokerSuits(jks);
         } else {
             int jkr = RANK_NONE;
@@ -424,17 +375,17 @@ Move StringToMoveM(const string& str) {
     return mv;
 }
 
-ostream& operator <<(ostream& out, const Board& b) { // Board出力
-    if (b.isNull()) out << "NULL";
-    else out << b.move();
+ostream& operator <<(ostream& ost, const Board& b) { // Board出力
+    if (b.isNull()) ost << "NULL";
+    else ost << b.move();
     // オーダー...一時オーダーのみ
-    out << "  Order : ";
-    if (b.order() == 0) out << "NORMAL";
-    else out << "REVERSED";
-    out << "  Suits : ";
-    if (b.suitsLocked()) out << "LOCKED";
-    else out << "FREE";
-    return out;
+    ost << "  Order : ";
+    if (b.order() == 0) ost << "NORMAL";
+    else ost << "REVERSED";
+    ost << "  Suits : ";
+    if (b.suitsLocked()) ost << "LOCKED";
+    else ost << "FREE";
+    return ost;
 }
 
 bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q) {

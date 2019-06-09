@@ -17,8 +17,8 @@ public:
         set(f, turn);
     }
 
-    int create(ImaginaryWorld *const dst, DealType type, const GameRecord& game,
-               const SharedData& shared, ThreadTools *const ptools) {
+    World create(DealType type, const GameRecord& game,
+                 const SharedData& shared, ThreadTools *const ptools) {
         Cards c[N_PLAYERS];
         // レベル指定からカード分配
         switch (type) {
@@ -32,8 +32,9 @@ public:
                 dealWithRejection(c, game, shared, ptools); break;
             default: UNREACHABLE; break;
         }
-        dst->set(turnCount, c);
-        return 0;
+        World world;
+        world.set(turnCount, c);
+        return world;
     }
     
     void dealAllRand(Cards *const dst, Dice& dice) const;
@@ -84,9 +85,16 @@ private:
     
     // inner function
     void set(const Field& field, int playerNum);
-    void setWeightInWA();
     void prepareSubjectiveInfo();
+    void setWeightInWA();
 
+    void addDetectedCards(int dstClass, Cards c) {
+        detCards[dstClass] += c;
+        dealCards -= c;
+        int n = c.count();
+        NDeal[dstClass] -= n;
+        NDet[dstClass] += n;
+    }
     void checkDeal(const Cards *dst, bool sbj = true) const;
     bool okForRejection() const;
     bool dealWithChangeRejection(Cards *const dst,

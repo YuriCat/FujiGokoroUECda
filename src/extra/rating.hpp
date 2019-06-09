@@ -2,7 +2,9 @@
 
 // シミュレーション結果を用いた相対レーティングの計算
 
+#include "../core/field.hpp"
 #include "../core/record.hpp"
+#include "../engine/data.hpp"
 #include "../engine/simulation.hpp"
 
 struct RateCalculationData {
@@ -27,34 +29,30 @@ struct RateCalculationData {
     }
 };
 
-template <class field_t, class sharedData_t, class threadTools_t>
 void simulationThreadForRating(RateCalculationData *const pdst,
-                                const field_t *const pfield,
-                                const int simulations,
-                                sharedData_t *const pshared,
-                                threadTools_t *const ptools) {
+                               const Field *const pfield,
+                               const int simulations,
+                               SharedData *const pshared,
+                               ThreadTools *const ptools) {
     while (pdst->trials++ < simulations)
     {
-        Field tfield = *pfield;
-        tfield.setMoveBuffer(ptools->mbuf);
+        Field f = *pfield;
+        f.setMoveBuffer(ptools->mbuf);
         
         // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
-        startAllSimulation(tfield, pshared, ptools);
+        startAllSimulation(f, pshared, ptools);
         
         pdst->lock.lock();
         // 相対勝ち数を加算
         for (int p0 = 0; p0 < N_PLAYERS; p0++) {
             for (int p1 = 0; p1 < N_PLAYERS; p1++) {
-                if (tfield.newClassOf(p0) < tfield.newClassOf(p1)) {
-                    pdst->relativeWins[p0][p1] += BetaDistribution(1, 0);
-                } else {
-                    pdst->relativeWins[p0][p1] += BetaDistribution(0, 1);
-                }
+                int win = f.newClassOf(p0) < f.newClassOf(p1) ? 1 : 0;
+                pdst->relativeWins[p0][p1] += BetaDistribution(win, 1 - win);
             }
         }
         // 絶対勝ち数を加算
         for (int p0 = 0; p0 < N_PLAYERS; p0++) {
-            int wins = DAIHINMIN - tfield.newClassOf(p0);
+            int wins = DAIHINMIN - f.newClassOf(p0);
             double score = wins / double(N_PLAYERS - 1);
             pdst->absoluteWins[p0] += BetaDistribution(score, 1 - score);
         }
@@ -62,48 +60,42 @@ void simulationThreadForRating(RateCalculationData *const pdst,
     }
 }
 
-template <class gameLog_t, class sharedData_t, class threadTools_t>
-void doSimulationsToEvaluate(const gameLog_t& gLog,
-                                const int simulations,
-                                RateCalculationData *const presult,
-                                sharedData_t *const pshared,
-                                threadTools_t tools[]) {
+void doSimulationsToEvaluate(const GameRecord& game,
+                             const int simulations,
+                             RateCalculationData *const presult,
+                             SharedData *const pshared,
+                             ThreadTools tools[]) {
     Field field;
     iterateGameLogBeforePlay
-    (field, gLog,
+    (field, game,
         [](const Field& field)->void{}, // first callback
         [&](const Field& field)->void{ // dealt callback
             // シミュレーションにより結果を予測
             std::vector<std::thread> thr;
             for (int ith = 0; ith < N_THREADS; ith++) {
-                thr.emplace_back(std::thread(&simulationThreadForRating<Field, sharedData_t, threadTools_t>,
-                                            presult, &field, simulations, pshared, &tools[ith]));
+                thr.emplace_back(std::thread(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[ith]));
             }
-            for (auto& th : thr) {
-                th.join();
-            }
+            for (auto& th : thr) th.join();
         },
         [](const Field& field, const int from, const int to, const Cards c)->int{ return 0; }, // change callback
         [](const Field& field)->void{}); // last callback
 }
 
-template <class gameLog_t, class sharedData_t, class threadTools_t>
-std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const gameLog_t& gLog,
+std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const GameRecord& game,
                                                                                             const int simulations,
-                                                                                            sharedData_t *const pshared,
-                                                                                            threadTools_t tools[]) {
+                                                                                            SharedData *const pshared,
+                                                                                            ThreadTools tools[]) {
     RateCalculationData result;
-    doSimulationsToEvaluate(gLog, simulations, &result, pshared, tools);
+    doSimulationsToEvaluate(game, simulations, &result, pshared, tools);
     return result.relativeWins;
 }
 
-template <class gameLog_t, class sharedData_t, class threadTools_t>
-std::array<BetaDistribution, N_PLAYERS> doSimulationsToGetAbsoluteWp(const gameLog_t& gLog,
-                                                                        const int simulations,
-                                                                        sharedData_t *const pshared,
-                                                                        threadTools_t tools[]) {
+std::array<BetaDistribution, N_PLAYERS> doSimulationsToGetAbsoluteWp(const GameRecord& game,
+                                                                     const int simulations,
+                                                                     SharedData *const pshared,
+                                                                     ThreadTools tools[]) {
     RateCalculationData result;
-    doSimulationsToEvaluate(gLog, simulations, &result, pshared, tools);
+    doSimulationsToEvaluate(game, simulations, &result, pshared, tools);
     return result.absoluteWins;
 }
 
@@ -126,7 +118,7 @@ std::array<std::array<double, N_PLAYERS>, N_PLAYERS> calcExpectedRelativeWp(cons
 }
 template <class array_t, class distributionArray_t>
 std::array<double, N_PLAYERS> calcExpectedAbsoluteWp(const array_t& orgRate,
-                                                        const distributionArray_t& absoluteWins) {
+                                                     const distributionArray_t& absoluteWins) {
     // 現在のレートと初期盤面を考慮した絶対勝率を計算
     std::array<double, N_PLAYERS> expectedWp;
     double sumRate = 0;
@@ -146,10 +138,10 @@ std::array<double, N_PLAYERS> calcExpectedAbsoluteWp(const array_t& orgRate,
     return expectedWp;
 }
 
-template <class gameLog_t, class matrix_t>
-std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const gameLog_t& gLog,
-                                                        const matrix_t& expectedWp,
-                                                        const double coef) {
+template <class matrix_t>
+std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const GameRecord& game,
+                                                       const matrix_t& expectedWp,
+                                                       const double coef) {
     // 相対勝率からレート差分を計算
     std::array<double, N_PLAYERS> diffRate;
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {
@@ -157,7 +149,7 @@ std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const gameLog_t& gLog,
         for (int p1 = 0; p1 < N_PLAYERS; p1++) {
             cerr << expectedWp[p0][p1] << " ";
             if (p0 != p1) {
-                double realWin = (gLog.newClassOf(p0) < gLog.newClassOf(p1)) ? 1 : 0;
+                double realWin = (game.newClassOf(p0) < game.newClassOf(p1)) ? 1 : 0;
                 sum += realWin - expectedWp[p0][p1];
             }
         }cerr << endl;
@@ -166,15 +158,15 @@ std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const gameLog_t& gLog,
     return diffRate;
 }
 
-template <class gameLog_t, class array_t>
-std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const gameLog_t& gLog,
-                                                        const array_t& expectedWp,
-                                                        const double coef) {
+template <class array_t>
+std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const GameRecord& game,
+                                                       const array_t& expectedWp,
+                                                       const double coef) {
     // 絶対勝率からレート差分を計算
     std::array<double, N_PLAYERS> diffRate;
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {
         //cerr << expectedWp[p0] << " ";
-        double realScore = (DAIHINMIN - gLog.newClassOf(p0)) / double(N_PLAYERS - 1);
+        double realScore = (DAIHINMIN - game.newClassOf(p0)) / double(N_PLAYERS - 1);
         //cerr << expectedWp[p0] << " -> " << realScore << endl;
         diffRate[p0] = coef * (realScore - expectedWp[p0]);
     }cerr << endl;
@@ -182,35 +174,35 @@ std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const gameLog_t& gLog,
     return diffRate;
 }
 
-template <class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
+template <class array_t>
 std::array<double, N_PLAYERS> calcDiffRateByRelativeWpWithSimulation(const array_t& orgRate,
-                                                                        const gameLog_t& gLog,
-                                                                        const int simulations,
-                                                                        const double coef,
-                                                                        sharedData_t *const pshared,
-                                                                        threadTools_t tools[]) {
+                                                                     const GameRecord& game,
+                                                                     const int simulations,
+                                                                     const double coef,
+                                                                     SharedData *const pshared,
+                                                                     ThreadTools tools[]) {
     // シミュレーションを行い、相対勝率もとにレートの更新幅を計算する
-    auto result = doSimulationsToGetRalativeWp(gLog, simulations, pshared, tools);
+    auto result = doSimulationsToGetRalativeWp(game, simulations, pshared, tools);
     auto expectedWp = calcExpectedRelativeWp(orgRate, result);
-    return calcDiffRateByRelativeWp(gLog, expectedWp, coef);
+    return calcDiffRateByRelativeWp(game, expectedWp, coef);
 }
 
-template <class array_t, class gameLog_t, class sharedData_t, class threadTools_t>
+template <class array_t>
 std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWpWithSimulation(const array_t& orgRate,
-                                                                        const gameLog_t& gLog,
-                                                                        const int simulations,
-                                                                        const double coef,
-                                                                        sharedData_t *const pshared,
-                                                                        threadTools_t tools[]) {
+                                                                     const GameRecord& game,
+                                                                     const int simulations,
+                                                                     const double coef,
+                                                                     SharedData *const pshared,
+                                                                     ThreadTools tools[]) {
     // シミュレーションを行い、相対勝率もとにレートの更新幅を計算する
-    auto result = doSimulationsToGetAbsoluteWp(gLog, simulations, pshared, tools);
+    auto result = doSimulationsToGetAbsoluteWp(game, simulations, pshared, tools);
     auto expectedWp = calcExpectedAbsoluteWp(orgRate, result);
-    return calcDiffRateByAbsoluteWp(gLog, expectedWp, coef);
+    return calcDiffRateByAbsoluteWp(game, expectedWp, coef);
 }
 
 template <class distribution_t>
 std::vector<double> calcExpectedTotalScore(const std::vector<double>& rates,
-                                            const distribution_t& distribution) {
+                                           const distribution_t& distribution) {
     // 与えられたレートのプレーヤー集合にて総当たりリーグ戦を行ったときの推定得点を求める
     const int players = rates.size();
     /*std::vector<std::vector<double>> matrix;

@@ -32,56 +32,35 @@ enum {
     RANK_NONE = -1
 };
 
-// 出力
-struct OutRank {
-    int r;
-    constexpr OutRank(int arg): r(arg) {}
-};
 struct RankRange { // 連続ランク
     int r0, r1;
     constexpr RankRange(int arg0, int arg1): r0(arg0), r1(arg1) {}
 };
 
 extern const std::string rankChar;
-extern std::ostream& operator <<(std::ostream& out, const OutRank& arg);
 extern std::ostream& operator <<(std::ostream& ost, const RankRange& arg);
 extern int CharToRank(char c);
 
 /**************************スート番号**************************/
 
 // 単スート
-enum {
-    SUITNUM_C, SUITNUM_D, SUITNUM_H, SUITNUM_S,
-    SUITNUM_X,
-    SUITNUM_MIN = SUITNUM_C,
-    SUITNUM_MAX = SUITNUM_S,
-    SUITNUM_NONE = -1
-};
+enum { SUITNUM_NONE = -1 };
 
 constexpr int N_SUITS = 4;
-    
-struct OutSuitNum {
-    int sn;
-    constexpr OutSuitNum(int arg): sn(arg) {}
-};
 
 extern const std::string suitNumChar;
-extern std::ostream& operator <<(std::ostream& ost, const OutSuitNum& arg);
 extern int CharToSuitNum(char c);
 
 /**************************スート**************************/
 
-// 単スート
-enum { SUIT_X = 16 };
-
 // スート集合 (スートの和集合)
 enum {
-    
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
     SUITS_HS,   SUITS_CHS, SUITS_DHS, SUITS_CDHS,
-    SUITS_CDHSX = SUITS_CDHS | SUIT_X, // クインタプル
+    SUITS_X,
+    SUITS_CDHSX = SUITS_CDHS | SUITS_X, // クインタプル
     SUITS_ALL = SUITS_CDHS,
 };
 
@@ -105,7 +84,7 @@ struct OutSuits {
     constexpr OutSuits(unsigned arg): s(arg) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const OutSuits& arg);
+extern std::ostream& operator <<(std::ostream& ost, const OutSuits& arg);
 
 // (スート, スート)のパターン
 extern uint8_t sSIndex[16][16];
@@ -193,7 +172,7 @@ struct OutIntCard {
     constexpr OutIntCard(const IntCard& arg): ic(arg) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const OutIntCard& arg);
+extern std::ostream& operator <<(std::ostream& ost, const OutIntCard& arg);
 extern IntCard StringToIntCard(const std::string& str);
 
 /**************************カード集合**************************/
@@ -305,14 +284,8 @@ constexpr bool examPlainCards(BitCards c) { return holdsCards(CARDS_PLAIN_ALL, c
 constexpr bool examImaginaryPlainCards(BitCards c) { return holdsCards(CARDS_IMG_PLAIN_ALL, c); }
 
 // 特定順序の要素を選ぶ（元のデータは変えない）
-inline BitCards pickLow(const BitCards c, int n) {
-    assert(n > 0 && (int)countCards(c) >= n);
-    return lowestNBits(c, n);
-}
-inline BitCards pickHigh(const BitCards c, int n) {
-    assert(n > 0 && (int)countCards(c) >= n);
-    return highestNBits(c, n);
-}
+inline BitCards pickLow(const BitCards c, int n) { return lowestNBits(c, n); }
+inline BitCards pickHigh(const BitCards c, int n) { return highestNBits(c, n); }
 
 // IntCard型で1つ取り出し
 inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf64(c); }
@@ -636,7 +609,7 @@ union Cards {
     std::string toString() const;
 };
 
-extern std::ostream& operator <<(std::ostream& out, const Cards& c);
+extern std::ostream& operator <<(std::ostream& ost, const Cards& c);
 
 struct CardArray : public BitArray64<4, 16> {
     constexpr CardArray(): BitArray64<4, 16>() {}
@@ -658,7 +631,7 @@ inline BitCards canMakeSeq(Cards c, int qty) {
 // 現在はいずれにせよ、ジョーカーは絡めないことにしている
 
 // 無支配ゾーン
-extern BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
+extern BitCards ORQ_NDTable[2][16][4]; // (order, rank, qty - 1)
 
 // 現在用意されている型は以下
 
@@ -806,27 +779,7 @@ inline void PQRToND(BitCards pqr, unsigned jk, Cards *const nd) {
     }
 }
 
-// 役の作成可能性判定
-inline BitCards plainGroupCards(BitCards c, int q) {
-    BitCards ret;
-    switch (q) {
-        case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする
-        case 1: ret = maskJOKER(c); break;
-        case 2: ret = CardsToQR(c) & PQR_234; break;
-        case 3: ret = (CardsToQR(c) + PQR_1) & PQR_34; break;
-        case 4: ret = CardsToFR(c); break;
-        default: ret = CARDS_NULL; break;
-    }
-    return ret;
-}
-inline BitCards groupCards(BitCards c, int q) {
-    return plainGroupCards(c, containsJOKER(c) ? (q - 1) : q);
-}
-
-// スート圧縮判定
-// あるカード集合（スート限定がなされていてもよい）の中にn枚グループが作成可能かの判定
-// ただしジョーカーの分は最初から引いておく
-// 高速な処理には場合分けが必要か
+// あるプレーンカード集合の中にn枚グループが作成可能かの判定
 inline bool canMakeGroup(BitCards c, int n) {
     if (c) {
         if (n <= 1) return true;
@@ -957,9 +910,6 @@ struct Move {
     void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
     // タイプを指定してまとめて処理
-    void setSingle(int rank, int suits) {
-        clear(); t = 1; q = 1; r = rank; s = suits;
-    }
     void setGroup(int qty, int rank, int suits) {
         clear(); t = 1; q = qty; r = rank; s = suits;
     }
@@ -968,44 +918,45 @@ struct Move {
     }
     // IntCard型からシングル着手をセットする
     void setSingle(IntCard ic) {
-        setSingle(IntCardToRank(ic), IntCardToSuits(ic));
+        setGroup(1, IntCardToRank(ic), IntCardToSuits(ic));
     }
     
     // True or False
-    constexpr bool isPASS() const { return t == 0; }
-    constexpr bool isGroup() const { return t == 1; }
-    constexpr bool isSeq() const { return t == 2; }
-    constexpr bool isSingle() const { return isGroup() && qty() == 1; }
-    constexpr bool isQuintuple() const { return isGroup() && q == 5; }
-
-    constexpr bool containsJOKER() const { return jks || jkr; }
-
-    constexpr bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
-    constexpr bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
-    
-    constexpr bool isEqualRankSuits(unsigned r, unsigned s) const {
+    bool isPASS() const { return t == 0; }
+    bool isGroup() const { return t == 1; }
+    bool isSeq() const { return t == 2; }
+    bool isSingle() const { return isGroup() && qty() == 1; }
+    bool containsJOKER() const { return jks || jkr; }
+    bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
+    bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
+    bool isEqualRankSuits(unsigned r, unsigned s) const {
         return rank() == r && suits() == s; // ランクとスート一致
     }
 
     // 情報を得る
-    constexpr unsigned suits()      const { return s; }
-    constexpr int qty()             const { return q; }
-    constexpr int rank()            const { return r; }
-    constexpr int jokerRank()       const { return jkr; }
-    constexpr unsigned jokerSuits() const { return jks; }
-    constexpr int type()            const { return t; }
+    unsigned suits()      const { return s; }
+    int qty()             const { return q; }
+    int rank()            const { return r; }
+    int jokerRank()       const { return jkr; }
+    unsigned jokerSuits() const { return jks; }
+    int type()            const { return t; }
 
-    int typeNum() const {
-        int q = qty();
-        if (isSeq()) {
-            if (q >= 6) return 8;
-            return 2 + q;
-        } else {
-            if (q >= 5) return 8;
-            return q;
-        }
+    // ランク全体
+    RankRange ranks() const {
+        return RankRange(rank(), rank() + (isSeq() ? (qty() - 1) : 0));
     }
-    
+
+    // 特別スート関係
+    bool isExtendedJokerGroup() const {
+        return isGroup() && jokerSuits() == 15;
+    }
+    unsigned extendedJokerSuits() const {
+        return jokerSuits() | (isExtendedJokerGroup() ? SUITS_X : 0);
+    }
+    unsigned extendedSuits() const {
+        return suits() | (isExtendedJokerGroup() ? SUITS_X : 0);
+    }
+
     Cards cards() const { // 構成するカード集合を得る
         if (isPASS()) return CARDS_NULL;
         if (isSingleJOKER()) return CARDS_JOKER;
@@ -1029,6 +980,7 @@ struct Move {
             return c;
         }
     }
+
     Cards charaCards() const {
         // 性質カードを返す
         // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
@@ -1038,28 +990,10 @@ struct Move {
         if (isSeq()) c = extractRanks(c, qty());
         return c;
     }
-    
-    template <int QTY = 256>
+
     Cards charaPQR() const {
-        static_assert(QTY == 256 || (1 <= QTY && QTY <= 4), "");
-        // 性質カードのPQRを返す
-        // 性質カードが表現出来ない可能性のある特別スートを用いる役が入った場合には対応していない
-        // パスとシングルジョーカーも関係ないし、
-        // 階段にも今の所対応していない(意味が無さそう)
-        if (QTY == 0) {
-            return CARDS_NULL;
-        } else if (QTY == 1) {
-            return CARDS_HORIZON << (rank() << 2);
-        } else if (QTY != 256) {
-            constexpr int sft = (QTY - 1) >= 0 ? ((QTY - 1) < 32 ? (QTY - 1) : 31) : 0; // warningに引っかからないように...
-            if (1 <= QTY && QTY <= 4) {
-                return Cards(1U << sft) << (rank() << 2);
-            } else {
-                return CARDS_NULL;
-            }
-        } else {
-            return BitCards(1U << (qty() - 1)) << (rank() << 2);
-        }
+        // 性質カードのPQRを返す (グループ限定)
+        return BitCards(1U << (qty() - 1)) << (rank() << 2);
     }
 
     bool domInevitably() const;
@@ -1128,8 +1062,8 @@ struct MeldChar : public Move {
     MeldChar(Move m): Move(m) {}
 };
 
-extern std::ostream& operator <<(std::ostream& out, const MeldChar& m);
-extern std::ostream& operator <<(std::ostream& out, const Move& m);
+extern std::ostream& operator <<(std::ostream& ost, const MeldChar& m);
+extern std::ostream& operator <<(std::ostream& ost, const Move& m);
 extern std::string toRecordString(Move m);
 extern Move CardsToMove(const Cards chara, const Cards used);
 extern Move StringToMoveM(const std::string& str);
@@ -1182,19 +1116,19 @@ struct Board : public Move {
     int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
     }
-    constexpr bool afterSuitsLocked(Move m) const {
+    bool afterSuitsLocked(Move m) const {
         return suitsLocked() || locksSuits(m);
     }
     
     // get
-    constexpr int prmOrder()   const { return Move::po; }
-    constexpr int order()      const { return Move::o; }
+    int prmOrder()   const { return Move::po; }
+    int order()      const { return Move::o; }
     
     // true or false
-    constexpr bool isNull() const { return type() == 0; }
-    constexpr bool suitsLocked() const { return Move::sl; }
-    constexpr bool rankLocked() const { return Move::rl; }
-    constexpr bool isRev() const { return Move::po; }
+    bool isNull() const { return type() == 0; }
+    bool suitsLocked() const { return Move::sl; }
+    bool rankLocked() const { return Move::rl; }
+    bool isRev() const { return Move::po; }
     
     bool isInvalid() const { return Move::invalid; }
 
@@ -1257,13 +1191,13 @@ inline Board OrderToNullBoard(int o) {
     return b;
 }
 
-extern std::ostream& operator <<(std::ostream& out, const Board& b);
+extern std::ostream& operator <<(std::ostream& ost, const Board& b);
 extern bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q);
 
 // L2局面ハッシュ値
 // 空場
 // 空場のときは、場の変数はオーダー関連だけである事が多いのでそのまま
-constexpr uint64_t NullBoardToHashKey(Board bd) {
+inline uint64_t NullBoardToHashKey(Board bd) {
     return bd.order();
 }
 inline uint64_t BoardToHashKey(Board bd) {
