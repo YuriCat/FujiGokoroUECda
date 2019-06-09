@@ -787,27 +787,7 @@ inline void PQRToND(BitCards pqr, unsigned jk, Cards *const nd) {
     }
 }
 
-// 役の作成可能性判定
-inline BitCards plainGroupCards(BitCards c, int q) {
-    BitCards ret;
-    switch (q) {
-        case 0: ret = CARDS_ALL; break; // 0枚のグループは必ずできるとする
-        case 1: ret = maskJOKER(c); break;
-        case 2: ret = CardsToQR(c) & PQR_234; break;
-        case 3: ret = (CardsToQR(c) + PQR_1) & PQR_34; break;
-        case 4: ret = CardsToFR(c); break;
-        default: ret = CARDS_NULL; break;
-    }
-    return ret;
-}
-inline BitCards groupCards(BitCards c, int q) {
-    return plainGroupCards(c, containsJOKER(c) ? (q - 1) : q);
-}
-
-// スート圧縮判定
-// あるカード集合（スート限定がなされていてもよい）の中にn枚グループが作成可能かの判定
-// ただしジョーカーの分は最初から引いておく
-// 高速な処理には場合分けが必要か
+// あるプレーンカード集合の中にn枚グループが作成可能かの判定
 inline bool canMakeGroup(BitCards c, int n) {
     if (c) {
         if (n <= 1) return true;
