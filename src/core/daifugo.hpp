@@ -90,15 +90,10 @@ extern std::ostream& operator <<(std::ostream& ost, const OutSuits& arg);
 extern uint8_t sSIndex[16][16];
 extern uint8_t S2Index[16][16];
 extern uint8_t SSIndex[16][16];
-// (スート, スート, スート)のパターン
-extern uint8_t sSSIndex[16][16][16];
-extern uint16_t SSSIndex[16][16][16];
 
 constexpr int N_PATTERNS_SUIT_SUITS = 8;
 constexpr int N_PATTERNS_2SUITS = 22;
 constexpr int N_PATTERNS_SUITS_SUITS = 35;
-constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
-constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
 
 extern void initSuits();
 
