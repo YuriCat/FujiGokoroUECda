@@ -315,8 +315,8 @@ Move StringToMoveM(const string& str) {
             CERR << "illegal suit number" << endl;
             return MOVE_NONE;
         }
-        if (sn != SUITNUM_X) s |= SuitNumToSuits(sn);
-        else jk = true; // クインタプル
+        if (sn < N_SUITS) s |= SuitNumToSuits(sn);
+        else jk = true; // 拡張スート分
         ns++;
     }
     // rank
@@ -338,7 +338,6 @@ Move StringToMoveM(const string& str) {
     if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
     // seq or group?
     if (nr > 1) mv.setSeq(nr, rank, s);
-    else if (ns == 1) mv.setSingle(rank, s);
     else  mv.setGroup(ns, rank, s);
     // joker
     if (jk) {
@@ -354,7 +353,7 @@ Move StringToMoveM(const string& str) {
                 }
                 jks |= SuitNumToSuits(sn);
             }
-            if (jks == SUITS_NULL || (jks & SUIT_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
+            if (jks == SUITS_NULL || (jks & SUITS_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
             mv.setJokerSuits(jks);
         } else {
             int jkr = RANK_NONE;

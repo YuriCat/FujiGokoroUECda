@@ -44,13 +44,7 @@ extern int CharToRank(char c);
 /**************************スート番号**************************/
 
 // 単スート
-enum {
-    SUITNUM_C, SUITNUM_D, SUITNUM_H, SUITNUM_S,
-    SUITNUM_X,
-    SUITNUM_MIN = SUITNUM_C,
-    SUITNUM_MAX = SUITNUM_S,
-    SUITNUM_NONE = -1
-};
+enum { SUITNUM_NONE = -1 };
 
 constexpr int N_SUITS = 4;
 
@@ -59,16 +53,14 @@ extern int CharToSuitNum(char c);
 
 /**************************スート**************************/
 
-// 単スート
-enum { SUIT_X = 16 };
-
 // スート集合 (スートの和集合)
 enum {
     SUITS_NULL, SUITS_C,   SUITS_D,   SUITS_CD,
     SUITS_H,    SUITS_CH,  SUITS_DH,  SUITS_CDH,
     SUITS_S,    SUITS_CS,  SUITS_DS,  SUITS_CDS,
     SUITS_HS,   SUITS_CHS, SUITS_DHS, SUITS_CDHS,
-    SUITS_CDHSX = SUITS_CDHS | SUIT_X, // クインタプル
+    SUITS_X,
+    SUITS_CDHSX = SUITS_CDHS | SUITS_X, // クインタプル
     SUITS_ALL = SUITS_CDHS,
 };
 
@@ -898,9 +890,6 @@ struct Move {
     void setSpecialJokerSuits()       { jks = SUITS_ALL; }
 
     // タイプを指定してまとめて処理
-    void setSingle(int rank, int suits) {
-        clear(); t = 1; q = 1; r = rank; s = suits;
-    }
     void setGroup(int qty, int rank, int suits) {
         clear(); t = 1; q = qty; r = rank; s = suits;
     }
@@ -909,7 +898,7 @@ struct Move {
     }
     // IntCard型からシングル着手をセットする
     void setSingle(IntCard ic) {
-        setSingle(IntCardToRank(ic), IntCardToSuits(ic));
+        setGroup(1, IntCardToRank(ic), IntCardToSuits(ic));
     }
     
     // True or False
@@ -942,10 +931,10 @@ struct Move {
         return isGroup() && jokerSuits() == 15;
     }
     unsigned extendedJokerSuits() const {
-        return jokerSuits() | (isExtendedJokerGroup() ? SUIT_X : 0);
+        return jokerSuits() | (isExtendedJokerGroup() ? SUITS_X : 0);
     }
     unsigned extendedSuits() const {
-        return suits() | (isExtendedJokerGroup() ? SUIT_X : 0);
+        return suits() | (isExtendedJokerGroup() ? SUITS_X : 0);
     }
 
     Cards cards() const { // 構成するカード集合を得る
