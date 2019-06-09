@@ -4,8 +4,6 @@
 #include "core/daifugo.hpp"
 
 // UECdaルールで戦うためのヘッダ
-// 様々なルールを設定
-constexpr bool RULE_FIRSTTURNPLAYER_D3 = true;
 
 namespace UECda {
     
@@ -67,31 +65,18 @@ namespace UECda {
     constexpr int N_MAX_OWNED_CARDS_CHANGE = 16;
     constexpr int N_MAX_OWNED_CARDS_PLAY = 14;
     
-    constexpr int N_MAX_CHANGE = 16 * 15 / 2;
+    constexpr int N_MAX_CHANGES = 16 * 15 / 2;
     constexpr int N_MAX_MOVES = 1024;
     
 #endif
-    constexpr int N_SEATS = N_PLAYERS;
-    
+    // 様々なルールを設定
+    constexpr bool FIRSTTURNPLAYER_D3 = true;
+    constexpr int MIN_SEQUENCE_QTY = 3;
+
     constexpr int CLASS_INIT_CYCLE = 100; // 階級リセット試合数(変更の可能性あり)
     constexpr int SEAT_INIT_CYCLE = 3; // 席順リセット試合数(変更の可能性あり)
     
-    //const int N_GAMES; // 総試合数
-    // ここにルールを書いていく
-
-    
-    // UECdaが提供しているデータ構造。
-    // プレーヤー番号などの基本型は、特に断りがなければ
-    // ここに定義されているものと考える
-    
-    // プレーヤー識別
-    // 0からN_PLAYERS - 1という標準型なので特に定義しない
-    
-    // 階級識別
-    // 0からN_PLAYERS - 1という標準型なので特に定義しない
-    
-    // 座席識別
-    // 0からN_PLAYERS - 1として問題ないので定義しない
+    // UECdaが提供しているデータ構造での処理
     
     // 基本通信型。手札兼着手兼エントリー時情報送信
     inline void clearAll(int table[8][15]) {
@@ -233,15 +218,14 @@ namespace UECda {
 
 using namespace UECda;
 
-    // ルールの性質
-    
-    // オーダー逆転のパターン
-    // スートロックの条件
-    // 初手プレーヤーの決め方
-    // 場の流れ方
-    //
+// ルールの性質
 
-constexpr int SEQ_MIN_QTY = 3;
+// オーダー逆転のパターン
+// スートロックの条件
+// 初手プレーヤーの決め方
+// 場の流れ方
+
+
 
 inline bool Move::domInevitably() const {
     if (isSeq()) return rank() <= RANK_8 && RANK_8 < rank() + qty();
@@ -264,7 +248,7 @@ inline bool Move::exam() const {
     } else {
         int suitCount = countSuits(extendedSuits());
         if (isSeq()) {
-            if (qty() < SEQ_MIN_QTY) return false;
+            if (qty() < MIN_SEQUENCE_QTY) return false;
             if (suitCount != 1) return false;
         } else {
             if (suitCount != qty()) return false;
@@ -278,16 +262,16 @@ inline bool isNoRev(const Cards mine) {
     return !canMakeGroup(mine, 4) && !canMakeSeq(mine, 5);
 }
 
-constexpr int getChangePartnerClass(int acl) {
+inline int getChangePartnerClass(int acl) {
     // 交換相手の階級
     return N_CLASSES - 1 - acl;
 }
 
-constexpr int numGamesBeforeClassInit(int gn) {
+inline int numGamesBeforeClassInit(int gn) {
     // 試合番号から、階級初期化ゲームへの残り試合数に変換
     return CLASS_INIT_CYCLE - 1 - (gn % CLASS_INIT_CYCLE);
 }
-constexpr int getNGamesForSeatInitGame(int gn) {
+inline int numGamesBeforeSeatInitGame(int gn) {
     // 試合番号から、席順初期化ゲームへの残り試合数に変換
     return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
 }
