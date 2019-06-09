@@ -256,17 +256,18 @@ inline bool Board::locksRank(Move m) const { return false; }
 
 inline bool Move::exam() const {
     // 変な値でないかチェック
-    int q = qty();
-    int r = rank();
-    uint32_t s = suits();
     if (isPASS()) {
-        if (q != 0) return false;
-    } else if (isSeq()) {
-        if (q < SEQ_MIN_QTY) return false;
-        if (countSuits(s) != 1) return false;
+        if (qty() != 0) return false;
+    } else if (isSingleJOKER()) {
+        if (qty() != 1) return false;
+        if (!isGroup()) return false;
     } else {
-        if (!isQuintuple()) {
-            if (q != countSuits(s)) return false;
+        int suitCount = countSuits(extendedSuits());
+        if (isSeq()) {
+            if (qty() < SEQ_MIN_QTY) return false;
+            if (suitCount != 1) return false;
+        } else {
+            if (suitCount != qty()) return false;
         }
     }
     return true;

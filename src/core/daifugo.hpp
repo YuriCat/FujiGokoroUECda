@@ -639,7 +639,7 @@ inline BitCards canMakeSeq(Cards c, int qty) {
 // 現在はいずれにせよ、ジョーカーは絡めないことにしている
 
 // 無支配ゾーン
-extern BitCards ORQ_NDTable[2][16][8]; // (order, rank, qty - 1)
+extern BitCards ORQ_NDTable[2][16][4]; // (order, rank, qty - 1)
 
 // 現在用意されている型は以下
 
@@ -917,13 +917,9 @@ struct Move {
     bool isGroup() const { return t == 1; }
     bool isSeq() const { return t == 2; }
     bool isSingle() const { return isGroup() && qty() == 1; }
-    bool isQuintuple() const { return isGroup() && q == 5; }
-
     bool containsJOKER() const { return jks || jkr; }
-
     bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
-    
     bool isEqualRankSuits(unsigned r, unsigned s) const {
         return rank() == r && suits() == s; // ランクとスート一致
     }
@@ -935,6 +931,22 @@ struct Move {
     int jokerRank()       const { return jkr; }
     unsigned jokerSuits() const { return jks; }
     int type()            const { return t; }
+
+    // ランク全体
+    RankRange ranks() const {
+        return RankRange(rank(), rank() + (isSeq() ? (qty() - 1) : 0));
+    }
+
+    // 特別スート関係
+    bool isExtendedJokerGroup() const {
+        return isGroup() && jokerSuits() == 15;
+    }
+    unsigned extendedJokerSuits() const {
+        return jokerSuits() | (isExtendedJokerGroup() ? SUIT_X : 0);
+    }
+    unsigned extendedSuits() const {
+        return suits() | (isExtendedJokerGroup() ? SUIT_X : 0);
+    }
 
     Cards cards() const { // 構成するカード集合を得る
         if (isPASS()) return CARDS_NULL;
