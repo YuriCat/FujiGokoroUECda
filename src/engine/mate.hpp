@@ -248,7 +248,7 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
 inline int searchHandMate(const int, MoveInfo *const, const int,
                           const Hand&, const Hand&,  const Board&, const FieldAddInfo&);
 
-inline bool judgeHandMate(const int depth, MoveInfo *const buf,
+inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     if (b.isNull()) {
@@ -260,9 +260,9 @@ inline bool judgeHandMate(const int depth, MoveInfo *const buf,
         // 階段パターンのみ検討
         // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
         if (myHand.seq) {
-            const int NMoves = genAllSeq(buf, myHand.cards);
+            const int NMoves = genAllSeq(mbuf, myHand.cards);
             for (int i = 0; i < NMoves; i++) {
-                const MoveInfo& mv = buf[i];
+                const MoveInfo& mv = mbuf[i];
                 if (mv.qty() >= myHand.qty) return true; // 即上がり
                 
                 Hand nextHand;
@@ -287,13 +287,13 @@ inline bool judgeHandMate(const int depth, MoveInfo *const buf,
         }
     } else {
         // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
-        const int NMoves = genMove(buf, myHand, b);
-        if (searchHandMate(depth, buf, NMoves, myHand, opsHand, b, fieldInfo) != -1) return true;
+        const int NMoves = genMove(mbuf, myHand, b);
+        if (searchHandMate(depth, mbuf, NMoves, myHand, opsHand, b, fieldInfo) != -1) return true;
     }
     return false;
 }
 
-inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo mv,
+inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo mv,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 間に他プレーヤーの着手を含んだ必勝を検討
@@ -326,7 +326,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo m
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
             nextFieldInfo.setMinNCards(aw - mv.qty());
             nextFieldInfo.setMinNCardsAwake(aw - mv.qty());
-            if (judgeHandMate(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
+            if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                 return true;
             }
             // ジョーカー -> S3 からの空場必勝を確認
@@ -334,7 +334,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo m
                 if (nextHand.qty == 1) return true;
                 Move s3; s3.setSingle(INTCARD_S3);
                 nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
-                if (judgeHandMate(depth, buf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
+                if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                     return true;
                 }
             }
@@ -344,7 +344,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const buf, const MoveInfo m
     return false;
 }
 
-inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
+inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& mv,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     
@@ -355,7 +355,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
             nb.flush();
             FieldAddInfo nextFieldInfo;
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            return judgeHandMate(depth, buf, myHand, opsHand, nb, nextFieldInfo);
+            return judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo);
         } else {
             if (mv.qty() >= myHand.qty) return true; // あがり
             Hand nextHand;
@@ -366,11 +366,11 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                 mv.setDM(); // 支配フラグ付加
                 bd.procAndFlush(mv);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
+                return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
             } else { // セルフフォロー必勝を判定
                 bd.proc(mv);
                 procUnrivaled(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, buf, nextHand, opsHand, bd, nextFieldInfo);
+                return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
             }
         }
         return false;
@@ -387,7 +387,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
             FieldAddInfo nextFieldInfo;
             nextFieldInfo.init();
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            return judgeHandMate(depth, buf, myHand, opsHand,
+            return judgeHandMate(depth, mbuf, myHand, opsHand,
                                  OrderToNullBoard(b.prmOrder()), nextFieldInfo);
         }
     }
@@ -414,14 +414,14 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
         if (judgeHandMate(mv.isRev() ? depth : 0,
-                          buf, nextHand, opsHand, bd, nextFieldInfo)) {
+                          mbuf, nextHand, opsHand, bd, nextFieldInfo)) {
             return true;
         }
         // 自分の出したジョーカーをS3で返してからの必勝チェック
         if (mv.isSingleJOKER() && containsS3(nextHand.cards)) {
             Move s3; s3.setSingle(INTCARD_S3);
             nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
-            return judgeHandMate(0, buf, nextHand, opsHand, bd, nextFieldInfo);
+            return judgeHandMate(0, mbuf, nextHand, opsHand, bd, nextFieldInfo);
         }
     } else { // 支配しない
         
@@ -452,7 +452,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
                 }
             }
             // BNPWを検討
-            if (checkHandBNPW(depth - 1, buf, mv, myHand, opsHand, b, fieldInfo)) {
+            if (checkHandBNPW(depth - 1, mbuf, mv, myHand, opsHand, b, fieldInfo)) {
                 DERR << "BNPW - " << mv << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
                 return true;
             }
@@ -461,15 +461,15 @@ inline bool checkHandMate(const int depth, MoveInfo *const buf, MoveInfo& mv,
     return false;
 }
 
-inline int searchHandMate(const int depth, MoveInfo *const buf, const int NMoves,
+inline int searchHandMate(const int depth, MoveInfo *const mbuf, const int NMoves,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 必勝手探し
     for (int i = NMoves - 1; i >= 0; i--) {
-        if (buf[i].qty() == myHand.qty) return i;
+        if (mbuf[i].qty() == myHand.qty) return i;
     }
     for (int i = NMoves - 1; i >= 0; i--) {
-        if (checkHandMate(depth, buf + NMoves, buf[i], myHand, opsHand, b, fieldInfo)) return i;
+        if (checkHandMate(depth, mbuf + NMoves, mbuf[i], myHand, opsHand, b, fieldInfo)) return i;
     }
     return -1;
 }
