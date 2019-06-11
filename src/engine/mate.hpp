@@ -262,21 +262,21 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
         if (myHand.seq) {
             const int NMoves = genAllSeq(mbuf, myHand.cards);
             for (int i = 0; i < NMoves; i++) {
-                const MoveInfo& mv = mbuf[i];
-                if (mv.qty() >= myHand.qty) return true; // 即上がり
+                const MoveInfo& m = mbuf[i];
+                if (m.qty() >= myHand.qty) return true; // 即上がり
                 
                 Hand nextHand;
                 
-                makeMove1stHalf(myHand, &nextHand, mv);
+                makeMove1stHalf(myHand, &nextHand, m);
                 // 5枚以上の階段は支配としておく
-                if (!depth && mv.qty() > 4) {
+                if (!depth && m.qty() > 4) {
                     Board nb = b;
-                    nb.procOrder(mv);
+                    nb.procOrder(m);
                     // いずれかのオーダーで必勝ならOK
                     if (judgeHandPW_NF(nextHand, opsHand, b)
                         || judgeHandPW_NF(nextHand, opsHand, nb)) return true;
                 } else {
-                    if (dominatesHand(mv, opsHand, b)) {
+                    if (dominatesHand(m, opsHand, b)) {
                         if (judgeHandPW_NF(nextHand, opsHand, b)) return true;
                     } else {
                         // 支配的でない場合、この役を最後に出すことを検討
@@ -293,39 +293,39 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
     return false;
 }
 
-inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo mv,
+inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo m,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 間に他プレーヤーの着手を含んだ必勝を検討
     // 支配的でないことは前提とする
     if (!b.isNull()) return false; // 未実装
-    if (mv.isPASS()) return false; // パスからのBNPWはない
+    if (m.isPASS()) return false; // パスからのBNPWはない
     int curOrder = b.prmOrder();
     Cards ops8 = opsHand.cards & CARDS_8;
     uint32_t aw = fieldInfo.getMinNCardsAwake();
     
     // 相手に間で上がられる可能性がある
-    if (aw <= mv.qty()) return false;
+    if (aw <= m.qty()) return false;
     
     FieldAddInfo nextFieldInfo;
     
-    if (mv.isSingle()) {
+    if (m.isSingle()) {
         // シングルジョーカーは少なくともBNPWではない
-        if (mv.isSingleJOKER()) return false;
+        if (m.isSingleJOKER()) return false;
         if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
             // 相手に8切りで返される可能性があればだめ
-            if (ops8 && isValidGroupRank(RANK_8, curOrder, mv.rank())) return false;
+            if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
             // 残り1枚がジョーカーなら勝ち
-            if (myHand.qty == mv.qty() + 1) return true;
+            if (myHand.qty == m.qty() + 1) return true;
 
             // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
             Hand nextHand;
-            makeMove1stHalf(myHand, &nextHand, mv);
+            makeMove1stHalf(myHand, &nextHand, m);
             Move sj; sj.setSingleJOKER();
             nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            nextFieldInfo.setMinNCards(aw - mv.qty());
-            nextFieldInfo.setMinNCardsAwake(aw - mv.qty());
+            nextFieldInfo.setMinNCards(aw - m.qty());
+            nextFieldInfo.setMinNCardsAwake(aw - m.qty());
             if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                 return true;
             }
@@ -344,31 +344,31 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     return false;
 }
 
-inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& mv,
+inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     
     if (fieldInfo.isUnrivaled()) { // 独断場のとき
-        mv.setDO(); // 支配フラグ付加
-        if (mv.isPASS()) {
+        m.setDO(); // 支配フラグ付加
+        if (m.isPASS()) {
             Board nb = b;
             nb.flush();
             FieldAddInfo nextFieldInfo;
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
             return judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo);
         } else {
-            if (mv.qty() >= myHand.qty) return true; // あがり
+            if (m.qty() >= myHand.qty) return true; // あがり
             Hand nextHand;
             Board bd = b;
             FieldAddInfo nextFieldInfo;
-            makeMove1stHalf(myHand, &nextHand, mv);
-            if (dominatesCards(mv, nextHand.cards, b)) { // 自己支配
-                mv.setDM(); // 支配フラグ付加
-                bd.procAndFlush(mv);
+            makeMove1stHalf(myHand, &nextHand, m);
+            if (dominatesCards(m, nextHand.cards, b)) { // 自己支配
+                m.setDM(); // 支配フラグ付加
+                bd.procAndFlush(m);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
                 return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
             } else { // セルフフォロー必勝を判定
-                bd.proc(mv);
+                bd.proc(m);
                 procUnrivaled(fieldInfo, &nextFieldInfo);
                 return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
             }
@@ -376,35 +376,32 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& mv,
         return false;
     }
     
-    if (mv.isPASS()) {
-        if (!fieldInfo.isPassDom()) {
-            // パス支配でない場合は判定終了
-            return false;
-        } else {
-            // Unrivaledでないがパス支配の場合がある?
-            // パス支配の場合, 流れてからの必勝を判定
-            mv.setDO(); // 支配フラグ付加
-            FieldAddInfo nextFieldInfo;
-            nextFieldInfo.init();
-            flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            return judgeHandMate(depth, mbuf, myHand, opsHand,
-                                 OrderToNullBoard(b.prmOrder()), nextFieldInfo);
-        }
+    if (m.isPASS()) {
+        // パス支配でない場合は判定終了
+        if (!fieldInfo.isPassDom()) return false;
+
+        // Unrivaledでないがパス支配の場合がある?
+        // パス支配の場合, 流れてからの必勝を判定
+        m.setDO(); // 支配フラグ付加
+        FieldAddInfo nextFieldInfo;
+        nextFieldInfo.init();
+        flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+        return judgeHandMate(depth, mbuf, myHand, opsHand,
+                             OrderToNullBoard(b.prmOrder()), nextFieldInfo);
     }
     // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
     // DERR << depth << endl;
     // 通常
-    if (mv.qty() >= myHand.qty) return true; // 即上がり
-    if (dominatesHand(mv, opsHand, b)
-       || mv.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
+    if (m.qty() >= myHand.qty) return true; // 即上がり
+    if (dominatesHand(m, opsHand, b)
+        || m.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
         
-        mv.setDO(); // 支配フラグ付加
+        m.setDO(); // 支配フラグ付加
         
         Board bd = b;
-        bd.proc(mv);
+        bd.proc(m);
         Hand nextHand;
-
-        makeMove1stHalf(myHand, &nextHand, mv);
+        makeMove1stHalf(myHand, &nextHand, m);
         
         // セルフフォロー
         
@@ -413,49 +410,48 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& mv,
         bd.flush();
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-        if (judgeHandMate(mv.isRev() ? depth : 0,
+        if (judgeHandMate(m.isRev() ? depth : 0,
                           mbuf, nextHand, opsHand, bd, nextFieldInfo)) {
             return true;
         }
         // 自分の出したジョーカーをS3で返してからの必勝チェック
-        if (mv.isSingleJOKER() && containsS3(nextHand.cards)) {
+        if (m.isSingleJOKER() && containsS3(nextHand.cards)) {
             Move s3; s3.setSingle(INTCARD_S3);
             nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
             return judgeHandMate(0, mbuf, nextHand, opsHand, bd, nextFieldInfo);
         }
     } else { // 支配しない
-        
-        if (depth) {
-            // S3分岐必勝を検討
-            // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
-            // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
-            if (mv.isSingle() // シングルのみ
-               && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
-               && containsS3(myHand.cards) // 残り手札にS3がある
-               && !mv.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
-                Cards zone = ORToGValidZone(b.order(), mv.rank());
-                if (b.locksSuits(mv)) {
-                    zone &= SuitsToCards(mv.suits());
-                }
-                if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
-                    Hand nextHand;
-                    makeMove1stHalf(myHand, &nextHand, mv);
-                    if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
-                        Move s3; s3.setSingle(INTCARD_S3);
-                        nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
-                        if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
-                            // 両方で勝ったので必勝
-                            DERR << "BRPW(S3)!!!" << endl;
-                            return true;
-                        }
+        if (depth <= 0) return false;
+
+        // S3分岐必勝を検討
+        // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
+        // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
+        if (m.isSingle() // シングルのみ
+           && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
+           && containsS3(myHand.cards) // 残り手札にS3がある
+           && !m.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
+            Cards zone = ORToGValidZone(b.order(), m.rank());
+            if (b.locksSuits(m)) {
+                zone &= SuitsToCards(m.suits());
+            }
+            if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
+                Hand nextHand;
+                makeMove1stHalf(myHand, &nextHand, m);
+                if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
+                    Move s3; s3.setSingle(INTCARD_S3);
+                    nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
+                    if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
+                        // 両方で勝ったので必勝
+                        DERR << "BRPW(S3)!!!" << endl;
+                        return true;
                     }
                 }
             }
-            // BNPWを検討
-            if (checkHandBNPW(depth - 1, mbuf, mv, myHand, opsHand, b, fieldInfo)) {
-                DERR << "BNPW - " << mv << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
-                return true;
-            }
+        }
+        // BNPWを検討
+        if (checkHandBNPW(depth - 1, mbuf, m, myHand, opsHand, b, fieldInfo)) {
+            DERR << "BNPW - " << m << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
+            return true;
         }
     }
     return false;
