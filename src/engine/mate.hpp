@@ -304,19 +304,14 @@ inline bool checkHandBNPW(const int depth, Move *const mbuf, const Move m,
     if (aw <= m.qty()) return false;
     
     if (m.isSingle()) {
-        if (m.isSingleJOKER()) {
-            // シングルジョーカーは少なくともBNPWではない
-            return false;
-        }
+        // シングルジョーカーは少なくともBNPWではない
+        if (m.isSingleJOKER()) return false;
         if (mh.jk && !containsS3(oh.cards)) { // まずジョーカーを検討
-            if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) {
-                // 相手に8切りで返される可能性があればだめ
-                return false;
-            }
-            if (mh.qty == m.qty() + 1) {
-                // 残り1枚がジョーカーなら勝ち
-                return true;
-            }
+            // 相手に8切りで返される可能性があればだめ
+            if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
+            // 残り1枚がジョーカーなら勝ち
+            if (mh.qty == m.qty() + 1) return true;
+
             // 簡単な勝ちの条件にはまらなかったので手札を更新して空場必勝を確認
             Hand nmh;
             makeMove1stHalf(mh, &nmh, m);

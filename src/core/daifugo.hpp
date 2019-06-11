@@ -90,15 +90,10 @@ extern std::ostream& operator <<(std::ostream& ost, const OutSuits& arg);
 extern uint8_t sSIndex[16][16];
 extern uint8_t S2Index[16][16];
 extern uint8_t SSIndex[16][16];
-// (スート, スート, スート)のパターン
-extern uint8_t sSSIndex[16][16][16];
-extern uint16_t SSSIndex[16][16][16];
 
 constexpr int N_PATTERNS_SUIT_SUITS = 8;
 constexpr int N_PATTERNS_2SUITS = 22;
 constexpr int N_PATTERNS_SUITS_SUITS = 35;
-constexpr int N_PATTERNS_SUITS_SUITS_SUITS = 330;
-constexpr int N_PATTERNS_SUIT_SUITS_SUITS = 80;
 
 extern void initSuits();
 
@@ -403,7 +398,7 @@ inline BitCards ORToGValidZone(int ord, int rank) { // ランク限定のみ
         case 0: res = RankRangeToCards(rank + 1, RANK_MAX); break;
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
         case 2: res = RankRangeToCards(RANK_MIN, RANK_MAX) - RankToCards(rank); break;
-        default: UNREACHABLE; res = CARDS_NULL; break;
+        default: assert(0); res = CARDS_NULL; break;
     }
     return res;
 }
@@ -415,7 +410,7 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
         case 1: res = RankRangeToCards(RANK_MIN, rank - 1); break;
         case 2: res = RankRangeToCards(RANK_MIN, rank - 1)
                       | RankRangeToCards(rank + qty, RANK_MAX); break;
-        default: UNREACHABLE; res = CARDS_NULL; break;
+        default: assert(0); res = CARDS_NULL; break;
     }
     return res;
 }
@@ -698,7 +693,7 @@ inline BitCards CardsToNR(BitCards c, int q) {
         case 2: nr = CardsTo2R(c); break;
         case 3: nr = CardsTo3R(c); break;
         case 4: nr = CardsToFR(c); break;
-        default: UNREACHABLE; nr = CARDS_NULL; break;
+        default: assert(0); nr = CARDS_NULL; break;
     }
     return nr;
 }

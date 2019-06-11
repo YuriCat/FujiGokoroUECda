@@ -107,54 +107,6 @@ void initSuits() {
             sSIndex[s0][s1] = suitSuitsCountIndex[c1][c01];
         }
     }
-    
-    // (suits, suits, suits) pattern index
-    map<array<int, ipow(2, 3) - 1>, int> sssMap;
-    for (unsigned s0 = 0; s0 < 16; s0++) {
-        for (unsigned s1 = 0; s1 < 16; s1++) {
-            for (unsigned s2 = 0; s2 < 16; s2++) {
-                unsigned s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
-                unsigned s012 = s0 & s1 & s2;
-                int c0 = popcnt(s0), c1 = popcnt(s1), c2 = popcnt(s2);
-                int c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
-                int c012 = popcnt(s012);
-                array<int, ipow(2, 3) - 1> pattern = {c0, c1, c2, c01, c02, c12, c012};
-                int cnt;
-                if (sssMap.count(pattern) == 0) {
-                    cnt = sssMap.size();
-                    sssMap[pattern] = cnt;
-                    DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << ", " << c012 << endl;
-                } else {
-                    cnt = sssMap[pattern];
-                }
-                SSSIndex[s0][s1][s2] = cnt;
-            }
-        }
-    }
-    ASSERT(sssMap.size() == N_PATTERNS_SUITS_SUITS_SUITS,
-           cerr << sssMap.size() << " <-> " << N_PATTERNS_SUITS_SUITS_SUITS << endl;);
-
-    map<array<int, ipow(2, 3) - 3>, int> s1ssMap;
-    for (unsigned s0 = 1; s0 < 16; s0 <<= 1) {
-        for (unsigned s1 = 0; s1 < 16; s1++) {
-            for (unsigned s2 = 0; s2 < 16; s2++) {
-                unsigned s01 = s0 & s1, s02 = s0 & s2, s12 = s1 & s2;
-                unsigned s012 = s0 & s1 & s2;
-                int c1 = popcnt(s1), c2 = popcnt(s2);
-                int c01 = popcnt(s01), c02 = popcnt(s02), c12 = popcnt(s12);
-                array<int, ipow(2, 3) - 3> pattern = {c1, c2, c01, c02, c12};
-                int cnt;
-                if (s1ssMap.count(pattern) == 0) {
-                    cnt = s1ssMap.size();
-                    s1ssMap[pattern] = cnt;
-                    DERR << "pattern " << cnt << " = " << c1 << ", " << c2 << ", " << c01 << ", " << c02 << ", " << c12 << endl;
-                } else {
-                    cnt = s1ssMap[pattern];
-                }
-                sSSIndex[s0][s1][s2] = cnt;
-            }
-        }
-    }
 }
 
 SuitsInitializer suitsInitializer;

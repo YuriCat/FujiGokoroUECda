@@ -80,19 +80,15 @@ constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
 
 // 出力
 #ifdef DEBUG
-#define DOUT std::cout
 #define DERR std::cerr
 #else
 #define DERR 0 && std::cerr
-#define DOUT 0 && std::cout
 #endif
 
 #ifndef MINIMUM
-#define COUT cout
-#define CERR cerr
+#define CERR std::cerr
 #else
-#define CERR 0 && cerr
-#define COUT 0 && cout
+#define CERR 0 && std::cerr
 #endif
 
 static double internal_clock_sec() {
@@ -204,14 +200,11 @@ constexpr size_t popcnt64CE(uint64_t v) {
 }
 
 template <typename T>
-constexpr static T allLowerBits(T v) { // 最下位ビットより下位のビット全て
+constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全て
     return ~v & (v - T(1));
 }
 template <typename T> inline T allHigherBits(T a) {
-    return ~((1U << bsr(a)) - 1U);
-}
-template <> inline std::uint64_t allHigherBits(std::uint64_t a) {
-    return ~((1ULL << bsr64(a)) - 1ULL);
+    return ~((T(1) << bsr<T>(a)) - T(1));
 }
 
 template <typename T>
@@ -348,7 +341,7 @@ static void dist2_64(uint64_t *goal0, uint64_t *goal1,
     assert((int)popcnt64(arg) == N0 + N1);
     uint64_t tmp = pickNBits64(arg, N0, N1, dice);
     *goal0 |= tmp;
-    *goal1 |= (arg - tmp);
+    *goal1 |= arg - tmp;
 }
 template <int N, typename T, class dice64_t>
 static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t& dice) {
@@ -437,7 +430,6 @@ struct BetaDistribution {
 
     constexpr double size() const { return a + b; }
     constexpr double mean() const { return a / (a + b); }
-    constexpr double rate() const { return a / b; }
     constexpr double med() const {
         return (a - 1 / 3.0) / (a + b - 2 / 3.0); // a, b > 1 での近似値
     }
@@ -462,71 +454,34 @@ struct BetaDistribution {
     double log_dens(double x) const {
         return log_relative_dens(x) - log_beta(a, b);
     }
-    
-    BetaDistribution& add(const BetaDistribution& arg)noexcept{
-        a += arg.a;
-        b += arg.b;
-        return *this;
-    }
-    BetaDistribution& subtr(const BetaDistribution& arg)noexcept{
-        a -= arg.a;
-        b -= arg.b;
-        return *this;
-    }
-    
-    BetaDistribution& operator+=(const BetaDistribution& rhs)noexcept{
+
+    BetaDistribution& operator+=(const BetaDistribution& rhs) {
         a += rhs.a;
         b += rhs.b;
         return *this;
     }
-    BetaDistribution& operator-=(const BetaDistribution& rhs)noexcept{
+    BetaDistribution& operator-=(const BetaDistribution& rhs) {
         a -= rhs.a;
         b -= rhs.b;
         return *this;
     }
-    BetaDistribution& operator*=(const double m)noexcept{
+    BetaDistribution& operator*=(const double m) {
         a *= m;
         b *= m;
         return *this;
     }
-    BetaDistribution& operator/=(const double d){
+    BetaDistribution& operator/=(const double d) {
         (*this) *= 1 / d;
         return *this;
     }
-    BetaDistribution& mul(const double m)noexcept{
-        a *= m;
-        b *= m;
-        return *this;
-    }
-    
-    BetaDistribution& rev()noexcept{
-        std::swap(a, b);
-        return *this;
-    }
-    
-    BetaDistribution& set(const double aa, const double ab)noexcept{
+
+    BetaDistribution& set(const double aa, const double ab) {
         a = aa;
         b = ab;
         return *this;
     }
-    BetaDistribution& set_by_mean(double m, double size)noexcept{
+    BetaDistribution& set_by_mean(double m, double size) {
         set(m * size, (1 - m) * size);
-        return *this;
-    }
-    BetaDistribution& set_by_rate(double r, double size)noexcept{
-        set_by_mean(r / (1 + r), size);
-        return *this;
-    }
-    
-    BetaDistribution& resize(double h){
-        // サイズをhにする
-        double s = size();
-        
-        assert(s);
-        
-        double h_s = h / s;
-        a *= h_s;
-        b *= h_s;
         return *this;
     }
     BetaDistribution reversed() const {
@@ -536,19 +491,17 @@ struct BetaDistribution {
     bool exam() const;
     std::string toString() const;
     
-    constexpr BetaDistribution():
-    a(), b(){}
-    explicit constexpr BetaDistribution(const double aa, const double ab):
-    a(aa), b(ab){}
+    constexpr BetaDistribution(): a(), b() {}
+    explicit constexpr BetaDistribution(double aa, double ab): a(aa), b(ab) {}
 };
 
-inline BetaDistribution operator+(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+inline BetaDistribution operator+(const BetaDistribution& lhs, const BetaDistribution& rhs) {
     return BetaDistribution(lhs.a + rhs.a, lhs.b + rhs.b);
 }
-inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistribution& rhs)noexcept{
+inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistribution& rhs) {
     return BetaDistribution(lhs.a - rhs.a, lhs.b - rhs.b);
 }
-inline BetaDistribution operator*(const BetaDistribution& lhs, const double m)noexcept{
+inline BetaDistribution operator*(const BetaDistribution& lhs, const double m) {
     return BetaDistribution(lhs.a * m, lhs.b * m);
 }
 extern std::ostream& operator<<(std::ostream& out, const BetaDistribution& b);
