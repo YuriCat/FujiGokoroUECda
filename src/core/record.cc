@@ -9,9 +9,9 @@ namespace Recorder {
         "dealt", "changed", "original",
         "play", "result",
     };
-    
+
     map<string, int> commandMap;
-    
+
     bool isCommand(const string& str) {
         return commandMap.find(str) != commandMap.end();
     }
@@ -60,13 +60,13 @@ int StringQueueToCardsM(queue<string>& q, Cards *const dst) {
 int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstTime) {
     *dstMv = MOVE_PASS;
     *dstTime = 0;
-    
+
     Move mv;
     vector<string> v = split(str, " []\n");
-    
+
     for (const string& tstr : v) DERR << tstr << ", ";
     DERR << endl;
-    
+
     if (v.size() <= 0) {
         DERR << "failed to read move-time : length = 0" << endl;
         return -1;
@@ -90,7 +90,7 @@ int StringToMoveTimeM(const string& str, Move *const dstMv, uint64_t *const dstT
 
 string GameRecord::toString() const {
     ostringstream oss;
-    
+
     oss << "/* " << endl;
     oss << "score " << endl;
     oss << "class ";
@@ -109,7 +109,7 @@ string GameRecord::toString() const {
     }
     oss << endl;
     oss << "changed ";
-    
+
     Cards changeCards[N_PLAYERS];
     for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
     for (auto change : changes) {
@@ -135,7 +135,7 @@ string GameRecord::toString() const {
     }
     oss << endl;
     oss << "*/ " << endl;
-    
+
     return oss.str();
 }
 
@@ -144,26 +144,26 @@ string GameRecord::toString() const {
 
 int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
     Recorder::initCommandSet();
-    
+
     ifstream ifs(fName);
     if (!ifs) {
         cerr << "readMatchLogFile() : no log file." << endl;
         return -1;
     }
-    
+
     pmLog->init();
     GameRecord game;
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass;
     map<int, ChangeRecord> changeMap;
     Move lastMove;
-    
+
     bitset<32> flagGame, flagMatch;
     int startedGame = -1;
     int failedGames = 0;
-    
+
     queue<string> q;
     string str;
-    
+
     // ここから読み込みループ
     cerr << "start reading log..." << endl;
     while (1) {
@@ -178,12 +178,12 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
                 if (str.size() > 0) q.push(str);
             }
         }
-        
+
         const string cmd = q.front();
         q.pop();
-        
+
         DERR << "command = " << cmd << endl;
-        
+
         if (cmd == "//") break; // 全試合終了
         else if (cmd == "/*") { // game開始合図
             if (startedGame >= 0) {
@@ -316,7 +316,7 @@ int readMatchLogFile(const string& fName, MatchRecord *const pmLog) {
     NEXT:;
     }
 END:;
-    
+
     cerr << pmLog->games.size() << " games were loaded." << endl;
     ifs.close();
     return 0;

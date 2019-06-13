@@ -10,11 +10,11 @@
 struct RateCalculationData {
     SpinLock<uint32_t> lock;
     std::atomic<int> trials;
-    
+
     // プレーヤー間の相対的な勝ち数
     std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> relativeWins;
     std::array<BetaDistribution, N_PLAYERS> absoluteWins;
-    
+
     RateCalculationData() {
         lock.unlock();
         trials = 0;
@@ -38,10 +38,10 @@ void simulationThreadForRating(RateCalculationData *const pdst,
     {
         Field f = *pfield;
         f.setMoveBuffer(ptools->mbuf);
-        
+
         // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
         startAllSimulation(f, pshared, ptools);
-        
+
         pdst->lock.lock();
         // 相対勝ち数を加算
         for (int p0 = 0; p0 < N_PLAYERS; p0++) {
@@ -152,7 +152,8 @@ std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const GameRecord& game,
                 double realWin = (game.newClassOf(p0) < game.newClassOf(p1)) ? 1 : 0;
                 sum += realWin - expectedWp[p0][p1];
             }
-        }cerr << endl;
+        }
+        cerr << endl;
         diffRate[p0] = coef * sum / (N_PLAYERS - 1);
     }
     return diffRate;
@@ -169,7 +170,8 @@ std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const GameRecord& game,
         double realScore = (DAIHINMIN - game.newClassOf(p0)) / double(N_PLAYERS - 1);
         //cerr << expectedWp[p0] << " -> " << realScore << endl;
         diffRate[p0] = coef * (realScore - expectedWp[p0]);
-    }cerr << endl;
+    }
+    cerr << endl;
     cerr << mean(expectedWp) << endl;
     return diffRate;
 }

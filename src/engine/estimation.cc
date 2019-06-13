@@ -582,7 +582,7 @@ double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
     // 想定した手札配置から、試合進行がどの程度それっぽいか考える
     if (inChange) return 0;
     double playllh = 0; // 対数尤度
-    std::array<Cards, N> orgCards;
+    array<Cards, N> orgCards;
     for (int p = 0; p < N; p++) {
         orgCards[p] = c[p] + usedCards[infoClass[p]];
     }

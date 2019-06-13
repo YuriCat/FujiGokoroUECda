@@ -68,7 +68,7 @@ void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
     uint64_t dkey = CardsToHashKey(dc);
-    
+
     // 全体の残り手札の更新
     usedCards[tp] += dc;
     remCards -= dc;
@@ -186,14 +186,14 @@ void Field::initGame() {
     infoClassPlayer.fill(-1);
     infoNewClass.fill(-1);
     infoNewClassPlayer.fill(-1);
-    
+
     common.clear();
-    
+
     usedCards.fill(CARDS_NULL);
     dealtCards.fill(CARDS_NULL);
     sentCards.fill(CARDS_NULL);
     recvCards.fill(CARDS_NULL);
-    
+
     remCards = CARDS_ALL;
     remQty = countCards(CARDS_ALL);
     remKey = HASH_CARDS_ALL;
@@ -215,7 +215,6 @@ void Field::prepareAfterChange() {
 
 bool Field::exam() const {
     // validator
-    
     if (!ps.exam()) {
         cerr << "Field::exam() illegal PlayersState" << endl;
         cerr << ps << endl; return false;
@@ -235,7 +234,7 @@ bool Field::exam() const {
             return false;
         }
     }
-    
+
     // 手札
     Cards sum = CARDS_NULL;
     int NSum = 0;
@@ -271,7 +270,6 @@ bool Field::exam() const {
                 cerr << "hand[" << p << "]hol" << endl;
                 return false;
             }
-            
             sum += c;
             NSum += hand[p].qty;
         } else {
@@ -407,22 +405,22 @@ void copyField(const Field& arg, Field *const dst) {
     // playout info
     dst->mbuf = arg.mbuf;
     dst->attractedPlayers = arg.attractedPlayers;
-    
+
     // game info
     dst->board = arg.board;
     dst->ps = arg.ps;
-    
+
     dst->infoSeat = arg.infoSeat;
     dst->infoSeatPlayer = arg.infoSeatPlayer;
     dst->infoNewClass = arg.infoNewClass;
     dst->infoNewClassPlayer = arg.infoNewClassPlayer;
     dst->infoClass = arg.infoClass;
     dst->infoClassPlayer = arg.infoClassPlayer;
-    
+
     dst->infoPosition = arg.infoPosition;
-    
+
     dst->common = arg.common;
-    
+
     // we don't have to copy each player's hand,
     // because card-position will be set in the opening of playout.
     dst->usedCards = arg.usedCards;

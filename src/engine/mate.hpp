@@ -35,7 +35,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
     assert(pqr == CardsToPQR(cards));
     const int ord = b.order();
 #define PPW(s) { DERR << "PPW" << s << " " << cards << endl; return true; }
-    
+
     const Cards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
     if (!ndpqr) {
@@ -90,7 +90,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
             }
         }
     }
-    
+
     if (jk && (pqr & PQR_3)) {
         // ジョーカーを使えば革命あり
         // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
@@ -170,13 +170,13 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
             bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? (1 - ord) : ord];
             bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? (1 - ord) : ord];
             if (!jh || !jl) PW("1(+JK)");
-            
+
             // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
             // 3はランク最低なのでlだろう
             if (l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)) PW("1(JK-S3)");
         }
     }
-    
+
     // 革命によって勝てないか考える
     if (myHand.pqr & PQR_4) {
         // ジョーカーを使わない革命あり。
@@ -218,7 +218,7 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
             }
         }
     }
-    
+
     if (myHand.jk && (myHand.pqr & PQR_3)) {
         // ジョーカーを使えば革命あり。
         // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
@@ -264,10 +264,10 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
             for (int i = 0; i < NMoves; i++) {
                 const MoveInfo& m = mbuf[i];
                 if (m.qty() >= myHand.qty) return true; // 即上がり
-                
+
                 Hand nextHand;
-                
                 makeMove1stHalf(myHand, &nextHand, m);
+
                 // 5枚以上の階段は支配としておく
                 if (!depth && m.qty() > 4) {
                     Board nb = b;
@@ -303,12 +303,12 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     int curOrder = b.prmOrder();
     Cards ops8 = opsHand.cards & CARDS_8;
     uint32_t aw = fieldInfo.getMinNCardsAwake();
-    
-    // 相手に間で上がられる可能性がある
+
+    // 相手に間で上がられる可能性がある場合
     if (aw <= m.qty()) return false;
-    
+
     FieldAddInfo nextFieldInfo;
-    
+
     if (m.isSingle()) {
         // シングルジョーカーは少なくともBNPWではない
         if (m.isSingleJOKER()) return false;
@@ -347,7 +347,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
 inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
-    
+
     if (fieldInfo.isUnrivaled()) { // 独断場のとき
         m.setDO(); // 支配フラグ付加
         if (m.isPASS()) {
@@ -375,7 +375,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         }
         return false;
     }
-    
+
     if (m.isPASS()) {
         // パス支配でない場合は判定終了
         if (!fieldInfo.isPassDom()) return false;
@@ -389,22 +389,20 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         return judgeHandMate(depth, mbuf, myHand, opsHand,
                              OrderToNullBoard(b.prmOrder()), nextFieldInfo);
     }
-    // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
-    // DERR << depth << endl;
+
     // 通常
     if (m.qty() >= myHand.qty) return true; // 即上がり
     if (dominatesHand(m, opsHand, b)
         || m.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
-        
         m.setDO(); // 支配フラグ付加
-        
+
         Board bd = b;
         bd.proc(m);
         Hand nextHand;
         makeMove1stHalf(myHand, &nextHand, m);
-        
+
         // セルフフォロー
-        
+
         // 自分の出した役を流してからの必勝チェック
         // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
         bd.flush();
@@ -427,9 +425,8 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
         // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
         if (m.isSingle() // シングルのみ
-           && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
-           && containsS3(myHand.cards) // 残り手札にS3がある
-           && !m.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
+            && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
+            && containsS3(myHand.cards - m.cards())) { // 残り手札にS3がある
             Cards zone = ORToGValidZone(b.order(), m.rank());
             if (b.locksSuits(m)) {
                 zone &= SuitsToCards(m.suits());

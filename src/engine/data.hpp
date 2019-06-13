@@ -23,7 +23,7 @@ struct ThreadTools {
 struct BaseSharedData {
     std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS> classDestination; // 階級到達回数
     std::array<std::array<std::array<uint32_t, N_PLAYERS>, N_PLAYERS>, N_PLAYERS> classTransition; // 階級遷移回数
-    
+
     MatchRecord record; // 主観的な対戦棋譜
 
     // クライアントの個人的スタッツ
@@ -64,7 +64,7 @@ struct SharedData : public BaseSharedData {
 
     // 毎回報酬テーブルから持ってこなくてもいいようにこの試合の報酬を置いておくテーブル
     std::array<double, N_PLAYERS> gameReward;
-    
+
     // 基本方策
     ChangePolicy<policy_value_t> baseChangePolicy;
     PlayPolicy<policy_value_t> basePlayPolicy;
@@ -72,13 +72,13 @@ struct SharedData : public BaseSharedData {
     // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
     int mateClass; // 初めてMATEと判定した階級の宣言
     int L2Result; // L2における判定結果
-    
+
     // クライアントの個人的スタッツ
     // (勝利, 敗戦) x (勝利宣言, 判定失敗, 敗戦宣言, 無宣言)
     std::array<std::array<long long, 5>, 2> myL2Result;
     // MATEの宣言結果
     std::array<std::array<long long, N_PLAYERS>, N_PLAYERS> myMateResult;
-    
+
     void setMyMate(int bestClass) { // 詰み宣言
         if (mateClass == -1) mateClass = bestClass;
     }
@@ -102,7 +102,7 @@ struct SharedData : public BaseSharedData {
             myMateResult[realClass][mateClass] += 1;
         }
     }
-    
+
     void initMatch(int playerNum) {
         base_t::initMatch(playerNum);
         // スタッツ初期化
@@ -114,7 +114,7 @@ struct SharedData : public BaseSharedData {
         mateClass = -1;
         L2Result = -2;
     }
-    
+
     void closeGame() {
         const auto& game = record.latestGame();
         base_t::closeGame(game);
@@ -132,26 +132,26 @@ struct RootAction {
     MoveInfo move;
     Cards changeCards;
     int nextDivision;
-    
+
     // 方策関数出力
     double policyScore, policyProb;
-    
+
     // モンテカルロ結果
     BetaDistribution monteCarloScore;
     BetaDistribution naiveScore;
-    
+
     // モンテカルロの詳細な結果
     BetaDistribution myScore, rivalScore;
     uint64_t simulations;
     std::array<std::array<int64_t, N_CLASSES>, N_PLAYERS> classDistribution;
     uint64_t turnSum;
-    
+
     double mean() const { return monteCarloScore.mean(); }
     double size() const { return monteCarloScore.size(); }
     double mean_var() const { return monteCarloScore.var(); }
     double var() const { return monteCarloScore.var() * size(); }
     double naive_mean() const { return naiveScore.mean(); }
-    
+
     void clear();
     void setChange(Cards cc) { clear(); changeCards = cc; }
     void setPlay(MoveInfo m) { clear(); move = m; }
@@ -165,12 +165,12 @@ struct RootInfo {
     int candidates; // 選択の候補とする数
     bool isChange;
     bool policyAdded = false;
-    
+
     // 雑多な情報
     int myPlayerNum = -1, rivalPlayerNum = -1;
     double bestReward, worstReward;
     double rewardGap;
-    
+
     // モンテカルロ用の情報
     std::atomic<bool> exitFlag;
     uint64_t limitSimulations;
@@ -222,9 +222,9 @@ struct RootInfo {
         }
         return num;
     }
-    
+
     std::string toString(int num = -1) const;
-    
+
     RootInfo() {
         candidates = -1;
         monteCarloAllScore.set(0, 0);

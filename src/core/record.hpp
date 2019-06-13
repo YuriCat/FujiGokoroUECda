@@ -59,22 +59,22 @@ struct GameRecord {
     bool isInitGame() const { return flags_.test(1); }
     bool isChangeOver() const { return flags_.test(2); }
     bool isPlayOver() const { return flags_.test(3); }
-    
+
     int classOf(int p) const { return infoClass[p]; }
     int seatOf(int p) const { return infoSeat[p]; }
     int newClassOf(int p) const { return infoNewClass[p]; }
     int positionOf(int p) const { return infoPosition[p]; }
-    
+
     // 逆置換
     int classPlayer(int cl) const { return invert(infoClass)[cl]; }
     int seatPlayer(int s) const { return invert(infoSeat)[s]; }
     int newClassPlayer(int ncl) const { return invert(infoNewClass)[ncl]; }
-    
+
     void setClassOf(int p, int cl) { infoClass.assign(p, cl); }
     void setSeatOf(int p, int s) { infoSeat.assign(p, s); }
     void setNewClassOf(int p, int ncl) { infoNewClass.assign(p, ncl); }
     void setPositionOf(int p, int pos) { infoPosition.assign(p, pos); }
-    
+
     int myPlayerNum;
     int firstTurn;
     BitArray32<4, N_PLAYERS> infoClass, infoSeat, infoNewClass, infoPosition;

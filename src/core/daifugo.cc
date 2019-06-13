@@ -48,7 +48,6 @@ uint8_t sSSIndex[16][16][16];
 uint16_t SSSIndex[16][16][16];
 
 void initSuits() {
-    
     // (suits suits) pattern index (exchangable) 0 ~ 21
     int twoSuitsCountIndex[5][5][5] = {0};
     int cnt = 0;
@@ -61,7 +60,7 @@ void initSuits() {
         }
     }
     ASSERT(cnt == N_PATTERNS_2SUITS, cerr << cnt << " <-> " << N_PATTERNS_2SUITS << endl;);
-    
+
     // (suits, suits) pattern index 0 ~ 34
     int suitsSuitsCountIndex[5][5][5] = {0};
     cnt = 0;
@@ -75,7 +74,7 @@ void initSuits() {
     }
     ASSERT(cnt == N_PATTERNS_SUITS_SUITS,
            cerr << cnt << " <-> " << N_PATTERNS_SUITS_SUITS << endl;);
-    
+
     for (unsigned s0 = 0; s0 < 16; s0++) {
         for (unsigned s1 = 0; s1 < 16; s1++) {
             unsigned s01 = s0 & s1;
@@ -85,7 +84,7 @@ void initSuits() {
             S2Index[s0][s1] = twoSuitsCountIndex[cmax][cmin][c01];
         }
     }
-    
+
     // (suit, suits) pattern index 0 ~ 7
     int suitSuitsCountIndex[5][2] = {0};
     cnt = 0;
@@ -97,7 +96,7 @@ void initSuits() {
         }
     }
     ASSERT(cnt == N_PATTERNS_SUIT_SUITS, cerr << cnt << " <-> " << N_PATTERNS_SUIT_SUITS << endl;);
-    
+
     for (int sn0 = 0; sn0 < 4; sn0++) {
         for (unsigned s1 = 0; s1 < 16; s1++) {
             unsigned s0 = SuitNumToSuits(sn0);
@@ -251,7 +250,7 @@ Move StringToMoveM(const string& str) {
     unsigned ns = 0; // num of suits
     int nr = 0; // num of ranks
     size_t i = 0;
-    
+
     // special
     if (str == "p") return MOVE_PASS;
     if (str == "jk") {

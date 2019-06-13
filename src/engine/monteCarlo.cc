@@ -49,7 +49,7 @@ bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
 
     struct Dist { double mean, sem, reg; };
     double regretThreshold = 1600.0 * double(2 * simuTime * Settings::valuePerSec) / rewardScale;
-    
+
     // regret check
     Dist d[N_MAX_MOVES];
     for (int i = 0; i < candidates; i++) {
@@ -97,13 +97,13 @@ void MonteCarloThread(const int threadId, const int numThreads,
     if (proot->rivalPlayerNum >= 0) {
         pf.attractedPlayers.set(proot->rivalPlayerNum);
     }
-    
+
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
     uint64_t estTime = 0ULL; // 局面推定にかかった時間
-    
+
     // 諸々の準備が終わったので時間計測開始
     ClockMicS clock(0);
-    
+
     while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
 
         int world = 0;
@@ -135,12 +135,12 @@ void MonteCarloThread(const int threadId, const int numThreads,
         } else {
             startPlaySimulation(f, proot->child[action].move, pshared, ptools);
         }
-        
+
         proot->feedSimulationResult(action, f, pshared); // 結果をセット(排他制御は関数内で)
         if (proot->exitFlag) return;
-        
+
         simuTime += clock.restart();
-        
+
         // 終了判定
         if (Settings::fixedSimulationCount < 0
             && threadId == 0

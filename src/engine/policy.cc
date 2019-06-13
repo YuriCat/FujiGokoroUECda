@@ -58,20 +58,19 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
         }
         if (field.isAlive(owner)) distanceToOwner++;
     }
-    
+
     // 自分以外のプレーヤーの手札の和
     const Cards opsCards = opsHand.cards;
     const Cards opsPlainCards = maskJOKER(opsCards);
-    
+
     pol.initCalculatingScore(NMoves);
-    
+
     for (int i = 0; i < NMoves; i++) {
-        
         pol.initCalculatingCandidateScore();
-        
+
         const MoveInfo m = mbuf[i];
         typename policy_t::real_t s = 0;
-        
+
         if (m.isMate() || !anyCards(myCards - m.cards())) {
             s -= 1000; // Mateのときは低い点にする
         } else {
@@ -82,22 +81,22 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             const Cards afterCards = myCards - m.cards();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
-            
+
             const int afterOrder = aftOrd;
-            
+
             // snowl score
             {
                 int base = FEA_IDX(FEA_HAND_SNOWL);
-                
+
                 if (!b.isNull()) {
                     if (fieldInfo.isUnrivaled()) base += 166 * 2;
                     else base += 166;
                 }
                 if (afterOrder != 0) base += 83;
                 if (containsJOKER(afterCards)) Foo(base + 82)
-                
+
                 Cards tmp = maskJOKER(afterCards);
-                
+
                 Cards seq3 = polymRanks<3>(tmp);
                 if (seq3) {
                     Cards seq4 = polymRanks<2>(seq3);
@@ -140,7 +139,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // joker, s3 bonus
             {
                 constexpr int base = FEA_IDX(FEA_HAND_S3);
@@ -148,21 +147,21 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 else if (containsS3(afterCards) && containsJOKER(opsCards)) Foo(base + 1)
                 else if (containsS3(opsCards) && containsJOKER(afterCards)) Foo(base + 2)
             }
-            
+
             // avg pqr rank
             {
                 constexpr int base = FEA_IDX(FEA_HAND_PQR_RANK);
                 double rs = pqrRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
                 FooX(base, oq * log(max(rs / rankScore, 0.000001)))
             }
-            
+
             // nf min party
             {
                 constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
                 if (b.isNull()) FooX(base, divisionCount(mbuf + NMoves, afterCards) - NParty)
                 else FooX(base + 1, divisionCount(mbuf + NMoves, afterCards) - NParty)
             }
-            
+
             // after hand joker - p8
             if (polymJump(maskJOKER(afterCards)) && containsJOKER(afterCards)) {
                 const int base = FEA_IDX(FEA_HAND_P8_JOKER);
@@ -221,7 +220,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // rev(only normal order)
             {
                 constexpr int base = FEA_IDX(FEA_REV_CLASS);
@@ -247,7 +246,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            
+
             // pass(unrivaled)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_DOM);
@@ -258,13 +257,13 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // pass(owner distance)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_OWNER_DISTANCE);
                 if (m.isPASS() && !fieldInfo.isUnrivaled()) Foo(base + (distanceToOwner - 1));
             }
-            
+
             // pass nawake and qty
             {
                 constexpr int base = FEA_IDX(FEA_PASS_NAWAKE_OWNER);
@@ -275,7 +274,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // s3(move)
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_S3);
@@ -284,7 +283,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            
+
             // joker against S3
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_JOKER_AGAINST_S3);
@@ -296,7 +295,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            
+
             // sequence
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_SEQ);
@@ -309,7 +308,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     if (b.isSeq()) Foo(base + 1)
                 }
             }
-            
+
             // rf group break
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
@@ -332,7 +331,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // NF_Dominance Move On PassDom
             {
                 if (fieldInfo.isPassDom()) {
@@ -342,7 +341,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // NF_EIGHT
             if (b.isNull()) {
                 if (m.domInevitably() && !m.isSeq()) {
@@ -357,7 +356,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // eight
             {
                 if (m.domInevitably()) {
@@ -367,7 +366,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     FooX(key, oq - m.qty())
                 }
             }
-            
+
             // min rank
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_MIN_RANK);
@@ -424,7 +423,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                         Foo(key)
                     }
                 }
-                
+
                 // MOパターン
                 if (!m.isSeq()) {
                     // グループ
@@ -476,11 +475,11 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             }
         }
         pol.feedCandidateScore(i, exp(s));
-        
+
         if (!M || dst != nullptr) dst[i] = s;
     }
     pol.finishCalculatingScore();
-    
+
     return 0;
 }
 
@@ -488,7 +487,7 @@ template <int M, class policy_t>
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       policy_t& pol) { // learnerとして呼ばれうるため const なし
-    
+
     using namespace ChangePolicySpace;
 
     const Cards pqr = CardsToPQR(myCards);
@@ -496,21 +495,20 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
     pol.initCalculatingScore(NChanges);
 
     for (int i = 0; i < NChanges; i++) {
-        
         pol.initCalculatingCandidateScore();
-        
+
         typename policy_t::real_t s = 0;
         const Cards changeCards = change[i];
         const Cards changePlainCards = changeCards.plain();
         const Cards afterCards = myCards - changeCards;
         const Cards afterPlainCards = afterCards.plain();
-        
+
         const Cards afterPqr = CardsToPQR(afterPlainCards);
-        
+
         // 1PQR, SEQ (snowl score except joker)
         {
             int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
-            
+
             Cards tmp = afterPlainCards;
             Cards seq3 = polymRanks<3>(tmp);
             if (seq3) {
@@ -546,7 +544,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                     }
                 }
             }
-            
+
             if (tmp) {
                 base += 30 - 4;
                 tmp = CardsToPQR(tmp); // 枚数位置型に変換
@@ -557,12 +555,12 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 }
             }
         }
-        
+
         { // D3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_D3);
             if (afterCards & CARDS_D3) Foo(base);
         }
-        
+
         { // JOKER_S3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_JOKER_S3);
             if (afterCards & CARDS_S3) {
@@ -570,7 +568,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 else Foo(base + 1) // ops
             } else if (afterCards.joker()) Foo(base + 2)
         }
-        
+
         { // MAX, MIN RANK
             Cards tmpPqr = afterPqr;
             int hr1;
@@ -589,7 +587,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
             FooX(FEA_IDX(FEA_CHANGE_HAND_MIN1_RANK), lr1);
             FooX(FEA_IDX(FEA_CHANGE_HAND_MIN2_RANK), lr2);
         }
-        
+
         { // DOUBLE PRESENT, PART SEQ PRESENT
             if (NChangeCards == 2) {
                 if (!any2Cards(CardsToER(changePlainCards))) { // 同じ階級のカードをあげる
@@ -601,7 +599,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 }
             }
         }
-        
+
         { // 2 CARDS
             constexpr int base = FEA_IDX(FEA_CHANGE_CC);
             using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
@@ -612,7 +610,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                     // suits - suits のパターン数より少ないのでOK
                 }
             }
-            
+
             // 交換するランクのカードと他のカードとの関係
             const Cards diffRanks = CardsToER(changeCards);
             for (IntCard ic : diffRanks) {

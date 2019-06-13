@@ -28,7 +28,7 @@ enum {
     // 階段作成の際の仮想上のランク限度
     RANK_IMG_MIN = RANK_U,
     RANK_IMG_MAX = RANK_O,
-    
+
     RANK_NONE = -1
 };
 
@@ -130,10 +130,10 @@ enum IntCard : int {
     // IntCardの最大はS2ではなくJOKERと定義されている(最大ランクの定義と違う)ので注意
     INTCARD_MIN = INTCARD_C3,
     INTCARD_MAX = INTCARD_JOKER,
-    
+
     INTCARD_PLAIN_MIN = INTCARD_C3,
     INTCARD_PLAIN_MAX = INTCARD_S2,
-    
+
     INTCARD_IMG_MIN = INTCARD_CU,
     INTCARD_IMG_MAX = INTCARD_JOKER,
 
@@ -483,7 +483,7 @@ union Cards {
 
     Cards(const std::string& str);
     Cards(const char *cstr): Cards(std::string(cstr)) {}
- 
+
     // 生のBitCards型への変換
     constexpr operator BitCards() const { return c_; }
 
@@ -519,7 +519,7 @@ union Cards {
 
     // 指定されたランクのスート集合を得る
     constexpr unsigned int operator[] (int r) const { return (c_ >> (r * 4)) & 15; }
-    
+
     Cards& operator |=(BitCards c) { c_ |= c; return *this; }
     Cards& operator &=(BitCards c) { c_ &= c; return *this; }
     Cards& operator ^=(BitCards c) { c_ ^= c; return *this; }
@@ -549,7 +549,7 @@ union Cards {
         assert(holds(c));
         return (*this) -= c;
     }
-    
+
     // pick, pop
     IntCard lowest() const {
         assert(any());
@@ -711,7 +711,7 @@ inline BitCards CardsToPQR(BitCards arg) {
     // 3ビットあったところを3に配置
     BitCards r3 = (a << 2) & (a >> 1) & PQR_3;
     r3 |= a & (a << 1) & PQR_3;
-    
+
     // 残りは足すだけ。ただし3,4ビットがすでにあったところにはビットを置かない。
     BitCards r12 = ((a & PQR_12) + ((a >> 2) & PQR_12)) & PQR_12;
     if (r3) {
@@ -741,7 +741,7 @@ inline void PQRToND(BitCards pqr, unsigned jk, Cards *const nd) {
     // ジョーカーの枚数の情報も必要
     assert(jk == 0 || jk == 1); // 0or1枚
     assert(nd != nullptr);
-    
+
     nd[0] = nd[1] = CARDS_NULL;
 
     // pqrの1ランクシフトが無支配限度
@@ -762,7 +762,7 @@ inline void PQRToND(BitCards pqr, unsigned jk, Cards *const nd) {
         nd[1] |= ORQ_NDTable[1][r][sn]; // このゾーンに対して返せることが確定
         tmp1 &= ~nd[1]; // もう関係なくなった部分は外す
     }
-    
+
     // ジョーカーがある場合は1枚分ずらして、全てのシングルを加える
     // 逆転オーダーの場合は+の4枚にフラグがある可能性があるのでマスクする
     if (jk) {
@@ -904,9 +904,6 @@ struct Move {
     bool containsJOKER() const { return jks || jkr; }
     bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
     bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
-    bool isEqualRankSuits(unsigned r, unsigned s) const {
-        return rank() == r && suits() == s; // ランクとスート一致
-    }
 
     // 情報を得る
     unsigned suits()      const { return s; }
@@ -1015,7 +1012,6 @@ int searchMove(const move_buf_t *const buf, const int moves, const callback_t& c
 // 着手表現と同一の系列
 
 struct Board : public Move {
-    
     void init() { clear(); }
     Move move() const { return Move(*this); }
 
@@ -1024,15 +1020,15 @@ struct Board : public Move {
 
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
-    
+
     void resetDom() { Move::invalid = 0; }
 
     // 場 x 提出役 の効果
     bool domConditionally(Move m) const;
-    
+
     bool locksSuits(Move m) const;
     bool locksRank(Move m) const;
-    
+
     int nextPrmOrder(Move m) const {
         return prmOrder() ^ bool(m.isRev());
     }
@@ -1042,17 +1038,17 @@ struct Board : public Move {
     bool afterSuitsLocked(Move m) const {
         return suitsLocked() || locksSuits(m);
     }
-    
+
     // get
     int prmOrder()   const { return Move::po; }
     int order()      const { return Move::o; }
-    
+
     // true or false
     bool isNull() const { return type() == 0; }
     bool suitsLocked() const { return Move::sl; }
     bool rankLocked() const { return Move::rl; }
     bool isRev() const { return Move::po; }
-    
+
     bool isInvalid() const { return Move::invalid; }
 
     // 進行
@@ -1079,7 +1075,7 @@ struct Board : public Move {
         Move::q = m.q;
         Move::t = m.t;
     }
-    
+
     void proc(Move m) { // プレーヤー等は関係なく局面のみ進める
         if (m.isPASS()) return;
         if (m.domInevitably() || domConditionally(m)) { // 無条件完全支配
@@ -1091,7 +1087,7 @@ struct Board : public Move {
             setMeld(m);
         }
     }
-    
+
     void procAndFlush(Move m) {
         // 局面を更新し、強引に場を流す
         if (m.isRev()) flipPrmOrder();
@@ -1118,10 +1114,9 @@ inline uint64_t NullBoardToHashKey(Board bd) {
 inline uint64_t BoardToHashKey(Board bd) {
     return bd.toInt();
 }
-// 完全情報局面なのでシンプルな後退ハッシュ値
-// 先手、後手の順番でカード集合ハッシュ値をクロスして場のハッシュ値を線形加算
-// ただしNFでない場合パスと場主も考慮が必要なので、現在はやってない
 
+// 完全情報局面のシンプルな後退ハッシュ値
+// 先手、後手の順番でカード集合ハッシュ値をクロスして場のハッシュ値を線形加算
 inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
     return CardsCardsToHashKey(c0, c1) ^ NullBoardToHashKey(bd);
 }

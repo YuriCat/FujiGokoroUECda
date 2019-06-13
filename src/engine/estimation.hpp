@@ -36,7 +36,7 @@ public:
         world.set(turnCount, c);
         return world;
     }
-    
+
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
     void dealWithBias(Cards *const dst, Dice& dice) const;
@@ -46,7 +46,7 @@ public:
 private:
     // 棋譜
     int turnCount;
-    
+
     // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
     std::array<int8_t, N> NOwn;  // 持っているカード数
     std::array<int8_t, N> NDet;  // 特定＋使用カード数
@@ -66,12 +66,12 @@ private:
     Cards myCards;
     Cards myDealtCards; // 配布時
     Cards recvCards, sentCards;
-    
+
     bool inChange;
     bool initGame;
     bool failed;
     unsigned failures;
-    
+
     // 自分が上位のときに献上された最小の札の確率
     int candidatesInWA;
     double thresholdInWA[16];
@@ -79,10 +79,10 @@ private:
     Cards dealCardsOverInWA[16];
 
     int buckets;
-    
+
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;
-    
+
     // inner function
     void set(const Field& field, int playerNum);
     void prepareSubjectiveInfo();
