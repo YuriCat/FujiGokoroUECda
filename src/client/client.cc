@@ -109,13 +109,13 @@ int main(int argc, char* argv[]) { // for UECda
         // javaサーバーに引っかからないように、最初にjavaなのかCなのか判定
         // init gameのときはfalseになれば問題ない
         bool isJava = false;
-        if (!game.isInitGame() && getNCards(recv_table, game.classPlayer(DAIFUGO)) == 13) {
+        if (!game.isInitGame() && numCardsOf(recv_table, game.classPlayer(DAIFUGO)) == 13) {
             isJava = true;
             CERR << "main() : This is java server." << endl;
         }
         
         for (int p = 0; p < N_PLAYERS; p++) {
-            int numCards = getNCards(recv_table, p);
+            int numCards = numCardsOf(recv_table, p);
             if (isJava) {
                 // javaサーバーでは献上分が加算されているので高位者は引く必要あり
                 int cl = classOf(recv_table, p);

@@ -226,8 +226,8 @@ void RandomDealer::set(const Field& field, int playerNum) {
     firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
     for (int p = 0; p < N; p++) {
         int cl = infoClass[p];
-        int org = field.getNCards(p) + field.getUsedCards(p).count();
-        int own = field.getNCards(p);
+        int org = field.numCardsOf(p) + field.getUsedCards(p).count();
+        int own = field.numCardsOf(p);
 
         if (inChange) {
             int nch = N_CHANGE_CARDS(cl);

@@ -147,7 +147,6 @@ struct Field {
         if (isL2Situation()) return true;
         return false;
     }
-    uint32_t getRivalPlayersFlag(int myPlayerNum) const;
 
     void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
@@ -160,12 +159,12 @@ struct Field {
     bool isInitGame() const { return common.flag.test(FLAG_INIT_GAME); }
     bool isInChange() const { return phase == PHASE_PRESENT; }
 
-    bool isAlive(const int p) const { return ps.isAlive(p); }
-    bool isAwake(const int p) const { return ps.isAwake(p); }
+    bool isAlive(int p) const { return ps.isAlive(p); }
+    bool isAwake(int p) const { return ps.isAwake(p); }
     unsigned numPlayersAwake() const { return ps.numAwake(); }
     unsigned numPlayersAlive() const { return ps.numAlive(); }
 
-    uint32_t searchOpsPlayer(const int p) const {
+    uint32_t searchOpsPlayer(int p) const {
         return ps.searchOpsPlayer(p);
     }
     int bestClass() const { return ps.bestClass(); }
@@ -206,9 +205,9 @@ struct Field {
     
     Cards getCards(int p) const { return hand[p].cards; }
     Cards getOpsCards(int p) const { return opsHand[p].cards; }
-    unsigned getNCards(int p) const { return hand[p].qty; }
+    unsigned numCardsOf(int p) const { return hand[p].qty; }
     Cards getRemCards() const { return remCards; }
-    Cards getNRemCards() const { return remQty; }
+    Cards getNumRemCards() const { return remQty; }
     const Hand& getHand(int p) const { return hand[p]; }
     const Hand& getOpsHand(int p) const { return opsHand[p]; }
 
@@ -218,7 +217,7 @@ struct Field {
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
     int flushLeadPlayer() const;
-    int nextSeatPlayer(const int p) const {
+    int nextSeatPlayer(int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
     void rotateTurnPlayer(int turn) {

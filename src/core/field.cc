@@ -50,25 +50,6 @@ ostream& operator <<(ostream& out, const PlayersState& arg) { // 出力
     return out;
 }
 
-uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
-    // ライバルプレーヤー集合を得る
-    uint32_t ret = 0U;
-    int best = 99999;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p != myPlayerNum) {
-            int pos = positionOf(p);
-            if (pos < best) {
-                ret = 1U << p;
-                best = pos;
-            } else if (pos == best) {
-                ret |= 1U << p;
-            }
-        }
-    }
-    assert(ret != 0U);
-    return ret;
-}
-
 int Field::flushLeadPlayer() const {
     // 全員パスの際に誰から始まるか
     if (isNull()) return turn();
@@ -101,7 +82,8 @@ void Field::procHand(int tp, Move m) {
                 assert(hand[p].holds(dc));
                 if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
-            } else hand[p].qty -= dq;
+            }
+            else hand[p].qty -= dq;
         } else if (isAlive(p)) {
             if (know(p)) {
                 assert(opsHand[p].holds(dc));
@@ -146,7 +128,6 @@ void Field::makeChange(int from, int to, int dq, Cards dc,
 }
 
 void Field::prepareForPlay() {
-
     int tp = turn();
     fieldInfo.init();
 
@@ -155,7 +136,7 @@ void Field::prepareForPlay() {
     int minNumAwake = INT_MAX, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = getNCards(p);
+        int num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
@@ -329,6 +310,7 @@ string Field::toString() const {
     }
     return oss.str();
 }
+
 string Field::toDebugString() const {
     ostringstream oss;
     oss << "turn = " << turnCount() << endl;

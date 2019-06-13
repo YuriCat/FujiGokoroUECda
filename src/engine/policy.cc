@@ -243,7 +243,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             {
                 constexpr int base = FEA_IDX(FEA_PASS_PHASE);
                 if (m.isPASS()) {
-                    int key = base + (field.getNRemCards() > 30 ? 0 : (field.getNRemCards() > 15 ? 1 : 2));
+                    int key = base + (field.getNumRemCards() > 30 ? 0 : (field.getNumRemCards() > 15 ? 1 : 2));
                     Foo(key)
                 }
             }
@@ -270,7 +270,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 constexpr int base = FEA_IDX(FEA_PASS_NAWAKE_OWNER);
                 if (m.isPASS() && owner != tp) {
                     if (field.isAlive(owner)) {
-                        int key = base + (field.numPlayersAwake() - 2) * 8 + min(field.getNCards(owner), 8U) - 1;
+                        int key = base + (field.numPlayersAwake() - 2) * 8 + min(field.numCardsOf(owner), 8U) - 1;
                         Foo(key)
                     }
                 }

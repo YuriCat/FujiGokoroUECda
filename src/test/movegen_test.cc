@@ -51,9 +51,9 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     // 主観的合法性
     for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
         if (!isSubjectivelyValid(field.board, *tmp, c,
-                                 field.getNCards(field.turn()))) {
+                                 field.numCardsOf(field.turn()))) {
             // 主観的合法性違反
-            cerr << "invalid move" << c << "(" << field.getNCards(field.turn()) << ")";
+            cerr << "invalid move" << c << "(" << field.numCardsOf(field.turn()) << ")";
             cerr << " -> " << *tmp << " on " << field.board << endl;
             return -1;
         }

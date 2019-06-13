@@ -10,7 +10,6 @@
 #include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
-#include "heuristics.hpp"
 #include "policy.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
@@ -340,7 +339,7 @@ public:
             if (Settings::defeatRivalMate) {
                 if (next > 1 && !isNoRev(myCards)) {
                     // 5. ライバルに不利になるように革命を起こすかどうか
-                    int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
+                    int prefRev = positionPreferRevolution(field, myPlayerNum);
                     if (prefRev > 0) { // 革命優先
                         next = root.sort(next, [myCards](const RootAction& a) {
                             return a.move.isRev() ? 2 :

@@ -1,4 +1,5 @@
 #include "data.hpp"
+#include "reward.hpp"
 
 using namespace std;
 
@@ -81,7 +82,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     worstReward = shared.gameReward[field.worstClass()];
     rewardGap = bestReward - worstReward;
     if (Settings::maximizePosition) {
-        uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
+        uint32_t rivals = rivalPlayers(field, myPlayerNum);
         if (popcnt(rivals) == 1) {
             int rnum = bsf(rivals);
             if (field.isAlive(rnum)) rivalPlayerNum = rnum;
