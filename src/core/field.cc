@@ -377,8 +377,7 @@ int Field::procImpl(const MoveInfo m) {
                 } else { // 他人だけ支配
                     if (isAwake(tp)) {
                         // 自分以外全員をasleepにして自分の手番
-                        ps.setAllAsleep();
-                        ps.setAwake(tp);
+                        ps.setAllAsleepExcept(tp);
                     } else {
                         // 流れる
                         flush();

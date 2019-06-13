@@ -58,7 +58,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
     if (anyCards(myCards)) {
         if (move.isPASS()) {
             if (flushLead) {
-                if (!ps.isAllAsleepExcept(p)) {
+                if (ps.numAwake() >= 2) {
                     // 他のプレーヤーが出せるか確認
                     const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
                     if (opsMoves > 0) return false;
@@ -72,7 +72,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
         } else {
             bd.proc(move);
             if (!bd.isNull()) { // 流れていない
-                if (!ps.isAllAsleepExcept(p)) {
+                if (ps.numAwake() >= 2) {
                     // 他のプレーヤーが出せるか確認
                     const int opsMoves = genFollowExceptPASS(buf, opsCards, bd);
                     if (opsMoves > 0) {
@@ -89,8 +89,7 @@ bool checkCardsPWSlow(MoveInfo *const buf,
                         }*/
                         return false;
                     }
-                    ps.setAllAsleep();
-                    ps.setAwake(p);
+                    ps.setAllAsleepExcept(p);
                 }
                 // セルフフォロー
             } else {
