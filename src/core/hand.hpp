@@ -47,14 +47,14 @@ struct Hand {
         pqr = QRToPQR(qr);
         assert(exam1stHalf());
     }
-    void set(Cards c, uint32_t q) {
+    void set(Cards c, unsigned q) {
         // ハッシュ値はsetKeyにて別に設定
         set1stHalf(c, q);
         sc = PQRToSC(pqr);
         PQRToND(pqr, jk, nd);
         assert(exam());
     }
-    void setAll(Cards c, uint32_t q, uint64_t k) {
+    void setAll(Cards c, unsigned q, uint64_t k) {
         set(c, q);
         setKey(k);
         assert(exam_key());
@@ -76,26 +76,26 @@ struct Hand {
     void makeMove1stHalf(Move m, Cards dc, int dq);
 
     // カード集合単位(役の形をなしていない)の場合
-    void add(Cards dc, const int dq) {
+    void add(Cards dc, int dq) {
         set(cards + dc, qty + dq);
     }
     void add(Cards dc) {
         add(dc, dc.count());
     }
-    void addAll(Cards dc, const int dq, const uint64_t dk) {
+    void addAll(Cards dc, int dq, uint64_t dk) {
         setAll(cards + dc, qty + dq, addCardKey(key, dk));
     }
     void addAll(Cards dc) {
         addAll(dc, dc.count(), CardsToHashKey(dc));
     }
 
-    void subtr(Cards dc, const int dq) {
+    void subtr(Cards dc, int dq) {
         set(cards - dc, qty - dq);
     }
     void subtr(Cards dc) {
         subtr(dc, dc.count());
     }
-    void subtrAll(Cards dc, const int dq, const uint64_t dk) {
+    void subtrAll(Cards dc, int dq, uint64_t dk) {
         setAll(cards - dc, qty - dq, subCardKey(key, dk));
     }
     void subtrAll(Cards dc) {
