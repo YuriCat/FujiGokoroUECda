@@ -230,7 +230,7 @@ string RootInfo::toString(int num) const {
             oss << "t = " << child[i].turnSum / (double)child[i].simulations << " "; // 統計量
         }
         oss << child[i].simulations << " trials." << endl;
-        
+
         if (i == 0) oss << "\033[0m";
     }
     return oss.str();
