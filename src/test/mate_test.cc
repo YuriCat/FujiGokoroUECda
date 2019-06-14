@@ -187,7 +187,7 @@ int testRecordMoveMate(const Record& record) {
             Board bd = field.board;
             Move mi = Move(move);
 
-            if (dominatesHand(bd, myHand)) return 0;
+            if (dominatesHand(bd, myHand)) continue;
 
             cl.start();
             bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, bd);
