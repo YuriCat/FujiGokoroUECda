@@ -84,6 +84,25 @@ bool StringToMoveTimeM(const string& str, Move *const dstMove, uint64_t *const d
     return true;
 }
 
+void GameRecord::init(int playerNum) {
+    changes.clear();
+    plays.clear();
+    flags_.reset();
+    infoClass.clear();
+    infoSeat.clear();
+    infoNewClass.clear();
+    infoPosition.clear();
+
+    dealtCards.fill(CARDS_NULL);
+    orgCards.fill(CARDS_NULL);
+
+    numDealtCards.fill(-1);
+    numOrgCards.fill(-1);
+
+    firstTurn = -1;
+    myPlayerNum = playerNum;
+}
+
 string GameRecord::toString() const {
     ostringstream oss;
 
@@ -370,6 +389,7 @@ void Field::passChange(const GameRecord& game, int playerNum) {
         makeChange(change.from, change.to, change.qty, change.cards, change.already);
     }
     phase = PHASE_CHANGE;
+    prepareAfterChange();
 }
 
 void Field::setAfterChange(const GameRecord& game,
@@ -386,13 +406,14 @@ void Field::setAfterChange(const GameRecord& game,
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
     myPlayerNum = game.myPlayerNum;
-    if (tcnt < 0) { // tcnt < 0で交換中まで
-        if (phase < PHASE_PRESENT) passPresent(game, playerNum);
-        return;
-    }
+    if (phase < PHASE_PRESENT) passPresent(game, playerNum);
+    if (tcnt < 0) return; // tcnt < 0で交換中まで
+
+    common.turn = common.owner = common.firstTurn = game.firstTurn; // prepareForPlayで反映するためここで
     if (phase < PHASE_CHANGE) passChange(game, playerNum);
+    prepareForPlay();
+
     // 役提出の処理
-    common.turn = common.owner = common.firstTurn = game.firstTurn;
     tcnt = min((int)game.plays.size(), tcnt);
     for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move);
 }

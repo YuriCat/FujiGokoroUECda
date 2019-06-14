@@ -237,9 +237,6 @@ public:
         }
         std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, rootTools.dice);
 
-        // 場の情報をまとめる
-        field.prepareForPlay();
-
         // 着手追加情報を設定
         bool l2failure = false;
         for (int i = 0; i < NMoves; i++) {

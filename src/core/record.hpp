@@ -7,6 +7,7 @@
 struct PlayRecord { // 1つの着手の記録
     Move move; unsigned time;
 
+    operator Move() const { return move; }
     void set(Move m, unsigned t) { move = m; time = t; }
     std::string toString() const;
 };
@@ -24,24 +25,7 @@ struct ChangeRecord { // 交換の記録
 };
 
 struct GameRecord {
-    void init(int playerNum = -1) {
-        changes.clear();
-        plays.clear();
-        flags_.reset();
-        infoClass.clear();
-        infoSeat.clear();
-        infoNewClass.clear();
-        infoPosition.clear();
-
-        dealtCards.fill(CARDS_NULL);
-        orgCards.fill(CARDS_NULL);
-
-        numDealtCards.fill(-1);
-        numOrgCards.fill(-1);
-
-        firstTurn = -1;
-        myPlayerNum = playerNum;
-    }
+    void init(int playerNum = -1);
     void pushChange(const ChangeRecord& change) {
         if (changes.size() < N_CHANGES) changes.push_back(change);
         else flags_.set(2);
@@ -231,7 +215,6 @@ int iterateGameLogInGame
     firstCallback(field);
     // play
     for (int t = 0; t < turns; t++) {
-        field.prepareForPlay();
         const auto& play = game.plays[t];
         int ret = playCallback(field, play.move, play.time);
         if (ret <= -2) {

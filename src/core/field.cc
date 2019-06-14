@@ -129,6 +129,7 @@ void Field::makeChange(int from, int to, int dq, Cards dc,
 
 void Field::prepareForPlay() {
     int tp = turn();
+    if (!know(tp)) return;
     fieldInfo.init();
 
     // 相手手札枚数情報
@@ -202,6 +203,7 @@ void Field::initGame() {
 void Field::prepareAfterChange() {
     // 初手のプレーヤーを探す
     for (int p = 0; p < N_PLAYERS; p++) {
+        if (!know(p)) continue;
         if (containsD3(hand[p].cards)) {
             setTurn(p);
             setFirstTurn(p);
@@ -209,6 +211,7 @@ void Field::prepareAfterChange() {
             break;
         }
     }
+    prepareForPlay();
     assert(exam());
 }
 
@@ -391,6 +394,7 @@ int Field::procImpl(const MoveInfo m) {
         }
     }
     common.turnCount++;
+    prepareForPlay();
     assert(exam());
     return turn();
 }
