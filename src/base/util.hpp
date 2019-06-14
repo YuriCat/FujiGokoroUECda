@@ -19,16 +19,6 @@
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#endif
-
 #if !defined(NDEBUG)
 #define UNREACHABLE assert(0)
 #elif defined(_MSC_VER) && !defined(__INTEL_COMPILER)
