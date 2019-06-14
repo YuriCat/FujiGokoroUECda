@@ -10,7 +10,6 @@
 #include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
-#include "heuristics.hpp"
 #include "policy.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
@@ -31,12 +30,12 @@ public:
     SharedData shared;
     decltype(shared.record)& record = shared.record;
     bool monitor = false;
-    
+
     void setRandomSeed(uint64_t s) {
         // 乱数系列を初期化
         rootTools.dice.srand(s);
     }
-    
+
     void initMatch(int playerNum) {
         // サイコロ初期化
         // シード指定の場合はこの後に再設定される
@@ -44,7 +43,7 @@ public:
         shared.initMatch(playerNum);
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
-        
+
         shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
         shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
     }
@@ -55,7 +54,7 @@ public:
         // ランク初期化まで残り何試合か
         // 公式には未定だが、多くの場合100試合だろうから100試合としておく
         const int gbci = numGamesBeforeClassInit(record.getLatestGameNum());
-        shared.gameReward = standardReward(min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
+        shared.gameReward = standardReward(std::min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
@@ -77,11 +76,11 @@ public:
     Cards change(unsigned changeQty) { // 交換関数
         const auto& game = record.latestGame();
         const int myPlayerNum = record.myPlayerNum;
-        
+
         RootInfo root;
         Cards changeCards = CARDS_NULL;
         const Cards myCards = game.dealtCards[myPlayerNum];
-        if (monitor) cerr << "My Cards : " << myCards << endl;
+        if (monitor) std::cerr << "My Cards : " << myCards << std::endl;
 
         // 手札レベルで枝刈りする場合
         Cards tmp = myCards;
@@ -90,7 +89,7 @@ public:
             if (myCards.joker() > 0) tmp.mask(CARDS_S3);
             if (tmp.count() < changeQty) tmp = myCards; // キャンセル
         }
-        
+
         if (tmp.count() == changeQty) return tmp;
 
         // 合法交換候補生成
@@ -98,7 +97,7 @@ public:
         int numCands = genChange(cand.data(), tmp, changeQty);
         if (numCands == 1) return cand[0];
         std::shuffle(cand.begin(), cand.begin() + numCands, rootTools.dice);
-        
+
         // 必勝チェック&枝刈り
         for (int i = 0; i < numCands; i++) {
             // 交換後の自分のカード
@@ -117,7 +116,7 @@ public:
                 mine.set(restCards);
                 ops.set(CARDS_ALL - restCards);
                 if (judgeHandMate(1, rootTools.mbuf, mine, ops, b)) {
-                    CERR << "CHANGE MATE!" << endl;
+                    CERR << "CHANGE MATE!" << std::endl;
                     return cand[i]; // 必勝
                 }
             }
@@ -140,12 +139,12 @@ public:
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
         root.setChange(cand.data(), numCands, field, shared, limitSimulations);
-        
+
         // 方策関数による評価
         double score[N_MAX_CHANGES];
         changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy, 0);
         root.feedPolicyScore(score, numCands);
-        
+
         // モンテカルロ法による評価
         if (!Settings::policyMode && changeCards == CARDS_NULL) {
             if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
@@ -155,23 +154,19 @@ public:
 
         // 最高評価の交換を選ぶ
         if (changeCards == CARDS_NULL) changeCards = root.child[0].changeCards;
-        
+
     DECIDED_CHANGE:
         assert(countCards(changeCards) == changeQty);
         assert(holdsCards(myCards, changeCards));
         if (monitor) {
-            cerr << root.toString();
-            cerr << "\033[1m\033[" << 34 << "m";
-            cerr << "Best Change : " << changeCards << endl;
-            cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << root.toString();
+            std::cerr << "\033[1m\033[" << 34 << "m";
+            std::cerr << "Best Change : " << changeCards << std::endl;
+            std::cerr << "\033[" << 39 << "m\033[0m";
         }
         return changeCards;
     }
-    
-    void afterChange() {}
-    void waitChange() {}
-    void prepareForGame() {}
-    
+
     Move play() {
         // 自分のプレーについての変数を更新
         ClockMicS clms;
@@ -181,42 +176,42 @@ public:
     }
     Move playImpl() { // ここがプレー関数
         const auto& game = shared.record.latestGame();
-        
+
         Move playMove = MOVE_NONE;
         RootInfo root;
-        
+
         // ルート合法手生成バッファ
         std::array<Move, N_MAX_MOVES> mbuf;
-        
+
         const int myPlayerNum = record.myPlayerNum;
-        
+
         Field field;
         field.fromRecord(game, myPlayerNum);
-        if (monitor) cerr << field.toString();
+        if (monitor) std::cerr << field.toString();
         field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
-        
+
         const Hand& myHand = field.getHand(myPlayerNum);
         const Hand& opsHand = field.getOpsHand(myPlayerNum);
         const Cards myCards = myHand.cards;
         const Cards opsCards = opsHand.cards;
         Board& b = field.board;
-        
+
         // サーバーの試合進行バグにより無条件支配役が流れずに残っている場合はリジェクトにならないようにパスしておく
         if (b.isInvalid()) return MOVE_PASS;
-            
+
         // 合法着手生成
         int NMoves = genMove(mbuf.data(), myCards, b);
         if (NMoves <= 0) { // 合法着手なし
-            cerr << "No valid move." << endl;
+            std::cerr << "No valid move." << std::endl;
             return MOVE_PASS;
         }
         if (NMoves == 1) {
             // 合法着手1つ。パスのみか、自分スタートで手札1枚
             // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
             if (monitor) {
-                if (!mbuf[0].isPASS()) cerr << "final move. " << mbuf[0] << endl;
-                else cerr << "no chance. PASS" << endl;
+                if (!mbuf[0].isPASS()) std::cerr << "final move. " << mbuf[0] << std::endl;
+                else std::cerr << "no chance. PASS" << std::endl;
             }
             if (!mbuf[0].isPASS()) {
                 shared.setMyMate(field.bestClass()); // 上がり
@@ -224,7 +219,7 @@ public:
             }
             return mbuf[0];
         }
-        
+
         // 合法着手生成(特別着手)
         if (b.isNull()) {
             mbuf[NMoves++].setPASS();
@@ -235,10 +230,7 @@ public:
             }
         }
         std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, rootTools.dice);
-        
-        // 場の情報をまとめる
-        field.prepareForPlay();
-        
+
         // 着手追加情報を設定
         bool l2failure = false;
         for (int i = 0; i < NMoves; i++) {
@@ -262,7 +254,7 @@ public:
                     L2Judge lj(Settings::policyMode ? 200000 : 2000000, rootTools.mbuf);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b);
                     if (l2Result == L2_WIN) { // 勝ち
-                        DERR << "l2win!" << endl;
+                        DERR << "l2win!" << std::endl;
                         move.setL2Mate(); b.setL2Mate();
                     } else if (l2Result == L2_LOSE) {
                         move.setL2GiveUp();
@@ -272,7 +264,7 @@ public:
                 }
             }
         }
-        
+
         // 判定結果を報告
         if (Settings::L2SearchOnRoot) {
             if (field.numPlayersAlive() == 2) {
@@ -294,18 +286,18 @@ public:
 
         if (monitor) {
             // 着手候補一覧表示
-            cerr << "My Cards : " << myCards << endl;
-            cerr << b << toInfoString(b) << endl;
+            std::cerr << "My Cards : " << myCards << std::endl;
+            std::cerr << b << toInfoString(b) << std::endl;
             for (int i = 0; i < NMoves; i++) {
-                cerr << mbuf[i] << toInfoString(mbuf[i], b) << endl;
+                std::cerr << mbuf[i] << toInfoString(mbuf[i], b) << std::endl;
             }
         }
-        
+
         // ルートノード設定
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
         root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
-        
+
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
         playPolicyScore(score, mbuf.data(), NMoves, field, shared.basePlayPolicy, 0);
@@ -318,10 +310,10 @@ public:
             startMonteCarlo(root, field, Settings::numPlayThreads);
         }
         // 着手決定のための情報が揃ったので着手を決定する
-        
+
         // 方策とモンテカルロの評価
         root.sort();
-        
+
         // 以下必勝を判定したときのみ
         if (b.isMate()) {
             int next = root.candidates;
@@ -337,7 +329,7 @@ public:
             if (Settings::defeatRivalMate) {
                 if (next > 1 && !isNoRev(myCards)) {
                     // 5. ライバルに不利になるように革命を起こすかどうか
-                    int prefRev = Heuristics::preferRev(field, myPlayerNum, field.getRivalPlayersFlag(myPlayerNum));
+                    int prefRev = positionPreferRevolution(field, myPlayerNum);
                     if (prefRev > 0) { // 革命優先
                         next = root.sort(next, [myCards](const RootAction& a) {
                             return a.move.isRev() ? 2 :
@@ -380,12 +372,11 @@ public:
         if (playMove == MOVE_NONE) playMove = root.child[0].move;
 
         if (monitor) {
-            cerr << root.toString();
-            cerr << "\033[1m\033[" << 31 << "m";
-            cerr << "Best Move : " << playMove << endl;
-            cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << root.toString();
+            std::cerr << "\033[1m\033[" << 31 << "m";
+            std::cerr << "Best Move : " << playMove << std::endl;
+            std::cerr << "\033[" << 39 << "m\033[0m";
         }
-        
         return playMove;
     }
     void closeGame() {

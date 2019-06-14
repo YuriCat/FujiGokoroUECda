@@ -37,3 +37,49 @@ vector<array<double, N_PLAYERS>> standardReward(int games) {
     }
     return reward;
 }
+
+uint32_t rivalPlayers(const Field& field, int playerNum) {
+    // ライバルプレーヤー集合を得る
+    uint32_t ret = 0U;
+    int best = 99999;
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (p == playerNum) continue;
+        int pos = field.positionOf(p);
+        if (pos < best) {
+            ret = 1U << p;
+            best = pos;
+        } else if (pos == best) {
+            ret |= 1U << p;
+        }
+    }
+    assert(ret != 0U);
+    return ret;
+}
+
+int positionPreferRevolution(const Field& field, int playerNum) {
+
+    uint32_t rivals = rivalPlayers(field, rivals);
+    int allClassSum = 0;
+    int rivalClassSum = 0;
+    int numRivals = 0;
+    
+    for (int p = 0; p < N_PLAYERS; p++) {
+        if (field.isAlive(p) && playerNum != p) {
+            int cl = field.classOf(p);
+            allClassSum += cl;
+            if (rivals & (1U << p)) {
+                rivalClassSum += cl;
+                numRivals++;
+            }
+        }
+    }
+    if (numRivals > 0) { // ライバルプレーヤーがもういないときはどうでも良い
+        // 革命優先かの判断
+        int rivalBetter = (rivalClassSum * field.numPlayersAlive()
+                           < allClassSum * numRivals) ? 1 : 0;
+        
+        // オーダー通常 & RPが良い階級　またはその逆の時革命優先
+        return (rivalBetter ^ field.board.order()) ? 1 : -1;
+    }
+    return 0;
+}

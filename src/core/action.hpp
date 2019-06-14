@@ -42,7 +42,7 @@ inline int divisionCount(Move *const mbuf, const Cards c) {
     // 階段を使った場合の方が分割数を減らせる場合を考慮
     for (int i = 0; i < cnt; i++) {
         int nret = divisionCount(mbuf + cnt, c - mbuf[i].cards()) + 1;
-        ret = min(ret, nret);
+        ret = std::min(ret, nret);
     }
     return ret;
 }

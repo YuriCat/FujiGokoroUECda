@@ -37,7 +37,7 @@ int genAllSeqWithJoker(Move *const mv0, const Cards x) {
     Cards c = maskJOKER(x);
     if (!c) return 0;
     Move *mv = mv0;
-    
+
     // 3枚階段
     const Cards c1_1 = polymJump(c);
     const Cards c2 = polymRanks<2>(c);
@@ -53,7 +53,7 @@ int genAllSeqWithJoker(Move *const mv0, const Cards x) {
     const Cards seq_2 = (c2 >> 4) & ~seq3;
     GEN_J(3, seq_2, 0);
     GEN_J(3, seq2_, 2);
-    
+
     // 4枚階段
     const Cards c2_1 = c2 & (c1_1 >> 4);
     const Cards c1_2 = c1_1 & (c2 >> 8);
@@ -71,7 +71,7 @@ int genAllSeqWithJoker(Move *const mv0, const Cards x) {
     const Cards seq_3 = (c3 >> 4) & ~seq4;
     GEN_J(4, seq_3, 0);
     GEN_J(4, seq3_, 3);
-    
+
     // 5枚階段
     const Cards c3_1 = c3 & (c2_1 >> 4);
     const Cards c1_3 = c1_2 & (c3 >> 8);
@@ -93,7 +93,7 @@ int genAllSeqWithJoker(Move *const mv0, const Cards x) {
     const Cards seq_4 = (c4 >> 4) & ~seq5;
     GEN_J(5, seq_4, 0);
     GEN_J(5, seq4_, 4);
-    
+
     // 6枚階段
     if (c3) {
         const Cards c4_1 = c4 & (c3_1 >> 4);
@@ -120,7 +120,7 @@ int genAllSeqWithJoker(Move *const mv0, const Cards x) {
         GEN_J(6, seq_5, 0);
         GEN_J(6, seq5_, 5);
     }
-    
+
     // 7枚以上階段は未実装
     return mv - mv0;
 }
@@ -199,9 +199,9 @@ int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
         case 3: {
             const Cards c1_1 = polymJump(c);
             const Cards c2 = polymRanks<2>(c);
-            
+
             const Cards c3 = c1_1 & c2;
-            
+
             // プレーンを作成
             const Cards seq3 = c3 & validSeqZone;
             GEN(3, seq3);
@@ -217,13 +217,13 @@ int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
         case 4: {
             const Cards c1_1 = polymJump(c);
             const Cards c2 = polymRanks<2>(c);
-            
+
             const Cards c3 = c1_1 & c2;
             const Cards c2_1 = c2 & (c1_1 >> 4);
             const Cards c1_2 = c1_1 & (c2 >> 8);
-            
+
             const Cards c4 = c3 & c2_1;
-            
+
             // プレーンを作成
             const Cards seq4 = c4 & validSeqZone;
             GEN(4, seq4);
@@ -241,21 +241,21 @@ int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
         case 5: {
             const Cards c1_1 = polymJump(c);
             const Cards c2 = polymRanks<2>(c);
-            
+
             const Cards c3 = c1_1 & c2;
-            
+
             if (!c3) break;
-            
+
             const Cards c2_1 = c2 & (c1_1 >> 4);
             const Cards c1_2 = c1_1 & (c2 >> 8);
-            
+
             const Cards c4 = c3 & c2_1;
             const Cards c3_1 = c3 & (c2_1 >> 4);
             const Cards c1_3 = c1_2 & (c3 >> 8);
             const Cards c2_2 = c2_1 & (c1_2 >> 4);
-            
+
             const Cards c5 = c4 & c3_1;
-            
+
             // プレーンを作成
             const Cards seq5 = c5 & validSeqZone;
             GEN(5, seq5);
@@ -356,7 +356,7 @@ int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
                 unsigned s0 = lsb(suits);
                 unsigned s1 = lsb(suits - s0);
                 unsigned s2 = suits - s0 - s1;
-                
+
                 GEN(2, s0 | s1);
                 GEN(2, s1 | s2);
                 GEN(2, s2 | s0);
@@ -374,12 +374,12 @@ int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
                 unsigned s0 = lsb(suits);
                 unsigned s1 = lsb(suits - s0);
                 unsigned s2 = suits - s0 - s1;
-                
+
                 // プレーン
                 GEN(2, s0 | s1);
                 GEN(2, s1 | s2);
                 GEN(2, s2 | s0);
-                
+
                 // ジョーカー使用
                 unsigned isuits = SUITS_ALL - suits;
                 GEN_J(2, s0 | isuits, isuits);
@@ -394,10 +394,10 @@ int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
                 unsigned isuits = SUITS_ALL - suits;
                 unsigned is0 = lsb(isuits);
                 unsigned is1 = isuits - is0;
-                
+
                 // プレーン
                 GEN(2, suits);
-                
+
                 // ジョーカー使用
                 GEN_J(2, s0 | is0, is0);
                 GEN_J(2, s0 | is1, is1);
@@ -448,7 +448,7 @@ int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
         valid = RankRangeToCards(RANK_MIN, b.rank() - 1);
     }
     Move *mv = mv0;
-    
+
     if (!b.suitsLocked()) { // スートしばりなし
         Cards c4 = genNRankInGenFollowGroup(c, valid, 4);
         // 4枚ある箇所から各スートで生成
@@ -752,7 +752,7 @@ int genJokerGroup(Move *const mv0, Cards c, const Cards ops, const Board b) {
     assert(containsJOKER(c));
     assert(containsS3(ops));
     assert(b.isGroup() && b.qty() > 1);
-    
+
     Move *mv = mv0;
     if (b.order() == 0) c &= RankRangeToCards(b.rank() + 1, RANK_MAX);
     else c &= RankRangeToCards(RANK_MIN , b.rank() - 1);

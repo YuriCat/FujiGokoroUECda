@@ -50,25 +50,6 @@ ostream& operator <<(ostream& out, const PlayersState& arg) { // 出力
     return out;
 }
 
-uint32_t Field::getRivalPlayersFlag(int myPlayerNum) const {
-    // ライバルプレーヤー集合を得る
-    uint32_t ret = 0U;
-    int best = 99999;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p != myPlayerNum) {
-            int pos = positionOf(p);
-            if (pos < best) {
-                ret = 1U << p;
-                best = pos;
-            } else if (pos == best) {
-                ret |= 1U << p;
-            }
-        }
-    }
-    assert(ret != 0U);
-    return ret;
-}
-
 int Field::flushLeadPlayer() const {
     // 全員パスの際に誰から始まるか
     if (isNull()) return turn();
@@ -87,7 +68,7 @@ void Field::procHand(int tp, Move m) {
     int dq = m.qty();
     Cards dc = m.cards();
     uint64_t dkey = CardsToHashKey(dc);
-    
+
     // 全体の残り手札の更新
     usedCards[tp] += dc;
     remCards -= dc;
@@ -101,7 +82,8 @@ void Field::procHand(int tp, Move m) {
                 assert(hand[p].holds(dc));
                 if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
-            } else hand[p].qty -= dq;
+            }
+            else hand[p].qty -= dq;
         } else if (isAlive(p)) {
             if (know(p)) {
                 assert(opsHand[p].holds(dc));
@@ -146,8 +128,8 @@ void Field::makeChange(int from, int to, int dq, Cards dc,
 }
 
 void Field::prepareForPlay() {
-
     int tp = turn();
+    if (!know(tp)) return;
     board.initInfo();
 
     // 相手手札枚数情報
@@ -155,7 +137,7 @@ void Field::prepareForPlay() {
     int minNumAwake = INT_MAX, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = getNCards(p);
+        int num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
@@ -205,14 +187,14 @@ void Field::initGame() {
     infoClassPlayer.fill(-1);
     infoNewClass.fill(-1);
     infoNewClassPlayer.fill(-1);
-    
+
     common.clear();
-    
+
     usedCards.fill(CARDS_NULL);
     dealtCards.fill(CARDS_NULL);
     sentCards.fill(CARDS_NULL);
     recvCards.fill(CARDS_NULL);
-    
+
     remCards = CARDS_ALL;
     remQty = countCards(CARDS_ALL);
     remKey = HASH_CARDS_ALL;
@@ -221,6 +203,7 @@ void Field::initGame() {
 void Field::prepareAfterChange() {
     // 初手のプレーヤーを探す
     for (int p = 0; p < N_PLAYERS; p++) {
+        if (!know(p)) continue;
         if (containsD3(hand[p].cards)) {
             setTurn(p);
             setFirstTurn(p);
@@ -228,13 +211,13 @@ void Field::prepareAfterChange() {
             break;
         }
     }
+    prepareForPlay();
     assert(exam());
 }
 
 
 bool Field::exam() const {
     // validator
-    
     if (!ps.exam()) {
         cerr << "Field::exam() illegal PlayersState" << endl;
         cerr << ps << endl; return false;
@@ -254,7 +237,7 @@ bool Field::exam() const {
             return false;
         }
     }
-    
+
     // 手札
     Cards sum = CARDS_NULL;
     int NSum = 0;
@@ -290,7 +273,6 @@ bool Field::exam() const {
                 cerr << "hand[" << p << "]hol" << endl;
                 return false;
             }
-            
             sum += c;
             NSum += hand[p].qty;
         } else {
@@ -329,6 +311,7 @@ string Field::toString() const {
     }
     return oss.str();
 }
+
 string Field::toDebugString() const {
     ostringstream oss;
     oss << "turn = " << turnCount() << endl;
@@ -395,8 +378,7 @@ int Field::procImpl(const Move m) {
                 } else { // 他人だけ支配
                     if (isAwake(tp)) {
                         // 自分以外全員をasleepにして自分の手番
-                        ps.setAllAsleep();
-                        ps.setAwake(tp);
+                        ps.setAllAsleepExcept(tp);
                     } else {
                         // 流れる
                         flush();
@@ -412,6 +394,7 @@ int Field::procImpl(const Move m) {
         }
     }
     common.turnCount++;
+    prepareForPlay();
     assert(exam());
     return turn();
 }
@@ -426,22 +409,22 @@ void copyField(const Field& arg, Field *const dst) {
     // playout info
     dst->mbuf = arg.mbuf;
     dst->attractedPlayers = arg.attractedPlayers;
-    
+
     // game info
     dst->board = arg.board;
     dst->ps = arg.ps;
-    
+
     dst->infoSeat = arg.infoSeat;
     dst->infoSeatPlayer = arg.infoSeatPlayer;
     dst->infoNewClass = arg.infoNewClass;
     dst->infoNewClassPlayer = arg.infoNewClassPlayer;
     dst->infoClass = arg.infoClass;
     dst->infoClassPlayer = arg.infoClassPlayer;
-    
+
     dst->infoPosition = arg.infoPosition;
-    
+
     dst->common = arg.common;
-    
+
     // we don't have to copy each player's hand,
     // because card-position will be set in the opening of playout.
     dst->usedCards = arg.usedCards;

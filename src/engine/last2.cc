@@ -17,11 +17,11 @@ struct L2Field {
 
     bool isNull() const { return b.isNull(); }
     int order() const { return b.order(); }
-    
+
     bool isLastAwake() const { return b.isLastAwake(); }
     bool isFlushLead() const { return b.isFlushLead(); }
     bool isUnrivaled() const { return b.isUnrivaled(); }
-    
+
     void setSelfFollow() { b.setSelfFollow(); }
     void setLastAwake() { b.setLastAwake(); }
     void setFlushLead() { b.setFlushLead(); }
@@ -231,13 +231,14 @@ int L2Judge::check(const int depth, Move *const buf, Move& tmp,
         if (checkDomMate(depth, buf, tmp, myHand, opsHand, field)) return L2_WIN;
     }
     childs++;
-    
+
     // 支配性判定
     if (!tmp.isPASS() && (field.isLastAwake() || tmp.dominatesOthers())) {
         if (dominatesCards(tmp, myHand.cards, field.b)) {
             tmp.setDM();
         }
     }
+
     Hand nextHand;
     L2Field nextField;
     int nextPlayer = procL2Field(field, &nextField, tmp);

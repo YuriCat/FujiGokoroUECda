@@ -4,6 +4,101 @@
 
 using namespace std;
 
+#define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature);\
+for (int i = 0; i < FEA_NUM(feature); i++) { os(base + i); } out << endl; }
+    
+#define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
+for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { out << endl; }} out << endl; }
+
+namespace PlayPolicySpace {
+    int commentToPolicyParam(ostream& out, const policy_value_t param[FEA_NUM_ALL]) {
+        auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
+
+        out << "****** MOVE POLICY ******" << endl;
+
+        out << "HAND_SNOWL" << endl;
+        int base = FEA_IDX(FEA_HAND_SNOWL);
+        string situationString[3] = { "NF", "RF", "UR" };
+        string orderString[2] = { "NML", "REV" };
+        for (int s = 0; s < 3; s++) {
+            for (int o = 0; o < 2; o++) {
+                out << situationString[s] << " " << orderString[o] << endl;
+                out << "  SEQ" << endl;
+                for (int i = 0; i < 11; i++) os(base + i);
+                out << endl;
+                for (int i = 0; i < 10; i++) os(base + 11 + i);
+                out << endl;
+                for (int i = 0; i < 9; i++) os(base + 21 + i);
+                out << endl;
+                out << "  GROUP" << endl;
+                for (int i = 0; i < 13; i++) {
+                    for (int j = 0; j < 4; j++) os(base + 30 + 4 * i + j);
+                    out << endl;
+                }
+                out << "  JOKER" << endl;
+                os(base + 82); out << endl;
+                base += 83;
+            }
+        }
+
+        LINEOUT(FEA_HAND_S3, "JK_S3");
+        LINEOUT(FEA_HAND_PQR_RANK, "AVG_PQR");
+        LINEOUT(FEA_HAND_NF_PARTY, "NF_PARTY");
+        LINEOUT(FEA_HAND_P8_JOKER, "P8_JOKER");
+        LINEOUT(FEA_MOVE_QTY, "QTY");
+        LINEOUT(FEA_SUITLOCK_EFFECT, "SUITLOCK_EFFECT");
+        LINEOUT(FEA_SAME_QR, "SAME_QR");
+        LINEOUT(FEA_REV_CLASS, "REV_CLASS");
+        LINEOUT(FEA_MOVE_S3, "S3 ON JOKER");
+        LINEOUT(FEA_MOVE_JOKER_AGAINST_S3, "JOKER AGAINST S3");
+        LINEOUT(FEA_PASS_PHASE, "PASS_PHASE");
+        LINEOUT(FEA_PASS_DOM, "PASS_DOM");
+        LINEOUT(FEA_PASS_OWNER_DISTANCE, "PASS_OWNER_DISTANCE");
+        LINEOUTX(FEA_PASS_NAWAKE_OWNER, "PASS_DOM_NAWAKE_OWNER", 8);
+        LINEOUT(FEA_MOVE_SEQ, "SEQ");
+        LINEOUT(FEA_MOVE_RF_GROUP_BREAK, "RF_GROUP_BREAK");
+        LINEOUT(FEA_MOVE_NFDOM_PASSDOM , "NFDOM_PASSDOM");
+        LINEOUT(FEA_MOVE_NF_EIGHT_MANY_WEAKERS, "NF_EIGHT_MANY_WEAKERS_NOREV");
+        LINEOUT(FEA_MOVE_EIGHT_QTY, "EIGHT_QTY");
+        LINEOUT(FEA_MOVE_MIN_RANK, "MIN_RANK");
+        //LINEOUT(,);
+        return 0;
+    }
+}
+namespace ChangePolicySpace {
+    int commentToPolicyParam(ostream& out, const policy_value_t param[FEA_NUM_ALL]) {
+        auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
+
+        out << "****** CHANGE POLICY ******" << endl;
+        {
+            out << "1PQR or SEQ" << endl;
+            int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
+            out << "  SEQ" << endl;
+            for (int i = 0; i < 11; i++) { os(base + i); } out << endl;
+            for (int i = 0; i < 10; i++) { os(base + 11 + i); } out << endl;
+            for (int i = 0; i < 9; i++) { os(base + 21 + i); } out << endl;
+            out << "  GROUP" << endl;
+            for (int i = 0; i < 13; i++) {
+                for (int j = 0; j < 4; j++) { os(base + 30 + 4 * i + j); } out << endl;
+            }
+        }
+
+        LINEOUT(FEA_CHANGE_HAND_D3, "D3 BONUS");
+        LINEOUT(FEA_CHANGE_HAND_JOKER_S3, "S3-JOKER LINK BONUS");
+        LINEOUT(FEA_CHANGE_HAND_MAX1_RANK, "MAX1 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MAX2_RANK, "MAX2 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MIN1_RANK, "MIN1 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MIN2_RANK, "MIN2 RANK");
+        LINEOUT(FEA_CHANGE_DOUBLE, "DOUBLE PRESENT");
+        LINEOUT(FEA_CHANGE_PART_SEQ, "PART SEQ PRESENT");
+        //LINEOUT(,);
+        return 0;
+    }
+}
+
+#undef LINEOUTX
+#undef LINEOUT
+
 double pqrRankScore(Cards pqr, int jk, int ord) {
     // 階級平均点を計算
     int r = 0;
@@ -57,20 +152,19 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
         }
         if (field.isAlive(owner)) distanceToOwner++;
     }
-    
+
     // 自分以外のプレーヤーの手札の和
     const Cards opsCards = opsHand.cards;
     const Cards opsPlainCards = maskJOKER(opsCards);
-    
+
     pol.initCalculatingScore(NMoves);
-    
+
     for (int i = 0; i < NMoves; i++) {
-        
         pol.initCalculatingCandidateScore();
-        
+
         const Move m = mbuf[i];
         typename policy_t::real_t s = 0;
-        
+
         if (m.isMate() || !anyCards(myCards - m.cards())) {
             s -= 1000; // Mateのときは低い点にする
         } else {
@@ -81,22 +175,22 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             const Cards afterCards = myCards - m.cards();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
-            
+
             const int afterOrder = aftOrd;
-            
+
             // snowl score
             {
                 int base = FEA_IDX(FEA_HAND_SNOWL);
-                
+
                 if (!b.isNull()) {
                     if (b.isUnrivaled()) base += 166 * 2;
                     else base += 166;
                 }
                 if (afterOrder != 0) base += 83;
                 if (containsJOKER(afterCards)) Foo(base + 82)
-                
+
                 Cards tmp = maskJOKER(afterCards);
-                
+
                 Cards seq3 = polymRanks<3>(tmp);
                 if (seq3) {
                     Cards seq4 = polymRanks<2>(seq3);
@@ -139,7 +233,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // joker, s3 bonus
             {
                 constexpr int base = FEA_IDX(FEA_HAND_S3);
@@ -147,21 +241,21 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                 else if (containsS3(afterCards) && containsJOKER(opsCards)) Foo(base + 1)
                 else if (containsS3(opsCards) && containsJOKER(afterCards)) Foo(base + 2)
             }
-            
+
             // avg pqr rank
             {
                 constexpr int base = FEA_IDX(FEA_HAND_PQR_RANK);
                 double rs = pqrRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
                 FooX(base, oq * log(max(rs / rankScore, 0.000001)))
             }
-            
+
             // nf min party
             {
                 constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
                 if (b.isNull()) FooX(base, divisionCount(mbuf + NMoves, afterCards) - NParty)
                 else FooX(base + 1, divisionCount(mbuf + NMoves, afterCards) - NParty)
             }
-            
+
             // after hand joker - p8
             if (polymJump(maskJOKER(afterCards)) && containsJOKER(afterCards)) {
                 const int base = FEA_IDX(FEA_HAND_P8_JOKER);
@@ -220,7 +314,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // rev(only normal order)
             {
                 constexpr int base = FEA_IDX(FEA_REV_CLASS);
@@ -242,11 +336,11 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             {
                 constexpr int base = FEA_IDX(FEA_PASS_PHASE);
                 if (m.isPASS()) {
-                    int key = base + (field.getNRemCards() > 30 ? 0 : (field.getNRemCards() > 15 ? 1 : 2));
+                    int key = base + (field.getNumRemCards() > 30 ? 0 : (field.getNumRemCards() > 15 ? 1 : 2));
                     Foo(key)
                 }
             }
-            
+
             // pass(unrivaled)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_DOM);
@@ -257,24 +351,24 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // pass(owner distance)
             {
                 constexpr int base = FEA_IDX(FEA_PASS_OWNER_DISTANCE);
                 if (m.isPASS() && !b.isUnrivaled()) Foo(base + (distanceToOwner - 1));
             }
-            
+
             // pass nawake and qty
             {
                 constexpr int base = FEA_IDX(FEA_PASS_NAWAKE_OWNER);
                 if (m.isPASS() && owner != tp) {
                     if (field.isAlive(owner)) {
-                        int key = base + (field.numPlayersAwake() - 2) * 8 + min(field.getNCards(owner), 8U) - 1;
+                        int key = base + (field.numPlayersAwake() - 2) * 8 + min(field.numCardsOf(owner), 8U) - 1;
                         Foo(key)
                     }
                 }
             }
-            
+
             // s3(move)
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_S3);
@@ -283,7 +377,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            
+
             // joker against S3
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_JOKER_AGAINST_S3);
@@ -295,7 +389,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     Foo(key)
                 }
             }
-            
+
             // sequence
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_SEQ);
@@ -308,7 +402,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     if (b.isSeq()) Foo(base + 1)
                 }
             }
-            
+
             // rf group break
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
@@ -331,7 +425,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // NF_Dominance Move On PassDom
             {
                 if (b.isPassDom()) {
@@ -341,7 +435,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // NF_EIGHT
             if (b.isNull()) {
                 if (m.domInevitably() && !m.isSeq()) {
@@ -356,7 +450,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     }
                 }
             }
-            
+
             // eight
             {
                 if (m.domInevitably()) {
@@ -366,7 +460,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     FooX(key, oq - m.qty())
                 }
             }
-            
+
             // min rank
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_MIN_RANK);
@@ -423,7 +517,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                         Foo(key)
                     }
                 }
-                
+
                 // MOパターン
                 if (!m.isSeq()) {
                     // グループ
@@ -475,11 +569,11 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             }
         }
         pol.feedCandidateScore(i, exp(s));
-        
+
         if (!M || dst != nullptr) dst[i] = s;
     }
     pol.finishCalculatingScore();
-    
+
     return 0;
 }
 
@@ -487,7 +581,7 @@ template <int M, class policy_t>
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       policy_t& pol) { // learnerとして呼ばれうるため const なし
-    
+
     using namespace ChangePolicySpace;
 
     const Cards pqr = CardsToPQR(myCards);
@@ -495,21 +589,20 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
     pol.initCalculatingScore(NChanges);
 
     for (int i = 0; i < NChanges; i++) {
-        
         pol.initCalculatingCandidateScore();
-        
+
         typename policy_t::real_t s = 0;
         const Cards changeCards = change[i];
         const Cards changePlainCards = changeCards.plain();
         const Cards afterCards = myCards - changeCards;
         const Cards afterPlainCards = afterCards.plain();
-        
+
         const Cards afterPqr = CardsToPQR(afterPlainCards);
-        
+
         // 1PQR, SEQ (snowl score except joker)
         {
             int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
-            
+
             Cards tmp = afterPlainCards;
             Cards seq3 = polymRanks<3>(tmp);
             if (seq3) {
@@ -545,7 +638,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                     }
                 }
             }
-            
+
             if (tmp) {
                 base += 30 - 4;
                 tmp = CardsToPQR(tmp); // 枚数位置型に変換
@@ -556,12 +649,12 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 }
             }
         }
-        
+
         { // D3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_D3);
             if (afterCards & CARDS_D3) Foo(base);
         }
-        
+
         { // JOKER_S3 BONUS
             constexpr int base = FEA_IDX(FEA_CHANGE_HAND_JOKER_S3);
             if (afterCards & CARDS_S3) {
@@ -569,7 +662,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 else Foo(base + 1) // ops
             } else if (afterCards.joker()) Foo(base + 2)
         }
-        
+
         { // MAX, MIN RANK
             Cards tmpPqr = afterPqr;
             int hr1;
@@ -588,7 +681,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
             FooX(FEA_IDX(FEA_CHANGE_HAND_MIN1_RANK), lr1);
             FooX(FEA_IDX(FEA_CHANGE_HAND_MIN2_RANK), lr2);
         }
-        
+
         { // DOUBLE PRESENT, PART SEQ PRESENT
             if (NChangeCards == 2) {
                 if (!any2Cards(CardsToER(changePlainCards))) { // 同じ階級のカードをあげる
@@ -600,7 +693,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                 }
             }
         }
-        
+
         { // 2 CARDS
             constexpr int base = FEA_IDX(FEA_CHANGE_CC);
             using Index = TensorIndexType<16, 16, N_PATTERNS_SUITS_SUITS>;
@@ -611,7 +704,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                     // suits - suits のパターン数より少ないのでOK
                 }
             }
-            
+
             // 交換するランクのカードと他のカードとの関係
             const Cards diffRanks = CardsToER(changeCards);
             for (IntCard ic : diffRanks) {

@@ -45,11 +45,8 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
         shared.initGame();
         int tc = dice() % game.plays.size();
         Field field;
-        iterateGameLogAfterChange
-        (field, game,
-        [](const Field& field)->void{}, // first callback
-        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
-            if (field.numPlayersAlive() <= 2) return 0;
+        for (Move move : PlayRoller(field, game)) {
+            if (field.numPlayersAlive() <= 2) continue;
             //cerr << field.toDebugString() << endl;
             // この手の前までの情報から手札推定を行う
             RandomDealer estimator(field, field.turn());
@@ -114,9 +111,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
                 entropy += e;
                 cross_entropy += ce;
             }
-            return 0;
-        },
-        [](const Field& field)->void{}); // last callback
+        }
     }
     cerr << "type " << type << ": ";
     cerr << perfect << " / " << cnt << " (" << double(perfect) / cnt << ") ";
@@ -137,6 +132,6 @@ bool EstimationTest(const vector<string>& recordFiles) {
         testEstimationRate(match, DealType::BIAS);
         testEstimationRate(match, DealType::REJECTION);
     }
-    
+
     return 0;
 }

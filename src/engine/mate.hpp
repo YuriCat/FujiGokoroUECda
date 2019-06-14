@@ -34,8 +34,8 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
 
     assert(pqr == CardsToPQR(cards));
     const int ord = b.order();
-#define PPW(s) { DERR << "PPW" << s << " " << cards << endl; return true; }
-    
+#define PPW(s) { DERR << "PPW" << s << " " << cards << std::endl; return true; }
+
     const Cards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
     if (!ndpqr) {
@@ -90,7 +90,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
             }
         }
     }
-    
+
     if (jk && (pqr & PQR_3)) {
         // ジョーカーを使えば革命あり
         // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
@@ -120,7 +120,7 @@ inline bool judgeHandPW_NF(const Hand& mh, const Hand& oh, const Board& b) {
 
     assert(mh.exam1stHalf() && oh.exam_nd());
     const int ord = b.order();
-#define PW(s) { DERR << "PPW" << s << " " << mh.cards << ", " << oh.cards << endl; return true; }
+#define PW(s) { DERR << "PPW" << s << " " << mh.cards << ", " << oh.cards << std::endl; return true; }
 
     const Cards ndpqr = mh.pqr & oh.nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
@@ -170,13 +170,13 @@ inline bool judgeHandPW_NF(const Hand& mh, const Hand& oh, const Board& b) {
             bool jh = (h << 1) & oh.nd[(h & PQR_3) ? (1 - ord) : ord];
             bool jl = (l << 1) & oh.nd[(l & PQR_3) ? (1 - ord) : ord];
             if (!jh || !jl) PW("1(+JK)");
-            
+
             // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
             // 3はランク最低なのでlだろう
             if (l == (CARDS_3 & PQR_1) && containsS3(mh.cards)) PW("1(JK-S3)");
         }
     }
-    
+
     // 革命によって勝てないか考える
     if (mh.pqr & PQR_4) {
         // ジョーカーを使わない革命あり。
@@ -218,7 +218,7 @@ inline bool judgeHandPW_NF(const Hand& mh, const Hand& oh, const Board& b) {
             }
         }
     }
-    
+
     if (mh.jk && (mh.pqr & PQR_3)) {
         // ジョーカーを使えば革命あり。
         // ジョーカー無し革命とジョーカーあり革命が両方の場合は多分上のに含まれているので考えない
@@ -263,10 +263,12 @@ inline bool judgeHandMate(const int depth, Move *const mbuf,
             for (int i = 0; i < NMoves; i++) {
                 const Move& m = mbuf[i];
                 if (m.qty() >= mh.qty) return true; // 即上がり
-                
+
                 Hand nmh;
                 makeMove1stHalf(mh, &nmh, m);
-                if (!depth && m.qty() > 4) { // 5枚以上の階段は支配としておく
+
+                // 5枚以上の階段は支配としておく
+                if (!depth && m.qty() > 4) {
                     Board nb = b;
                     nb.procOrder(m);
                     // いずれかのオーダーで必勝ならOK
@@ -289,7 +291,6 @@ inline bool judgeHandMate(const int depth, Move *const mbuf,
     return false;
 }
 
-
 inline bool checkHandBNPW(const int depth, Move *const mbuf, const Move m,
                           const Hand& mh, const Hand& oh, const Board& b) {
     // 間に他プレーヤーの着手を含んだ必勝を検討
@@ -299,10 +300,10 @@ inline bool checkHandBNPW(const int depth, Move *const mbuf, const Move m,
     int curOrder = b.prmOrder();
     Cards ops8 = oh.cards & CARDS_8;
     uint32_t aw = b.getMinNCardsAwake();
-    
+
     // 相手に間で上がられる可能性がある
     if (aw <= m.qty()) return false;
-    
+
     if (m.isSingle()) {
         // シングルジョーカーは少なくともBNPWではない
         if (m.isSingleJOKER()) return false;
@@ -337,7 +338,7 @@ inline bool checkHandBNPW(const int depth, Move *const mbuf, const Move m,
 
 inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
                           const Hand& mh, const Hand& oh, const Board& b) {
-    
+
     if (b.isUnrivaled()) { // 独断場のとき
         m.setDO(); // 支配フラグ付加
         if (m.isPASS()) {
@@ -346,8 +347,8 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
             return judgeHandMate(depth, mbuf, mh, oh, nb);
         } else {
             if (m.qty() >= mh.qty) return true; // あがり
-            Hand nmh;
             Board nb = b;
+            Hand nmh;
             makeMove1stHalf(mh, &nmh, m);
             if (dominatesCards(m, nmh.cards, b)) { // 自己支配
                 m.setDM(); // 支配フラグ付加
@@ -362,7 +363,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
         }
         return false;
     }
-    
+
     if (m.isPASS()) {
         if (!b.isPassDom()) return false; // パス支配でない場合は判定終了
         // Unrivaledでないがパス支配の場合がある?
@@ -372,8 +373,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
         nb.flush(true);
         return judgeHandMate(depth, mbuf, mh, oh, nb);
     }
-    // DERR << "CHECK - " << argMove << " " << IS_NF << ", " << IS_UNRIVALED << endl;
-    // DERR << depth << endl;
+
     // 通常
     if (m.qty() >= mh.qty) return true; // 即上がり
     if (dominatesHand(m, oh, b) || m.qty() > b.getMaxNCardsAwake()) { // 支配
@@ -382,7 +382,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
         nb.proc(m);
         Hand nmh;
         makeMove1stHalf(mh, &nmh, m);
-        
+
         // セルフフォロー
         // 自分の出した役を流してからの必勝チェック
         // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
@@ -401,8 +401,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
         // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
         if (m.isSingle() // シングルのみ
             && b.getMinNCardsAwake() > 1 // 相手に即上がりされない
-            && containsS3(mh.cards) // 残り手札にS3がある
-            && !m.isEqualRankSuits(RANK_3, SUITS_S)) { // 今出す役がS3でない
+            && containsS3(mh.cards - m.cards())) { // 残り手札にS3がある
             Cards zone = ORToGValidZone(b.order(), m.rank());
             if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
             if (!(zone & oh.cards)) { // ジョーカー以外は出せない
@@ -413,7 +412,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
                     nmh.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
                     if (judgeHandPW_NF(nmh, oh, b)) { // S3で返した場合
                         // 両方で勝ったので必勝
-                        DERR << "BRPW(S3)!!!" << endl;
+                        DERR << "BRPW(S3)!!!" << std::endl;
                         return true;
                     }
                 }
@@ -421,7 +420,7 @@ inline bool checkHandMate(const int depth, Move *const mbuf, Move& m,
         }
         // BNPWを検討
         if (checkHandBNPW(depth - 1, mbuf, m, mh, oh, b)) {
-            DERR << "BNPW - " << m << " ( " << b.getMinNCardsAwake() << " ) " << endl;
+            DERR << "BNPW - " << m << " ( " << b.getMinNCardsAwake() << " ) " << std::endl;
             return true;
         }
     }

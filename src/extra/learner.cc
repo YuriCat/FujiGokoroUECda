@@ -36,7 +36,7 @@ public:
     // 相手プレーヤー別に呼び出しを分ける想定もあるので引数を取れるようにはしておく
     ChangePolicyLearner<policy_value_t>& changeLearner(int p = 0) { return changeLearner_; }
     PlayPolicyLearner<policy_value_t>& playLearner(int p = 0) { return playLearner_; }
-    
+
     LearningSpace(ChangePolicy<policy_value_t> *const pcp,
                   PlayPolicy<policy_value_t> *const ppp) {
         changeLearner_.setClassifier(pcp);
@@ -81,12 +81,12 @@ vector<int64_t> divide(int64_t st, int64_t ed, int n) {
     return v;
 }
 int learn(vector<string> logFileNames, string outDirName, int mode) {
-    
+
     XorShift64 dice((uint32_t)time(NULL));
     mt19937 mt((uint32_t)time(NULL));
-    
+
     if (outDirName == "") outDirName = DIRECTORY_PARAMS_OUT;
-    
+
     // 学習クラスとスレッドツールをスレッド数分確保
     const int threads = LearningSettings::threads;
     ls.clear();
@@ -94,46 +94,46 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
         ls.emplace_back(LearningSpace(&changePolicy, &playPolicy));
         threadTools.emplace_back(ThreadTools());
     }
-    
+
     // 0番スレッドの学習クラスをマスターとする
     auto& masterChangeLearner = ls.at(0).changeLearner();
     auto& masterPlayLearner = ls.at(0).playLearner();
-    
+
     // ログを読み込み
     Record record(logFileNames);
-    
+
     // preparing
     for (int th = 0; th < threads; th++) {
         ls.at(th).changeLearner().setLearnParam(LearningSettings::temperature, 0, 0, 0, 0);
         ls.at(th).playLearner().setLearnParam(LearningSettings::temperature, 0, 0, 0, 0);
     }
     const int64_t games = record.games();
-    
+
     // トレーニングとテストの試合数を決める
     const double learnGameRate = games / (games + pow((double)games, LearningSettings::testRate));
     const int64_t learnGames = (mode & MODE_FLAG_TEST) ? min((int64_t)(games * learnGameRate), games) : games;
     const int64_t testGames = games - learnGames;
     if (mode & MODE_FLAG_SHUFFLE) record.shuffle(mt);
-    
+
     cerr << learnGames << " games for learning, " << testGames << " games for test." << endl;
-    
+
     cerr << "change policy : " << masterChangeLearner.toOverviewString() << endl;
     cerr << "play   policy : " << masterPlayLearner.toOverviewString() << endl;
-    
+
     // 特徴要素の解析(学習時のステップ幅決め)
     cerr << "started analyzing feature." << endl;
-    
+
     // 解析スレッドごとの試合割り振り
     vector<int64_t> eachLearnGames = divide(0, learnGames, threads);
     vector<int64_t> eachTestGames = divide(learnGames, games, threads);
     cerr << "learn games dist = " << eachLearnGames << endl;
     cerr << "test  games dist = " << eachTestGames << endl;
-    
+
     bitset<32> flag(0);
     flag.set(1);
-    
+
     vector<thread> threadPool;
-    
+
     if (mode & MODE_FLAG_CHANGE) {
         // 交換学習データ
         threadPool.clear();
@@ -148,7 +148,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
         for (int ph = 0; ph < 2; ph++) {
             cerr << "change - training record : " << masterChangeLearner.toRecordString(ph) << endl;
         }
-        
+
         // 交換テストデータ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
@@ -175,7 +175,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
         for (int th = 1; th < threads; th++) masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
         masterPlayLearner.foutFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
         cerr << "play   - training record : " << masterPlayLearner.toRecordString() << endl;
-        
+
         // 着手テストデータ
         threadPool.clear();
         for (int th = 0; th < threads; th++) {
@@ -187,19 +187,19 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
         for (int th = 1; th < threads; th++) masterPlayLearner.mergeFeatureValue(ls.at(th).playLearner());
         cerr << "play   - test     record : " << masterPlayLearner.toRecordString() << endl;
     }
-    
+
     cerr << "finished analyzing feature." << endl;
-    
+
     // learning
     cerr << "started learning." << endl;
-    
+
     // 学習の設定を表示
     cerr << "learning rate = " << LearningSettings::learningRate << endl;
     cerr << "attenuation rate = " << LearningSettings::attenuationRate << endl;
     cerr << "L1 reguralization rate = " << LearningSettings::L1Rate << endl;
     cerr << "L2 reguralization rate = " << LearningSettings::L2Rate << endl;
     cerr << "batch size = " << LearningSettings::batchSize << endl;
-    
+
     if (mode & MODE_FLAG_CHANGE) {
         for (int th = 0; th < threads; th++) {
             ls.at(th).changeLearner().finFeatureSurvey(outDirName + "change_policy_feature_survey.dat");
@@ -210,14 +210,14 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
             ls.at(th).playLearner().finFeatureSurvey(outDirName + "play_policy_feature_survey.dat");
         }
     }
-    
+
     int64_t changeTrials = 0;
     int64_t playTrials = 0;
     uint64_t startTime = (uint64_t)time(NULL);
-    for (int j = 0; j < LearningSettings::iterations; ++j) {
-        
+    for (int j = 0; j < LearningSettings::iterations; j++) {
+
         cerr << ((uint64_t)time(NULL) - startTime) << "sec. iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
-        
+
         for (int th = 0; th < threads; th++) {
             double catr = exp(-changeTrials * LearningSettings::attenuationRate);
             ls.at(th).changeLearner().setLearnParam(LearningSettings::temperature,
@@ -232,13 +232,13 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
                                                   LearningSettings::L2Rate * patr,
                                                   LearningSettings::batchSize);
         }
-        
+
         if (mode & MODE_FLAG_SHUFFLE) record.shuffle(0, learnGames, mt);
-        
+
         bitset<32> flag(0);
         flag.set(0);
         flag.set(2);
-        
+
         // 学習フェーズ
         if (mode & MODE_FLAG_CHANGE) {
             threadPool.clear();
@@ -272,11 +272,11 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
             foutComment(playPolicy, outDirName + "play_policy_comment.txt");
             cerr << "Play   Training : " << masterPlayLearner.toObjValueString() << endl;
         }
-        
+
         if (testGames > 0) {
             // テストフェーズ
             flag.reset(0);
-            
+
             if (mode & MODE_FLAG_CHANGE) {
                 threadPool.clear();
                 for (int th = 0; th < threads; th++) {
@@ -305,12 +305,12 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
         }
     }
     cerr << "finished learning." << endl;
-    
+
     return 0;
 }
 
 int main(int argc, char* argv[]) { // For UECda
-    
+
     // 基本的な初期化
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) { // For UECda
 
     vector<string> recordFiles;
     string outDirName = "";
-    
+
     int mode = MODE_FLAG_CHANGE | MODE_FLAG_PLAY | MODE_FLAG_SHUFFLE;
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-t")) {
@@ -348,8 +348,8 @@ int main(int argc, char* argv[]) { // For UECda
             LearningSettings::threads = atoi(argv[c + 1]);
         }
     }
-    
+
     int ret = learn(recordFiles, outDirName, mode);
-    
+
     return ret;
 }

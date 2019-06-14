@@ -1,4 +1,5 @@
 #include "data.hpp"
+#include "reward.hpp"
 
 using namespace std;
 
@@ -81,7 +82,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     worstReward = shared.gameReward[field.worstClass()];
     rewardGap = bestReward - worstReward;
     if (Settings::maximizePosition) {
-        uint32_t rivals = field.getRivalPlayersFlag(myPlayerNum);
+        uint32_t rivals = rivalPlayers(field, myPlayerNum);
         if (popcnt(rivals) == 1) {
             int rnum = bsf(rivals);
             if (field.isAlive(rnum)) rivalPlayerNum = rnum;
@@ -143,10 +144,10 @@ void RootInfo::feedPolicyScore(const double *const score, int num) {
 void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedData *const pshared) {
     // シミュレーション結果を記録
     // ロックが必要な演算とローカルでの演算が混ざっているのでこの関数内で排他制御する
-    
+
     // 新たに得た証拠分布
     BetaDistribution myScore, rivalScore, totalScore;
-    
+
     int myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
     myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
     if (rivalPlayerNum >= 0) {
@@ -204,14 +205,14 @@ string RootInfo::toString(int num) const {
         double nrew = worstReward + child[i].naive_mean() * rewardGap;
         double sem = sqrt(child[i].mean_var());
         double rewZone[2] = {rew - sem * rewardGap, rew + sem * rewardGap};
-        
+
         if (i == 0) oss << "\033[1m";
         oss << i << " ";
-        
+
         if (isChange) oss << child[i].changeCards;
         else oss << child[i].move;
         oss << " : ";
-        
+
         if (child[i].simulations > 0) {
             const int K = 100;
             // 総合評価点を表示
@@ -229,7 +230,7 @@ string RootInfo::toString(int num) const {
             oss << "t = " << child[i].turnSum / (double)child[i].simulations << " "; // 統計量
         }
         oss << child[i].simulations << " trials." << endl;
-        
+
         if (i == 0) oss << "\033[0m";
     }
     return oss.str();

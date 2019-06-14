@@ -36,7 +36,7 @@ inline bool dominatesCards(const Board b, const Cards oc) {
 
     if (b.isSingleJOKER()) return !containsS3(oc);
     if (!b.isSeq() && b.qty() <= oc.joker()) return false;
-    
+
     Cards zone = -1;
     if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
 
@@ -55,14 +55,14 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
     assert(oh.exam_jk());
     assert(oh.exam_seq());
     assert(oh.exam_nd());
-    
+
     if (m.isPASS()) return false;
     if (m.domInevitably()) return true;
     if (b.domConditionally(m)) return true;
 
     if (m.isSingleJOKER()) return !containsS3(oh.cards);
     if (!m.isSeq() && m.qty() <= oh.jk) return false;
-    
+
     if (!m.isSeq()) {
         if (m.qty() > 4 + oh.jk) return true;
         int nextOrder = b.nextOrder(m);
@@ -87,13 +87,13 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
     assert(oh.exam_jk());
     assert(oh.exam_seq());
     assert(oh.exam_nd());
-    
+
     if (b.isNull()) return false;
     if (b.domInevitably()) return true;
 
     if (b.isSingleJOKER()) return !containsS3(oh.cards);
     if (!b.isSeq() && b.qty() <= oh.jk) return false;
-    
+
     if (!b.isSeq()) { // グループ
         if (b.qty() > 4 + oh.jk) return true;
         if (!(b.charaPQR() & oh.nd[b.order()])) return true; // 無支配型と交差なし

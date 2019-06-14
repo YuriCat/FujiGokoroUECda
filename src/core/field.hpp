@@ -47,53 +47,45 @@ struct PlayersState : public BitArray32<8, 4> {
     constexpr static uint32_t REALPMASK = (1 << N) - 1; // 実際にいるプレーヤー全体
     constexpr static uint32_t NMASK = (1 << 8) - 1; // 数全体
     // set
-    void setAsleep(const int p) {
+    void setAsleep(int p) {
         assert(isAwake(p)); // 現在Awake
         base_t::data_ -= (BMASK << 24) + ((BMASK << 16) << p);
     }
-    void setDead(const int p) {
+    void setDead(int p) {
         // プレーヤーがあがった
         assert(isAwake(p)); assert(isAlive(p)); // 現在AliveかつAwakeの必要
         base_t::data_ -= (BMASK << 8) + (BMASK << 24) + (((1U << 0) + (1U << 16)) << p);
     }
-    void setAwake(const int p) {
-        assert(!isAwake(p));
-        base_t::data_ += (BMASK << 24) + ((BMASK << 16) << p);
-    }
-    void setAllAsleep() {
+    void setAllAsleepExcept(int p) {
         base_t::data_ &= (PMASK << 0) | (NMASK << 8);
+        base_t::data_ += (BMASK << 24) + ((BMASK << 16) << p);
     }
 
     constexpr data_t isAlive(int p) const { return data() & ((BMASK << 0) << p); }
     constexpr data_t isAwake(int p) const { return data() & ((BMASK << 16) << p); }
     constexpr bool isExcluded(int p) const { return false; } // あがり以外の除外(都落ち)
-    
-    constexpr bool isAllAsleepExcept(int p) const { // p以外全員asleep
-        return !(data() & ((PMASK << 16) ^ ((BMASK << 16) << p)));
-    }
-    
+
     uint32_t searchOpsPlayer(int p) const {
         // p以外でaliveなプレーヤーを1人挙げる
-        // pがaliveであることは保証される
-        assert(isAlive(p)); assert(numAlive() >= 2);
-        return bsf32(data() ^ (BMASK << p));
+        assert(numAlive() >= 1);
+        return bsf32(data() & ~(BMASK << p));
     }
-    
+
     constexpr data_t numAlive() const { return (*this)[1]; }
     constexpr data_t numAwake() const { return (*this)[3]; }
-    
+
     unsigned countNAlive() const { return popcnt(part(0)); }
     unsigned countNAwake() const { return popcnt(part(2)); }
 
     constexpr data_t bestClass() const { return N - numAlive(); } // 最高の階級 = 全員 - 残っている人数
     constexpr data_t worstClass() const { return N - 1; } // 最低の階級 = 全員の最後
-    
-    uint32_t searchL1Player() const {
+
+    int searchL1Player() const {
         // 最後に残ったプレーヤーを探す
         assert(popcnt32(data() & PMASK) == 1); // 1人だけ残っている
         return bsf32(data());
     }
-    
+
     void flush() {
         // 場が流れる
         data_t alive = data() & ((PMASK << 0) | (NMASK << 8)); // alive情報
@@ -145,7 +137,6 @@ struct Field {
         if (isL2Situation()) return true;
         return false;
     }
-    uint32_t getRivalPlayersFlag(int myPlayerNum) const;
 
     void setMoveBuffer(Move *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
@@ -158,14 +149,11 @@ struct Field {
     bool isInitGame() const { return common.flag.test(FLAG_INIT_GAME); }
     bool isInChange() const { return phase == PHASE_PRESENT; }
 
-    bool isAlive(const int p) const { return ps.isAlive(p); }
-    bool isAwake(const int p) const { return ps.isAwake(p); }
+    bool isAlive(int p) const { return ps.isAlive(p); }
+    bool isAwake(int p) const { return ps.isAwake(p); }
     unsigned numPlayersAwake() const { return ps.numAwake(); }
     unsigned numPlayersAlive() const { return ps.numAlive(); }
 
-    uint32_t searchOpsPlayer(const int p) const {
-        return ps.searchOpsPlayer(p);
-    }
     int bestClass() const { return ps.bestClass(); }
     int worstClass() const { return ps.worstClass(); }
 
@@ -184,29 +172,29 @@ struct Field {
     void setPositionOf(int p, int pos) {
         infoPosition[p] = pos;
     }
-    
+
     int classOf(int p) const { return infoClass[p]; }
     int newClassOf(int p) const { return infoNewClass[p]; }
     int seatOf(int p) const { return infoSeat[p]; }
     int positionOf(int p) const { return infoPosition[p]; }
-    
+
     int classPlayer(int c) const { return infoClassPlayer[c]; }
     int newClassPlayer(int c) const { return infoNewClassPlayer[c]; }
     int seatPlayer(int s) const { return infoSeatPlayer[s]; }
-    
+
     int turn() const { return common.turn; }
     int owner() const { return common.owner; }
     int firstTurn() const { return common.firstTurn; }
-    
+
     void setTurn(int p) { common.turn = p; }
     void setOwner(int p) { common.owner = p; }
     void setFirstTurn(int p) { common.firstTurn = p; }
-    
+
     Cards getCards(int p) const { return hand[p].cards; }
     Cards getOpsCards(int p) const { return opsHand[p].cards; }
-    unsigned getNCards(int p) const { return hand[p].qty; }
+    unsigned numCardsOf(int p) const { return hand[p].qty; }
     Cards getRemCards() const { return remCards; }
-    Cards getNRemCards() const { return remQty; }
+    Cards getNumRemCards() const { return remQty; }
     const Hand& getHand(int p) const { return hand[p]; }
     const Hand& getOpsHand(int p) const { return opsHand[p]; }
 
@@ -216,7 +204,7 @@ struct Field {
     Cards getRecvCards(int p) const { return recvCards[p]; }
 
     int flushLeadPlayer() const;
-    int nextSeatPlayer(const int p) const {
+    int nextSeatPlayer(int p) const {
         return seatPlayer(getNextSeat<N_PLAYERS>(seatOf(p)));
     }
     void rotateTurnPlayer(int turn) {
@@ -245,10 +233,10 @@ struct Field {
     template <bool FAST> int procImpl(const Move m);
     int procFast(const Move m);
     int proceed(const Move m);
-    
+
     void makeChange(int from, int to, int dq, Cards dc,
                     bool sendOnly = false, bool recvOnly = false);
-    
+
     void setHand(int p, Cards c) { hand[p].setAll(c); }
     void setOpsHand(int p, Cards c) { opsHand[p].setAll(c); }
     void setBothHand(int p, Cards c) {
@@ -276,7 +264,7 @@ struct Field {
 
     // recordが定義された時用
     void setBeforeGame(const GameRecord& game, int playerNum);
-    void passPresent(const GameRecord& game, int playerNum);
+    int passPresent(const GameRecord& game, int playerNum);
     void passChange(const GameRecord& game, int playerNum);
     void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);

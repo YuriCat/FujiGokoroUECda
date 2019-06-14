@@ -34,18 +34,15 @@ bool dominatesSlow(const Move m, const Cards c, Board b) {
 int testRecordMoveDominance(const Record& record) {
     // 棋譜中の局面において支配性判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
-    
+
     uint64_t judgeTime[6] = {0};
     uint64_t judgeCount[4] = {0};
     uint64_t judgeMatrix[4][2][2] = {0};
-    
+
     // プリミティブ型での支配性判定
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        iterateGameLogAfterChange
-        (field, record.game(i),
-        [&](const Field& field) {}, // first callback
-        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
+        for (Move move : PlayRoller(field, record.game(i))) {
             int turn = field.turn();
             Cards opsCards = field.getOpsCards(turn);
             Board b = field.board;
@@ -53,11 +50,11 @@ int testRecordMoveDominance(const Record& record) {
             bool dom = dominatesCards(move, opsCards, b);
             judgeTime[0] += cl.stop();
             judgeCount[0] += 1;
-            
+
             cl.start();
             bool ans = dominatesSlow(move, opsCards, b);
             judgeTime[2] += cl.stop();
-            
+
             /*if (dom != ans) {
                 cerr << "judge " << dom << " <-> " << " answer " << ans << endl;
                 cerr << move << " on " << b << endl;
@@ -65,21 +62,15 @@ int testRecordMoveDominance(const Record& record) {
                 cerr << endl;
                 getchar();
             }*/
-            
+
             judgeMatrix[0][ans][dom] += 1;
-            return 0;
-        },
-        [&](const Field& field) {} // last callback
-        );
+        }
     }
-    
+
     // より複雑な型での支配性判定
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        iterateGameLogAfterChange
-        (field, record.game(i),
-        [&](const Field& field) {}, // first callback
-        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
+        for (Move move : PlayRoller(field, record.game(i))) {
             int turn = field.turn();
             const Hand& opsHand = field.getOpsHand(turn);
             Board b = field.board;
@@ -87,26 +78,20 @@ int testRecordMoveDominance(const Record& record) {
             bool dom = dominatesHand(move, opsHand, b);
             judgeTime[1] += cl.stop();
             judgeCount[1] += 1;
-            
+
             cl.start();
             bool ans = dominatesSlow(move, opsHand.cards, b);
             judgeTime[2] += cl.stop();
-            
+
             judgeMatrix[1][ans][dom] += 1;
-            return 0;
-        },
-        [&](const Field& field) {} // last callback
-        );
+        }
     }
 
     // 場からの判定
     // プリミティブ型での支配性判定
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        iterateGameLogAfterChange
-        (field, record.game(i),
-        [&](const Field& field) {}, // first callback
-        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
+        for (Move move : PlayRoller(field, record.game(i))) {
             Cards remCards = field.remCards;
             Hand remHand;
             remHand.set(remCards);
@@ -116,25 +101,19 @@ int testRecordMoveDominance(const Record& record) {
             bool dom = dominatesCards(b, remCards);
             judgeTime[3] += cl.stop();
             judgeCount[2] += 1;
-            
+
             cl.start();
             bool ans = dominatesSlow(b, remCards);
             judgeTime[5] += cl.stop();
-            
+
             judgeMatrix[2][ans][dom] += 1;
-            return 0;
-        },
-        [&](const Field& field) {} // last callback
-        );
+        }
     }
     
     // より複雑な型での支配性判定
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        iterateGameLogAfterChange
-        (field, record.game(i),
-        [&](const Field& field) {}, // first callback
-        [&](const Field& field, const Move move, const uint64_t time)->int{ // play callback
+        for (Move move : PlayRoller(field, record.game(i))) {
             Cards remCards = field.remCards;
             Hand remHand;
             remHand.set(remCards);
@@ -144,18 +123,15 @@ int testRecordMoveDominance(const Record& record) {
             bool dom = dominatesHand(b, remHand);
             judgeTime[4] += cl.stop();
             judgeCount[3] += 1;
-            
+
             cl.start();
             bool ans = dominatesSlow(b, remCards);
             judgeTime[5] += cl.stop();
-            
+
             judgeMatrix[3][ans][dom] += 1;
-            return 0;
-        },
-        [&](const Field& field) {} // last callback
-        );
+        }
     }
-    
+
     cerr << "judge result (move - cards) = " << endl;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
@@ -184,7 +160,7 @@ int testRecordMoveDominance(const Record& record) {
         }
         cerr << endl;
     }
-    
+
     cerr << "judge time (move  - cards) = " << judgeTime[0] / (double)judgeCount[0] << endl;
     cerr << "judge time (move  - hand)  = " << judgeTime[1] / (double)judgeCount[1] << endl;
     cerr << "judge time (move  - slow)  = " << judgeTime[2] / (double)(judgeCount[0] + judgeCount[1]) << endl;
@@ -198,7 +174,6 @@ int testRecordMoveDominance(const Record& record) {
 bool DominanceTest(const vector<string>& recordFiles) {
 
     mt.seed(1);
-    
     if (outputDominanceJudgeResult()) {
         cerr << "failed case test." << endl;
         return false;
@@ -210,6 +185,6 @@ bool DominanceTest(const vector<string>& recordFiles) {
         cerr << "failed record move dominance judge test." << endl;
     }
     cerr << "passed record move dominance judge test." << endl;
-    
+
     return true;
 }

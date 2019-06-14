@@ -101,7 +101,7 @@ namespace UECda {
     inline int isMyTurn(const int table[8][15]) { return table[5][2]; }
     inline int turnOf(const int table[8][15]) { return table[5][3]; }
     inline int isNull(const int table[8][15]) { return table[5][4]; } // 空場
-    inline int getNCards(const int table[8][15], int p) { return table[6][0 + p]; }
+    inline int numCardsOf(const int table[8][15], int p) { return table[6][0 + p]; }
     inline int classOf(const int table[8][15], int p) { return table[6][5 + p]; }
     inline int seatPlayer(const int table[8][15], int s) { return table[6][10 + s]; } // seat:0-4
     inline int isInChange(const int table[8][15]) { return table[5][0]; }
@@ -200,7 +200,7 @@ namespace UECda {
     static Move TableToMove(const int table[8][15]) {
         Cards chara = TableToCards(table, true);
         Cards used = TableToCards(table, false);
-        DERR << "chara " << chara << " used " << used << endl;
+        DERR << "chara " << chara << " used " << used << std::endl;
         return CardsToMove(chara, used);
     }
     

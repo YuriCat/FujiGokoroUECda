@@ -13,24 +13,24 @@ struct Hand {
     uint32_t qty; // 総枚数
     uint32_t jk; // ジョーカー枚数
     BitCards seq; // 3枚階段型
-    
+
     CardArray qr; // ランク枚数型
     Cards pqr; // ランク枚数位置型
     Cards sc; // 圧縮型
     Cards nd[2]; // 無支配型(通常、革命)
 
     uint64_t key; // ハッシュ値
-    
+
     // 情報を使う早さにより、前後半(keyだけは例外としてその他)に分ける
     // allが付く進行はkeyも含めて更新する
-    
+
     // 前半
     // cards, qty, jk, seq, qr, pqr
     // 後半
     // sc, nd[2]
     // その他
     // key
-    
+
     constexpr operator Cards() const { return cards; }
     bool holds(Cards c) const { return cards.holds(c); }
     constexpr bool any() const { return cards.any(); }
@@ -47,14 +47,14 @@ struct Hand {
         pqr = QRToPQR(qr);
         assert(exam1stHalf());
     }
-    void set(Cards c, uint32_t q) {
+    void set(Cards c, unsigned q) {
         // ハッシュ値はsetKeyにて別に設定
         set1stHalf(c, q);
         sc = PQRToSC(pqr);
         PQRToND(pqr, jk, nd);
         assert(exam());
     }
-    void setAll(Cards c, uint32_t q, uint64_t k) {
+    void setAll(Cards c, unsigned q, uint64_t k) {
         set(c, q);
         setKey(k);
         assert(exam_key());
@@ -76,60 +76,60 @@ struct Hand {
     void makeMove1stHalf(Move m, Cards dc, int dq);
 
     // カード集合単位(役の形をなしていない)の場合
-    void add(Cards dc, const int dq) {
+    void add(Cards dc, int dq) {
         set(cards + dc, qty + dq);
     }
     void add(Cards dc) {
         add(dc, dc.count());
     }
-    void addAll(Cards dc, const int dq, const uint64_t dk) {
+    void addAll(Cards dc, int dq, uint64_t dk) {
         setAll(cards + dc, qty + dq, addCardKey(key, dk));
     }
     void addAll(Cards dc) {
         addAll(dc, dc.count(), CardsToHashKey(dc));
     }
-    
-    void subtr(Cards dc, const int dq) {
+
+    void subtr(Cards dc, int dq) {
         set(cards - dc, qty - dq);
     }
     void subtr(Cards dc) {
         subtr(dc, dc.count());
     }
-    void subtrAll(Cards dc, const int dq, const uint64_t dk) {
+    void subtrAll(Cards dc, int dq, uint64_t dk) {
         setAll(cards - dc, qty - dq, subCardKey(key, dk));
     }
     void subtrAll(Cards dc) {
         subtrAll(dc, dc.count(), CardsToHashKey(dc));
     }
-    
+
     // validator
     // 無視する部分もあるので、その場合は部分ごとにチェックする
     // 当然だが基本のcardsがおかしかったらどうにもならない
     bool exam_cards() const {
         if (!holdsCards(CARDS_ALL, cards)) {
-            cerr << "Hand : exam_cards() <<" << cards << endl;
+            std::cerr << "Hand : exam_cards() <<" << cards << std::endl;
             return false;
         }
         return true;
     }
     bool exam_key() const {
         if (key != CardsToHashKey(cards)) {
-            cerr << "Hand : exam_key()" << cards << " <-> ";
-            cerr << std::hex << key << std::dec << endl;
+            std::cerr << "Hand : exam_key()" << cards << " <-> ";
+            std::cerr << std::hex << key << std::dec << std::endl;
             return false;
         }
         return true;
     }
     bool exam_qty() const {
         if (qty != cards.count()) {
-            cerr << "Hand : exam_qty() " << cards << " <-> " << qty << endl;
+            std::cerr << "Hand : exam_qty() " << cards << " <-> " << qty << std::endl;
             return false;
         }
         return true;
     }
     bool exam_jk() const {
         if (jk != cards.joker()) {
-            cerr << "Hand : exam_jk()" << endl;
+            std::cerr << "Hand : exam_jk()" << std::endl;
             return false;
         }
         return true;
@@ -140,12 +140,12 @@ struct Hand {
             uint32_t rq = rc.count();
             uint32_t rqr = qr[r];
             if (rqr != rq) {
-                cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
+                std::cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << std::endl;
                 return false;
             } // 枚数型があってない
         }
         if (qr & ~CARDS_ALL) {
-            cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
+            std::cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << std::endl;
             return false;
         }
         return true;
@@ -157,18 +157,18 @@ struct Hand {
             uint32_t rpqr = pqr[r];
             if (anyCards(rc)) {
                 if (1U << (rq - 1) != rpqr) {
-                    cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+                    std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
                     return false;
                 } // pqrの定義
             } else {
                 if (rpqr) {
-                    cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+                    std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
                     return false;
                 }
             }
         }
         if (pqr & ~CARDS_PLAIN_ALL) {
-            cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+            std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
             return false;
         }
         return true;
@@ -179,19 +179,19 @@ struct Hand {
             uint32_t rq = rc.count();
             uint32_t rsc = sc[r];
             if ((1U << rq) - 1U != rsc) {
-                cerr << "Hand : exam_sc()" << endl;
+                std::cerr << "Hand : exam_sc()" << std::endl;
                 return false;
             } // scの定義
         }
         if (sc & ~CARDS_PLAIN_ALL) {
-            cerr << "Hand : exam_sc()" << endl;
+            std::cerr << "Hand : exam_sc()" << std::endl;
             return false;
         }
         return true;
     }
     bool exam_seq() const {
         if (seq != polymRanks(cards.plain(), cards.joker(), 3)) {
-            cerr << "Hand : exam_seq()" << endl;
+            std::cerr << "Hand : exam_seq()" << std::endl;
             return false;
         }
         return true;
@@ -202,11 +202,11 @@ struct Hand {
         Cards tmpnd[2];
         PQRToND(pqr, containsJOKER(cards) ? 1 : 0, tmpnd);
         if (nd[0] != tmpnd[0]) {
-            cerr << "Hand : exam_nd_by_pqr() nd[0]" << endl;
+            std::cerr << "Hand : exam_nd_by_pqr() nd[0]" << std::endl;
             return false;
         }
         if (nd[1] != tmpnd[1]) {
-            cerr << "Hand : exam_nd_by_pqr() nd[1]" << endl;
+            std::cerr << "Hand : exam_nd_by_pqr() nd[1]" << std::endl;
             return false;
         }
         return true;
@@ -216,7 +216,7 @@ struct Hand {
         if (!exam_nd_by_pqr()) return false;
         return true;
     }
-    
+
     bool exam1stHalf() const {
         if (!exam_cards()) return false;
         if (!exam_jk()) return false;
@@ -241,33 +241,33 @@ struct Hand {
         if (!exam_key()) return false;
         return true;
     }
-    
+
     std::string toDebugString() const {
         std::ostringstream oss;
-        oss << "cards = " << cards << endl;
-        oss << "qty = " << qty << endl;
-        oss << "jk = " << jk << endl;
-        oss << "seq = " << seq << endl;
-        oss << "qr = " << CardArray(qr) << endl;
-        oss << "pqr = " << CardArray(pqr) << endl;
-        oss << "sc = " << CardArray(sc) << endl;
-        oss << "nd[0] = " << CardArray(nd[0]) << endl;
-        oss << "nd[1] = " << CardArray(nd[1]) << endl;
-        oss << std::hex << key << std::dec << endl;
-        
-        oss << "correct data : " << endl;
+        oss << "cards = " << cards << std::endl;
+        oss << "qty = " << qty << std::endl;
+        oss << "jk = " << jk << std::endl;
+        oss << "seq = " << seq << std::endl;
+        oss << "qr = " << CardArray(qr) << std::endl;
+        oss << "pqr = " << CardArray(pqr) << std::endl;
+        oss << "sc = " << CardArray(sc) << std::endl;
+        oss << "nd[0] = " << CardArray(nd[0]) << std::endl;
+        oss << "nd[1] = " << CardArray(nd[1]) << std::endl;
+        oss << std::hex << key << std::dec << std::endl;
+
+        oss << "correct data : " << std::endl;
         Hand tmp;
         tmp.setAll(cards);
-        oss << "qty = " << tmp.qty << endl;
-        oss << "jk = " << tmp.jk << endl;
-        oss << "seq = " << tmp.seq << endl;
-        oss << "qr = " << CardArray(tmp.qr) << endl;
-        oss << "pqr = " << CardArray(tmp.pqr) << endl;
-        oss << "sc = " << CardArray(tmp.sc) << endl;
-        oss << "nd[0] = " << CardArray(tmp.nd[0]) << endl;
-        oss << "nd[1] = " << CardArray(tmp.nd[1]) << endl;
-        oss << std::hex << tmp.key << std::dec << endl;
-        
+        oss << "qty = " << tmp.qty << std::endl;
+        oss << "jk = " << tmp.jk << std::endl;
+        oss << "seq = " << tmp.seq << std::endl;
+        oss << "qr = " << CardArray(tmp.qr) << std::endl;
+        oss << "pqr = " << CardArray(tmp.pqr) << std::endl;
+        oss << "sc = " << CardArray(tmp.sc) << std::endl;
+        oss << "nd[0] = " << CardArray(tmp.nd[0]) << std::endl;
+        oss << "nd[1] = " << CardArray(tmp.nd[1]) << std::endl;
+        oss << std::hex << tmp.key << std::dec << std::endl;
+
         return oss.str();
     }
 };
@@ -280,28 +280,28 @@ inline std::ostream& operator <<(std::ostream& out, const Hand& hand) { // 出�
 template <bool HALF = false>
 inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_t dq) {
     // 普通、パスやカードが0枚になるときはこの関数には入らない。
-    
+
     // 更新するものは最初にチェック
     if (HALF) assert(arg.exam1stHalf());
     else assert(arg.exam());
     assert(!m.isPASS());
     assert(arg.cards.holds(dc));
-    
+
     int djk = dc.joker();
     int r = m.rank();
-    
+
     dst->cards = arg.cards - dc; // 通常型は引けば良い
     dst->qty = arg.qty - dq; // 枚数進行
     dst->jk = arg.jk - djk; // ジョーカー枚数進行
-    
+
     BitCards plain = dst->cards.plain();
     dst->seq = polymRanks(plain, dst->jk, 3);
-    
+
     if (!HALF) {
         // 無支配型(共通処理)
         dst->nd[0] = arg.nd[0];
         dst->nd[1] = arg.nd[1];
-        
+
         if (djk) {
             // ジョーカーが無くなった事で、1枚分ずれる
             // ただしもともと同ランク4枚があった場合にはそこだけ変化しない
@@ -322,13 +322,13 @@ inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_
         if (!m.isSeq()) {
             // ジョーカーの存在により少し処理が複雑に
             dq -= djk; // ジョーカーの分引く
-            
+
             Cards mask = RankToCards(r); // 当該ランクのマスク
             Cards opqr = arg.pqr & mask; // 当該ランクの元々のpqr
-            
+
             // 枚数型は当該ランクの枚数を引く
             dst->qr = arg.qr - (BitCards(dq) << (r << 2));
-            
+
             // 枚数位置型、圧縮型は当該ランクのみ枚数分シフト
             // 0枚になったときに、シフトだけでは下のランクにはみ出す事に注意
             dst->pqr = (((arg.pqr & mask) >> dq) & mask) | (arg.pqr & ~mask);
