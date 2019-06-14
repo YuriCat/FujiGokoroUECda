@@ -2,60 +2,62 @@
 #include <sys/stat.h>
 #include "util.hpp"
 
+using namespace std;
+
 bool BetaDistribution::exam() const {
     if (a < 0 || b < 0) return false;
     if (a == 0 && b == 0) return false;
     return true;
 }
-std::string BetaDistribution::toString() const {
-    std::ostringstream oss;
+string BetaDistribution::toString() const {
+    ostringstream oss;
     oss << "Be(" << a << ", " << b << ")";
     return oss.str();
 }
-std::ostream& operator<<(std::ostream& out, const BetaDistribution& b) {
+ostream& operator<<(ostream& out, const BetaDistribution& b) {
     out << b.toString();
     return out;
 }
 
-std::string toupper(const std::string& str) {
-    std::string s;
-    for (char c : str) s.push_back(std::toupper(c));
+string toupper(const string& str) {
+    string s;
+    for (char c : str) s.push_back(toupper(c));
     return s;
 }
-std::string tolower(const std::string& str) {
-    std::string s;
-    for (char c : str) s.push_back(std::tolower(c));
+string tolower(const string& str) {
+    string s;
+    for (char c : str) s.push_back(tolower(c));
     return s;
 }
-bool isSuffix(const std::string& s, const std::string& suffix) {
+bool isSuffix(const string& s, const string& suffix) {
     if (s.size() < suffix.size()) return false;
     return s.substr(s.size() - suffix.size()) == suffix;
 }
-std::vector<std::string> split(const std::string& s,
+vector<string> split(const string& s,
                                char separator) {
-    std::vector<std::string> result;
-    std::string::size_type p = 0;
-    std::string::size_type q;
-    while ((q = s.find(separator, p)) != std::string::npos) {
+    vector<string> result;
+    string::size_type p = 0;
+    string::size_type q;
+    while ((q = s.find(separator, p)) != string::npos) {
         result.emplace_back(s, p, q - p);
         p = q + 1;
     }
     result.emplace_back(s, p);
     return result;
 }
-std::vector<std::string> split(const std::string& s,
-                               const std::string& separators) {
-    std::vector<std::string> result;
-    std::string::size_type p = 0;
-    std::string::size_type q;
+vector<string> split(const string& s,
+                               const string& separators) {
+    vector<string> result;
+    string::size_type p = 0;
+    string::size_type q;
     
     bool found;
     do {
         found = false;
-        std::string::size_type minq = s.size();
+        string::size_type minq = s.size();
         for (char sep : separators) {
             //cerr << "separator : " << sep << endl;
-            if ((q = s.find(sep, p)) != std::string::npos) {
+            if ((q = s.find(sep, p)) != string::npos) {
                 minq = min(minq, q);
                 found = true;
             }
@@ -69,9 +71,9 @@ std::vector<std::string> split(const std::string& s,
     return result;
 }
 
-std::vector<std::string> getFilePathVector(const std::string& ipath, const std::string& suffix, bool recursive) {
+vector<string> getFilePathVector(const string& ipath, const string& suffix, bool recursive) {
     // make file path vector by suffix
-    std::vector<std::string> file_names;
+    vector<string> file_names;
     DIR *pdir;
     dirent *pentry;
 
@@ -80,13 +82,13 @@ std::vector<std::string> getFilePathVector(const std::string& ipath, const std::
     do {
         pentry = readdir(pdir);
         if (pentry != nullptr) {
-            const std::string name = std::string(pentry->d_name);
-            const std::string full_path = ipath + name;
+            const string name = string(pentry->d_name);
+            const string full_path = ipath + name;
             struct stat st;
             stat(full_path.c_str(), &st);
             if ((st.st_mode & S_IFMT) == S_IFDIR) { // is directory
                 if (recursive && name != "." && name != "..") {
-                    std::vector<std::string> tfile_names = getFilePathVector(full_path + "/", suffix, true);
+                    vector<string> tfile_names = getFilePathVector(full_path + "/", suffix, true);
                     file_names.insert(file_names.end(), tfile_names.begin(), tfile_names.end()); // add vector
                 }
             } else if (suffix.size() == 0 || isSuffix(name, suffix)) {
@@ -97,7 +99,7 @@ std::vector<std::string> getFilePathVector(const std::string& ipath, const std::
     return file_names;
 }
 
-std::vector<std::string> getFilePathVectorRecursively(const std::string& ipath, const std::string& suffix) {
+vector<string> getFilePathVectorRecursively(const string& ipath, const string& suffix) {
     // make file path vector by suffix recursively
     return getFilePathVector(ipath, suffix, true);
 }
