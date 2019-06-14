@@ -34,7 +34,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
 
     assert(pqr == CardsToPQR(cards));
     const int ord = b.order();
-#define PPW(s) { DERR << "PPW" << s << " " << cards << endl; return true; }
+#define PPW(s) { DERR << "PPW" << s << " " << cards << std::endl; return true; }
 
     const Cards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
@@ -120,7 +120,7 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
 
     assert(myHand.exam1stHalf() && opsHand.exam_nd());
     const int ord = b.order();
-#define PW(s) { DERR << "PPW" << s << " " << myHand.cards << ", " << opsHand.cards << endl; return true; }
+#define PW(s) { DERR << "PPW" << s << " " << myHand.cards << ", " << opsHand.cards << std::endl; return true; }
 
     const Cards ndpqr = myHand.pqr & opsHand.nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
@@ -439,7 +439,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                     nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
                     if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
                         // 両方で勝ったので必勝
-                        DERR << "BRPW(S3)!!!" << endl;
+                        DERR << "BRPW(S3)!!!" << std::endl;
                         return true;
                     }
                 }
@@ -447,7 +447,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         }
         // BNPWを検討
         if (checkHandBNPW(depth - 1, mbuf, m, myHand, opsHand, b, fieldInfo)) {
-            DERR << "BNPW - " << m << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << endl;
+            DERR << "BNPW - " << m << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << std::endl;
             return true;
         }
     }

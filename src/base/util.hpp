@@ -46,7 +46,6 @@
 #define ASSERT(X, Y)
 #define FASSERT(f, o)
 #define FEQUALS(f0, f1, o)
-#define ASSERT_EQ(k0, k1)
 #else
 #define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
 // 浮動小数点がまともな値を取っているかどうかのアサーション
@@ -59,15 +58,10 @@ if(!(!std::isinf(f1) && !std::isnan(f1))){ cerr << (f1) << endl; {o}};\
 assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
 if(!(abs((f0) - (f1)) <= 0.00001)){ cerr << (f0) << " <-> " << (f1) << endl; {o}\
 assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
-#define ASSERT_EQ(k0, k1) ASSERT((k0) == (k1), cerr << (k0) << " <-> " << (k1) << endl;);
 #endif // NDEBUG
 
 // 標準ライブラリ使用
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::max;
-using std::min;
+//using std::endl;
 using std::size_t;
 
 template <typename T>

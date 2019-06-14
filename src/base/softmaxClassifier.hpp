@@ -19,8 +19,8 @@ struct MomentQuadruple{
 template <int _N_PARAMS_, int _N_PHASES_ = 1, int _N_STAGES_ = 1, typename _real_t = double>
 class SoftmaxClassifier {
 private:
-    static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, cerr << i << endl;); }
-    static void assert_stage(int st) { ASSERT(0 <= st && st < N_STAGES_, cerr << st << endl;); }
+    static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, std::cerr << i << std::endl;); }
+    static void assert_stage(int st) { ASSERT(0 <= st && st < N_STAGES_, std::cerr << st << std::endl;); }
     mutable std::mutex mutex_;
     
 public:
@@ -72,12 +72,12 @@ public:
         memset(param_, 0, sizeof(param_));
         std::ifstream ifs(fName, std::ios::in);
         if (!ifs) {
-            cerr << "SoftmaxClassifier::fin() : failed to import! " << fName << endl;
+            std::cerr << "SoftmaxClassifier::fin() : failed to import! " << fName << std::endl;
             return -1;
         }
         for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
             if (!ifs) {
-                cerr << "SoftmaxClassifier::fin() : failed to read parameter " << i << endl;
+                std::cerr << "SoftmaxClassifier::fin() : failed to read parameter " << i << std::endl;
                 return -1;
             }
             ifs >> param_[i];
@@ -89,7 +89,7 @@ public:
         memset(param_, 0, sizeof(param_));
         FILE *const pf = fopen(fName.c_str(), "rb");
         if (pf == nullptr) {
-            cerr << "SoftmaxClassifier::bin() : failed to import! " << fName << endl;
+            std::cerr << "SoftmaxClassifier::bin() : failed to import! " << fName << std::endl;
             return -1;
         }
         fread(param_, sizeof(param_), 1, pf);
@@ -118,9 +118,9 @@ public:
     int hout(const std::string& fName, const std::string& tableName) const { // ヘッダファイル型
         std::ofstream ofs(fName, std::ios::out);
         if (!ofs) return -1;
-        ofs << "double " << tableName << "[] = {" << endl;
+        ofs << "double " << tableName << "[] = {" << std::endl;
         for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
-            ofs << param_[i] << "," << endl;
+            ofs << param_[i] << "," << std::endl;
         }
         ofs << "};";
         return 0;
@@ -180,9 +180,9 @@ private:
     constexpr static double PARAM_SUM_VALUE_MAX = 256; // 大きい値になりすぎるのを防ぐ
     constexpr static double VAR_ALPHA_MIN = 0.0001; // 分散が小さい要素に対応するパラメータの学習率が上がり過ぎないようにする
     
-    static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, cerr << i << endl;); }
-    static void assert_phase(int i) { ASSERT(0 <= i && i < N_PHASES_, cerr << i << endl;); }
-    static void assert_stage(int i) { ASSERT(0 <= i && i < N_STAGES_, cerr << i << endl;); }
+    static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, std::cerr << i << std::endl;); }
+    static void assert_phase(int i) { ASSERT(0 <= i && i < N_PHASES_, std::cerr << i << std::endl;); }
+    static void assert_stage(int i) { ASSERT(0 <= i && i < N_STAGES_, std::cerr << i << std::endl;); }
     
     classifier_t *pclassifier_;
     
@@ -334,7 +334,7 @@ public:
         // パラメータ数が多いとき
         // 特徴量の値の分散が大きいとき
         // にはパラメータの値を小さめに制限
-        return PARAM_SUM_VALUE_MAX / sqrt(sqrt(N_PARAMS_)) / sqrt(max(all_phase_var(i, st), 1.0));
+        return PARAM_SUM_VALUE_MAX / std::sqrt(sqrt(N_PARAMS_)) / std::sqrt(std::max(all_phase_var(i, st), 1.0));
     }
     
     void setClassifier(classifier_t *const apc) {
@@ -539,8 +539,8 @@ public:
             for (const auto& element : q.feature_[q.chosenIndex_]) { // chosen action
                 double dg = element.second / (var(element.first, ph) + VAR_ALPHA_MIN) * reward;
                 
-                FASSERT(dg, cerr << "elm = " << element.first << " " << element.second
-                        << " / " << var(element.first, ph) << endl;);
+                FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
+                        << " / " << var(element.first, ph) << std::endl;);
                 
                 gradient_[st][element.first] += dg;
             }
@@ -548,12 +548,12 @@ public:
             for (int m = 0, n = q.feature_.size(); m < n; m++) { // all actions
                 double possibility = (q.score_sum_ > 0) ? (q.score_[m] / q.score_sum_) : (1.0 / n);
                 
-                FASSERT(possibility, cerr << q.score_[m] << " / " << q.score_sum_ << endl;);
+                FASSERT(possibility, std::cerr << q.score_[m] << " / " << q.score_sum_ << std::endl;);
                 for (const auto& element : q.feature_[m]) { // all features
                     double dg = -element.second / (var(element.first, ph) + VAR_ALPHA_MIN) * possibility * reward;
                     
-                    FASSERT(dg, cerr << "elm = " << element.first << " grd = " << dg
-                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << endl;);
+                    FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
+                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << std::endl;);
                     
                     gradient_[st][element.first] += dg;
                 }
@@ -591,8 +591,8 @@ public:
             for (const auto& element : q.feature_[q.chosenIndex_]) { // chosen action
                 double dg = element.second / var(element.first, ph) * reward;
                 
-                FASSERT(dg, cerr << "elm = " << element.first << " " << element.second
-                        << " / " << var(element.first, ph) << endl;);
+                FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
+                        << " / " << var(element.first, ph) << std::endl;);
                 
                 gradient_[element.first] += dg;
             }
@@ -600,12 +600,12 @@ public:
             for (int m = 0, n = q.feature_.size(); m < n; m++) { // all actions
                 double possibility = (q.score_sum_ > 0) ? (q.score_[m] / q.score_sum_) : (1 / (double)n);
                 
-                FASSERT(possibility, cerr << q.score_[m] << " / " << q.score_sum_ << endl;);
+                FASSERT(possibility, std::cerr << q.score_[m] << " / " << q.score_sum_ << std::endl;);
                 for (const auto& element : q.feature_[m]) { // all features
                     double dg = -element.second / var(element.first, ph) * possibility * reward;
                     
-                    FASSERT(dg, cerr << "elm = " << element.first << " grd = " << dg
-                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << endl;);
+                    FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
+                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << std::endl;);
                     
                     gradient_[element.first] += dg;
                 }
@@ -631,14 +631,14 @@ public:
             const double lam1 = L1_, lam2 = L2_;
             for (int m = 0, n = feature_.size(); m < n; m++) { // all candidates
                 double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1.0 / n);
-                FASSERT(possibility, cerr << score_[m] << " / " << score_sum_ << endl;);
+                FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
                 
                 double correct = (m == correctIndex_) ? 1.0 : 0.0;
                 for (const auto& element : feature_[m]) {
                     const int pi = element.first + st * params();
                     double dg = (correct - possibility) * element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN);
-                    FASSERT(dg, cerr << "elm = " << element.first << " grd = " << dg
-                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << endl;);
+                    FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
+                            << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << std::endl;);
                     
                     param[pi] += e / T * dg;
                     
@@ -661,7 +661,7 @@ public:
                     
                     // 絶対値が大きい場合は丸める
                     double paramLimit = limit(element.first, st);
-                    param[pi] = max(-paramLimit, min(paramLimit, (double)param[pi]));
+                    param[pi] = std::max(-paramLimit, std::min(paramLimit, (double)param[pi]));
                     FASSERT(param[pi],);
                 }
             }
@@ -689,12 +689,12 @@ public:
                     } else {
                         param[pi] += nrm;
                     }
-                    //if (nrm > 100) { cerr << nrm << endl; }
+                    //if (nrm > 100) { std::cerr << nrm << std::endl; }
                 }
                 
                 // 絶対値が大きい場合は丸める
                 double paramLimit = limit(i, st);
-                param[pi] = max(-paramLimit, min(paramLimit, (double)param[pi]));
+                param[pi] = std::max(-paramLimit, std::min(paramLimit, (double)param[pi]));
                 FASSERT(param[pi],);
             }
             pclassifier_->unlock();
@@ -731,21 +731,21 @@ public:
         for (const auto& element : feature_[idx]) { // correct answer
             double dg = element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN);
             
-            FASSERT(dg, cerr << "elm = " << element.first << " " << element.second
-                   << " / " << var(element.first, ph, st) << endl;);
+            FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
+                   << " / " << var(element.first, ph, st) << std::endl;);
             
             gradient_[st][element.first] += dg;
         }
         for (int m = 0, n = feature_.size(); m < n; m++) { // all answers
             double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1 / (double)n);
             
-            FASSERT(possibility, cerr << score_[m] << " / " << score_sum_ << endl;);
+            FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
             
             for (const auto& element : feature_[m]) {
                 double dg = -element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN) * possibility;
                 
-                FASSERT(dg, cerr << "elm = " << element.first << " grd = " << dg
-                       << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << endl;);
+                FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
+                       << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << std::endl;);
                 
                 gradient_[st][element.first] += dg;
             }
@@ -759,7 +759,7 @@ public:
             for (int m = 0, n = feature_.size(); m < n; m++) {
                 double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1 / (double)n);
                 
-                FASSERT(possibility, cerr << score_[m] << " / " << score_sum_ << endl;);
+                FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
                 
                 if (possibility > 0) {
                     entropySum_[ph][st] += - possibility * log(possibility) / log(2.0);
@@ -790,16 +790,16 @@ public:
                     bestHitRateSum_[ph][st] += best ? (1.0 / bestIdx.size()) : 0;
                     
                     const double dkl = -(log(score_[idx] / score_sum_) / log(2.0));
-                    FASSERT(dkl, cerr << " dkl" << endl;);
+                    FASSERT(dkl, std::cerr << " dkl" << std::endl;);
                     
                     KLDivergenceSum_[ph][st] += dkl;
                 } else {
                     meanHitRateSum_[ph][st] += 1.0 / feature_.size();
                     bestHitRateSum_[ph][st] += 1.0 / feature_.size();
                     KLDivergenceSum_[ph][st] += -(log(1.0 / feature_.size()) / log(2.0));
-                    //cerr << " n- " << -(log(1.0 / feature_.size()) / log(2.0)) << endl;
+                    //cerr << " n- " << -(log(1.0 / feature_.size()) / log(2.0)) << std::endl;
                 }
-                //cerr << KLDivergenceSum_[ph] << endl;
+                //cerr << KLDivergenceSum_[ph] << std::endl;
             }
             trials_[ph][st]++;
         } else {
@@ -831,7 +831,7 @@ public:
 
         std::ifstream ifs(fName, std::ios::in);
         if (!ifs) {
-            cerr << "SoftmaxClassifyLearner::finFeatureSurvey() : failed to import! " << fName << endl;
+            std::cerr << "SoftmaxClassifyLearner::finFeatureSurvey() : failed to import! " << fName << std::endl;
             return -1;
         }
         
@@ -871,7 +871,7 @@ public:
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; ofs && st < N_STAGES_; st++) {
                 for (int i = 0; ofs && i < N_PARAMS_; i++) {
-                    ofs << frequency(i, ph, st) << " " << mean(i, ph, st) << " " << var(i, ph, st) << endl;
+                    ofs << frequency(i, ph, st) << " " << mean(i, ph, st) << " " << var(i, ph, st) << std::endl;
                 }
             }
         }
@@ -895,7 +895,7 @@ public:
                 }
                 oss << " ";
             }
-            oss << endl;
+            oss << std::endl;
         }
         return oss.str();
     }

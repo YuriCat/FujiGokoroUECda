@@ -501,14 +501,14 @@ union Cards {
     constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
 
     Cards masked(Cards c) const {
-        return Cards(plain_ & ~c.plain_, max(0, joker_ - c.joker_));
+        return Cards(plain_ & ~c.plain_, std::max(0, joker_ - c.joker_));
     }
     Cards high(int n) const {
         if (joker() >= n) return Cards(0, n);
         else return Cards(pickHigh(plain_, n - joker_), joker_);
     }
     Cards common(Cards c) const {
-        return Cards(plain_ & c.plain_, min(joker_, c.joker_));
+        return Cards(plain_ & c.plain_, std::min(joker_, c.joker_));
     }
 
     // 指定されたランクのスート集合を得る

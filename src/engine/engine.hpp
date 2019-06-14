@@ -54,7 +54,7 @@ public:
         // ランク初期化まで残り何試合か
         // 公式には未定だが、多くの場合100試合だろうから100試合としておく
         const int gbci = numGamesBeforeClassInit(record.getLatestGameNum());
-        shared.gameReward = standardReward(min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
+        shared.gameReward = standardReward(std::min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
@@ -80,7 +80,7 @@ public:
         RootInfo root;
         Cards changeCards = CARDS_NULL;
         const Cards myCards = game.dealtCards[myPlayerNum];
-        if (monitor) cerr << "My Cards : " << myCards << endl;
+        if (monitor) std::cerr << "My Cards : " << myCards << std::endl;
 
         // 手札レベルで枝刈りする場合
         Cards tmp = myCards;
@@ -117,7 +117,7 @@ public:
                 mine.set(restCards);
                 ops.set(CARDS_ALL - restCards);
                 if (judgeHandMate(1, rootTools.mbuf, mine, ops, b, fieldInfo)) {
-                    CERR << "CHANGE MATE!" << endl;
+                    CERR << "CHANGE MATE!" << std::endl;
                     return cand[i]; // 必勝
                 }
             }
@@ -160,10 +160,10 @@ public:
         assert(countCards(changeCards) == changeQty);
         assert(holdsCards(myCards, changeCards));
         if (monitor) {
-            cerr << root.toString();
-            cerr << "\033[1m\033[" << 34 << "m";
-            cerr << "Best Change : " << changeCards << endl;
-            cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << root.toString();
+            std::cerr << "\033[1m\033[" << 34 << "m";
+            std::cerr << "Best Change : " << changeCards << std::endl;
+            std::cerr << "\033[" << 39 << "m\033[0m";
         }
         return changeCards;
     }
@@ -188,7 +188,7 @@ public:
 
         Field field;
         field.fromRecord(game, myPlayerNum);
-        if (monitor) cerr << field.toString();
+        if (monitor) std::cerr << field.toString();
         field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
 
@@ -205,15 +205,15 @@ public:
         // 合法着手生成
         int NMoves = genMove(mbuf.data(), myCards, b);
         if (NMoves <= 0) { // 合法着手なし
-            cerr << "No valid move." << endl;
+            std::cerr << "No valid move." << std::endl;
             return MOVE_PASS;
         }
         if (NMoves == 1) {
             // 合法着手1つ。パスのみか、自分スタートで手札1枚
             // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
             if (monitor) {
-                if (!mbuf[0].isPASS()) cerr << "final move. " << mbuf[0] << endl;
-                else cerr << "no chance. PASS" << endl;
+                if (!mbuf[0].isPASS()) std::cerr << "final move. " << mbuf[0] << std::endl;
+                else std::cerr << "no chance. PASS" << std::endl;
             }
             if (!mbuf[0].isPASS()) {
                 shared.setMyMate(field.bestClass()); // 上がり
@@ -256,9 +256,9 @@ public:
                     L2Judge lj(Settings::policyMode ? 200000 : 2000000, rootTools.mbuf);
                     int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
                     if (l2Result == L2_WIN) { // 勝ち
-                        DERR << "l2win!" << endl;
+                        DERR << "l2win!" << std::endl;
                         move.setL2Mate(); fieldInfo.setL2Mate();
-                        DERR << fieldInfo << endl;
+                        DERR << fieldInfo << std::endl;
                     } else if (l2Result == L2_LOSE) {
                         move.setL2GiveUp();
                     } else {
@@ -289,10 +289,10 @@ public:
 
         if (monitor) {
             // 着手候補一覧表示
-            cerr << "My Cards : " << myCards << endl;
-            cerr << b << " " << fieldInfo << endl;
+            std::cerr << "My Cards : " << myCards << std::endl;
+            std::cerr << b << " " << fieldInfo << std::endl;
             for (int i = 0; i < NMoves; i++) {
-                cerr << mbuf[i] << toInfoString(mbuf[i], b) << endl;
+                std::cerr << mbuf[i] << toInfoString(mbuf[i], b) << std::endl;
             }
         }
 
@@ -375,10 +375,10 @@ public:
         if (playMove == MOVE_NONE) playMove = root.child[0].move;
 
         if (monitor) {
-            cerr << root.toString();
-            cerr << "\033[1m\033[" << 31 << "m";
-            cerr << "Best Move : " << playMove << endl;
-            cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << root.toString();
+            std::cerr << "\033[1m\033[" << 31 << "m";
+            std::cerr << "Best Move : " << playMove << std::endl;
+            std::cerr << "\033[" << 39 << "m\033[0m";
         }
         return playMove;
     }

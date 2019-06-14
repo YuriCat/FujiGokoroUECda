@@ -85,19 +85,19 @@ struct SharedData : public BaseSharedData {
     void setMyL2Result(int result) { // L2詰み宣言
         if (L2Result == -2) L2Result = result;
     }
-    void feedResult(int realClass) {
+    void feedMyResult(int realClass) {
         // ラスト2人
         if (realClass >= N_PLAYERS - 2) {
             bool realWin = realClass == N_PLAYERS - 2;
-            if (realWin && L2Result == -1) CERR << "L2 Lucky!" << endl;
-            if (!realWin && L2Result == 1) CERR << "L2 Miss!" << endl;
+            if (realWin && L2Result == -1) CERR << "L2 Lucky!" << std::endl;
+            if (!realWin && L2Result == 1) CERR << "L2 Miss!" << std::endl;
             myL2Result[realClass - (N_PLAYERS - 2)][1 - L2Result] += 1;
         }
         // MATE宣言あり
         if (mateClass != -1) {
             if (mateClass != realClass) { // MATE宣言失敗
                 CERR << "Mate Miss! DCL:" << mateClass;
-                CERR << " REAL:" << realClass << endl;
+                CERR << " REAL:" << realClass << std::endl;
             }
             myMateResult[realClass][mateClass] += 1;
         }
@@ -121,7 +121,7 @@ struct SharedData : public BaseSharedData {
         int myNewClass = game.newClassOf(record.myPlayerNum);
 
         // 自己スタッツ更新
-        feedResult(myNewClass);
+        feedMyResult(myNewClass);
     }
     void closeMatch();
 };
@@ -198,7 +198,7 @@ struct RootInfo {
 
     template <class callback_t>
     int sort(int ed, const callback_t& callback) { // 数値基準を定義して候補行動をソート
-        const int num = min(ed, candidates);
+        const int num = std::min(ed, candidates);
         std::stable_sort(child.begin(), child.begin() + num,
                             [&](const RootAction& a, const RootAction& b)->bool{
                                 return callback(a) > callback(b);
@@ -211,7 +211,7 @@ struct RootInfo {
     }
     template <class callback_t>
     int binary_sort(int ed, const callback_t& callback) { // ブール値を定義して候補行動をソート
-        const int num = min(ed, candidates);
+        const int num = std::min(ed, candidates);
         std::stable_sort(child.begin(), child.begin() + num,
                             [&](const RootAction& a, const RootAction& b)->bool{
                                 return (callback(a) ? 1 : 0) > (callback(b) ? 1 : 0);

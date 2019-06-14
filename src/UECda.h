@@ -200,7 +200,7 @@ namespace UECda {
     static Move TableToMove(const int table[8][15]) {
         Cards chara = TableToCards(table, true);
         Cards used = TableToCards(table, false);
-        DERR << "chara " << chara << " used " << used << endl;
+        DERR << "chara " << chara << " used " << used << std::endl;
         return CardsToMove(chara, used);
     }
     

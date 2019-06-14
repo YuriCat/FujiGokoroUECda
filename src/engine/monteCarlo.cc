@@ -3,6 +3,8 @@
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
 
+using namespace std;
+
 namespace Settings {
     const double valuePerClock = 5.0 / (THINKING_LEVEL * THINKING_LEVEL) / pow(10.0, 10);
     // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い

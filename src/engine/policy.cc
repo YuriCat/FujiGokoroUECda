@@ -4,6 +4,101 @@
 
 using namespace std;
 
+#define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature);\
+for (int i = 0; i < FEA_NUM(feature); i++) { os(base + i); } out << endl; }
+    
+#define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
+for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { out << endl; }} out << endl; }
+
+namespace PlayPolicySpace {
+    int commentToPolicyParam(ostream& out, const policy_value_t param[FEA_NUM_ALL]) {
+        auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
+
+        out << "****** MOVE POLICY ******" << endl;
+
+        out << "HAND_SNOWL" << endl;
+        int base = FEA_IDX(FEA_HAND_SNOWL);
+        string situationString[3] = { "NF", "RF", "UR" };
+        string orderString[2] = { "NML", "REV" };
+        for (int s = 0; s < 3; s++) {
+            for (int o = 0; o < 2; o++) {
+                out << situationString[s] << " " << orderString[o] << endl;
+                out << "  SEQ" << endl;
+                for (int i = 0; i < 11; i++) os(base + i);
+                out << endl;
+                for (int i = 0; i < 10; i++) os(base + 11 + i);
+                out << endl;
+                for (int i = 0; i < 9; i++) os(base + 21 + i);
+                out << endl;
+                out << "  GROUP" << endl;
+                for (int i = 0; i < 13; i++) {
+                    for (int j = 0; j < 4; j++) os(base + 30 + 4 * i + j);
+                    out << endl;
+                }
+                out << "  JOKER" << endl;
+                os(base + 82); out << endl;
+                base += 83;
+            }
+        }
+
+        LINEOUT(FEA_HAND_S3, "JK_S3");
+        LINEOUT(FEA_HAND_PQR_RANK, "AVG_PQR");
+        LINEOUT(FEA_HAND_NF_PARTY, "NF_PARTY");
+        LINEOUT(FEA_HAND_P8_JOKER, "P8_JOKER");
+        LINEOUT(FEA_MOVE_QTY, "QTY");
+        LINEOUT(FEA_SUITLOCK_EFFECT, "SUITLOCK_EFFECT");
+        LINEOUT(FEA_SAME_QR, "SAME_QR");
+        LINEOUT(FEA_REV_CLASS, "REV_CLASS");
+        LINEOUT(FEA_MOVE_S3, "S3 ON JOKER");
+        LINEOUT(FEA_MOVE_JOKER_AGAINST_S3, "JOKER AGAINST S3");
+        LINEOUT(FEA_PASS_PHASE, "PASS_PHASE");
+        LINEOUT(FEA_PASS_DOM, "PASS_DOM");
+        LINEOUT(FEA_PASS_OWNER_DISTANCE, "PASS_OWNER_DISTANCE");
+        LINEOUTX(FEA_PASS_NAWAKE_OWNER, "PASS_DOM_NAWAKE_OWNER", 8);
+        LINEOUT(FEA_MOVE_SEQ, "SEQ");
+        LINEOUT(FEA_MOVE_RF_GROUP_BREAK, "RF_GROUP_BREAK");
+        LINEOUT(FEA_MOVE_NFDOM_PASSDOM , "NFDOM_PASSDOM");
+        LINEOUT(FEA_MOVE_NF_EIGHT_MANY_WEAKERS, "NF_EIGHT_MANY_WEAKERS_NOREV");
+        LINEOUT(FEA_MOVE_EIGHT_QTY, "EIGHT_QTY");
+        LINEOUT(FEA_MOVE_MIN_RANK, "MIN_RANK");
+        //LINEOUT(,);
+        return 0;
+    }
+}
+namespace ChangePolicySpace {
+    int commentToPolicyParam(ostream& out, const policy_value_t param[FEA_NUM_ALL]) {
+        auto os = [&out, param](int idx)->void{ out << param[idx] << " "; };
+
+        out << "****** CHANGE POLICY ******" << endl;
+        {
+            out << "1PQR or SEQ" << endl;
+            int base = FEA_IDX(FEA_CHANGE_HAND_1PQR_SEQ);
+            out << "  SEQ" << endl;
+            for (int i = 0; i < 11; i++) { os(base + i); } out << endl;
+            for (int i = 0; i < 10; i++) { os(base + 11 + i); } out << endl;
+            for (int i = 0; i < 9; i++) { os(base + 21 + i); } out << endl;
+            out << "  GROUP" << endl;
+            for (int i = 0; i < 13; i++) {
+                for (int j = 0; j < 4; j++) { os(base + 30 + 4 * i + j); } out << endl;
+            }
+        }
+
+        LINEOUT(FEA_CHANGE_HAND_D3, "D3 BONUS");
+        LINEOUT(FEA_CHANGE_HAND_JOKER_S3, "S3-JOKER LINK BONUS");
+        LINEOUT(FEA_CHANGE_HAND_MAX1_RANK, "MAX1 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MAX2_RANK, "MAX2 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MIN1_RANK, "MIN1 RANK");
+        LINEOUT(FEA_CHANGE_HAND_MIN2_RANK, "MIN2 RANK");
+        LINEOUT(FEA_CHANGE_DOUBLE, "DOUBLE PRESENT");
+        LINEOUT(FEA_CHANGE_PART_SEQ, "PART SEQ PRESENT");
+        //LINEOUT(,);
+        return 0;
+    }
+}
+
+#undef LINEOUTX
+#undef LINEOUT
+
 double pqrRankScore(Cards pqr, int jk, int ord) {
     // 階級平均点を計算
     int r = 0;

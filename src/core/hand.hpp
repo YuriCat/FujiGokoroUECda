@@ -107,29 +107,29 @@ struct Hand {
     // 当然だが基本のcardsがおかしかったらどうにもならない
     bool exam_cards() const {
         if (!holdsCards(CARDS_ALL, cards)) {
-            cerr << "Hand : exam_cards() <<" << cards << endl;
+            std::cerr << "Hand : exam_cards() <<" << cards << std::endl;
             return false;
         }
         return true;
     }
     bool exam_key() const {
         if (key != CardsToHashKey(cards)) {
-            cerr << "Hand : exam_key()" << cards << " <-> ";
-            cerr << std::hex << key << std::dec << endl;
+            std::cerr << "Hand : exam_key()" << cards << " <-> ";
+            std::cerr << std::hex << key << std::dec << std::endl;
             return false;
         }
         return true;
     }
     bool exam_qty() const {
         if (qty != cards.count()) {
-            cerr << "Hand : exam_qty() " << cards << " <-> " << qty << endl;
+            std::cerr << "Hand : exam_qty() " << cards << " <-> " << qty << std::endl;
             return false;
         }
         return true;
     }
     bool exam_jk() const {
         if (jk != cards.joker()) {
-            cerr << "Hand : exam_jk()" << endl;
+            std::cerr << "Hand : exam_jk()" << std::endl;
             return false;
         }
         return true;
@@ -140,12 +140,12 @@ struct Hand {
             uint32_t rq = rc.count();
             uint32_t rqr = qr[r];
             if (rqr != rq) {
-                cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
+                std::cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << std::endl;
                 return false;
             } // 枚数型があってない
         }
         if (qr & ~CARDS_ALL) {
-            cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << endl;
+            std::cerr << "Hand : exam_qr()" << cards << " -> " << BitArray64<4>(qr) << std::endl;
             return false;
         }
         return true;
@@ -157,18 +157,18 @@ struct Hand {
             uint32_t rpqr = pqr[r];
             if (anyCards(rc)) {
                 if (1U << (rq - 1) != rpqr) {
-                    cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+                    std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
                     return false;
                 } // pqrの定義
             } else {
                 if (rpqr) {
-                    cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+                    std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
                     return false;
                 }
             }
         }
         if (pqr & ~CARDS_PLAIN_ALL) {
-            cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << endl;
+            std::cerr << "Hand : exam_pqr()" << cards << " -> " << pqr << std::endl;
             return false;
         }
         return true;
@@ -179,19 +179,19 @@ struct Hand {
             uint32_t rq = rc.count();
             uint32_t rsc = sc[r];
             if ((1U << rq) - 1U != rsc) {
-                cerr << "Hand : exam_sc()" << endl;
+                std::cerr << "Hand : exam_sc()" << std::endl;
                 return false;
             } // scの定義
         }
         if (sc & ~CARDS_PLAIN_ALL) {
-            cerr << "Hand : exam_sc()" << endl;
+            std::cerr << "Hand : exam_sc()" << std::endl;
             return false;
         }
         return true;
     }
     bool exam_seq() const {
         if (seq != polymRanks(cards.plain(), cards.joker(), 3)) {
-            cerr << "Hand : exam_seq()" << endl;
+            std::cerr << "Hand : exam_seq()" << std::endl;
             return false;
         }
         return true;
@@ -202,11 +202,11 @@ struct Hand {
         Cards tmpnd[2];
         PQRToND(pqr, containsJOKER(cards) ? 1 : 0, tmpnd);
         if (nd[0] != tmpnd[0]) {
-            cerr << "Hand : exam_nd_by_pqr() nd[0]" << endl;
+            std::cerr << "Hand : exam_nd_by_pqr() nd[0]" << std::endl;
             return false;
         }
         if (nd[1] != tmpnd[1]) {
-            cerr << "Hand : exam_nd_by_pqr() nd[1]" << endl;
+            std::cerr << "Hand : exam_nd_by_pqr() nd[1]" << std::endl;
             return false;
         }
         return true;
@@ -244,29 +244,29 @@ struct Hand {
 
     std::string toDebugString() const {
         std::ostringstream oss;
-        oss << "cards = " << cards << endl;
-        oss << "qty = " << qty << endl;
-        oss << "jk = " << jk << endl;
-        oss << "seq = " << seq << endl;
-        oss << "qr = " << CardArray(qr) << endl;
-        oss << "pqr = " << CardArray(pqr) << endl;
-        oss << "sc = " << CardArray(sc) << endl;
-        oss << "nd[0] = " << CardArray(nd[0]) << endl;
-        oss << "nd[1] = " << CardArray(nd[1]) << endl;
-        oss << std::hex << key << std::dec << endl;
+        oss << "cards = " << cards << std::endl;
+        oss << "qty = " << qty << std::endl;
+        oss << "jk = " << jk << std::endl;
+        oss << "seq = " << seq << std::endl;
+        oss << "qr = " << CardArray(qr) << std::endl;
+        oss << "pqr = " << CardArray(pqr) << std::endl;
+        oss << "sc = " << CardArray(sc) << std::endl;
+        oss << "nd[0] = " << CardArray(nd[0]) << std::endl;
+        oss << "nd[1] = " << CardArray(nd[1]) << std::endl;
+        oss << std::hex << key << std::dec << std::endl;
 
-        oss << "correct data : " << endl;
+        oss << "correct data : " << std::endl;
         Hand tmp;
         tmp.setAll(cards);
-        oss << "qty = " << tmp.qty << endl;
-        oss << "jk = " << tmp.jk << endl;
-        oss << "seq = " << tmp.seq << endl;
-        oss << "qr = " << CardArray(tmp.qr) << endl;
-        oss << "pqr = " << CardArray(tmp.pqr) << endl;
-        oss << "sc = " << CardArray(tmp.sc) << endl;
-        oss << "nd[0] = " << CardArray(tmp.nd[0]) << endl;
-        oss << "nd[1] = " << CardArray(tmp.nd[1]) << endl;
-        oss << std::hex << tmp.key << std::dec << endl;
+        oss << "qty = " << tmp.qty << std::endl;
+        oss << "jk = " << tmp.jk << std::endl;
+        oss << "seq = " << tmp.seq << std::endl;
+        oss << "qr = " << CardArray(tmp.qr) << std::endl;
+        oss << "pqr = " << CardArray(tmp.pqr) << std::endl;
+        oss << "sc = " << CardArray(tmp.sc) << std::endl;
+        oss << "nd[0] = " << CardArray(tmp.nd[0]) << std::endl;
+        oss << "nd[1] = " << CardArray(tmp.nd[1]) << std::endl;
+        oss << std::hex << tmp.key << std::dec << std::endl;
 
         return oss.str();
     }
