@@ -161,13 +161,7 @@ constexpr int IntCardToRank(IntCard ic) { return int(ic) >> 2; }
 constexpr int IntCardToSuitNum(IntCard ic) { return int(ic) & 3; }
 constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCardToSuitNum(ic)); }
 
-// 出力用クラス
-struct OutIntCard {
-    IntCard ic;
-    constexpr OutIntCard(const IntCard& arg): ic(arg) {}
-};
-
-extern std::ostream& operator <<(std::ostream& ost, const OutIntCard& arg);
+extern std::ostream& operator <<(std::ostream& ost, const IntCard& ic);
 extern IntCard StringToIntCard(const std::string& str);
 
 /**************************カード集合**************************/
@@ -533,7 +527,7 @@ union Cards {
     Cards& clear() { c_ = 0; return *this; }
     Cards& fill() { c_ = CARDS_ALL; return *this; }
 
-    Cards& merge(BitCards c) { return (*this) |= c; }
+    Cards& merge(BitCards c) { return (*this) += c; }
     Cards& mask(BitCards c) { return (*this) &= ~c; }
     Cards& maskJOKER() { return mask(CARDS_JOKER_RANK); }
 
@@ -572,6 +566,7 @@ union Cards {
         return ic;
     }
     Cards exceptLowest() const { return popLsb(c_); }
+
     class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
         friend Cards;
     public:
@@ -875,7 +870,7 @@ struct Move {
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
     }
-    
+
     void clear()                      { Move tmp = {0}; (*this) = tmp; }
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
@@ -895,7 +890,7 @@ struct Move {
     void setSingle(IntCard ic) {
         setGroup(1, IntCardToRank(ic), IntCardToSuits(ic));
     }
-    
+
     // True or False
     bool isPASS() const { return t == 0; }
     bool isGroup() const { return t == 1; }

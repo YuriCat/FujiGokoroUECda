@@ -83,11 +83,11 @@ SuitsInitializer suitsInitializer;
 
 // カード
 
-ostream& operator <<(ostream& ost, const OutIntCard& arg) {
-    if (arg.ic == INTCARD_JOKER) {
+ostream& operator <<(ostream& ost, const IntCard& ic) {
+    if (ic == INTCARD_JOKER) {
         ost << "JO";
     } else {
-        ost << suitNumChar[IntCardToSuitNum(arg.ic)] << rankChar[IntCardToRank(arg.ic)];
+        ost << suitNumChar[IntCardToSuitNum(ic)] << rankChar[IntCardToRank(ic)];
     }
     return ost;
 }
@@ -113,7 +113,7 @@ Cards::Cards(const string& str) {
 string Cards::toString() const {
     ostringstream oss;
     oss << "{";
-    for (IntCard ic : *this) oss << " " << OutIntCard(ic);
+    for (IntCard ic : *this) oss << " " << ic;
     oss << " }";
     return oss.str();
 }
@@ -215,7 +215,7 @@ Move CardsToMove(const Cards chara, const Cards used) {
 
 Move StringToMoveM(const string& str) {
     // 入力文字列からMove型への変更
-    Move mv = MOVE_NULL;
+    Move m = MOVE_NULL;
     bool jk = false; // joker used
     unsigned s = SUITS_NULL;
     int rank = RANK_NONE;
@@ -226,8 +226,8 @@ Move StringToMoveM(const string& str) {
     // special
     if (str == "p") return MOVE_PASS;
     if (str == "jk") {
-        mv.setSingleJOKER();
-        return mv;
+        m.setSingleJOKER();
+        return m;
     }
     // suits
     for (; i < str.size(); i++) {
@@ -260,11 +260,11 @@ Move StringToMoveM(const string& str) {
     if (rank == RANK_NONE) { CERR << "null lowest-rank" << endl; return MOVE_NONE; }
     if (!nr) { CERR << "zero ranks" << endl; return MOVE_NONE; }
     // seq or group?
-    if (nr > 1) mv.setSeq(nr, rank, s);
-    else  mv.setGroup(ns, rank, s);
+    if (nr > 1) m.setSeq(nr, rank, s);
+    else  m.setGroup(ns, rank, s);
     // joker
     if (jk) {
-        if (!mv.isSeq()) {
+        if (!m.isSeq()) {
             unsigned jks = SUITS_NULL;
             for (; i < str.size(); i++) {
                 char c = str[i];
@@ -277,7 +277,7 @@ Move StringToMoveM(const string& str) {
                 jks |= SuitNumToSuits(sn);
             }
             if (jks == SUITS_NULL || (jks & SUITS_X)) jks = SUITS_CDHS; // クインタのときはスート指定なくてもよい
-            mv.setJokerSuits(jks);
+            m.setJokerSuits(jks);
         } else {
             int jkr = RANK_NONE;
             for (; i < str.size(); i++) {
@@ -290,11 +290,11 @@ Move StringToMoveM(const string& str) {
                 }
                 jkr = r;
             }
-            mv.setJokerRank(jkr);
-            mv.setJokerSuits(mv.suits());
+            m.setJokerRank(jkr);
+            m.setJokerSuits(m.suits());
         }
     }
-    return mv;
+    return m;
 }
 
 ostream& operator <<(ostream& ost, const Board& b) { // Board出力
@@ -310,34 +310,34 @@ ostream& operator <<(ostream& ost, const Board& b) { // Board出力
     return ost;
 }
 
-bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q) {
+bool isSubjectivelyValid(Board b, Move m, const Cards& c, const int q) {
     // 不完全情報の上での合法性判定
     // c はそのプレーヤーが所持可能なカード
     // q はそのプレーヤーの手札枚数（公開されている情報）
-    if (mv.isPASS()) return true;
+    if (m.isPASS()) return true;
     // 枚数オーバー
-    if (mv.qty() > q) return false;
+    if (m.qty() > q) return false;
     // 持っていないはずの札を使った場合
-    if (!holdsCards(c, mv.cards())) return false;
+    if (!holdsCards(c, m.cards())) return false;
     if (!b.isNull()) {
-        if (b.type() != mv.type()) return false; // 型違い
+        if (b.type() != m.type()) return false; // 型違い
         if (b.isSeq()) {
-            if (!isValidSeqRank(mv.rank(), b.order(), b.rank(), mv.qty())) {
+            if (!isValidSeqRank(m.rank(), b.order(), b.rank(), m.qty())) {
                 return false;
             }
             if (b.suitsLocked()) {
-                if (b.suits() != mv.suits()) return false;
+                if (b.suits() != m.suits()) return false;
             }
         } else {
-            if (b.isSingleJOKER()) return mv.isS3();
-            if (mv.isSingleJOKER()) {
+            if (b.isSingleJOKER()) return m.isS3();
+            if (m.isSingleJOKER()) {
                 if (!b.isSingle()) return false;
             } else {
-                if (!isValidGroupRank(mv.rank(), b.order(), b.rank())) {
+                if (!isValidGroupRank(m.rank(), b.order(), b.rank())) {
                     return false;
                 }
                 if (b.suitsLocked()) {
-                    if (b.suits() != mv.suits()) return false;
+                    if (b.suits() != m.suits()) return false;
                 }
             }
         }
