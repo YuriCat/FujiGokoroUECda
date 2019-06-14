@@ -51,36 +51,30 @@ int testChangePolicyWithRecord(const MatchRecord& match) {
     int sameCount[N_PLAYERS][2] = {0};
     int trials[N_PLAYERS][2] = {0};
     uint64_t time[N_PLAYERS][2] = {0};
-    
+
     cerr << "change policy : " << endl;
-    
+
     Field field;
     for (const auto& game : match.games) {
-        iterateGameLogBeforePlay
-        (field, game,
-        [](const Field& field)->void{}, // first callback
-        [](const Field& field)->void{}, // dealt callback
-        [&](const Field& field, int from, int to, Cards ch)->int{ // change callback
+        for (ChangeRecord ch : ChangeRoller(field, game)) {
             Cards change[N_MAX_CHANGES + 1];
-            const int cl = field.classOf(from);
+            const int cl = field.classOf(ch.from);
             if (cl < MIDDLE) {
-                const Cards myCards = field.getCards(from);
+                const Cards myCards = field.getCards(ch.from);
                 const int changeQty = N_CHANGE_CARDS(cl);
                 const int NChanges = genChange(change, myCards, changeQty);
-                
+
                 Clock clock;
                 clock.start();
                 int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, changePolicy, dice);
-                time[from][cl] += clock.stop();
-                
+                time[ch.from][cl] += clock.stop();
+
                 Cards p = change[index];
 
-                if (ch == p) sameCount[from][cl] += 1;
-                trials[from][cl] += 1;
+                if (ch.cards == p) sameCount[ch.from][cl] += 1;
+                trials[ch.from][cl] += 1;
             }
-            return 0;
-        },
-        [](const Field& field)->void{}); // last callback
+        }
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << match.playerName[p];
@@ -102,29 +96,24 @@ int testPlayPolicyWithRecord(const MatchRecord& match) {
     int sameCount[N_PLAYERS] = {0};
     int trials[N_PLAYERS] = {0};
     uint64_t time[N_PLAYERS] = {0};
-    
+
     cerr << "play policy : " << endl;
-    
+
     Field field;
     for (const auto& game : match.games) {
-        iterateGameLogAfterChange
-        (field, game,
-        [](const Field& field)->void{}, // first callback
-        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
+        for (Move move : PlayRoller(field, game)) {
             int turn = field.turn();
             auto moves = genMove(field);
-            
+
             Clock clock;
             clock.start();
             int index = playWithBestPolicy(moves.data(), moves.size(), field, playPolicy, dice);
             time[turn] += clock.stop();
             Move p = moves[index];
-            
-            if (pl == p) sameCount[turn] += 1;
+
+            if (move == p) sameCount[turn] += 1;
             trials[turn] += 1;
-            return 0;
-        },
-        [](const Field& field)->void{}); // last callback
+        }
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         cerr << match.playerName[p];
@@ -140,49 +129,46 @@ int testSelector(const MatchRecord& match) {
     double sameProb[4][7][5] = {0}; // 確率ベースでの一致率
     double entropy[4][7][5] = {0}; // 方策エントロピー
     int trials = 0;
-    
+
     cerr << "play policy with selector : " << endl;
-    
+
     Field field;
     for (const auto& game : match.games) {
-        iterateGameLogAfterChange
-        (field, game,
-        [](const Field& field)->void{}, // first callback
-        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
+        for (Move move : PlayRoller(field, game)) {
             MoveInfo play[N_MAX_MOVES];
             double score[N_MAX_MOVES];
-            
+
             const int turnPlayer = field.turn();
             const int moves = genMove(play, field.getCards(turnPlayer), field.board);
-            
+
             playPolicyScore(score, play, moves, field, playPolicy, 0);
-            
-            int recordIndex = searchMove(play, moves, pl);
-            
+
+            int recordIndex = searchMove(play, moves, move);
+
             // ここから条件を少しずつ変更
             for (int i = 0; i < 7; i++) {
                 {
                     // softmax
                     double tscore[N_MAX_MOVES];
                     memcpy(tscore, score, sizeof(double) * (moves + 1));
-                    
+
                     double temp = 0.7 + 0.1 * i;
-                    
+
                     SoftmaxSelector<double> selector(tscore, moves, temp);
                     if (recordIndex >= 0) {
                         sameProb[0][i][0] += selector.prob(recordIndex);
                     }
                     entropy[0][i][0] += selector.entropy();
                 }
-                for (int j = 0; j < 5; ++j) {
+                for (int j = 0; j < 5; j++) {
                     {
                         // truncated
                         double tscore[N_MAX_MOVES];
                         memcpy(tscore, score, sizeof(double) * (moves + 1));
-                        
+
                         double temp = 0.7 + 0.1 * i;
                         double threshold = (4 - j) * 0.01;
-                        
+
                         ThresholdSoftmaxSelector<double> selector(tscore, moves, temp, threshold);
                         if (recordIndex >= 0) {
                             sameProb[1][i][j] += selector.prob(recordIndex);
@@ -193,11 +179,11 @@ int testSelector(const MatchRecord& match) {
                         // biased
                         double tscore[N_MAX_MOVES];
                         memcpy(tscore, score, sizeof(double) * (moves + 1));
-                        
+
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
                         double rate = 2; // エンジン設定が変化した場合注意
-                        
+
                         BiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, rate);
                         if (recordIndex >= 0) {
                             sameProb[2][i][j] += selector.prob(recordIndex);
@@ -208,12 +194,12 @@ int testSelector(const MatchRecord& match) {
                         // exp-biased
                         double tscore[N_MAX_MOVES];
                         memcpy(tscore, score, sizeof(double) * (moves + 1));
-                        
+
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
                         double etemp = 1 / log(2);
                         //double etemp = 0.1 * pow(4, j);
-                        
+
                         ExpBiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, etemp);
                         if (recordIndex >= 0) {
                             sameProb[3][i][j] += selector.prob(recordIndex);
@@ -223,32 +209,30 @@ int testSelector(const MatchRecord& match) {
                 }
             }
             trials += 1;
-            return 0;
-        },
-        [](const Field& field)->void{}); // last callback
+        }
     }
-    
+
     cerr << "Softmax Selector" << endl;
     for (int i = 0; i < 7; i++) {
         cerr << "(" << sameProb[0][i][0] / trials << ", " << entropy[0][i][0] / trials << ") " << endl;
     }
     cerr << "Truncated Softmax Selector" << endl;
     for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; ++j) {
+        for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[1][i][j] / trials << ", " << entropy[1][i][j] / trials << ") ";
         }
         cerr << endl;
     }
     cerr << "Polynomially Biased Softmax Selector" << endl;
     for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; ++j) {
+        for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[2][i][j] / trials << ", " << entropy[2][i][j] / trials << ") ";
         }
         cerr << endl;
     }
     cerr << "Exponentially Biased Softmax Selector" << endl;
     for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 5; ++j) {
+        for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[3][i][j] / trials << ", " << entropy[3][i][j] / trials << ") ";
         }
         cerr << endl;
@@ -262,7 +246,7 @@ bool PolicyTest(const vector<string>& recordFiles) {
     playPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
 
     outputParams();
-    
+
     for (string file : recordFiles) {
         MatchRecord record(file);
         testChangePolicyWithRecord(record);

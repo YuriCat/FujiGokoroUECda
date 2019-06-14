@@ -1,5 +1,6 @@
 #pragma once
 
+#include <queue>
 #include <boost/container/static_vector.hpp>
 #include "daifugo.hpp"
 #include "field.hpp"
@@ -159,105 +160,85 @@ struct Record {
     int fin(const std::vector<std::string>& paths);
 };
 
-// ここから棋譜から局面を正方向に読む関数たち
+// ここから棋譜から局面を正方向に読む実装
 
-// 交換やプレー時のコールバッックには返り値を要求する
-// 0 が通常
-// -1 でそのフェーズ終了
-// -2 で試合ログ読み終了
-// -3 で1マッチ(連続対戦)終了
-// -4 で全マッチ終了
-
-template <typename firstCallback_t, typename dealtCallback_t,
-          typename changeCallback_t, typename lastCallback_t>
-int iterateGameLogBeforePlay
-(Field& field, const GameRecord& game,
- const firstCallback_t& firstCallback = [](const Field&)->void{},
- const dealtCallback_t& dealtCallback = [](const Field&)->void{},
- const changeCallback_t& changeCallback = [](const Field&, const int, const int, const Cards)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const Field&)->void{},
- bool stopBeforeChange = false) {
-    field.phase = PHASE_UNINIT;
-    field.setBeforeGame(game, -1);
-    firstCallback(field);
-    field.passPresent(game, -1);
-    if (stopBeforeChange) return -1;
-    
-    dealtCallback(field);
-    
-    // change
-    for (const auto& change : game.changes) {
-        if (!change.already) {
-            // 上位側の交換選択機会
-            int ret = changeCallback(field, change.from, change.to, change.cards);
-            if (ret <= -2) {
-                cerr << "error on change " << change.from << " -> " << change.to << endl;
-                return ret;
-            }
-            if (ret == -1) break;
-        }
-        field.makeChange(change.from, change.to, change.qty, change.cards, change.already);
+template <class actionRecord_t>
+class RecordIteratorBase : public std::iterator<std::input_iterator_tag, actionRecord_t> {
+    friend Field;
+public:
+    bool operator !=(const RecordIteratorBase<actionRecord_t>& itr) const {
+        return field != itr.field || game != itr.game || ply != itr.ply;
     }
-    lastCallback(field);
-    return 0;
-}
+protected:
+    explicit RecordIteratorBase(Field *const f, const GameRecord *const g, int p):
+    field(f), game(g), ply(p) {}
+    Field *const field;
+    const GameRecord *const game;
+    int ply;
+};
 
-// 試合中のプレーヤーがこれまでの試合(交換後)を振り返る場合
-// 相手手札がわからないのでhandとして外部から与える
-template <typename firstCallback_t, typename playCallback_t>
-int iterateGameLogInGame
-(Field& field, const GameRecord& game, int turns, const std::array<Cards, N_PLAYERS>& hand,
- const firstCallback_t& firstCallback = [](const Field&)->void{},
- const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; }) {
-    field.phase = PHASE_UNINIT;
-    field.passChange(game, game.myPlayerNum);
-    field.setAfterChange(game, hand); // 交換後の手札を配置
-    firstCallback(field);
-    // play
-    for (int t = 0; t < turns; t++) {
-        const auto& play = game.plays[t];
-        int ret = playCallback(field, play.move, play.time);
-        if (ret <= -2) {
-            cerr << "error on play turn " << t << endl;
-            return ret;
-        }
-        if (ret == -1) break;
-        // proceed field
-        field.proceed(play.move);
+class RollerBase {
+public:
+    RollerBase(Field& f, const GameRecord& g): field(&f), game(&g) {
+        field->phase = PHASE_UNINIT; // 初期化状態でなくてもOKに
     }
-    return 0;
-}
+    ~RollerBase() {
+        for (int p = 0; p < N_PLAYERS; p++) {
+            if (game->newClassOf(p) >= 0) field->setNewClassOf(p, game->newClassOf(p));
+        }
+    }
+protected:
+    Field *const field;
+    const GameRecord *const game;
+};
 
-template <typename firstCallback_t, typename playCallback_t, typename lastCallback_t>
-int iterateGameLogAfterChange
-(Field& field, const GameRecord& game,
- const firstCallback_t& firstCallback = [](const Field&)->void{},
- const playCallback_t& playCallback = [](const Field&, const Move, const uint64_t)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const Field&)->void{}) {
-    field.phase = PHASE_UNINIT;
-    int ret = iterateGameLogInGame(field, game, game.plays.size(), game.orgCards,
-                                   firstCallback, playCallback);
-    if (ret <= -2) return ret; // この試合もう進めない
-    for (int p = 0; p < N_PLAYERS; p++) field.setNewClassOf(p, game.newClassOf(p));
-    lastCallback(field);
-    return 0;
-}
+class ChangeRoller : public RollerBase {
+public:
+    class const_iterator : public RecordIteratorBase<ChangeRecord> {
+    public:
+        ChangeRecord operator *() const { return game->changes[ply]; }
+        const_iterator& operator ++() {
+            ChangeRecord change = game->changes[ply++];
+            field->makeChange(change.from, change.to, change.qty, change.cards,
+                              change.already, false);
+            return *this;
+        }
+        explicit const_iterator(Field *const f, const GameRecord *const g, int p):
+        RecordIteratorBase<ChangeRecord>(f, g, p) {}
+    };
 
-// 1試合全体
-template <typename firstCallback_t, typename dealtCallback_t, typename changeCallback_t,
-          typename afterChangeCallback_t, typename playCallback_t, typename lastCallback_t>
-int iterateGameLog
-(Field& field, const GameRecord& game,
- const firstCallback_t& firstCallback = [](const Field&)->void{},
- const dealtCallback_t& dealtCallback = [](const Field&)->void{},
- const changeCallback_t& changeCallback = [](const Field&, const int, const int, const Cards)->int{ return 0; },
- const afterChangeCallback_t& afterChangeCallback = [](const Field&)->void{},
- const playCallback_t& playCallback = [](const Field&, const Move&, const uint64_t)->int{ return 0; },
- const lastCallback_t& lastCallback = [](const Field&)->void{}) {
-    field.phase = PHASE_UNINIT;
-    // 交換
-    int ret = iterateGameLogBeforePlay(field, game, firstCallback, dealtCallback, changeCallback);
-    if (ret <= -2) return ret; // この試合もう進めない
-    // 役提出
-    return iterateGameLogAfterChange(field, game, afterChangeCallback, playCallback, lastCallback);
-}
+    const_iterator begin() const { return const_iterator(field, game, presentCount); }
+    const_iterator end() const { return const_iterator(field, game, game->changes.size()); }
+
+    ChangeRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
+        presentCount = field->passPresent(*game, game->myPlayerNum);
+    }
+protected:
+    int presentCount;
+};
+
+class PlayRoller : public RollerBase {
+public:
+    class const_iterator : public RecordIteratorBase<PlayRecord> {
+    public:
+        PlayRecord operator *() const { return game->plays[ply]; }
+        const_iterator& operator ++() {
+            field->proceed(game->plays[ply++]);
+            return *this;
+        }
+        explicit const_iterator(Field *const f, const GameRecord *const g, int p):
+        RecordIteratorBase<PlayRecord>(f, g, p) {}
+    };
+
+    const_iterator begin() const { return const_iterator(field, game, 0); }
+    const_iterator end() const { return const_iterator(field, game, game->plays.size()); }
+
+    PlayRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
+        field->passChange(*game, game->myPlayerNum);
+    }
+    PlayRoller(Field& f, const GameRecord& g, const std::array<Cards, N_PLAYERS>& hand):
+    PlayRoller(f, g) {
+        // 手札を外部からセットする場合
+        field->setAfterChange(*game, hand);
+    }
+};

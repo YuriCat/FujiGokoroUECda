@@ -214,7 +214,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
     int64_t changeTrials = 0;
     int64_t playTrials = 0;
     uint64_t startTime = (uint64_t)time(NULL);
-    for (int j = 0; j < LearningSettings::iterations; ++j) {
+    for (int j = 0; j < LearningSettings::iterations; j++) {
 
         cerr << ((uint64_t)time(NULL) - startTime) << "sec. iteration " << j << " change trials " << changeTrials << " play trials " << playTrials << endl;
 

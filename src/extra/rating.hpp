@@ -66,19 +66,13 @@ void doSimulationsToEvaluate(const GameRecord& game,
                              SharedData *const pshared,
                              ThreadTools tools[]) {
     Field field;
-    iterateGameLogBeforePlay
-    (field, game,
-        [](const Field& field)->void{}, // first callback
-        [&](const Field& field)->void{ // dealt callback
-            // シミュレーションにより結果を予測
-            std::vector<std::thread> thr;
-            for (int ith = 0; ith < N_THREADS; ith++) {
-                thr.emplace_back(std::thread(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[ith]));
-            }
-            for (auto& th : thr) th.join();
-        },
-        [](const Field& field, const int from, const int to, const Cards c)->int{ return 0; }, // change callback
-        [](const Field& field)->void{}); // last callback
+    field.passPresent(game, -1);
+    // シミュレーションにより結果を予測
+    std::vector<std::thread> thr;
+    for (int ith = 0; ith < N_THREADS; ith++) {
+        thr.emplace_back(std::thread(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[ith]));
+    }
+    for (auto& th : thr) th.join();
 }
 
 std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const GameRecord& game,

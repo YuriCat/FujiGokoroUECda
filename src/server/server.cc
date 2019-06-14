@@ -69,7 +69,7 @@ void outputLog() {
             int i,iret;
             FILE *pf;
             //ログの番号を決める
-            for (i = 0; i < 999; ++i) {
+            for (i = 0; i < 999; i++) {
                 snprintf(str_file, 256, std::string(DIRECTORY_LOGS+"logn%d.dat").c_str(), i);
                 pf = fopen(str_file, "r");
                 if (pf == NULL) { break; }
@@ -532,7 +532,7 @@ int main(int argc, char *argv[]) {
         // work_card[5][6] = 0;
         work_card[5][6] = rev_mode ? 1 : 0;//最初からオーダー逆の場合
         work_card[5][7] = 0;
-        for (int i = 0; i < N_PLAYERS; ++i) {
+        for (int i = 0; i < N_PLAYERS; i++) {
             work_card[6][i] = count_card_num_r(players_card[i], &error);
         }
         if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
@@ -727,7 +727,7 @@ int main(int argc, char *argv[]) {
             work_card[5][5] = now_11back;
             work_card[5][6] = now_kakumei;
             work_card[5][7] = now_shibari;
-            for (int i = 0; i < N_PLAYERS; ++i) {
+            for (int i = 0; i < N_PLAYERS; i++) {
                 work_card[6][i] = count_card_num_r(players_card[i], &error);
             }
             if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
@@ -752,7 +752,7 @@ int main(int argc, char *argv[]) {
             if (debug) {printf("To send prepared datas for each player now\n");} //DEBUG
             // prepare datas for each player
             // atode
-            for (int i = 0; i < N_PLAYERS; ++i) {
+            for (int i = 0; i < N_PLAYERS; i++) {
                 tn_card_write(client_sockfd[i],players_card[i],protocol_version);
             }
             
@@ -1019,7 +1019,7 @@ int main(int argc, char *argv[]) {
             work_card[5][5] = now_11back;
             work_card[5][6] = now_kakumei;
             work_card[5][7] = now_shibari;
-            for (int i = 0; i < N_PLAYERS; ++i) {
+            for (int i = 0; i < N_PLAYERS; i++) {
                 work_card[6][i] = count_card_num_r(players_card[i], &error);
             }
             if (((now_number_of_games-1 )% FLASH_MIBUN_NUMBER)==0) {
@@ -1041,7 +1041,7 @@ int main(int argc, char *argv[]) {
             players_card[now_player][5][2]=1;
             
             // send information "stage cards" to clients.
-            for (int i = 0; i < N_PLAYERS; ++i) {
+            for (int i = 0; i < N_PLAYERS; i++) {
                 tn_card_write(client_sockfd[i],stage_card,protocol_version);
             }
             

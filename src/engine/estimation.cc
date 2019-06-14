@@ -587,21 +587,15 @@ double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
         orgCards[p] = c[p] + usedCards[infoClass[p]];
     }
     Field field;
-    iterateGameLogInGame
-    (field, game, game.plays.size(), orgCards,
-    // after change callback
-    [](const Field& field)->void{},
-    // play callback
-    [this, &shared, ptools, &playllh]
-    (const Field& field, Move move, unsigned time)->int{
+    for (Move move : PlayRoller(field, game, orgCards)) {
         int turn = field.turn();
-        if (field.turnCount() >= turnCount) return -1; // 決めたところまで読み終えた(オフラインでの判定用)
-        if (!holdsCards(field.getCards(turn), move.cards())) return -1; // 終了(エラー)
-        // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)については考慮しない
-        if (!playFlag.test(turn)) return 0;
-        double lh = onePlayLikelihood(field, move, shared, ptools);
-        if (lh < 1) playllh += log(lh);
-        return 0;
-    });
+        if (field.turnCount() >= turnCount) break; // 決めたところまで読み終えた(オフラインでの判定用)
+        if (!holdsCards(field.getCards(turn), move.cards())) break; // 終了(エラー)
+        // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)以外を考慮
+        if (playFlag.test(turn)) {
+            double lh = onePlayLikelihood(field, move, shared, ptools);
+            if (lh < 1) playllh += log(lh);
+        }
+    }
     return playllh;
 }

@@ -209,10 +209,8 @@ int main(int argc, char* argv[]) { // for UECda
                         change.set(from, to, N_CHANGE_CARDS(cl), c, false);
                         game.pushChange(change);
                     }
-                    engine.afterChange();
                 }
                 game.orgCards[myPlayerNum] = newCards;
-                engine.prepareForGame();
             }
             
             bool myTurn = isMyTurn(recv_table);

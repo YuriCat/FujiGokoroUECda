@@ -23,14 +23,10 @@ int testSimulation(const MatchRecord& match) {
 
     for (const auto& game : match.games) {
         shared.initGame();
-        // 対局結果
-        auto newClasses = game.infoNewClass;
+        auto newClasses = game.infoNewClass; // 対局結果
         int tc = dice() % game.plays.size();
         Field field;
-        iterateGameLogAfterChange
-        (field, game,
-        [](const Field& field)->void{}, // first callback
-        [&](const Field& field, Move pl, uint32_t tm)->int{ // play callback
+        for (Move move : PlayRoller(field, game)) {
             // この局面からシミュレーションを行う
             Field f = field;
             f.attractedPlayers.reset();
@@ -45,13 +41,10 @@ int testSimulation(const MatchRecord& match) {
                 // 実際の試合結果との一致
                 matrix[newClasses[field.turn()]][ff.newClassOf(field.turn())]++;
             }
-            // 多様性計測
-            if (field.turnCount() == tc) {
-            }
-            return 0;
-        },
-        [](const Field& field)->void{}); // last callback
+            // TODO: 多様性計測
+        }
     }
+
     double all = 0, same = 0;
     cerr << "real - simulation matrix" << endl;
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {

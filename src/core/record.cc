@@ -363,7 +363,7 @@ void Field::setBeforeGame(const GameRecord& game, int playerNum) {
     phase = PHASE_INIT;
 }
 
-void Field::passPresent(const GameRecord& game, int playerNum) {
+int Field::passPresent(const GameRecord& game, int playerNum) {
     if (phase < PHASE_INIT) setBeforeGame(game, playerNum);
     // 初期手札の設定
     for (int p = 0; p < N_PLAYERS; p++) {
@@ -373,13 +373,16 @@ void Field::passPresent(const GameRecord& game, int playerNum) {
         } else setBothHandQty(p, game.numDealtCards[p]);
     }
     // 献上の処理
+    int presentCount = 0;
     for (const auto& change : game.changes) {
         // 自分が受け取る側では無い献上を処理
         if (change.already && change.to != myPlayerNum) {
             makeChange(change.from, change.to, change.qty, change.cards, false, true);
+            presentCount++;
         }
     }
     phase = PHASE_PRESENT;
+    return presentCount;
 }
 
 void Field::passChange(const GameRecord& game, int playerNum) {

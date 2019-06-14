@@ -168,10 +168,6 @@ public:
         return changeCards;
     }
 
-    void afterChange() {}
-    void waitChange() {}
-    void prepareForGame() {}
-
     Move play() {
         // 自分のプレーについての変数を更新
         ClockMicS clms;
