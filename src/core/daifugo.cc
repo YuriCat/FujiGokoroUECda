@@ -40,40 +40,32 @@ ostream& operator <<(ostream& ost, const OutSuits& arg) { // 出力の時だけ�
 }
 
 // (スート, スート)のパターン
-uint8_t sSIndex[16][16];
-uint8_t S2Index[16][16];
 uint8_t SSIndex[16][16];
-// (スート, スート, スート)のパターン
-uint8_t sSSIndex[16][16][16];
-uint16_t SSSIndex[16][16][16];
+uint8_t S2Index[16][16];
+uint8_t sSIndex[16][16];
 
 void initSuits() {
     // (suits suits) pattern index (exchangable) 0 ~ 21
     int twoSuitsCountIndex[5][5][5] = {0};
-    int cnt = 0;
-    for (int c0 = 0; c0 <= 4; c0++) {
-        for (int c1 = 0; c1 <= c0; c1++) {
-            for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); c01++) {
-                DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
-                twoSuitsCountIndex[c0][c1][c01] = cnt++;
-            }
-        }
-    }
-    ASSERT(cnt == N_PATTERNS_2SUITS, cerr << cnt << " <-> " << N_PATTERNS_2SUITS << endl;);
-
     // (suits, suits) pattern index 0 ~ 34
     int suitsSuitsCountIndex[5][5][5] = {0};
-    cnt = 0;
+    // (suit, suits) pattern index 0 ~ 7
+    int suitSuitsCountIndex[5][2] = {0};
+
+    int S2 = 0, SS = 0, sS = 0;
     for (int c0 = 0; c0 <= 4; c0++) {
         for (int c1 = 0; c1 <= 4; c1++) {
             for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); c01++) {
-                DERR << "pattern " << cnt << " = " << c0 << ", " << c1 << ", " << c01 << endl;
-                suitsSuitsCountIndex[c0][c1][c01] = cnt++;
+                suitsSuitsCountIndex[c0][c1][c01] = SS++;
+                if (c0 <= c1) twoSuitsCountIndex[c0][c1][c01] = S2++;
+                if (c0 == 1) suitSuitsCountIndex[c1][c01] = sS++;
             }
         }
     }
-    ASSERT(cnt == N_PATTERNS_SUITS_SUITS,
-           cerr << cnt << " <-> " << N_PATTERNS_SUITS_SUITS << endl;);
+
+    assert(SS == N_PATTERNS_SUITS_SUITS);
+    assert(S2 == N_PATTERNS_2SUITS);
+    assert(sS == N_PATTERNS_SUIT_SUITS);
 
     for (unsigned s0 = 0; s0 < 16; s0++) {
         for (unsigned s1 = 0; s1 < 16; s1++) {
@@ -82,26 +74,6 @@ void initSuits() {
             int cmin = min(c0, c1), cmax = max(c0, c1);
             SSIndex[s0][s1] = suitsSuitsCountIndex[c0][c1][c01];
             S2Index[s0][s1] = twoSuitsCountIndex[cmax][cmin][c01];
-        }
-    }
-
-    // (suit, suits) pattern index 0 ~ 7
-    int suitSuitsCountIndex[5][2] = {0};
-    cnt = 0;
-    for (int c1 = 0; c1 <= 4; c1++) {
-        for (int c01 = max(0, 1 + c1 - 4); c01 <= min(c1, 1); c01++) {
-            assert(c01 == 0 || c01 == 1);
-            DERR << "pattern " << cnt << " = " << c1 << ", " << c01 << endl;
-            suitSuitsCountIndex[c1][c01] = cnt++;
-        }
-    }
-    ASSERT(cnt == N_PATTERNS_SUIT_SUITS, cerr << cnt << " <-> " << N_PATTERNS_SUIT_SUITS << endl;);
-
-    for (int sn0 = 0; sn0 < 4; sn0++) {
-        for (unsigned s1 = 0; s1 < 16; s1++) {
-            unsigned s0 = SuitNumToSuits(sn0);
-            unsigned s01 = s0 & s1;
-            int c1 = popcnt(s1), c01 = popcnt(s01);
             sSIndex[s0][s1] = suitSuitsCountIndex[c1][c01];
         }
     }
