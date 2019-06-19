@@ -353,7 +353,7 @@ bool RandomDealer::okForRejection() const {
         case DAIHINMIN:
             if (NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5) return false;
             break;
-        default: UNREACHABLE; break;
+        default: exit(1); break;
     }
     return true;
 }

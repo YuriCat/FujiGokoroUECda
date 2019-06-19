@@ -30,7 +30,7 @@ public:
                 dealWithBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
                 dealWithRejection(c, game, shared, ptools); break;
-            default: UNREACHABLE; break;
+            default: exit(1); break;
         }
         World world;
         world.set(turnCount, c);

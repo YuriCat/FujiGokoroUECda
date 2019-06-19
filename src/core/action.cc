@@ -15,8 +15,6 @@ int genChange(Cards *const pc0, const Cards myCards, const int changeQty) {
             tmp -= c;
             for (Cards c1 : tmp.divide()) *(pc++) = c | c1;
         }
-    } else {
-        UNREACHABLE;
     }
     return pc - pc0;
 }
@@ -193,9 +191,9 @@ int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
     if (!c) return 0;
     Move *mv = mv0;
     switch (qty) {
-        case 0: UNREACHABLE; break;
-        case 1: UNREACHABLE; break;
-        case 2: UNREACHABLE; break;
+        case 0: break;
+        case 1: break;
+        case 2: break;
         case 3: {
             const Cards c1_1 = polymJump(c);
             const Cards c2 = polymRanks<2>(c);
@@ -565,7 +563,7 @@ int genLead(Move *const mv0, const Cards c) {
     while (x) {
         int r = IntCardToRank(pickIntCardLow(x));
         switch (c[r]) {
-            case 0: UNREACHABLE; break;
+            case 0: assert(0); break;
             case 1: {
                 if (!jk) break; // ジョーカーがなければ飛ばす
                 GEN_J(2, 3, 2);
@@ -721,7 +719,7 @@ int genLead(Move *const mv0, const Cards c) {
                 if (!jk) break; // ジョーカーがなければ飛ばす
                 GEN_J(5, 15, 15);
             } break;
-            default: UNREACHABLE; break;
+            default: assert(0); break;
         }
         x = maskCards(x, RankToCards(r));
     }

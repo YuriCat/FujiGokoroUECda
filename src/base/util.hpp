@@ -19,18 +19,6 @@
 #include <string>
 #include <vector>
 
-#if !defined(NDEBUG)
-#define UNREACHABLE assert(0)
-#elif defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-#define UNREACHABLE __assume(0)
-#elif defined(__INTEL_COMPILER)
-#define UNREACHABLE __assume(0)
-#elif defined(__GNUC__) && (4 < __GNUC__ || (__GNUC__ == 4 && 4 < __GNUC_MINOR__))
-#define UNREACHABLE __builtin_unreachable()
-#else
-#define UNREACHABLE assert(0)
-#endif
-
 // 条件x、命令等y
 #ifdef NDEBUG
 #define ASSERT(X, Y)
