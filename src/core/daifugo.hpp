@@ -290,10 +290,9 @@ inline BitCards pickLower(BitCards c) { return allLowerBits(c); }
 template <int N>
 constexpr BitCards polymRanks(BitCards c) {
     static_assert(N >= 0, "");
-    return ((c >> ((N - 1) << 2)) & polymRanks<N - 1>(c));
+    return (c >> ((N - 1) << 2)) & polymRanks<N - 1>(c);
 }
-template <> constexpr BitCards polymRanks<0>(BitCards c) { return CARDS_NULL; }
-template <> constexpr BitCards polymRanks<1>(BitCards c) { return c; }
+template <> constexpr BitCards polymRanks<0>(BitCards c) { return -1; }
 inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
     while (--n) c = polymRanks<2>(c);
     return c;
