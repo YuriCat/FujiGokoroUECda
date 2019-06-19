@@ -276,14 +276,9 @@ inline int numGamesBeforeSeatInitGame(int gn) {
     return SEAT_INIT_CYCLE - 1 - (gn % SEAT_INIT_CYCLE);
 }
 
-
 template <int N = N_PLAYERS>
 constexpr unsigned int getNextSeat(unsigned int s) {
     return (s + 1) % (unsigned int)cmax(N, 1);
-}
-template <int N>
-constexpr unsigned int getRemovedNextSeat(unsigned int s) {
-    return s % (unsigned int)cmax(N - 1, 1);
 }
 template <int N = N_PLAYERS>
 constexpr unsigned int getPreviousSeat(unsigned int s) {
