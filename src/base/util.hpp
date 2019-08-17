@@ -27,14 +27,14 @@
 #else
 #define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
 // 浮動小数点がまともな値を取っているかどうかのアサーション
-#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ cerr << (f) << endl; {o}\
+#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ std::cerr << (f) << std::endl; {o}\
 assert(!std::isinf(f) && !std::isnan(f)); assert(0); };
 // 浮動小数点が「ほぼ」同じ値を取っているかのチェック && FASSERT
-#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ cerr << (f0) << endl; {o}\
+#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ std::cerr << (f0) << std::endl; {o}\
 assert(!std::isinf(f0) && !std::isnan(f0)); assert(0); };\
-if(!(!std::isinf(f1) && !std::isnan(f1))){ cerr << (f1) << endl; {o}};\
+if(!(!std::isinf(f1) && !std::isnan(f1))){ std::cerr << (f1) << std::endl; {o}};\
 assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
-if(!(abs((f0) - (f1)) <= 0.00001)){ cerr << (f0) << " <-> " << (f1) << endl; {o}\
+if(!(abs((f0) - (f1)) <= 0.00001)){ std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
 assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #endif // NDEBUG
 
