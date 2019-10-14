@@ -511,6 +511,7 @@ void RandomDealer::setWeightInWA() {
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);
+
     // WA mathod 用の配列に入れる
     double sum = 0;
     for (double prob : probs) sum += prob;
@@ -521,6 +522,7 @@ void RandomDealer::setWeightInWA() {
         if (probs[i] < 1) small.push(i);
         else large.push(i);
     }
+
     while (small.size() > 0 && large.size() > 0) {
         int l = small.front();
         int g = large.front();
@@ -568,11 +570,13 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
 
     array<double, N_MAX_MOVES> score;
     playPolicyScore(score.data(), mbuf, NMoves, field, shared.basePlayPolicy, 0);
+
     // Mateの手のスコアを設定
     double maxScore = *max_element(score.begin(), score.begin() + NMoves);
     for (int i = 0; i < NMoves; i++) {
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
+
     SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
@@ -582,10 +586,12 @@ double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
     // 想定した手札配置から、試合進行がどの程度それっぽいか考える
     if (inChange) return 0;
     double playllh = 0; // 対数尤度
+
     array<Cards, N> orgCards;
     for (int p = 0; p < N; p++) {
         orgCards[p] = c[p] + usedCards[infoClass[p]];
     }
+
     Field field;
     for (Move move : PlayRoller(field, game, orgCards)) {
         int turn = field.turn();
