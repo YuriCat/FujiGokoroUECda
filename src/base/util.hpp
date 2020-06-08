@@ -242,7 +242,7 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
     assert((int)popcnt(arg) == N0 + N1);
-    
+
     uint64_t res = 0;
 
     if (N0 < N1) {
@@ -255,7 +255,7 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     while (1) {
         uint64_t dist = arg & dice();
         int NDist = popcnt(dist);
-        
+
         // まずは一致チェック
         if (NDist == N0) {
             res |= dist; break;
@@ -456,10 +456,10 @@ struct BetaDistribution {
     BetaDistribution reversed() const {
         return BetaDistribution(b, a);
     }
-    
+
     bool exam() const;
     std::string toString() const;
-    
+
     constexpr BetaDistribution(): a(), b() {}
     explicit constexpr BetaDistribution(double aa, double ab): a(aa), b(ab) {}
 };
@@ -556,10 +556,10 @@ class TwoValueBook {
     // 2(+中間1)値を保存するハッシュ表
 public:
     using page_t = TwoValuePage32;
-    
+
     void clear() { std::memset(page_, 0, sizeof(page_)); }
     TwoValueBook() { clear(); }
-    
+
     int read(uint64_t key) {
         page_t fpage = page_[KeyToIndex(key)];
         if (!fpage.any() || fpage.compareKey(key)) return -1;
@@ -594,7 +594,7 @@ public:
     void unlock() { data_ = 0; }
     SpinLock() { unlock(); }
 private:
-    std::atomic<T> data_; 
+    std::atomic<T> data_;
 };
 
 template <int L, int ... shape_t>

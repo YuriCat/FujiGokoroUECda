@@ -298,7 +298,7 @@ inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
     return c;
 }
 constexpr BitCards polymJump(BitCards c) { return c & (c >> 8); }
-    
+
 // ランク展開
 // ランクを１つずつ上げてorをとるのが基本だが、
 // 4以上の場合は倍々で増やしていった方が少ない命令で済む
@@ -821,7 +821,7 @@ constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
 }
 inline uint64_t CardsToHashKey(Cards c) {
     uint64_t key = HASH_CARDS_NULL;
-    for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic)); 
+    for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic));
     return key;
 }
 

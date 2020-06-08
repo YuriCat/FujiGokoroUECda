@@ -87,9 +87,9 @@ int entryToGame(const char *name) {
     if (g_logging==1) {
         printf("connectiong to server was finished successfully[%s:%d].\n",server_name,port);
     }
-    
+
     sendProfile(user_name);     //クライアントの情報を送信
-    
+
     if (g_logging==1) {
         printf("send profile .\n");
     }
@@ -104,7 +104,7 @@ int entryToGame(const char *name) {
         printf("failed to get player number.\n");
         exit (1);
     }
-    
+
     return my_playernum; //自身のプレイヤー番号を返す。
 }
 
@@ -134,15 +134,15 @@ int startGame(int table[8][15]) {
         printf("failed to get initial cards table for exchange.\n");
         exit(1) ;
     }
-    
+
     //ログ取りが有効なら、配布されたカード(というかテーブル)を表示
     if (g_logging ==1) {
         printf("initial cards table is follow.\n");
         outputTable(table);
     }
-    
+
     game_count++;
-    
+
     return game_count;
 }
 
@@ -195,12 +195,12 @@ int sendCards(int cards[8][15]) {
         printf("send card table was following.\n");
         outputTable(cards);
     }
-    
+
     if ((sendTable(cards)) == -1 ) { //カードを送信し 失敗時はメッセージを表示
         printf("failed to send card sending table. \n");
         exit(1);
     }
-    
+
     //accept_flagをサーバから受け取る
     if ((recv(g_sockfd, &accept_flag, sizeof(protocol_int_t), 0)) < 0 ) {
         printf("failed to get accept sign.\n");
@@ -252,7 +252,7 @@ void checkArg(int argc,char* argv[]) {
      */
     const char Option[]="[-h server_adress] [-p port] [-n user_name]";
     int        arg_count=1;
-    
+
     while (arg_count<argc) {
         if ( strcmp(argv[arg_count],"--help")==0) {
             printf("usage : %s %s\n",argv[0],Option);
@@ -331,13 +331,13 @@ static int openSocket(const char addr[], uint16_t port_num) {
     if ((g_sockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         return(-1);
     }
-    
+
     /* ポートとアドレスの設定 */
     memset(&g_client_addr,0,sizeof(g_client_addr));
     g_client_addr.sin_family = PF_INET;
     g_client_addr.sin_port = htons(port_num);
     g_client_addr.sin_addr.s_addr = inet_addr(addr);
-    
+
     //IPアドレスで指定されていないとき、ホスト名の解決を試みる
     if (g_client_addr.sin_addr.s_addr == 0xffffffff) {
         struct hostent *host;
@@ -349,7 +349,7 @@ static int openSocket(const char addr[], uint16_t port_num) {
         g_client_addr.sin_addr.s_addr=
         *(unsigned int *)host->h_addr_list[0];
     }
-    
+
     /* サーバにコネクトする */
     if (connect(g_sockfd,(struct sockaddr *)&g_client_addr, sizeof(g_client_addr)) == 0) {
         return 0;
@@ -361,17 +361,17 @@ static int openSocket(const char addr[], uint16_t port_num) {
 static int sendProfile(const char user[15]) {
     int profile[8][15];
     int i;
-    
+
     memset(&profile,0,sizeof(profile));        //テーブルを0でうめる
     profile[0][0]=PROTOCOL_VERSION;                   //2007年度版を宣言
     for (i=0;i<15;i++) profile[1][i]=(int)user[i];     //制作者名をテーブルに格納
-    
+
     //送信
     if (sendTable(profile)==-1) {                       //失敗したらエラーを出力し停止
         printf("sending profile table was failed.\n");
         exit (1);
     }
-    
+
     //成功時はloggingフラグが立っていたら、メッセージとテーブルの内容を出力する
     if (g_logging==1) {
         printf("sending profile was done successfully.\n");

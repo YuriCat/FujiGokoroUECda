@@ -76,7 +76,7 @@ BitCards PQRToSC_slow(CardArray qr) {
     }
     return ret.data();
 }
-    
+
 
 int testSuitSuits() {
     // (Suit, Suits)関係テスト
@@ -285,19 +285,19 @@ int testENR(const std::vector<Cards>& sample) {
         time[0] += cl.restart();
         BitArray64<4> ans1 = CardsToENR_slow(c, 1);
         time[1] += cl.stop();
-        
+
         if (test1 != ans1) {
             cerr << "inconsistent Cards -> E1R conversion!" << endl;
             cerr << c << " : " << test1 << " <-> " << ans1 << endl;
             return -1;
         }
-        
+
         /*cl.start();
         BitArray64<4> test3 = convCards_3R(c);
         time[6] += cl.restart();
         BitArray64<4> ans3 = convCards_NR_slow(c, 3);
         time[7] += cl.stop();
-        
+
         if (test0 != ans0) {
             cerr << "inconsistent Cards -> E3R conversion!" << endl;
             cerr << c << " : " << test3 << " <-> " << ans3 << endl;
@@ -321,7 +321,7 @@ int testNR(const std::vector<Cards>& sample) {
             time[n * 2] += cl.restart();
             BitArray64<4> ans = CardsToNR_slow(c, n);
             time[n * 2 + 1] += cl.stop();
-            
+
             if (test != ans) {
                 cerr << "inconsistent Cards -> " << n << "R conversion!" << endl;
                 cerr << c << " : " << test << " <-> " << ans << endl;
@@ -342,7 +342,7 @@ int testSC(const std::vector<Cards>& sample) {
     for (Cards c : sample) {
         CardArray qr = CardsToQR(c);
         Cards pqr = QRToPQR(qr);
-        
+
         cl.start();
         Cards test = PQRToSC(pqr);
         time[0] += cl.restart();
@@ -368,74 +368,74 @@ bool CardsTest() {
 
     cerr << "sizeof(BitCards) = " << sizeof(BitCards) << endl;
     cerr << "sizeof(Cards) = " << sizeof(Cards) << endl;
-    
+
     std::vector<Cards> sample;
     XorShift64 dice((unsigned int)time(NULL));
-    
+
     for (int i = 0; i < 50000; ++i) {
         int n = dice() % N_MAX_OWNED_CARDS_CHANGE;
         sample.push_back(pickNBits64(CARDS_ALL, n, N_CARDS - n, dice));
     }
-    
+
     if (testSuitSuits()) {
         cerr << "failed (Suit, Suits) test." << endl;
         return false;
     }
     cerr << "passed (Suit, Suits) test." << endl;
-    
+
     if (test2Suits()) {
         cerr << "failed (Suits Suits) test." << endl;
         return false;
     }
     cerr << "passed (Suits Suits) test." << endl;
-    
+
     if (testSuitsSuits()) {
         cerr << "failed (Suits, Suits) test." << endl;
         return false;
     }
     cerr << "passed (Suits, Suits) test." << endl << endl;
-    
+
     if (testRankCards()) {
         cerr << "failed Rank -> Cards test." << endl;
         return false;
     }
     cerr << "passed Rank -> Cards test." << endl << endl;
-    
+
     if (testSuitCards()) {
         cerr << "failed Suits -> Cards test." << endl;
         return false;
     }
     cerr << "passed Suits -> Cards test." << endl << endl;
-    
+
     if (testQR(sample)) {
         cerr << "failed QR test." << endl;
         return false;
     }
     cerr << "passed QR test." << endl << endl;
-    
+
     if (testPQR(sample)) {
         cerr << "failed PQR test." << endl;
         return false;
     }
     cerr << "passed PQR test." << endl << endl;
-    
+
     if (testSC(sample)) {
         cerr << "failed SC test." << endl;
         return false;
     }
     cerr << "passed SC test." << endl << endl;
-    
+
     if (testNR(sample)) {
         cerr << "failed NR test." << endl;
         return false;
     }
     cerr << "passed NR test." << endl << endl;
-    
+
     if (testENR(sample)) {
         cerr << "failed ENR test." << endl;
         return false;
     }
     cerr << "passed ENR test." << endl << endl;
-    
+
     return true;
 }

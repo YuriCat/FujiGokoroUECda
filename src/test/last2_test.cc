@@ -31,7 +31,7 @@ int outputL2JudgeResult() {
      2 : { C3 H3 }(0)
      3 : { S3 S4 H7 H9 DT HQ SK }(7)
      4 : { D6 H6 }(0)
-     
+
      game 1503
      score
      class 2 4 1 3 0

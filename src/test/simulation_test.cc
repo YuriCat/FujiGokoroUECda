@@ -1,4 +1,4 @@
- 
+
 // シミュレーションの性能チェック
 
 #include "../core/record.hpp"

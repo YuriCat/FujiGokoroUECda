@@ -109,7 +109,7 @@ int testRecordMoveDominance(const Record& record) {
             judgeMatrix[2][ans][dom] += 1;
         }
     }
-    
+
     // より複雑な型での支配性判定
     for (int i = 0; i < record.games(); i++) {
         Field field;

@@ -86,7 +86,7 @@ namespace Deal {
 bool dist2Rest_64(int numRest,
                   uint64_t *const goal0, uint64_t *const goal1,
                   const uint64_t arg, int N0, int N1,
-                  const uint64_t rest0, const uint64_t rest1, Dice& dice) {   
+                  const uint64_t rest0, const uint64_t rest1, Dice& dice) {
     // 0が交換上手側、1が下手側
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
@@ -331,7 +331,7 @@ void RandomDealer::checkDeal(const Cards *dst, bool sbj) const {
         }
     }
 }
-    
+
 bool RandomDealer::okForRejection() const {
     // 採択棄却法使用可能性
     // 数値は経験的に決定している
@@ -480,7 +480,7 @@ Cards RandomDealer::selectInWA(double urand) const {
     if (u < thresholdInWA[k]) return dealCardsUnderInWA[k];
     else return dealCardsOverInWA[k];
 }
-    
+
 void RandomDealer::setWeightInWA() {
     vector<double> probs;
     const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数

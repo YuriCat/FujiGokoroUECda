@@ -13,7 +13,7 @@ using namespace std;
 WisteriaEngine engine;
 
 int main(int argc, char* argv[]) { // for UECda
-    
+
     // main関数はクライアントの思考の進行役を務める
     // サーバーの情報を、クライアントが用いる共通型に変換して最低限の主観的情報を更新する
     // それ以上高次な演算はクライアントが行う
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) { // for UECda
     // 時間計測(microsec単位)
     ClockMicS clms;
     uint64_t tmpTime;
-    
+
     // 基本的な初期化
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) { // for UECda
     // 全試合前の初期化
     auto& record = engine.record;
     auto& shared = engine.shared;
-    
+
     bool seedSet = false;
     int seed = -1;
     bool monitor = false;
@@ -60,31 +60,31 @@ int main(int argc, char* argv[]) { // for UECda
             Settings::maximizePosition = true;
         }
     }
-    
+
     checkArg(argc, argv); // 引数のチェック 引数に従ってサーバアドレス、接続ポート、クライアント名を変更
     string name = Settings::policyMode ? MY_POL_NAME : MY_NAME;
     CERR << name << " ver. " << MY_VERSION << endl;
     int myPlayerNum = entryToGame(name.c_str()); // ゲームに参加
 
-    engine.initMatch(myPlayerNum); // ここで呼ばないとプレーヤー番号が反映されない 
+    engine.initMatch(myPlayerNum); // ここで呼ばないとプレーヤー番号が反映されない
     if (seedSet) engine.setRandomSeed(seed); // シード指定
     engine.monitor = monitor;
-    
+
     // 通信変数
     int whole_gameend_flag;
     int recv_table[8][15];
     int send_table[8][15];
-    
+
     clearAll(recv_table);
     clearAll(send_table);
-    
+
     // 試合フェーズ
     while (1) {
         // 各試合前の初期化
         engine.initGame();
         record.initGame();
         auto& game = record.latestGame();
-        
+
         startGame(recv_table); // 自分のカード、初期情報受け取り
         CERR << toString(recv_table) << endl;
 
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) { // for UECda
             game.resetInitGame();
             for (int p = 0; p < N_PLAYERS; p++) game.setClassOf(p, classOf(recv_table, p));
         }
-        
+
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
         game.dealtCards[myPlayerNum] = c;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) { // for UECda
             isJava = true;
             CERR << "main() : This is java server." << endl;
         }
-        
+
         for (int p = 0; p < N_PLAYERS; p++) {
             int numCards = numCardsOf(recv_table, p);
             if (isJava) {
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) { // for UECda
             }
             game.numDealtCards[p] = numCards;
         }
-        
+
         // カード交換フェーズ
         Cards mySentCards = CARDS_NULL;
         int changeQty = getChangeQty(recv_table);
@@ -148,11 +148,11 @@ int main(int argc, char* argv[]) { // for UECda
         while (1) { // ターンループ
             clms.start(); // ここで時間計測開始
             // javaサーバーでは、ここで時間計測を初めても自分以外ほぼ0になってしまう。解決策は不明...
-            
+
             // 自分のカードとフィールド情報を受け取り
             // Cサーバーではこの後に時間計測を始めても相手の計算時間がわからない(ほぼ0になる)
             receiveCards(recv_table);
-            
+
             // 自分の情報をサーバーの情報に合わせておく
             int turn = turnOf(recv_table);
             if (firstPlay) {
@@ -160,13 +160,13 @@ int main(int argc, char* argv[]) { // for UECda
                 firstPlay = false;
                 Cards newCards = TableToCards(recv_table, false);
                 Cards sentCards = CARDS_NULL, recvCards = CARDS_NULL;
-                
+
                 if (!game.isInitGame()) {
                     int myClass = game.classOf(myPlayerNum);
                     if (myClass != HEIMIN) {
                         // 自分がカード交換に関与した場合、ここで初めて結果が分かる
                         // 自分が上位の際もカード交換が自分の想定通りに行われたか確認の必要がある
-                        
+
                         Cards dealtCards = game.dealtCards[myPlayerNum];
 
                         if (myClass < HEIMIN) {
@@ -212,11 +212,11 @@ int main(int argc, char* argv[]) { // for UECda
                 }
                 game.orgCards[myPlayerNum] = newCards;
             }
-            
+
             bool myTurn = isMyTurn(recv_table);
             Field field;
             field.fromRecord(game, myPlayerNum);
-            
+
             if (myTurn) { // 自分のターン
                 Move myMove = engine.play(); // 自分のプレー
                 MoveToTable(myMove, field.board, send_table);
@@ -228,11 +228,11 @@ int main(int argc, char* argv[]) { // for UECda
                     cerr << "main() : My Play was Rejected(" << accept_flag << ")! " << myMove << endl;
                 }
             }
-            
+
             // 共通処理
             receiveCards(recv_table);
             unsigned playTime = clms.stop();
-            
+
             // サーバーが受理した役(場に出ている役)
             Move serverMove = TableToMove(recv_table);
             // すでに場に出ていた役が調べることで、パスを判定
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) { // for UECda
             }
             if (one_gameend_flag) break;
         }
-        
+
         // 試合終了後処理
         Field field;
         field.fromRecord(game, myPlayerNum);
@@ -264,10 +264,10 @@ int main(int argc, char* argv[]) { // for UECda
         }
         record.closeGame();
         engine.closeGame(); // 相手の分析等はここで
-        
+
         if (whole_gameend_flag) break;
     }
-    
+
     // 全試合終了後処理
     // エンジンの全試合終了処理はデストラクタにて
     if (closeSocket() != 0) {

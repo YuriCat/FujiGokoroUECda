@@ -61,7 +61,7 @@ namespace PlayPolicySpace {
         3, 2,
         5 - 1, // N_PLAYERS - 1,
         (5 - 1) * 8, // (N_PLAYERS - 1) * 8,
-        2, 3, 3, 3,            
+        2, 3, 3, 3,
         1, 1, 2, 2, 1,
 
         2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン

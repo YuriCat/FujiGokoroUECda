@@ -153,7 +153,7 @@ int testRecordMoveMate(const Record& record) {
             visitedCards.clear();
             bool pw = judgeCardsPWSlow(buffer, turnPlayer,
                                         myHand.cards, opsHand.cards, bd, field.ps, field.fieldInfo.isFlushLead());
-            judgeTime[1] += cl.stop();         
+            judgeTime[1] += cl.stop();
             judgeMatrix[pw][mate] += 1;
 
             /*if (mate && !pw) {
@@ -249,12 +249,12 @@ int testRecordMoveMate(const Record& record) {
             searchMatrix[(pwIndex >= 0)][(mateIndex >= 0)] += 1;
 
             /*if ((mateIndex >= 0) != (pwIndex >= 0)) {
-                
+
                 for (int m = 0; m < moves; m++) {
                     bool check = checkHandMate(0, buffer + moves, buffer[m], myHand, opsHand, bd, 1, 1);
                     cerr << buffer[m] << " : " << check << endl;
                 }
-                
+
                 cerr << "search ";
                 if (mateIndex >= 0) {
                     cerr << buffer[mateIndex];
@@ -310,7 +310,7 @@ int analyzeMateDistribution(const Record& record) {
         }
     }
 
-    cerr << "number of mate moves = " << mateMovesDistribution << endl;    
+    cerr << "number of mate moves = " << mateMovesDistribution << endl;
     return 0;
 }
 

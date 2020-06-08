@@ -45,7 +45,7 @@ ostream& operator <<(ostream& out, const PlayersState& arg) { // 出力
     out << " aw{";
     for (int i = 0; i < PlayersState::N; i++) {
         if (arg.isAwake(i)) out << i;
-    }	
+    }
     out << "}";
     return out;
 }

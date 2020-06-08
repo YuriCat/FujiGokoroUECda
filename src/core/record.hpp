@@ -80,7 +80,7 @@ struct MatchRecord {
     const GameRecord& latestGame() const { return games.back(); }
     GameRecord& latestGame() { return games.back(); }
     int getLatestGameNum() const { return int(games.size()) - 1; }
-    
+
     int getScore(int p) const { return score[p]; }
     int positionOf(int p) const { // score から順位を調べる
         int pos = 0;
@@ -130,7 +130,7 @@ struct Record {
     // MatchRecordのリストをランダム順なアクセス可能にしたもの
     std::deque<MatchRecord> match;
     std::vector<int> rindex, startIndex;
-    
+
     Record() { init(); }
     Record(const std::vector<std::string>& paths) {
         init(); fin(paths);

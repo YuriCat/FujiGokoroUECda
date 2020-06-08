@@ -62,7 +62,7 @@ int positionPreferRevolution(const Field& field, int playerNum) {
     int allClassSum = 0;
     int rivalClassSum = 0;
     int numRivals = 0;
-    
+
     for (int p = 0; p < N_PLAYERS; p++) {
         if (field.isAlive(p) && playerNum != p) {
             int cl = field.classOf(p);
@@ -77,7 +77,7 @@ int positionPreferRevolution(const Field& field, int playerNum) {
         // 革命優先かの判断
         int rivalBetter = (rivalClassSum * field.numPlayersAlive()
                            < allClassSum * numRivals) ? 1 : 0;
-        
+
         // オーダー通常 & RPが良い階級　またはその逆の時革命優先
         return (rivalBetter ^ field.board.order()) ? 1 : -1;
     }

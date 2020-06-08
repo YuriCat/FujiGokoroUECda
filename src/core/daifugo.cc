@@ -181,7 +181,7 @@ string toRecordString(Move m) {
     }
     return tolower(oss.str());
 }
-    
+
 Move CardsToMove(const Cards chara, const Cards used) {
     // 性質 chara 構成札 used のカードから着手への変換
     Move m = MOVE_NULL;

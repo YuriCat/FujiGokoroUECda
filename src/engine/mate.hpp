@@ -128,10 +128,10 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
         // このときほぼ必勝なのだが、一応4枚グループが複数ある場合にはそうでないことがある
         Cards quad = myHand.pqr & PQR_4;
         // 4枚グループが1つ以下
-        if (!any2Cards(quad)) PW("0(U1QUAD)"); 
+        if (!any2Cards(quad)) PW("0(U1QUAD)");
         // 以下4枚グループ2つ以上 誤りを許容
         // 革命のうち1つにジョーカーを加えれば勝ち
-        if (myHand.jk) PW("0(2QUAD+JK)"); 
+        if (myHand.jk) PW("0(2QUAD+JK)");
         if (!any2Cards(quad & ~CARDS_8 & opsHand.nd[ord])) PW("0(U1NDQUAD)");
         return false;
     }
@@ -199,7 +199,7 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
                 if (!(quad & opsHand.nd[flipOrder(ord)] & ~CARDS_8)) {
                     // 革命でターンがとれる
                     // このとき、まだターンが取れていなかったやつを逆オーダーで考える
-                    
+
                     // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
                     Cards l = ndpqr_new.divide().lowest();
                     Cards h = ndpqr_new - l;

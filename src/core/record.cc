@@ -27,7 +27,7 @@ string PlayRecord::toString() const {
     oss << toRecordString(move) << "[" << time << "]";
     return oss.str();
 }
-    
+
 int StringQueueToCardsM(queue<string>& q, Cards *const dst) {
     *dst = CARDS_NULL;
     const string& str = q.front();
@@ -271,7 +271,7 @@ int loadMatchRecord(const string& path, MatchRecord *const pmatch) {
         } else if (cmd == "original") {
             for (int p = 0; p < N_PLAYERS; p++) {
                 Cards c;
-                if (StringQueueToCardsM(q, &c) < 0) Foo(); 
+                if (StringQueueToCardsM(q, &c) < 0) Foo();
                 game.orgCards[p] = c;
             }
         } else if (cmd == "play") {

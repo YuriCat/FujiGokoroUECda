@@ -88,8 +88,8 @@ namespace PolicyGradient {
             if (idx == -1) { // unfound
                 if (flags.test(1)) plearner->feedUnfoundFeatureValue();
                 if (flags.test(2)) plearner->feedObjValue(idx);
-            } else {                     
-                if (!playPolicyScore(score, mbuf, numMoves, field, *plearner, 1)) {  
+            } else {
+                if (!playPolicyScore(score, mbuf, numMoves, field, *plearner, 1)) {
                     if (flags.test(1)) plearner->feedFeatureValue();
                     if (flags.test(0)) { // learn
                         plearner->feedSupervisedActionIndex(idx);

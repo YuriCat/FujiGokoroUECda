@@ -7,7 +7,7 @@ SharedData shared;
 
 int main(int argc, char* argv[]) {
     vector<string> recordFiles;
-    
+
     // ヘッダ読み取り
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-i")) { // input directory
@@ -33,6 +33,6 @@ int main(int argc, char* argv[]) {
     PolicyTest(recordFiles);
     SimulationTest(recordFiles);
     EstimationTest(recordFiles);
-    
+
     return 0;
 }

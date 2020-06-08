@@ -6,7 +6,7 @@
 // UECdaルールで戦うためのヘッダ
 
 namespace UECda {
-    
+
 #if _PLAYERS == 5 // 5人時
     // 階級
     enum Class {
@@ -17,26 +17,26 @@ namespace UECda {
         DAIHINMIN,
         MIDDLE = HEIMIN, // 中央
     };
-    
+
     // UECdaの固定ルール
     constexpr int N_PLAYERS = 5;
     constexpr int N_CLASSES = 5;
-    
+
     constexpr int N_CHANGE_FALL_CARDS(int cl) { return MIDDLE - cl; }
     constexpr int N_CHANGE_RISE_CARDS(int cl) { return cl - MIDDLE; }
-    
+
     inline int N_CHANGE_CARDS(int cl) { return abs(cl - MIDDLE); }
-    
+
     constexpr int REWARD(int cl) { return N_PLAYERS - cl; }
-    
+
     constexpr int N_MAX_OWNED_CARDS_CHANGE = 13;
     constexpr int N_MAX_OWNED_CARDS_PLAY = 11;
-    
+
     constexpr int N_MAX_CHANGES = 13 * 12 / 2;
     constexpr int N_MAX_MOVES = 256;
-    
+
 #elif _PLAYERS == 4 // 4人時
-    
+
     // 階級
     enum Class {
         DAIFUGO = 0,
@@ -46,28 +46,28 @@ namespace UECda {
         HEIMIN = -1,
         MIDDLE = HINMIN,
     };
-    
+
     // UECdaの固定ルール
     constexpr int N_PLAYERS = 4;
     constexpr int N_CLASSES = 4;
-    
+
     constexpr int NChangeFallCards[N_PLAYERS] = {2, 1, 0, 0};
     constexpr int NChangeRiseCards[N_PLAYERS] = {0, 0, 1, 2};
     constexpr int NChangeCards[N_PLAYERS] = {2, 1, 1, 2};
-    
+
     constexpr int N_CHANGE_FALL_CARDS(int cl) { return NChangeFallCards[cl]; }
     constexpr int N_CHANGE_RISE_CARDS(int cl) { return NChangeRiseCards[cl]; }
-    
+
     constexpr int N_CHANGE_CARDS(int cl) { return NChangeCards[cl]; }
-    
+
     constexpr int REWARD(int cl) { return N_PLAYERS - cl; }
-    
+
     constexpr int N_MAX_OWNED_CARDS_CHANGE = 16;
     constexpr int N_MAX_OWNED_CARDS_PLAY = 14;
-    
+
     constexpr int N_MAX_CHANGES = 16 * 15 / 2;
     constexpr int N_MAX_MOVES = 1024;
-    
+
 #endif
     // 様々なルールを設定
     constexpr bool FIRSTTURNPLAYER_D3 = true;
@@ -75,9 +75,9 @@ namespace UECda {
 
     constexpr int CLASS_INIT_CYCLE = 100; // 階級リセット試合数(変更の可能性あり)
     constexpr int SEAT_INIT_CYCLE = 3; // 席順リセット試合数(変更の可能性あり)
-    
+
     // UECdaが提供しているデータ構造での処理
-    
+
     // 基本通信型。手札兼着手兼エントリー時情報送信
     inline void clearAll(int table[8][15]) {
         for (int i = 0; i < 8; i++) {
@@ -93,7 +93,7 @@ namespace UECda {
             }
         }
     }
-    
+
     inline bool isInitGame(const int table[8][15]) { return (table[6][5] == table[6][6]) ? true : false; } // プレーヤー0と1の階級が同じかどうかで判別
     inline int getTmpOrder(const int table[8][15]) { return (table[5][5] != table[5][6]) ? 1 : 0; } // 革命とイレバの片方のみ起こっている
     inline int getPrmOrder(const int table[8][15]) { return table[5][6] ? 1 : 0; } // 革命が起こっている
@@ -106,21 +106,21 @@ namespace UECda {
     inline int seatPlayer(const int table[8][15], int s) { return table[6][10 + s]; } // seat:0-4
     inline int isInChange(const int table[8][15]) { return table[5][0]; }
     inline int getChangeQty(const int table[8][15]) { return table[5][1]; }
-    
+
     // コンバート
     // ジョーカー関連は対応していないので注意
     constexpr inline int WToRank(int w) { return w; }
     constexpr inline int HToSuitNum(int h) { return 3 - h; }
     constexpr inline uint32_t HToSuit(int h) { return SuitNumToSuits(HToSuitNum(h)); }
-    
+
     constexpr inline int RankToW(int r) { return r; }
     constexpr inline int SuitNumToH(int sn) { return 3 - sn; }
     inline int SuitToH(uint32_t s) { return SuitNumToH(SuitToSuitNum(s)); }
-    
+
     constexpr inline int IntCardToH(IntCard ic) { return SuitNumToH(IntCardToSuitNum(ic)); }
     constexpr inline int IntCardToW(IntCard ic) { return RankToW(IntCardToRank(ic)); }
     constexpr inline IntCard HWtoIC(int h, int w) { return RankSuitNumToIntCard(WToRank(w), HToSuitNum(h)); }
-    
+
     // カード集合変換(chara == true の場合は性質カードに変換)
     inline Cards TableToCards(const int table[8][15], bool chara = false) {
         Cards c = CARDS_NULL;
@@ -149,19 +149,19 @@ namespace UECda {
         if (jk && c.count() == 1) c = CARDS_JOKER;
         return c;
     }
-    
+
     inline void CardsToTable(Cards c, int table[8][15]) {
         clearAll(table);
         if (c.joker()) table[4][1] = 2;
         for (IntCard ic : c.plain()) table[IntCardToH(ic)][IntCardToW(ic)] = 1;
     }
-    
+
     inline void replaceCards(Cards c, int table[8][15]) {
         clearCards(table);
         if (c.joker()) table[4][1] = 2;
         for (IntCard ic : c.plain()) table[IntCardToH(ic)][IntCardToW(ic)] = 1;
     }
-    
+
     // 着手変換
     static void MoveToTable(const Move m, const Board bd, int table[8][15]) {
         clearAll(table);
@@ -196,14 +196,14 @@ namespace UECda {
             else table[h][w] = 2; // JOKERが代役
         }
     }
-    
+
     static Move TableToMove(const int table[8][15]) {
         Cards chara = TableToCards(table, true);
         Cards used = TableToCards(table, false);
         DERR << "chara " << chara << " used " << used << std::endl;
         return CardsToMove(chara, used);
     }
-    
+
     static std::string toString(const int table[8][15]) { // 出力
         std::ostringstream oss;
         for (int i = 0; i < 8; i++) {

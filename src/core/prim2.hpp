@@ -57,7 +57,7 @@ constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
 constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
 
 class FieldAddInfo {
-    
+
     // 着手決定のためにこの程度は調べておきたい場情報
     // 着手ごとの情報と被る場合もあるけれども、検索が面倒な場合はこちらに記録しておく
 
@@ -69,13 +69,13 @@ class FieldAddInfo {
     // 21 PDOM
     // 22 BDOMOTHERS
     // 23 BDOMME
-    
+
     // info1
     // 0-3 MinNCards
     // 4-7 MaxNCards
     // 8-11 MinNCardsAwake
     // 12-15 MaxNCardsAwake
-    
+
 public:
     using data_t = uint64_t;
 
@@ -127,7 +127,7 @@ public:
     uint64_t isL2GiveUp() const { return test(LCT64_L2GIVEUP); }
     uint64_t isMate() const {     return i_ & FLAG64_MATE; }
     uint64_t isGiveUp() const {   return i_ & FLAG64_GIVEUP; }
-    
+
     uint64_t isSelfFollow() const { return test(LCT64_SELFFOLLOW); }
     uint64_t isUnrivaled() const { return test(LCT64_UNRIVALED); }
     uint64_t isLastAwake() const { return test(LCT64_LASTAWAKE); }
@@ -139,14 +139,14 @@ public:
     bool isBDALL() const { return holds(LCT64_BDOMOTHERS,
                                                  LCT64_BDOMME); }
     uint64_t isNoChance() const { return isBDM(); }
-    
+
     uint32_t getMinNCards() const { return i_ & 15U; }
     uint32_t getMaxNCards() const { return (i_ >> 4) & 15U; }
     uint32_t getMinNCardsAwake() const { return (i_ >> 8) & 15U; }
     uint32_t getMaxNCardsAwake() const { return (i_ >> 12) & 15U; }
-    
+
     void initHalf() { i_ = 0; }
-    
+
     void init() {
         // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
         i_ = 0x0000F0F0ULL;
@@ -154,11 +154,11 @@ public:
     void procTmpInfo() {
         i_ &= 0xFFFFULL;
     }
-    
+
     constexpr data_t data() const { return i_; }
     constexpr FieldAddInfo(): i_() {}
     constexpr FieldAddInfo(const FieldAddInfo& arg): i_(arg.data()) {}
-    
+
 protected:
     data_t i_;
 
@@ -179,19 +179,19 @@ static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 
     else if (i.isBNPW()) out << " -BNPW";
     else if (i.isBRPW()) out << " -BRPW";
     else if (i.isMPMate()) out << " -MPMATE";
-    
+
     if (i.isL2Mate()) out << " -L2MATE";
-    
+
     if (i.isMPGiveUp()) out << " -MPGIVEUP";
     if (i.isL2GiveUp()) out << " -L2GIVEUP";
-    
+
     if (i.isSelfFollow()) out << " -SFOL";
     if (i.isUnrivaled()) out << " -UNRIV";
     if (i.isLastAwake()) out << " -LA";
     if (i.isFlushLead()) out << " -FLEAD";
     if (i.isNonPassDom()) out << " -NPD";
     if (i.isPassDom()) out << " -PD";
-    
+
     if (i.isBDALL()) out << " -BDALL";
     else {
         if (i.isBDO()) out << " -BDO";
@@ -234,7 +234,7 @@ struct MoveInfo : public Move {
         return !(~Move::flags & dst);
     }
     uint32_t test(size_t i) const { return Move::flags & (1U << i); }
-    
+
     void setFinal() {    set(LCT_FINAL, LCT_PW, LCT_MPMATE); }
     void setPW() {       set(LCT_PW, LCT_MPMATE); }
     void setBNPW() {     set(LCT_BNPW, LCT_MPMATE); }
@@ -253,7 +253,7 @@ struct MoveInfo : public Move {
     void setDomAll() { setDO(); }
 
     void init() { Move::flags = 0; }
-    
+
     // get
     uint64_t isFinal() const {    return test(LCT_FINAL); }
     uint64_t isPW() const {       return test(LCT_PW); }
@@ -265,11 +265,11 @@ struct MoveInfo : public Move {
     uint64_t isL2GiveUp() const { return test(LCT_L2GIVEUP); }
     uint64_t isMate() const {     return Move::flags & FLAG_MATE; }
     uint64_t isGiveUp() const {   return Move::flags & FLAG_GIVEUP; }
-    
+
     uint64_t isDO() const { return test(12); }
     uint64_t isDM() const { return test(13); }
     bool isDALL() const { return holds(12, 13); }
-    
+
     uint64_t dominatesOthers() const { return isDO(); }
     uint64_t dominatesMe() const { return isDM(); }
     uint64_t dominatesAll() const { return isDALL(); }
@@ -283,16 +283,16 @@ static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
     else if (i.isBNPW()) oss << " -BNPW";
     else if (i.isBRPW()) oss << " -BRPW";
     else if (i.isMPMate()) oss << " -MPMATE";
-    
+
     if (i.isL2Mate()) oss << " -L2MATE";
-    
+
     if (i.isMPGiveUp()) oss << " -MPGIVEUP";
     if (i.isL2GiveUp()) oss << " -L2GIVEUP";
-    
+
     // 後場
     if (b.nextOrder(i) != 0) oss << " -TREV";
     if (b.locksSuits(i)) oss << " -SLOCK";
-    
+
     // 当座支配
     if (i.dominatesAll()) oss<< " -DALL";
     else {

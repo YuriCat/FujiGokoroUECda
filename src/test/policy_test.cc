@@ -40,7 +40,7 @@ int outputParams() {
     cerr << f1 << " " << playPolicy.param(f1) << endl;
     cerr << f2 << " " << playPolicy.param(f2) << endl;
 
-    //PlayPolicySpace::commentToPolicyParam(cerr, playPolicy.param_);    
+    //PlayPolicySpace::commentToPolicyParam(cerr, playPolicy.param_);
     return 0;
 }
 

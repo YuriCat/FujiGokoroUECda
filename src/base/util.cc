@@ -50,7 +50,7 @@ vector<string> split(const string& s,
     vector<string> result;
     string::size_type p = 0;
     string::size_type q;
-    
+
     bool found;
     do {
         found = false;

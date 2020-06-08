@@ -22,16 +22,16 @@ private:
     static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, std::cerr << i << std::endl;); }
     static void assert_stage(int st) { ASSERT(0 <= st && st < N_STAGES_, std::cerr << st << std::endl;); }
     mutable std::mutex mutex_;
-    
+
 public:
     using real_t = _real_t;
-    
+
     constexpr static int N_PARAMS_ = _N_PARAMS_; // パラメータの数
     constexpr static int N_PHASES_ = _N_PHASES_; // ドメインの数(複数のドメインに同じパラメータを使い回す場合)
     constexpr static int N_STAGES_ = _N_STAGES_; // 第1分岐の数(パラメータを分ける)
 
     real_t param_[N_STAGES_ * N_PARAMS_];
-    
+
     constexpr static int params() { return N_PARAMS_; }
     constexpr static int phases() { return N_PHASES_; }
     constexpr static int stages() { return N_STAGES_; }
@@ -40,13 +40,13 @@ public:
         assert_index(i); assert_stage(st);
         return param_[st * params() + i];
     }
-    
+
     void setLearningMode() const {}
-    
+
     bool isLearning() const { return false; }
-    
+
     void initFeedingFeatureValue() const {}
-    
+
     // learner 用の関数
     void initObjValue() const {}
     void initLearning() const {}
@@ -55,7 +55,7 @@ public:
     void feedFeatureScore(int c, int f, double v) const {}
     void feedCandidateScore(int c, double s) const {}
     void finishCalculatingScore() const {}
-    
+
     // 学習用の排他制御
     void lock() const { mutex_.lock(); }
     void unlock() const { mutex_.unlock(); }
@@ -67,7 +67,7 @@ public:
         }
         return oss.str();
     }
-    
+
     int fin(const std::string& fName) {
         memset(param_, 0, sizeof(param_));
         std::ifstream ifs(fName, std::ios::in);
@@ -84,7 +84,7 @@ public:
         }
         return 0;
     }
-    
+
     int bin(const std::string& fName) {
         memset(param_, 0, sizeof(param_));
         FILE *const pf = fopen(fName.c_str(), "rb");
@@ -96,7 +96,7 @@ public:
         fclose(pf);
         return 0;
     }
-    
+
     int fout(const std::string& fName) const { // 標準出入力型
         std::ofstream ofs(fName, std::ios::out);
         if (!ofs) return -1;
@@ -106,7 +106,7 @@ public:
         ofs << param_[N_STAGES_ * N_PARAMS_ - 1];
         return 0;
     }
-    
+
     int bout(const std::string& fName) const { // バイナリ型
         FILE *const pf = fopen(fName.c_str(), "wb");
         if (pf == nullptr) return -1;
@@ -114,7 +114,7 @@ public:
         fclose(pf);
         return 0;
     }
-    
+
     int hout(const std::string& fName, const std::string& tableName) const { // ヘッダファイル型
         std::ofstream ofs(fName, std::ios::out);
         if (!ofs) return -1;
@@ -125,7 +125,7 @@ public:
         ofs << "};";
         return 0;
     }
-    
+
     void setParam(const std::vector<real_t>& apv) {
         for (int i = 0, n = apv.size(); i < n && i < N_STAGES_ * N_PARAMS_; i++) {
             param_[i] = apv[i];
@@ -147,13 +147,13 @@ public:
             param_[i] = ap[i];
         }
     }
-    
+
     SoftmaxClassifier() {
         for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
             param_[i] = 0;
         }
     }
-    
+
     bool exam() const {
         // nan, inf
         auto valid = [](real_t d)->bool{ return !std::isnan(d) && !std::isinf(d); };
@@ -162,7 +162,7 @@ public:
         }
         return true;
     }
-    
+
     std::string toOverviewString() const {
         std::ostringstream oss;
         oss << params() << " params, " << phases() << " phases, " << stages() << " stages";
@@ -176,38 +176,38 @@ private:
     constexpr static int N_PARAMS_ = classifier_t::N_PARAMS_; // パラメータの数
     constexpr static int N_PHASES_ = classifier_t::N_PHASES_; // ドメインの数(複数のドメインに同じパラメータを使い回す場合)
     constexpr static int N_STAGES_ = classifier_t::N_STAGES_; // 第1分岐の数(パラメータを分ける)
-    
+
     constexpr static double PARAM_SUM_VALUE_MAX = 256; // 大きい値になりすぎるのを防ぐ
     constexpr static double VAR_ALPHA_MIN = 0.0001; // 分散が小さい要素に対応するパラメータの学習率が上がり過ぎないようにする
-    
+
     static void assert_index(int i) { ASSERT(0 <= i && i < N_PARAMS_, std::cerr << i << std::endl;); }
     static void assert_phase(int i) { ASSERT(0 <= i && i < N_PHASES_, std::cerr << i << std::endl;); }
     static void assert_stage(int i) { ASSERT(0 <= i && i < N_STAGES_, std::cerr << i << std::endl;); }
-    
+
     classifier_t *pclassifier_;
-    
+
 public:
     using real_t = typename classifier_t::real_t;
-    
+
     constexpr static int params() { return N_PARAMS_; }
     constexpr static int phases() { return N_PHASES_; }
     constexpr static int stages() { return N_STAGES_; }
-    
+
     double temperature() const { return T_; }
-    
+
     // temporary variable
     std::vector<double> score_;
     double score_sum_;
     int correctIndex_;
     std::vector<std::vector<std::pair<int, double>>> feature_;
-    
+
     // temporary variables for learning
     // double param_sum_;
     // double param2_sum_;
     double gradient_[N_STAGES_][N_PARAMS_];
     int64_t turns_;
     int64_t tmpBatch_;
-    
+
     // objective function
     int64_t trials_[N_PHASES_][N_STAGES_];
     int64_t unfoundTrials_[N_PHASES_][N_STAGES_];
@@ -215,51 +215,51 @@ public:
     double bestHitRateSum_[N_PHASES_][N_STAGES_];
     double KLDivergenceSum_[N_PHASES_][N_STAGES_];
     double entropySum_[N_PHASES_][N_STAGES_];
-    
+
     // about feature
     double feature_size_[N_PHASES_][N_STAGES_];
     float feature_count_[N_PHASES_][N_STAGES_][N_PARAMS_];
     float feature_sum_[N_PHASES_][N_STAGES_][N_PARAMS_];
     float feature_sum2_[N_PHASES_][N_STAGES_][N_PARAMS_];
-    
+
     // about record
     int64_t records_[N_PHASES_][N_STAGES_];
     int64_t unfoundRecords_[N_PHASES_][N_STAGES_];
     double branchSum_[N_PHASES_][N_STAGES_];
     double invBranchSum_[N_PHASES_][N_STAGES_];
-    
+
     // L1, L2 standardation
     float baseParam_[N_STAGES_ * N_PARAMS_];
-    
+
     // learning param
     double E_;
     double L1_;
     double L2_;
-    
+
     double T_;
     int batch_;
-    
+
     bool sparseUpdate;
-    
+
     // value stock for after learning
     std::vector<MomentQuadruple> stock_;
-    
+
     struct ImaginaryTragectory{
         std::vector<MomentQuadruple> trg;
         double reward;
     };
-    
+
     // imaginary value stock for after learning (1 turn)
     std::vector<ImaginaryTragectory> imaginaryTragectories_;
-    
+
     struct ImaginaryTragectories{
         std::vector<ImaginaryTragectory> tragectory_;
         int realChosenIndex_;
     };
-    
+
     // stock of imaginary tragectories
     std::vector<ImaginaryTragectories> imaginaryStock_;
-    
+
     SoftmaxClassifyLearner():
     pclassifier_(nullptr) {
         initBaseParam();
@@ -268,7 +268,7 @@ public:
         initLearnParam();
         initLearning();
     }
-    
+
     real_t param(int i, int st = 0) const {
         if (pclassifier_ != nullptr) return pclassifier_->param(i, st);
         else return 0.0;
@@ -336,7 +336,7 @@ public:
         // にはパラメータの値を小さめに制限
         return PARAM_SUM_VALUE_MAX / std::sqrt(sqrt(N_PARAMS_)) / std::sqrt(std::max(all_phase_var(i, st), 1.0));
     }
-    
+
     void setClassifier(classifier_t *const apc) {
         pclassifier_ = apc;
     }
@@ -360,7 +360,7 @@ public:
         batch_ = ab;
         if (batch_ == 1) sparseUpdate = true;
     }
-    
+
     void initFeatureValue() {
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; st < N_STAGES_; st++) {
@@ -380,9 +380,9 @@ public:
             }
         }
     }
-    
+
     void closeFeatureValue() {}
-    
+
     void mergeFeatureValue(const SoftmaxClassifyLearner& alearner) {
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; st < N_STAGES_; st++) {
@@ -400,7 +400,7 @@ public:
             }
         }
     }
-    
+
     void initBaseParam() {
         for (int i = 0; i < N_STAGES_ * N_PARAMS_; i++) {
             baseParam_[i] = 0;
@@ -411,7 +411,7 @@ public:
             baseParam_[i] = ap[i];
         }
     }
-    
+
     void initObjValue() {
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; st < N_STAGES_; st++) {
@@ -436,7 +436,7 @@ public:
             }
         }
     }
-    
+
     int64_t trials(int ph = 0, int st = 0) const {
         return trials_[ph][st];
     }
@@ -461,7 +461,7 @@ public:
         assert_stage(st); assert_phase(ph);
         return trials_[ph][st] > 0 ? entropySum_[ph][st] / trials_[ph][st] : 0.0;
     }
-    
+
     double calcMeanBranches(int ph = 0, int st = 0) const {
         assert_stage(st); assert_phase(ph);
         return records_[ph][st] > 0 ? branchSum_[ph][st] / records_[ph][st] : 0.0;
@@ -470,7 +470,7 @@ public:
         assert_stage(st); assert_phase(ph);
         return records_[ph][st] > 0 ? invBranchSum_[ph][st] / records_[ph][st] : 0.0;
     }
-    
+
     void initLearning() {
         // initialize
         turns_ = 0;
@@ -481,7 +481,7 @@ public:
         }
         tmpBatch_ = 0;
     }
-    
+
     void initCalculatingScore(int candidates) {
         feature_.clear();
         score_.clear();
@@ -500,12 +500,12 @@ public:
         // 候補 c 特徴 f 係数 v
         feature_.at(c).emplace_back(std::pair<int, double>(f, v));
     }
-    
+
     void feedCandidateScore(int c, double s) {
         score_.at(c) += s;
         score_sum_ += s;
     }
-    
+
     void finishCalculatingScore(bool stock = false) {
         // if after-learning mode, value should be stocked
         if (stock) {
@@ -517,114 +517,114 @@ public:
             });
         }
     }
-    
+
     void feedChosenActionIndexToLatestStock(int idx, int ph = 0) {
         if (stock_.size() > 0) {
             stock_.back().chosenIndex_ = idx;
         }
     }
-    
+
     void clearStocks() {
         stock_.clear();
     }
-    
+
     void clearImaginaryStocks() {
         imaginaryStock_.clear();
     }
-    
+
     void feedReward(double reward, int ph = 0, int st = 0) { // reinforcement learning
         for (auto& q : stock_) {
             if (q.feature_.size() <= 1) return;
-            
+
             for (const auto& element : q.feature_[q.chosenIndex_]) { // chosen action
                 double dg = element.second / (var(element.first, ph) + VAR_ALPHA_MIN) * reward;
-                
+
                 FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
                         << " / " << var(element.first, ph) << std::endl;);
-                
+
                 gradient_[st][element.first] += dg;
             }
-            
+
             for (int m = 0, n = q.feature_.size(); m < n; m++) { // all actions
                 double possibility = (q.score_sum_ > 0) ? (q.score_[m] / q.score_sum_) : (1.0 / n);
-                
+
                 FASSERT(possibility, std::cerr << q.score_[m] << " / " << q.score_sum_ << std::endl;);
                 for (const auto& element : q.feature_[m]) { // all features
                     double dg = -element.second / (var(element.first, ph) + VAR_ALPHA_MIN) * possibility * reward;
-                    
+
                     FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
                             << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << std::endl;);
-                    
+
                     gradient_[st][element.first] += dg;
                 }
             }
         }
         clearStocks();
     }
-    
+
     void feedImaginaryReward(double reward, int ph = 0) {
         //imaginaryStock.back().emplace_back(make_tuple(stock_, reward));
     }
-    
+
     /*void feedChosenActionIndexToLatestImagnaryStock(int idx, int ph = 0) {
         if (stock_.size() > 0) {
             stock_.back().chosenIndex_ = idx;
         }
     }*/
-    
+
     void feedRealChosenIndex(int idx) {
         imaginaryStock_.emplace_back(ImaginaryTragectories{
             std::move(imaginaryTragectories_),
             idx,
         });
     }
-    
+
     void feedRealReward(double reward, int ph = 0) {
         /*for (auto& ts : imaginaryStock_) {
             for (auto& t : ts.tragectories) {
-                
+
             }
         }
         for (auto& q : stock_) {
             if (q.feature_.size() <= 1) return;
-            
+
             for (const auto& element : q.feature_[q.chosenIndex_]) { // chosen action
                 double dg = element.second / var(element.first, ph) * reward;
-                
+
                 FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
                         << " / " << var(element.first, ph) << std::endl;);
-                
+
                 gradient_[element.first] += dg;
             }
-            
+
             for (int m = 0, n = q.feature_.size(); m < n; m++) { // all actions
                 double possibility = (q.score_sum_ > 0) ? (q.score_[m] / q.score_sum_) : (1 / (double)n);
-                
+
                 FASSERT(possibility, std::cerr << q.score_[m] << " / " << q.score_sum_ << std::endl;);
                 for (const auto& element : q.feature_[m]) { // all features
                     double dg = -element.second / var(element.first, ph) * possibility * reward;
-                    
+
                     FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
                             << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph) << std::endl;);
-                    
+
                     gradient_[element.first] += dg;
                 }
             }
         }*/
         clearImaginaryStocks();
     }
-    
+
     void updateParams(int ph = 0, int st = 0) {
-        
+
         ++tmpBatch_;
         if (tmpBatch_ >= batch_) tmpBatch_ = 0;
         else return;
-        
+
         const double T = temperature();
         const double e = E_;
-        
+
         if (e == 0.0 || pclassifier_ == nullptr) return;
-        
+
         real_t *const param = pclassifier_->param_;
         if (sparseUpdate) { // 勾配を使用した特徴1つずつで更新する場合
             if (feature_.size() <= 1) return;
@@ -632,24 +632,24 @@ public:
             for (int m = 0, n = feature_.size(); m < n; m++) { // all candidates
                 double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1.0 / n);
                 FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
-                
+
                 double correct = (m == correctIndex_) ? 1.0 : 0.0;
                 for (const auto& element : feature_[m]) {
                     const int pi = element.first + st * params();
                     double dg = (correct - possibility) * element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN);
                     FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
                             << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << std::endl;);
-                    
+
                     param[pi] += e / T * dg;
-                    
+
                     FASSERT(param[pi],); FASSERT(baseParam_[pi],);
-                    
+
                     // 正則化
                     /*if (lam1 || lam2) {
                         const double weight = 1.0 / sqrt(frequency(element.first, ph, st)) / sqrt(feature_.size());
                         const double l1 = param[pi] > baseParam_[pi] ? (-weight) : weight; // L1
                         const double l2 = -2 * weight * (param[pi] - baseParam_[pi]); // L2
-                        
+
                         // 正則化項によるパラメータ更新は、baseを追い越すときはbaseにする(FOBOS)
                         double nrm = l1 * lam1 + l2 * lam2;
                         if ((param[pi] - baseParam_[pi]) * (param[pi] + nrm - baseParam_[pi]) <= 0) {
@@ -658,7 +658,7 @@ public:
                             param[pi] += nrm;
                         }
                     }*/
-                    
+
                     // 絶対値が大きい場合は丸める
                     double paramLimit = limit(element.first, st);
                     param[pi] = std::max(-paramLimit, std::min(paramLimit, (double)param[pi]));
@@ -669,19 +669,19 @@ public:
             pclassifier_->lock();
             const double weight = sqrt(batch_);
             const double lam1 = L1_ * weight, lam2 = L2_ * weight;
-            
+
             for (int i = 0; i < N_PARAMS_; i++) {
                 int pi = i + st * params();
                 double omg = e / T * gradient_[st][i];
                 param[pi] += omg; // 最急降下法によるパラメータ更新
                 double tmp = param[pi];
-                
+
                 FASSERT(tmp,); FASSERT(baseParam_[pi],);
-                
+
                 if (lam1 || lam2) {
                     const double l1 = tmp > baseParam_[pi] ? (-1) : (1); // L1
                     const double l2 = -2 * (tmp - baseParam_[pi]); // L2
-                    
+
                     // 正則化項によるパラメータ更新は、baseを追い越すときはbaseにする(FOBOS)
                     double nrm = l1 * lam1 + l2 * lam2;
                     if ((tmp - baseParam_[pi]) * (tmp + nrm - baseParam_[pi]) <= 0) {
@@ -691,7 +691,7 @@ public:
                     }
                     //if (nrm > 100) { std::cerr << nrm << std::endl; }
                 }
-                
+
                 // 絶対値が大きい場合は丸める
                 double paramLimit = limit(i, st);
                 param[pi] = std::max(-paramLimit, std::min(paramLimit, (double)param[pi]));
@@ -707,9 +707,9 @@ public:
     }
     void feedFeatureValue(int ph = 0, int st = 0) {
         if (feature_.size() <= 1) return;
-        
+
         const double weight = 1.0 / feature_.size(); // 候補クラスが少ないときほど重要
-        
+
         for (int m = 0, n = feature_.size(); m < n; m++) {
             for (auto element : feature_[m]) {
                 feature_count_[ph][st][element.first] += weight;
@@ -717,50 +717,50 @@ public:
                 feature_sum2_[ph][st][element.first] += element.second * element.second * weight;
             }
         }
-        
+
         ++feature_size_[ph][st];
         ++records_[ph][st];
         branchSum_[ph][st] += feature_.size();
         invBranchSum_[ph][st] += 1.0 / feature_.size();
     }
-    
+
     void feedSupervisedActionIndex(int idx, int ph = 0, int st = 0) { // in supervised learning mode
         if (feature_.size() <= 1) return;
         correctIndex_ = idx;
         if (sparseUpdate)return;
         for (const auto& element : feature_[idx]) { // correct answer
             double dg = element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN);
-            
+
             FASSERT(dg, std::cerr << "elm = " << element.first << " " << element.second
                    << " / " << var(element.first, ph, st) << std::endl;);
-            
+
             gradient_[st][element.first] += dg;
         }
         for (int m = 0, n = feature_.size(); m < n; m++) { // all answers
             double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1 / (double)n);
-            
+
             FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
-            
+
             for (const auto& element : feature_[m]) {
                 double dg = -element.second / (var(element.first, ph, st) + VAR_ALPHA_MIN) * possibility;
-                
+
                 FASSERT(dg, std::cerr << "elm = " << element.first << " grd = " << dg
                        << " val = " << element.second << " p = " << possibility << " var = " << var(element.first, ph, st) << std::endl;);
-                
+
                 gradient_[st][element.first] += dg;
             }
         }
         turns_++;
     }
-    
+
     void feedObjValue(int idx, int ph = 0, int st = 0) {
         if (feature_.size() <= 1) return;
         if (idx >= 0) {
             for (int m = 0, n = feature_.size(); m < n; m++) {
                 double possibility = (score_sum_ > 0) ? (score_[m] / score_sum_) : (1 / (double)n);
-                
+
                 FASSERT(possibility, std::cerr << score_[m] << " / " << score_sum_ << std::endl;);
-                
+
                 if (possibility > 0) {
                     entropySum_[ph][st] += - possibility * log(possibility) / log(2.0);
                 }
@@ -788,10 +788,10 @@ public:
                 if (score_sum_ > 0) {
                     meanHitRateSum_[ph][st] += score_[idx] / score_sum_;
                     bestHitRateSum_[ph][st] += best ? (1.0 / bestIdx.size()) : 0;
-                    
+
                     const double dkl = -(log(score_[idx] / score_sum_) / log(2.0));
                     FASSERT(dkl, std::cerr << " dkl" << std::endl;);
-                    
+
                     KLDivergenceSum_[ph][st] += dkl;
                 } else {
                     meanHitRateSum_[ph][st] += 1.0 / feature_.size();
@@ -806,7 +806,7 @@ public:
             unfoundTrials_[ph][st]++;
         }
     }
-    
+
     double calcBaseDistance(int ph = 0, int st = 0) const {
         double dsum = 0;
         for (int i = 0; i < N_PARAMS_; i++) {
@@ -816,7 +816,7 @@ public:
         }
         return dsum;
     }
-    
+
     double calcBaseDistance2(int ph = 0, int st = 0) const {
         double dsum = 0;
         for (int i = 0; i < N_PARAMS_; i++) {
@@ -826,7 +826,7 @@ public:
         }
         return dsum;
     }
-    
+
     int finFeatureSurvey(const std::string& fName, double af_size = 10000) {
 
         std::ifstream ifs(fName, std::ios::in);
@@ -834,7 +834,7 @@ public:
             std::cerr << "SoftmaxClassifyLearner::finFeatureSurvey() : failed to import! " << fName << std::endl;
             return -1;
         }
-        
+
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; st < N_STAGES_; st++) {
                 feature_size_[ph][st] = af_size;
@@ -845,26 +845,26 @@ public:
                 }
             }
         }
-        
+
         for (int ph = 0; ph < N_PHASES_; ph++) {
             for (int st = 0; ifs && st < N_STAGES_; st++) {
                 for (int i = 0; ifs && i < N_PARAMS_; i++) {
                     float tfreq, tmean, tvar;
                     ifs >> tfreq >> tmean >> tvar;
-                    
+
                     feature_count_[ph][st][i] = tfreq * feature_size_[ph][st];
                     feature_sum_[ph][st][i] = tmean * feature_size_[ph][st];
                     if (tvar > 0) {
                         feature_sum2_[ph][st][i] = (tvar + tmean * tmean) * feature_size_[ph][st];
                     }
-                    
+
                     ASSERT(var(i, ph, st) > 0,);
                 }
             }
         }
         return 0;
     }
-    
+
     int foutFeatureSurvey(const std::string& fName) const {
         std::ofstream ofs(fName, std::ios::out);
         if (!ofs) return -1;
@@ -877,13 +877,13 @@ public:
         }
         return 0;
     }
-    
+
     std::string toOverviewString() const {
         std::ostringstream oss;
         oss << params() << " params, " << phases() << " phases, " << stages() << " stages";
         return oss.str();
     }
-    
+
     std::string toFeatureString() const {
         std::ostringstream oss;
         for (int i = 0, n = feature_.size(); i < n; i++) {
@@ -899,7 +899,7 @@ public:
         }
         return oss.str();
     }
-    
+
     std::string toRecordString(int ph = 0, int st = 0) const {
         std::ostringstream oss;
         oss << "MB = " << calcMeanBranches(ph, st);
@@ -907,7 +907,7 @@ public:
         oss << " records. (and " << unfoundRecords_[ph][st] << " unfound)";
         return oss.str();
     }
-    
+
     std::string toObjValueString(int ph = 0, int st = 0) const {
         std::ostringstream oss;
         oss << "MHR(BHR) = " << calcMeanHitRate(ph, st);

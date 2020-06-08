@@ -8,7 +8,7 @@ using namespace std;
 namespace Settings {
     const double valuePerClock = 5.0 / (THINKING_LEVEL * THINKING_LEVEL) / pow(10.0, 10);
     // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
-    const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6); 
+    const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6);
 }
 
 int selectBanditAction(const RootInfo& root, Dice& dice) {
@@ -109,7 +109,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
 
         int world = 0;
-        int action = selectBanditAction(*proot, dice);          
+        int action = selectBanditAction(*proot, dice);
 
         if (numSimulations[action] < numWorlds) {
             // まだ全ての世界でこの着手を検討していない

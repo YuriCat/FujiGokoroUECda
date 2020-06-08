@@ -6,7 +6,7 @@ using namespace std;
 
 #define LINEOUT(feature, str) { out << str << endl; int base = FEA_IDX(feature);\
 for (int i = 0; i < FEA_NUM(feature); i++) { os(base + i); } out << endl; }
-    
+
 #define LINEOUTX(feature, str, x) { out << str << endl; int base = FEA_IDX(feature); int num = FEA_NUM(feature);\
 for (int i = 0;;) { os(base + i); i++; if (i >= num) break; if (i % (x) == 0) { out << endl; }} out << endl; }
 
@@ -104,7 +104,7 @@ double pqrRankScore(Cards pqr, int jk, int ord) {
     int r = 0;
     int cnt = countCards(pqr);
     for (IntCard ic : pqr) r += IntCardToRank(ic);
-    if (ord != 0) r = (RANK_3 + RANK_2) * cnt - r; 
+    if (ord != 0) r = (RANK_3 + RANK_2) * cnt - r;
     if (jk) {
         r += RANK_2 + 1;
         cnt += 1;
@@ -119,7 +119,7 @@ double pqrRankScore(Cards pqr, int jk, int ord) {
 template <int M, class policy_t>
 int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
                     const Field& field, policy_t& pol) { // learnerとして呼ばれうるため const なし
-    
+
     using namespace PlayPolicySpace;
 
     // 恒常パラメータ
@@ -136,14 +136,14 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
     const Cards curPqr = myHand.pqr;
     const FieldAddInfo& fieldInfo = field.fieldInfo;
     const int NParty = divisionCount(mbuf + NMoves, myCards);
-    
+
     // 元々の手札の最低、最高ランク
     const int myLR = IntCardToRank(pickIntCardLow(myCards));
     const int myHR = IntCardToRank(pickIntCardHigh(myCards));
-    
+
     const int order = b.order();
     const double rankScore = pqrRankScore(curPqr, myCards.joker(), order);
-    
+
     // 場役主から自分が何人目か数える
     int distanceToOwner = 0;
     if (owner != tp) {
@@ -172,7 +172,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int NMoves,
             // 着手パラメータ
             const int aftOrd = b.nextOrder(m);
             const int q4 = min(m.qty(), 4);
-            
+
             const Cards afterCards = myCards - m.cards();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
@@ -676,7 +676,7 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
             const int hr2 = IntCardToRank(tmpPqr.highest());
             const int lr1 = IntCardToRank(tmpPqr.popLowest());
             const int lr2 = IntCardToRank(tmpPqr.lowest());
-            
+
             FooX(FEA_IDX(FEA_CHANGE_HAND_MAX1_RANK), hr1);
             FooX(FEA_IDX(FEA_CHANGE_HAND_MAX2_RANK), hr2);
             FooX(FEA_IDX(FEA_CHANGE_HAND_MIN1_RANK), lr1);
@@ -744,11 +744,11 @@ int changePolicyScore(double *const dst, const Cards *const change, const int NC
                       const Cards myCards, const int NChangeCards,
                       const ChangePolicy<policy_value_t>& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);                         
+    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
                       const Cards myCards, const int NChangeCards,
                       ChangePolicyLearner<policy_value_t>& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, NChanges, myCards, NChangeCards, pol);
-    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);                       
+    else return changePolicyScore<1>(dst, change, NChanges, myCards, NChangeCards, pol);
 }

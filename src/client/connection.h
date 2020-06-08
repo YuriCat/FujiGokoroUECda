@@ -1,4 +1,4 @@
-/*connection*/ 
+/*connection*/
 
 void checkArg(int argc,char* argv[]);
 int  startGame(int table[8][15]);

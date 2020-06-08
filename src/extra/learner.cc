@@ -31,7 +31,7 @@ class LearningSpace {
 private:
     ChangePolicyLearner<policy_value_t> changeLearner_;
     PlayPolicyLearner<policy_value_t> playLearner_;
-    
+
 public:
     // 相手プレーヤー別に呼び出しを分ける想定もあるので引数を取れるようにはしておく
     ChangePolicyLearner<policy_value_t>& changeLearner(int p = 0) { return changeLearner_; }
@@ -162,7 +162,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
             cerr << "change - test     record : " << masterChangeLearner.toRecordString(ph) << endl;
         }
     }
-    
+
     if (mode & MODE_FLAG_PLAY) {
         // 着手学習データ
         threadPool.clear();
