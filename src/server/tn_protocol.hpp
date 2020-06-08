@@ -10,7 +10,7 @@ static int num[65536];
 int tn_card_write(int client_sockfd, int send_card[8][15], int protocol_version) {
     uint32_t tmp_card[8][15];
     int i,j;
-    
+
     switch (protocol_version) {
         case 20060:
             return send(client_sockfd, send_card, sizeof(i)*8*15, 0);
@@ -29,7 +29,7 @@ int tn_card_write(int client_sockfd, int send_card[8][15], int protocol_version)
 
 int tn_int_write(int client_sockfd, int i, int protocol_version) {
     uint32_t tmp;
-    
+
     switch (protocol_version) {
         case 20060:
             return send(client_sockfd, &i, sizeof(i), 0);
@@ -46,7 +46,7 @@ int tn_card_read(int client_sockfd, int read_card[8][15], int protocol_version) 
     uint32_t tmp_card[8][15];
     int tmp_card2[8][15];
     int i,j;
-    
+
     memset(tmp_card,0,sizeof(tmp_card));
     switch (protocol_version) {
         case 20060:
@@ -65,5 +65,5 @@ int tn_card_read(int client_sockfd, int read_card[8][15], int protocol_version) 
     return -1;
 }
 
-#endif 
+#endif
 

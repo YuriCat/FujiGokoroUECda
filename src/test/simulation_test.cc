@@ -24,7 +24,7 @@ int testSimulation(const MatchRecord& match) {
     for (const auto& game : match.games) {
         shared.initGame();
         auto newClasses = game.infoNewClass; // 対局結果
-        int tc = dice() % game.plays.size();
+        int tc = dice() % game.numPlays;
         Field field;
         for (Move move : PlayRoller(field, game)) {
             // この局面からシミュレーションを行う

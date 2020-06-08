@@ -14,6 +14,6 @@ struct playerStatistics {
     int eightGiriTurnSum;
     int eightGiriCnt;
     int spe3;
-}; 
+};
 
 #endif //STATISTICS_H

@@ -43,7 +43,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
 
     for (const auto& game : match.games) {
         shared.initGame();
-        int tc = dice() % game.plays.size();
+        int tc = dice() % game.numPlays;
         Field field;
         for (Move move : PlayRoller(field, game)) {
             if (field.numPlayersAlive() <= 2) continue;

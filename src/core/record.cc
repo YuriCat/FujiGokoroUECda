@@ -85,8 +85,8 @@ bool StringToMoveTimeM(const string& str, Move *const dstMove, uint64_t *const d
 }
 
 void GameRecord::init(int playerNum) {
-    changes.clear();
-    plays.clear();
+    numChanges = 0;
+    numPlays = 0;
     flags_.reset();
     infoClass.clear();
     infoSeat.clear();
@@ -127,8 +127,8 @@ string GameRecord::toString() const {
 
     Cards changeCards[N_PLAYERS];
     for (int p = 0; p < N_PLAYERS; p++) changeCards[p].clear();
-    for (auto change : changes) {
-        changeCards[change.from] = change.cards;
+    for (int i = 0; i < numChanges; i++) {
+        changeCards[changes[i].from] = changes[i].cards;
     }
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << tolower(changeCards[p].toString()) << " ";
@@ -140,8 +140,8 @@ string GameRecord::toString() const {
     }
     oss << endl;
     oss << "play ";
-    for (auto play : plays) {
-        oss << play.toString() << " ";
+    for (int t = 0; t < numPlays; t++) {
+        oss << plays[t].toString() << " ";
     }
     oss << endl;
     oss << "result ";
@@ -374,8 +374,9 @@ int Field::passPresent(const GameRecord& game, int playerNum) {
     }
     // 献上の処理
     int presentCount = 0;
-    for (const auto& change : game.changes) {
+    for (int i = 0; i < game.numChanges; i++) {
         // 自分が受け取る側では無い献上を処理
+        const auto& change = game.changes[i];
         if (change.already && change.to != myPlayerNum) {
             makeChange(change.from, change.to, change.qty, change.cards, false, true);
             presentCount++;
@@ -388,7 +389,8 @@ int Field::passPresent(const GameRecord& game, int playerNum) {
 void Field::passChange(const GameRecord& game, int playerNum) {
     if (phase < PHASE_PRESENT) passPresent(game, playerNum);
     // 交換の処理
-    for (const auto& change : game.changes) {
+    for (int i = 0; i < game.numChanges; i++) {
+        const auto& change = game.changes[i];
         makeChange(change.from, change.to, change.qty, change.cards, change.already);
     }
     phase = PHASE_CHANGE;
@@ -417,6 +419,6 @@ void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
     prepareForPlay();
 
     // 役提出の処理
-    tcnt = min((int)game.plays.size(), tcnt);
+    tcnt = min(game.numPlays, tcnt);
     for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move);
 }

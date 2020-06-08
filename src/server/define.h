@@ -11,7 +11,7 @@
 #define RULE_8GIRI
 #undef  RULE_11BASK*/
 
-/* setting values*/ 
+/* setting values*/
 /*#define  GAME_NUMBER 10*/
 
 // header
