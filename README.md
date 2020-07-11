@@ -39,7 +39,7 @@ make -j4
 
 過去に大会出場したバージョンは
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2020/download.html
 
 からダウンロードできます。
 
@@ -47,7 +47,7 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/downloads.html
 
 ## ルール等 公式のドキュメント
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/document.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2020/document.html
 
 ## 大会での利用について
 
@@ -55,4 +55,4 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2017/document.html
 
 特に私の製作プログラムについては、こちらの開発版コードの利用しての出場も許可します。
 
-（出場申し込みの際に、コード利用の由を運営方に伝えたほうがよいかとは思います）
+（出場申し込みの際に、コード利用の旨を運営方に伝えたほうがよいかとは思います）
