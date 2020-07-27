@@ -1,7 +1,6 @@
 #pragma once
 
 #include <queue>
-#include <boost/container/static_vector.hpp>
 #include "daifugo.hpp"
 #include "field.hpp"
 
@@ -28,11 +27,11 @@ struct ChangeRecord { // 交換の記録
 struct GameRecord {
     void init(int playerNum = -1);
     void pushChange(const ChangeRecord& change) {
-        if (changes.size() < N_CHANGES) changes.push_back(change);
+        if (numChanges < N_CHANGES) changes[numChanges++] = change;
         else flags_.set(2);
     }
     void pushPlay(const PlayRecord& play) {
-        if (plays.size() < 128) plays.push_back(play);
+        if (numPlays < 128) plays[numPlays++] = play;
         else flags_.set(3);
     }
 
@@ -67,10 +66,12 @@ struct GameRecord {
     std::array<Cards, N_PLAYERS> dealtCards, orgCards;
 
     static constexpr int N_CHANGES = (N_PLAYERS / 2) * 2; // TODO: まあ5人以下だからいいのか?
-    boost::container::static_vector<ChangeRecord, N_CHANGES> changes;
+    std::array<ChangeRecord, N_CHANGES> changes;
+    int numChanges;
     // 128手を超えることは滅多にないので強制打ち切り
     // ここをvectorとかにすると連続対戦棋譜がvector<vector>みたいになって死ぬ
-    boost::container::static_vector<PlayRecord, 128> plays;
+    std::array<PlayRecord, 128> plays;
+    int numPlays;
     std::bitset<32> flags_;
 
     std::string toString() const;
@@ -208,7 +209,7 @@ public:
     };
 
     const_iterator begin() const { return const_iterator(field, game, presentCount); }
-    const_iterator end() const { return const_iterator(field, game, game->changes.size()); }
+    const_iterator end() const { return const_iterator(field, game, game->numChanges); }
 
     ChangeRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
         presentCount = field->passPresent(*game, game->myPlayerNum);
@@ -231,7 +232,7 @@ public:
     };
 
     const_iterator begin() const { return const_iterator(field, game, 0); }
-    const_iterator end() const { return const_iterator(field, game, game->plays.size()); }
+    const_iterator end() const { return const_iterator(field, game, game->numPlays); }
 
     PlayRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
         field->passChange(*game, game->myPlayerNum);
