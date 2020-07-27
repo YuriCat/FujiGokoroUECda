@@ -649,7 +649,7 @@ int main(int argc, char *argv[]) {
             Cards c = TableToCards(work_card);
             ChangeRecord change;
             change.set(mibun[1], mibun[N_PLAYERS - 2], c.count(), c, false);
-            
+            game_log.pushChange(change);            
         }// fi
         if (debug) {printf("change hugou - OK\n");} //DEBUG
         if (debug) {printf("end of distribute\n");} //DEBUG
