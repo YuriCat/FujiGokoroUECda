@@ -203,12 +203,12 @@ public:
         if (b.isInvalid()) return MOVE_PASS;
 
         // 合法着手生成
-        int NMoves = genMove(mbuf.data(), myCards, b);
-        if (NMoves <= 0) { // 合法着手なし
+        int numMoves = genMove(mbuf.data(), myCards, b);
+        if (numMoves <= 0) { // 合法着手なし
             std::cerr << "No valid move." << std::endl;
             return MOVE_PASS;
         }
-        if (NMoves == 1) {
+        if (numMoves == 1) {
             // 合法着手1つ。パスのみか、自分スタートで手札1枚
             // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
             if (monitor) {
@@ -224,18 +224,18 @@ public:
 
         // 合法着手生成(特別着手)
         if (b.isNull()) {
-            mbuf[NMoves++].setPASS();
+            mbuf[numMoves++].setPASS();
         }
         if (containsJOKER(myCards) && containsS3(opsCards)) {
             if (b.isGroup() && b.qty() > 1) {
-                NMoves += genJokerGroup(mbuf.data() + NMoves, myCards, opsCards, b);
+                numMoves += genJokerGroup(mbuf.data() + numMoves, myCards, opsCards, b);
             }
         }
-        std::shuffle(mbuf.begin(), mbuf.begin() + NMoves, rootTools.dice);
+        std::shuffle(mbuf.begin(), mbuf.begin() + numMoves, rootTools.dice);
 
         // 着手追加情報を設定
         bool l2failure = false;
-        for (int i = 0; i < NMoves; i++) {
+        for (int i = 0; i < numMoves; i++) {
             MoveInfo& move = mbuf[i];
             // 支配性
             if (move.qty() > fieldInfo.getMaxNCardsAwake()
@@ -291,20 +291,20 @@ public:
             // 着手候補一覧表示
             std::cerr << "My Cards : " << myCards << std::endl;
             std::cerr << b << " " << fieldInfo << std::endl;
-            for (int i = 0; i < NMoves; i++) {
+            for (int i = 0; i < numMoves; i++) {
                 std::cerr << mbuf[i] << toInfoString(mbuf[i], b) << std::endl;
             }
         }
 
         // ルートノード設定
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
-                               : std::min(5000, (int)(pow((double)NMoves, 0.8) * 700));
-        root.setPlay(mbuf.data(), NMoves, field, shared, limitSimulations);
+                               : std::min(5000, (int)(pow((double)numMoves, 0.8) * 700));
+        root.setPlay(mbuf.data(), numMoves, field, shared, limitSimulations);
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
-        playPolicyScore(score, mbuf.data(), NMoves, field, shared.basePlayPolicy, 0);
-        root.feedPolicyScore(score, NMoves);
+        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy, 0);
+        root.feedPolicyScore(score, numMoves);
 
         // モンテカルロ法による評価(結果確定のとき以外)
         if (!Settings::policyMode
@@ -352,7 +352,7 @@ public:
                 // 6. 独断場のとき最小分割数が減るのであればパスでないものを優先
                 //    そうでなければパスを優先
                 int division = divisionCount(rootTools.mbuf, myCards);
-                for (int i = 0; i < NMoves; i++) {
+                for (int i = 0; i < numMoves; i++) {
                     Cards nextCards = myCards - root.child[i].move.cards();
                     root.child[i].nextDivision = divisionCount(rootTools.mbuf, nextCards);
                 }

@@ -49,29 +49,29 @@ int outputL2JudgeResult() {
         Hand myHand, oppHand;
         myHand.setAll(myCards);
         oppHand.setAll(oppCards);
-        Board bd = OrderToNullBoard(0);
+        Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
 
-        genMove(buffer, myCards, bd);
+        genMove(buffer, myCards, b);
     }
 
     {
         Hand myHand, oppHand;
         myHand.setAll(oppCards);
         oppHand.setAll(myCards);
-        Board bd = OrderToNullBoard(0);
+        Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, bd, fieldInfo);
+        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
         cerr << myHand << oppHand << " -> " << judgeResult << endl;
     }
 

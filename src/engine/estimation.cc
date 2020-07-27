@@ -550,34 +550,34 @@ void RandomDealer::setWeightInWA() {
 
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
                                        const SharedData& shared, ThreadTools *const ptools) const {
-    const int turn = field.turn();
+    int turn = field.turn();
     const Board b = field.board;
 
     MoveInfo *const mbuf = ptools->mbuf;
-    const int NMoves = genMove(mbuf, field.getCards(turn), b);
-    if (NMoves <= 1) return 1;
+    int numMoves = genMove(mbuf, field.getCards(turn), b);
+    if (numMoves <= 1) return 1;
 
     // 場の情報をまとめる
-    for (int i = 0; i < NMoves; i++) {
-        bool mate = checkHandMate(0, mbuf + NMoves, mbuf[i], field.hand[turn],
+    for (int i = 0; i < numMoves; i++) {
+        bool mate = checkHandMate(0, mbuf + numMoves, mbuf[i], field.hand[turn],
                                   field.opsHand[turn], b, field.fieldInfo);
         if (mate) mbuf[i].setMPMate();
     }
 
     // 選ばれた手が生成されているか調べる
-    int moveIndex = searchMove(mbuf, NMoves, move);
-    if (moveIndex == -1) return 0.1 / double(NMoves + 1);
+    int moveIndex = searchMove(mbuf, numMoves, move);
+    if (moveIndex == -1) return 0.1 / double(numMoves + 1);
 
     array<double, N_MAX_MOVES> score;
-    playPolicyScore(score.data(), mbuf, NMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy, 0);
 
     // Mateの手のスコアを設定
-    double maxScore = *max_element(score.begin(), score.begin() + NMoves);
-    for (int i = 0; i < NMoves; i++) {
+    double maxScore = *max_element(score.begin(), score.begin() + numMoves);
+    for (int i = 0; i < numMoves; i++) {
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
 
-    SoftmaxSelector<double> selector(score.data(), NMoves, Settings::estimationTemperaturePlay);
+    SoftmaxSelector<double> selector(score.data(), numMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 

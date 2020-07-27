@@ -62,11 +62,11 @@ int testChangePolicyWithRecord(const MatchRecord& match) {
             if (cl < MIDDLE) {
                 const Cards myCards = field.getCards(ch.from);
                 const int changeQty = N_CHANGE_CARDS(cl);
-                const int NChanges = genChange(change, myCards, changeQty);
+                const int numChanges = genChange(change, myCards, changeQty);
 
                 Clock clock;
                 clock.start();
-                int index = changeWithBestPolicy(change, NChanges, myCards, changeQty, changePolicy, dice);
+                int index = changeWithBestPolicy(change, numChanges, myCards, changeQty, changePolicy, dice);
                 time[ch.from][cl] += clock.stop();
 
                 Cards p = change[index];
@@ -139,22 +139,22 @@ int testSelector(const MatchRecord& match) {
             double score[N_MAX_MOVES];
 
             const int turnPlayer = field.turn();
-            const int moves = genMove(play, field.getCards(turnPlayer), field.board);
+            const int numMoves = genMove(play, field.getCards(turnPlayer), field.board);
 
-            playPolicyScore(score, play, moves, field, playPolicy, 0);
+            playPolicyScore(score, play, numMoves, field, playPolicy, 0);
 
-            int recordIndex = searchMove(play, moves, move);
+            int recordIndex = searchMove(play, numMoves, move);
 
             // ここから条件を少しずつ変更
             for (int i = 0; i < 7; i++) {
                 {
                     // softmax
                     double tscore[N_MAX_MOVES];
-                    memcpy(tscore, score, sizeof(double) * (moves + 1));
+                    memcpy(tscore, score, sizeof(double) * (numMoves + 1));
 
                     double temp = 0.7 + 0.1 * i;
 
-                    SoftmaxSelector<double> selector(tscore, moves, temp);
+                    SoftmaxSelector<double> selector(tscore, numMoves, temp);
                     if (recordIndex >= 0) {
                         sameProb[0][i][0] += selector.prob(recordIndex);
                     }
@@ -164,12 +164,12 @@ int testSelector(const MatchRecord& match) {
                     {
                         // truncated
                         double tscore[N_MAX_MOVES];
-                        memcpy(tscore, score, sizeof(double) * (moves + 1));
+                        memcpy(tscore, score, sizeof(double) * (numMoves + 1));
 
                         double temp = 0.7 + 0.1 * i;
                         double threshold = (4 - j) * 0.01;
 
-                        ThresholdSoftmaxSelector<double> selector(tscore, moves, temp, threshold);
+                        ThresholdSoftmaxSelector<double> selector(tscore, numMoves, temp, threshold);
                         if (recordIndex >= 0) {
                             sameProb[1][i][j] += selector.prob(recordIndex);
                         }
@@ -178,13 +178,13 @@ int testSelector(const MatchRecord& match) {
                     {
                         // biased
                         double tscore[N_MAX_MOVES];
-                        memcpy(tscore, score, sizeof(double) * (moves + 1));
+                        memcpy(tscore, score, sizeof(double) * (numMoves + 1));
 
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
                         double rate = 2; // エンジン設定が変化した場合注意
 
-                        BiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, rate);
+                        BiasedSoftmaxSelector<double> selector(tscore, numMoves, temp, coef, rate);
                         if (recordIndex >= 0) {
                             sameProb[2][i][j] += selector.prob(recordIndex);
                         }
@@ -193,14 +193,14 @@ int testSelector(const MatchRecord& match) {
                     {
                         // exp-biased
                         double tscore[N_MAX_MOVES];
-                        memcpy(tscore, score, sizeof(double) * (moves + 1));
+                        memcpy(tscore, score, sizeof(double) * (numMoves + 1));
 
                         double temp = 0.8 + 0.1 * i;
                         double coef = 0.4 - 0.1 * j;
                         double etemp = 1 / log(2);
                         //double etemp = 0.1 * pow(4, j);
 
-                        ExpBiasedSoftmaxSelector<double> selector(tscore, moves, temp, coef, etemp);
+                        ExpBiasedSoftmaxSelector<double> selector(tscore, numMoves, temp, coef, etemp);
                         if (recordIndex >= 0) {
                             sameProb[3][i][j] += selector.prob(recordIndex);
                         }

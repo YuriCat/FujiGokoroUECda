@@ -181,13 +181,13 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         default: // 完全探索
             if (nodes > NODE_LIMIT) { failed = 1; return L2_DRAW; }
 
-            const int NMoves = genMove(buf, myHand, field.b);
-            childs += NMoves;
+            int numMoves = genMove(buf, myHand, field.b);
+            childs += numMoves;
 
             // 即上がり判定
-            if (field.b.qty() >= myHand.qty && NMoves >= 2) return L2_WIN;
+            if (field.b.qty() >= myHand.qty && numMoves >= 2) return L2_WIN;
             // 探索
-            int winIndex = search(depth, buf, NMoves, myHand, opsHand, field);
+            int winIndex = search(depth, buf, numMoves, myHand, opsHand, field);
             if (winIndex >= 0 || winIndex == -1) {
                 int result = winIndex >= 0 ? L2_WIN : L2_LOSE;
                 if (field.isNull()) L2::book.regist(result, fkey);
@@ -260,17 +260,17 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     }
 }
 
-int L2Judge::search(const int depth, MoveInfo *const buf, const int NMoves,
+int L2Judge::search(int depth, MoveInfo *const buf, const int numMoves,
                     const Hand& myHand, const Hand& opsHand, const L2Field& field) {
     // 勝利手があればインデックス(>=0)、結果不明なら-2、負け確定なら-1を返す
     // 支配からの簡単詰み
-    for (int i = NMoves - 1; i >= 0; i--) {
-        if (checkDomMate(depth, buf + NMoves, buf[i], myHand, opsHand, field)) return i;
+    for (int i = numMoves - 1; i >= 0; i--) {
+        if (checkDomMate(depth, buf + numMoves, buf[i], myHand, opsHand, field)) return i;
     }
     // 探索
     bool unFound = false;
-    for (int i = NMoves - 1; i >= 0; i--) {
-        int res = check(depth, buf + NMoves, buf[i], myHand, opsHand, field, true);
+    for (int i = numMoves - 1; i >= 0; i--) {
+        int res = check(depth, buf + numMoves, buf[i], myHand, opsHand, field, true);
         if (res == L2_WIN) return i;
         if (res == L2_DRAW) unFound = true;
     }

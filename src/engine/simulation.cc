@@ -19,13 +19,13 @@ namespace Settings {
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools) {
     int turn = field.turn();
-    int NMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
-    if (NMoves == 1) return field.mbuf[0];
+    int numMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
+    if (numMoves == 1) return field.mbuf[0];
     if (Settings::MateSearchInSimulation) {
         int mateIndice[N_MAX_MOVES];
         int mates = 0;
-        for (int i = 0; i < NMoves; i++) {
-            bool mate = checkHandMate(0, field.mbuf + NMoves, field.mbuf[i],
+        for (int i = 0; i < numMoves; i++) {
+            bool mate = checkHandMate(0, field.mbuf + numMoves, field.mbuf[i],
                                       field.hand[turn], field.opsHand[turn], field.board, field.fieldInfo);
             if (mate) mateIndice[mates++] = i;
         }
@@ -41,10 +41,10 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 
     // 行動方策を計算
     double score[N_MAX_MOVES];
-    playPolicyScore(score, ptools->mbuf, NMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
 
     // ランダム選択
-    BiasedSoftmaxSelector<double> selector(score, NMoves,
+    BiasedSoftmaxSelector<double> selector(score, numMoves,
                                            Settings::simulationTemperaturePlay,
                                            Settings::simulationAmplifyCoef,
                                            Settings::simulationAmplifyExponent);

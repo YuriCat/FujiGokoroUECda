@@ -51,14 +51,14 @@ namespace UECda {
     constexpr int N_PLAYERS = 4;
     constexpr int N_CLASSES = 4;
 
-    constexpr int NChangeFallCards[N_PLAYERS] = {2, 1, 0, 0};
-    constexpr int NChangeRiseCards[N_PLAYERS] = {0, 0, 1, 2};
-    constexpr int NChangeCards[N_PLAYERS] = {2, 1, 1, 2};
+    constexpr int numChangeFallCards[N_PLAYERS] = {2, 1, 0, 0};
+    constexpr int numChangeRiseCards[N_PLAYERS] = {0, 0, 1, 2};
+    constexpr int numChangeCards[N_PLAYERS] = {2, 1, 1, 2};
 
-    constexpr int N_CHANGE_FALL_CARDS(int cl) { return NChangeFallCards[cl]; }
-    constexpr int N_CHANGE_RISE_CARDS(int cl) { return NChangeRiseCards[cl]; }
+    constexpr int N_CHANGE_FALL_CARDS(int cl) { return numChangeFallCards[cl]; }
+    constexpr int N_CHANGE_RISE_CARDS(int cl) { return numChangeRiseCards[cl]; }
 
-    constexpr int N_CHANGE_CARDS(int cl) { return NChangeCards[cl]; }
+    constexpr int N_CHANGE_CARDS(int cl) { return numChangeCards[cl]; }
 
     constexpr int REWARD(int cl) { return N_PLAYERS - cl; }
 
@@ -163,17 +163,17 @@ namespace UECda {
     }
 
     // 着手変換
-    static void MoveToTable(const Move m, const Board bd, int table[8][15]) {
+    static void MoveToTable(const Move m, const Board b, int table[8][15]) {
         clearAll(table);
         if (m.isPASS()) return;
         if (m.isSingleJOKER()) { // シングルジョーカー
-            int ord = bd.order();
-            if (bd.isNull()) {
+            int ord = b.order();
+            if (b.isNull()) {
                 table[0][(ord == 0) ? 14 : 0] = 2;
             } else {
                 // ジョーカーでスートロックを掛けないように、別スートになるようにする
                 // java版サーバーのリジェクトバグにひっかからないための処理
-                uint32_t bs = bd.suits();
+                uint32_t bs = b.suits();
                 int h = SuitToH(bs);
                 h = (h + 1) % 4; // スートを変更
                 table[h][(ord == 0) ? 14 : 0] = 2;

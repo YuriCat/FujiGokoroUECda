@@ -14,9 +14,9 @@ static std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
 assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
-int moves = genLead(buffer, c);\
-cerr << moves << " moves were generated for " << c << endl;\
-for (int m = 0; m < moves; m++) { cerr << buffer[m] << " "; }\
+int numMoves = genLead(buffer, c);\
+cerr << numMoves << " moves were generated for " << c << endl;\
+for (int m = 0; m < numMoves; m++) { cerr << buffer[m] << " "; }\
 cerr << endl;}
 
 int outputGenerationResult() {
@@ -42,14 +42,14 @@ int outputGenerationResult() {
 }
 
 template <class move_t>
-int testMoveValidity(const move_t *const mv0, const int moves, const Field& field) {
-    // moves 個生成された着手をチェック
+int testMoveValidity(const move_t *const mv0, const int numMoves, const Field& field) {
+    // numMoves 個生成された着手をチェック
     const Cards c = field.getCards(field.turn());
 
     // 客観的合法性
 
     // 主観的合法性
-    for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
+    for (const move_t *tmp = mv0; tmp != mv0 + numMoves; tmp++) {
         if (!isSubjectivelyValid(field.board, *tmp, c,
                                  field.numCardsOf(field.turn()))) {
             // 主観的合法性違反
@@ -60,7 +60,7 @@ int testMoveValidity(const move_t *const mv0, const int moves, const Field& fiel
     }
 
     // 排他性
-    for (const move_t *tmp = mv0; tmp != mv0 + moves; tmp++) {
+    for (const move_t *tmp = mv0; tmp != mv0 + numMoves; tmp++) {
         for (const move_t *tmp2 = mv0; tmp2 != tmp; tmp2++) {
             if (*tmp == *tmp2) {
                 // 同じ役であった
@@ -85,25 +85,25 @@ int testRecordMoves(const Record& record) {
         for (Move move : PlayRoller(field, record.game(i))) {
             int turnPlayer = field.turn();
             Cards cards = field.getCards(turnPlayer);
-            Board bd = field.board;
+            Board b = field.board;
 
             // Cards 型で生成
             cl.start();
-            int moves = genMove(buffer, cards, bd);
+            int numMoves = genMove(buffer, cards, b);
             genTime[0] += cl.stop();
             genCount[0] += 1;
 
             // 重大な問題がないかチェック
-            if (testMoveValidity(buffer, moves, field)) {
+            if (testMoveValidity(buffer, numMoves, field)) {
                 cerr << "failed move generation by Cards." << endl;
                 return -1;
             }
 
             // 棋譜の着手が生成されているかチェック
-            if (searchMove(buffer, moves, move) < 0) {
+            if (searchMove(buffer, numMoves, move) < 0) {
                 cerr << "ungenerated record move " << move;
                 cerr << " " << std::hex << move.toInt() << std::dec;
-                cerr << " by " << cards << " on " << bd << endl;
+                cerr << " by " << cards << " on " << b << endl;
             } else {
                 genHolded[0] += 1;
             }

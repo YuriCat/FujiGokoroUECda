@@ -41,7 +41,7 @@ public:
     int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
     int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
     bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
-    int search(const int depth, MoveInfo *const buf, const int NMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+    int search(const int depth, MoveInfo *const buf, const int numMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
 
     int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);
     int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);

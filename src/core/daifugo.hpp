@@ -411,13 +411,13 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
 // 許容包括
 // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
 // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
-inline bool isValidGroupRank(int mvRank, int order, int bdRank) {
-    if (order == 0) return mvRank > bdRank;
-    else return mvRank < bdRank;
+inline bool isValidGroupRank(int moveRank, int order, int boardRank) {
+    if (order == 0) return moveRank > boardRank;
+    else return moveRank < boardRank;
 }
-inline bool isValidSeqRank(int mvRank, int order, int bdRank, int qty) {
-    if (order == 0) return mvRank >= bdRank + qty;
-    else return mvRank <= bdRank - qty;
+inline bool isValidSeqRank(int moveRank, int order, int boardRank, int qty) {
+    if (order == 0) return moveRank >= boardRank + qty;
+    else return moveRank <= boardRank - qty;
 }
 
 /**************************カード集合表現(クラス版)**************************/
@@ -983,18 +983,18 @@ extern Move CardsToMove(const Cards chara, const Cards used);
 extern Move StringToMoveM(const std::string& str);
 
 template <class move_buf_t>
-int searchMove(const move_buf_t *const buf, const int moves, const Move& move) {
+int searchMove(const move_buf_t *const buf, const int numMoves, const Move& move) {
     // 同じ着手の探索
-    for (int i = 0; i < moves; i++) {
+    for (int i = 0; i < numMoves; i++) {
         if (buf[i] == move) return i;
     }
     return -1;
 }
 
 template <class move_buf_t, typename callback_t>
-int searchMove(const move_buf_t *const buf, const int moves, const callback_t& callback) {
+int searchMove(const move_buf_t *const buf, const int numMoves, const callback_t& callback) {
     // callback を条件とする着手の探索
-    for (int i = 0; i < moves; i++) {
+    for (int i = 0; i < numMoves; i++) {
         if (callback(buf[i])) return i;
     }
     return -1;
@@ -1102,17 +1102,17 @@ extern bool isSubjectivelyValid(Board b, Move mv, const Cards& c, const int q);
 // L2局面ハッシュ値
 // 空場
 // 空場のときは、場の変数はオーダー関連だけである事が多いのでそのまま
-inline uint64_t NullBoardToHashKey(Board bd) {
-    return bd.order();
+inline uint64_t NullBoardToHashKey(Board b) {
+    return b.order();
 }
-inline uint64_t BoardToHashKey(Board bd) {
-    return bd.toInt();
+inline uint64_t BoardToHashKey(Board b) {
+    return b.toInt();
 }
 
 // 完全情報局面のシンプルな後退ハッシュ値
 // 先手、後手の順番でカード集合ハッシュ値をクロスして場のハッシュ値を線形加算
-inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board bd) {
-    return CardsCardsToHashKey(c0, c1) ^ NullBoardToHashKey(bd);
+inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board b) {
+    return CardsCardsToHashKey(c0, c1) ^ NullBoardToHashKey(b);
 }
 
 // すでにハッシュ値が部分的に計算されている場合

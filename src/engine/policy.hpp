@@ -122,7 +122,7 @@ namespace ChangePolicySpace {
 }
 
 template <typename T> using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1, T>;
-template <typename T> using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy<T>>;
+template <typename T> using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy<T >>;
 template <typename T> using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::FEA_NUM_ALL, 2, 1, T>;
 template <typename T> using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy<T>>;
 
@@ -137,78 +137,84 @@ int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
     return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
 }
 
-extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
+extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
                            const Field& field, const PlayPolicy<policy_value_t>& pol, int mode = 1);
-extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
+extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
                            const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode = 1);
-extern int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
-                             const Cards myCards, const int NChangeCards,
+extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
+                             const Cards myCards, int numChangeCards,
                              const ChangePolicy<policy_value_t>& pol, int mode = 1);
-extern int changePolicyScore(double *const dst, const Cards *const change, const int NChanges,
-                             const Cards myCards, const int NChangeCards,
+extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
+                             const Cards myCards, int numChangeCards,
                              ChangePolicyLearner<policy_value_t>& pol, int mode = 1);
 
 template <int STOCK = 0, class policy_t>
-int playWithPolicy(Move *const mbuf, const int NMoves,
+int playWithPolicy(Move *const mbuf, int numMoves,
                    const policy_t& pol, double temperature, Dice& dice,
                    double *const pentropy = nullptr) {
     double score[N_MAX_MOVES];
-    playPolicyScore(score, mbuf, NMoves, pol, STOCK ? 2 : 0);
-    SoftmaxSelector<double> selector(score, NMoves, temperature);
+    playPolicyScore(score, mbuf, numMoves, pol, STOCK ? 2 : 0);
+    SoftmaxSelector<double> selector(score, numMoves, temperature);
     if (pentropy != nullptr) *pentropy = selector.entropy();
     return selector.select(dice.random());
 }
 
 template <class policy_t>
-int changeWithPolicy(Cards *const cbuf, const int NChanges,
-                     const Cards myCards, const int NChangeCards,
+int changeWithPolicy(Cards *const cbuf, const int numChanges,
+                     const Cards myCards, const int numChangeCards,
                      const policy_t& pol, double temperature, Dice& dice) {
     double score[N_MAX_CHANGES];
-    changePolicyScore(score, cbuf, NChanges, myCards, NChangeCards, pol, 0);
-    SoftmaxSelector<double> selector(score, NChanges, temperature);
+    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
+    SoftmaxSelector<double> selector(score, numChanges, temperature);
     return selector.select(dice.random());
 }
+
 template <class policy_t>
-int changeWithBestPolicy(const Cards *const cbuf, const int NChanges,
-                         const Cards myCards, const int NChangeCards,
+int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
+                         const Cards myCards, int numChangeCards,
                          const policy_t& pol, Dice& dice) {
     double score[N_MAX_CHANGES + 1];
-    changePolicyScore(score, cbuf, NChanges, myCards, NChangeCards, pol, 0);
+    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
+
     int bestIndex[N_MAX_CHANGES];
     bestIndex[0] = -1;
-    int NBestMoves = 0;
+    int numBestMoves = 0;
     double bestScore = -DBL_MAX;
-    for (int m = 0; m < NChanges; m++) {
+    for (int m = 0; m < numChanges; m++) {
         double s = score[m];
         if (s > bestScore) {
             bestIndex[0] = m;
             bestScore = s;
-            NBestMoves = 1;
+            numBestMoves = 1;
         } else if (s == bestScore) {
-            bestIndex[NBestMoves++] = m;
+            bestIndex[numBestMoves++] = m;
         }
     }
-    if (NBestMoves <= 1) return bestIndex[0];
-    else return bestIndex[dice() % NBestMoves];
+
+    if (numBestMoves <= 1) return bestIndex[0];
+    else return bestIndex[dice() % numBestMoves];
 }
+
 template <int STOCK = 0, class policy_t>
-int playWithBestPolicy(MoveInfo *const mbuf, const int NMoves, const Field& field, const policy_t& pol, Dice& dice) {
+int playWithBestPolicy(MoveInfo *const mbuf, int numMoves, const Field& field, const policy_t& pol, Dice& dice) {
     double score[N_MAX_MOVES + 1];
-    playPolicyScore(score, mbuf, NMoves, field, pol, STOCK ? 2 : 0);
+    playPolicyScore(score, mbuf, numMoves, field, pol, STOCK ? 2 : 0);
+
     int bestIndex[N_MAX_MOVES];
     bestIndex[0] = -1;
-    int NBestMoves = 0;
+    int numBestMoves = 0;
     double bestScore = -DBL_MAX;
-    for (int m = 0; m < NMoves; m++) {
+    for (int m = 0; m < numMoves; m++) {
         double s = score[m];
         if (s > bestScore) {
             bestIndex[0] = m;
             bestScore = s;
-            NBestMoves = 1;
+            numBestMoves = 1;
         } else if (s == bestScore) {
-            bestIndex[NBestMoves++] = m;
+            bestIndex[numBestMoves++] = m;
         }
     }
-    if (NBestMoves <= 1) return bestIndex[0];
-    else return bestIndex[dice() % NBestMoves];
+
+    if (numBestMoves <= 1) return bestIndex[0];
+    else return bestIndex[dice() % numBestMoves];
 }

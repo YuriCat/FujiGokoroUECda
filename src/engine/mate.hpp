@@ -260,8 +260,8 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
         // 階段パターンのみ検討
         // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
         if (myHand.seq) {
-            const int NMoves = genAllSeq(mbuf, myHand.cards);
-            for (int i = 0; i < NMoves; i++) {
+            int numMoves = genAllSeq(mbuf, myHand.cards);
+            for (int i = 0; i < numMoves; i++) {
                 const MoveInfo& m = mbuf[i];
                 if (m.qty() >= myHand.qty) return true; // 即上がり
 
@@ -287,8 +287,8 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
         }
     } else {
         // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
-        const int NMoves = genMove(mbuf, myHand, b);
-        if (searchHandMate(depth, mbuf, NMoves, myHand, opsHand, b, fieldInfo) != -1) return true;
+        int numMoves = genMove(mbuf, myHand, b);
+        if (searchHandMate(depth, mbuf, numMoves, myHand, opsHand, b, fieldInfo) != -1) return true;
     }
     return false;
 }
@@ -359,18 +359,18 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         } else {
             if (m.qty() >= myHand.qty) return true; // あがり
             Hand nextHand;
-            Board bd = b;
+            Board nb = b;
             FieldAddInfo nextFieldInfo;
             makeMove1stHalf(myHand, &nextHand, m);
             if (dominatesCards(m, nextHand.cards, b)) { // 自己支配
                 m.setDM(); // 支配フラグ付加
-                bd.procAndFlush(m);
+                nb.procAndFlush(m);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
+                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
             } else { // セルフフォロー必勝を判定
-                bd.proc(m);
+                nb.proc(m);
                 procUnrivaled(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, bd, nextFieldInfo);
+                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
             }
         }
         return false;
@@ -396,8 +396,8 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         || m.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
         m.setDO(); // 支配フラグ付加
 
-        Board bd = b;
-        bd.proc(m);
+        Board nb = b;
+        nb.proc(m);
         Hand nextHand;
         makeMove1stHalf(myHand, &nextHand, m);
 
@@ -405,18 +405,18 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
 
         // 自分の出した役を流してからの必勝チェック
         // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
-        bd.flush();
+        nb.flush();
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
         if (judgeHandMate(m.isRev() ? depth : 0,
-                          mbuf, nextHand, opsHand, bd, nextFieldInfo)) {
+                          mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
             return true;
         }
         // 自分の出したジョーカーをS3で返してからの必勝チェック
         if (m.isSingleJOKER() && containsS3(nextHand.cards)) {
             Move s3; s3.setSingle(INTCARD_S3);
             nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
-            return judgeHandMate(0, mbuf, nextHand, opsHand, bd, nextFieldInfo);
+            return judgeHandMate(0, mbuf, nextHand, opsHand, nb, nextFieldInfo);
         }
     } else { // 支配しない
         if (depth <= 0) return false;
@@ -454,15 +454,15 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
     return false;
 }
 
-inline int searchHandMate(const int depth, MoveInfo *const mbuf, const int NMoves,
+inline int searchHandMate(const int depth, MoveInfo *const mbuf, int numMoves,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 必勝手探し
-    for (int i = NMoves - 1; i >= 0; i--) {
+    for (int i = numMoves - 1; i >= 0; i--) {
         if (mbuf[i].qty() == myHand.qty) return i;
     }
-    for (int i = NMoves - 1; i >= 0; i--) {
-        if (checkHandMate(depth, mbuf + NMoves, mbuf[i], myHand, opsHand, b, fieldInfo)) return i;
+    for (int i = numMoves - 1; i >= 0; i--) {
+        if (checkHandMate(depth, mbuf + numMoves, mbuf[i], myHand, opsHand, b, fieldInfo)) return i;
     }
     return -1;
 }
