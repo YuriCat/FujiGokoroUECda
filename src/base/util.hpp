@@ -39,7 +39,6 @@ assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #endif // NDEBUG
 
 // 標準ライブラリ使用
-//using std::endl;
 using std::size_t;
 
 template <typename T>
@@ -63,6 +62,7 @@ constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
 static double internal_clock_sec() {
     return double(clock()) / CLOCKS_PER_SEC;
 }
+
 static double clock_sec() {
     // clock() is insuffient in multi thread procedure
     struct timeval tv;
@@ -122,6 +122,7 @@ inline size_t popcnt32(std::uint32_t v) {
 inline size_t popcnt64(std::uint64_t v) {
     return __builtin_popcountll(v);
 }
+
 template <typename T> inline size_t popcnt(T a);
 template <> inline size_t popcnt<std::uint8_t >(std::uint8_t  v) { return popcnt32(v); }
 template <> inline size_t popcnt<std::uint16_t>(std::uint16_t v) { return popcnt32(v); }
@@ -134,6 +135,7 @@ inline size_t bsf32(std::uint32_t v) {
 inline size_t bsf64(std::uint64_t v) {
     return __builtin_ctzll(v);
 }
+
 inline size_t bsr32(std::uint32_t v) {
     std::int32_t r;
     __asm__("bsrl %1, %0;" :"=r"(r) : "r"(v));
@@ -152,6 +154,7 @@ template <> inline size_t bsf<std::uint8_t >(std::uint8_t  v) { return bsf32(v);
 template <> inline size_t bsf<std::uint16_t>(std::uint16_t v) { return bsf32(v); }
 template <> inline size_t bsf<std::uint32_t>(std::uint32_t v) { return bsf32(v); }
 template <> inline size_t bsf<std::uint64_t>(std::uint64_t v) { return bsf64(v); }
+
 template <> inline size_t bsr<std::uint8_t >(std::uint8_t  v) { return bsr32(v); }
 template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v); }
 template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
@@ -312,6 +315,7 @@ static void dist2_64(uint64_t *goal0, uint64_t *goal1,
     *goal0 |= tmp;
     *goal1 |= arg - tmp;
 }
+
 template <int N, typename T, class dice64_t>
 static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t& dice) {
     if (N <= 1) dst[0] = arg;
@@ -378,6 +382,7 @@ static double dCombination(int n, int r) {
     if (n >= r) return dPermutation(n, r) / dFactorial(r);
     else return 0;
 }
+
 constexpr int ipow(int m, int n) {
     return n <= 0 ? 1 : (m * ipow(m, n - 1));
 }
@@ -473,6 +478,7 @@ inline BetaDistribution operator-(const BetaDistribution& lhs, const BetaDistrib
 inline BetaDistribution operator*(const BetaDistribution& lhs, const double m) {
     return BetaDistribution(lhs.a * m, lhs.b * m);
 }
+
 extern std::ostream& operator<<(std::ostream& out, const BetaDistribution& b);
 
 template <typename T, size_t B, size_t N>
@@ -607,6 +613,7 @@ struct TensorIndexTypeImpl {
         return L * TensorIndexTypeImpl<shape_t...>::size();
     }
 };
+
 template <int L>
 struct TensorIndexTypeImpl<L> {
     template <typename ... args_t>
@@ -623,6 +630,7 @@ struct TensorIndexType {
         return L * TensorIndexType<shape_t...>::size();
     }
 };
+
 template <int L>
 struct TensorIndexType<L> {
     static constexpr int get(int i) { return i; }

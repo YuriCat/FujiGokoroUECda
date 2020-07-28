@@ -9,11 +9,13 @@ bool BetaDistribution::exam() const {
     if (a == 0 && b == 0) return false;
     return true;
 }
+
 string BetaDistribution::toString() const {
     ostringstream oss;
     oss << "Be(" << a << ", " << b << ")";
     return oss.str();
 }
+
 ostream& operator<<(ostream& out, const BetaDistribution& b) {
     out << b.toString();
     return out;
@@ -24,17 +26,19 @@ string toupper(const string& str) {
     for (char c : str) s.push_back(toupper(c));
     return s;
 }
+
 string tolower(const string& str) {
     string s;
     for (char c : str) s.push_back(tolower(c));
     return s;
 }
+
 bool isSuffix(const string& s, const string& suffix) {
     if (s.size() < suffix.size()) return false;
     return s.substr(s.size() - suffix.size()) == suffix;
 }
-vector<string> split(const string& s,
-                               char separator) {
+
+vector<string> split(const string& s, char separator) {
     vector<string> result;
     string::size_type p = 0;
     string::size_type q;
@@ -45,8 +49,8 @@ vector<string> split(const string& s,
     result.emplace_back(s, p);
     return result;
 }
-vector<string> split(const string& s,
-                               const string& separators) {
+
+vector<string> split(const string& s, const string& separators) {
     vector<string> result;
     string::size_type p = 0;
     string::size_type q;
