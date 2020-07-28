@@ -141,13 +141,13 @@ std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const GameRecord& game,
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {
         double sum = 0;
         for (int p1 = 0; p1 < N_PLAYERS; p1++) {
-            cerr << expectedWp[p0][p1] << " ";
+            std::cerr << expectedWp[p0][p1] << " ";
             if (p0 != p1) {
                 double realWin = (game.newClassOf(p0) < game.newClassOf(p1)) ? 1 : 0;
                 sum += realWin - expectedWp[p0][p1];
             }
         }
-        cerr << endl;
+        std::cerr << std::endl;
         diffRate[p0] = coef * sum / (N_PLAYERS - 1);
     }
     return diffRate;
@@ -160,13 +160,13 @@ std::array<double, N_PLAYERS> calcDiffRateByAbsoluteWp(const GameRecord& game,
     // 絶対勝率からレート差分を計算
     std::array<double, N_PLAYERS> diffRate;
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {
-        //cerr << expectedWp[p0] << " ";
+        //std::cerr << expectedWp[p0] << " ";
         double realScore = (DAIHINMIN - game.newClassOf(p0)) / double(N_PLAYERS - 1);
-        //cerr << expectedWp[p0] << " -> " << realScore << endl;
+        //std::cerr << expectedWp[p0] << " -> " << realScore << std::endl;
         diffRate[p0] = coef * (realScore - expectedWp[p0]);
     }
-    cerr << endl;
-    cerr << mean(expectedWp) << endl;
+    std::cerr << std::endl;
+    std::cerr << mean(expectedWp) << std::endl;
     return diffRate;
 }
 
@@ -217,7 +217,7 @@ std::vector<double> calcExpectedTotalScore(const std::vector<double>& rates,
                     double x = i / double(precision + 1);
                     double density = distribution.dens(x);
                     double wp = calcBiasedExpectedWp(rates[p0], rates[p1], x);
-                    //cerr << x << " " << density << " " << wp << endl;
+                    //std::cerr << x << " " << density << " " << wp << std::endl;
                     sum += density * wp;
                 }
                 sum /= precision;

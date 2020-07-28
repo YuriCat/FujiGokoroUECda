@@ -17,9 +17,6 @@
 #include "../UECda.h"
 #include "define.h"
 
-using namespace UECda;
-using namespace std;
-
 int count_card_num(int tmp_card[8][15],int *card_num) {
     /***********************************************************/
     /* input  : tmp_card : player's card table.                */

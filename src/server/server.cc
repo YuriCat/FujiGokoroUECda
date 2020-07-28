@@ -47,7 +47,7 @@
 #include "../engine/data.hpp"
 #include "../extra/rating.hpp"
 
-using namespace UECda;
+using namespace std;
 
 const char* one_to_yes(int n) {
     if (n) return "YES";
