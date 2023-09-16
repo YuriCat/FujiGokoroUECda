@@ -39,7 +39,7 @@ make -j4
 
 過去に大会出場したバージョンは
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2022/download.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2023/download.html
 
 からダウンロードできます。
 
@@ -47,7 +47,7 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2022/download.html
 
 ## ルール等 公式のドキュメント
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2022/document.html
+http://www.tnlab.inf.uec.ac.jp/daihinmin/2023/document.html
 
 ## 大会での利用について
 
