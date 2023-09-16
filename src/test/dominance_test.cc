@@ -32,7 +32,7 @@ bool dominatesSlow(const Move m, const Cards c, Board b) {
 }
 
 int testRecordMoveDominance(const Record& record) {
-    // 棋譜中の局面において支配性判定の結果をテスト
+    // 棋譜中の局面において支配性判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
 
     uint64_t judgeTime[6] = {0};

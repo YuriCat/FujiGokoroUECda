@@ -1,5 +1,5 @@
 
-// 方策関数のテスト
+// 方策関数のテスト
 
 #include "../core/record.hpp"
 #include "../core/action.hpp"

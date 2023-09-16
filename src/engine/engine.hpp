@@ -82,7 +82,7 @@ public:
         const Cards myCards = game.dealtCards[myPlayerNum];
         if (monitor) std::cerr << "My Cards : " << myCards << std::endl;
 
-        // 手札レベルで枝刈りする場合
+        // 手札レベルで枝刈りする場合
         Cards tmp = myCards;
         if (Settings::changeHeuristicsOnRoot) {
             tmp.mask(CARDS_8 | CARDS_2 | CARDS_JOKER | CARDS_D3);
@@ -301,7 +301,7 @@ public:
                                : std::min(5000, (int)(pow((double)numMoves, 0.8) * 700));
         root.setPlay(mbuf.data(), numMoves, field, shared, limitSimulations);
 
-        // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
+        // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
         playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy, 0);
         root.feedPolicyScore(score, numMoves);

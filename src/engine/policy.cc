@@ -409,7 +409,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
                 constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
                 if (!b.isNull() && !fieldInfo.isUnrivaled() && m.isGroup() && !m.containsJOKER()) {
                     if (myHand.qr[m.rank()] != m.qty()) { // 崩して出した
-                        if (m.domInevitably()) Foo(base) // 8切り
+                        if (m.domInevitably()) Foo(base) // 8切り
                         else {
                             if (aftOrd == 0) {
                                 if (m.rank() >= IntCardToRank(pickIntCardHigh(opsPlainCards))) {

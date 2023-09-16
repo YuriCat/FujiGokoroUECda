@@ -74,7 +74,7 @@ int testMoveValidity(const move_t *const mv0, const int numMoves, const Field& f
 }
 
 int testRecordMoves(const Record& record) {
-    // 棋譜中の局面においてテスト
+    // 棋譜中の局面においてテスト
     uint64_t genTime[2] = {0};
     uint64_t genCount[2] = {0};
     uint64_t genHolded[2] = {0};

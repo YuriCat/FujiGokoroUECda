@@ -227,7 +227,7 @@ int testSuitCards() {
 }
 
 int testQR(const std::vector<Cards>& sample) {
-    // QR（枚数型）のテスト
+    // QR（枚数型）のテスト
     uint64_t time[2] = {0};
     for (Cards c : sample) {
         cl.start();
@@ -247,7 +247,7 @@ int testQR(const std::vector<Cards>& sample) {
 }
 
 int testPQR(const std::vector<Cards>& sample) {
-    // PQR（枚数位置型）のテスト
+    // PQR（枚数位置型）のテスト
     uint64_t time[4] = {0};
     for (Cards c : sample) {
         cl.start();
@@ -337,7 +337,7 @@ int testNR(const std::vector<Cards>& sample) {
 }
 
 int testSC(const std::vector<Cards>& sample) {
-    // SC（スート圧縮型）のテスト
+    // SC（スート圧縮型）のテスト
     uint64_t time[4] = {0};
     for (Cards c : sample) {
         CardArray qr = CardsToQR(c);

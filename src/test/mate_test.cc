@@ -126,7 +126,7 @@ int searchCardsPWSlow(MoveInfo *const buf, const int numMoves,
 }
 
 int testRecordMoveMate(const Record& record) {
-    // 棋譜中の局面において必勝判定の結果をテスト
+    // 棋譜中の局面において必勝判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
 
     // judge(高速判定)

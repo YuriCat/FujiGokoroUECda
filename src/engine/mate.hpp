@@ -286,7 +286,7 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
             }
         }
     } else {
-        // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
+        // depth > 0 のとき 空場でない場合は合法手生成して詳しく判定
         int numMoves = genMove(mbuf, myHand, b);
         if (searchHandMate(depth, mbuf, numMoves, myHand, opsHand, b, fieldInfo) != -1) return true;
     }

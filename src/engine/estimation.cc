@@ -487,7 +487,7 @@ void RandomDealer::setWeightInWA() {
     if (T == 0) return; // どうしようもない
     const int NMyDC = myDealtCards.count();
 
-    // 相手の献上後の所持カードで判明しているもの
+    // 相手の献上後の所持カードで判明しているもの
     const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
     // 相手の献上後の所持カードの上界より高い札のみ献上でもらっている可能性がある
     const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(pickHigh(partnerDealtCards, 1)) : CARDS_ALL;
