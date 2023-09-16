@@ -57,7 +57,7 @@ void initSuits() {
         for (int c1 = 0; c1 <= 4; c1++) {
             for (int c01 = max(0, c0 + c1 - 4); c01 <= min(c0, c1); c01++) {
                 suitsSuitsCountIndex[c0][c1][c01] = SS++;
-                if (c0 <= c1) twoSuitsCountIndex[c0][c1][c01] = S2++;
+                if (c0 >= c1) twoSuitsCountIndex[c0][c1][c01] = S2++;
                 if (c0 == 1) suitSuitsCountIndex[c1][c01] = sS++;
             }
         }
