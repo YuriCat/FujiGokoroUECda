@@ -301,7 +301,7 @@ int analyzeMateDistribution(const Record& record) {
             int turnPlayer = field.turn();
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
-            Board b =  field.board;
+            Board b = field.board;
             mateMoves.clear();
             visitedCards.clear();
             bool pw = judgeCardsPWSlow<1>(buffer, turnPlayer,
