@@ -129,6 +129,8 @@ int testSelector(const MatchRecord& match) {
     double sameProb[4][7][5] = {0}; // 確率ベースでの一致率
     double entropy[4][7][5] = {0}; // 方策エントロピー
     int trials = 0;
+    uint64_t time[4] = {0};
+    Clock clock;
 
     cerr << "play policy with selector : " << endl;
 
@@ -154,11 +156,13 @@ int testSelector(const MatchRecord& match) {
 
                     double temp = 0.7 + 0.1 * i;
 
+                    clock.start();
                     SoftmaxSelector<double> selector(tscore, numMoves, temp);
                     if (recordIndex >= 0) {
                         sameProb[0][i][0] += selector.prob(recordIndex);
                     }
                     entropy[0][i][0] += selector.entropy();
+                    time[0] += clock.stop();
                 }
                 for (int j = 0; j < 5; j++) {
                     {
@@ -169,11 +173,13 @@ int testSelector(const MatchRecord& match) {
                         double temp = 0.7 + 0.1 * i;
                         double threshold = (4 - j) * 0.01;
 
+                        clock.start();
                         ThresholdSoftmaxSelector<double> selector(tscore, numMoves, temp, threshold);
                         if (recordIndex >= 0) {
                             sameProb[1][i][j] += selector.prob(recordIndex);
                         }
                         entropy[1][i][j] += selector.entropy();
+                        time[1] += clock.stop();
                     }
                     {
                         // biased
@@ -184,11 +190,13 @@ int testSelector(const MatchRecord& match) {
                         double coef = 0.4 - 0.1 * j;
                         double rate = 2; // エンジン設定が変化した場合注意
 
+                        clock.start();
                         BiasedSoftmaxSelector<double> selector(tscore, numMoves, temp, coef, rate);
                         if (recordIndex >= 0) {
                             sameProb[2][i][j] += selector.prob(recordIndex);
                         }
                         entropy[2][i][j] += selector.entropy();
+                        time[2] += clock.stop();
                     }
                     {
                         // exp-biased
@@ -199,12 +207,13 @@ int testSelector(const MatchRecord& match) {
                         double coef = 0.4 - 0.1 * j;
                         double etemp = 1 / log(2);
                         //double etemp = 0.1 * pow(4, j);
-
+                        clock.start();
                         ExpBiasedSoftmaxSelector<double> selector(tscore, numMoves, temp, coef, etemp);
                         if (recordIndex >= 0) {
                             sameProb[3][i][j] += selector.prob(recordIndex);
                         }
                         entropy[3][i][j] += selector.entropy();
+                        time[3] += clock.stop();
                     }
                 }
             }
@@ -212,25 +221,25 @@ int testSelector(const MatchRecord& match) {
         }
     }
 
-    cerr << "Softmax Selector" << endl;
+    cerr << "Softmax Selector : " << time[0] / (trials * 7) << " clock" << endl;
     for (int i = 0; i < 7; i++) {
         cerr << "(" << sameProb[0][i][0] / trials << ", " << entropy[0][i][0] / trials << ") " << endl;
     }
-    cerr << "Truncated Softmax Selector" << endl;
+    cerr << "Truncated Softmax Selector : " << time[1] / (trials * 7 * 5) << " clock" << endl;
     for (int i = 0; i < 7; i++) {
         for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[1][i][j] / trials << ", " << entropy[1][i][j] / trials << ") ";
         }
         cerr << endl;
     }
-    cerr << "Polynomially Biased Softmax Selector" << endl;
+    cerr << "Polynomially Biased Softmax Selector : " << time[2] / (trials * 7 * 5) << " clock" << endl;
     for (int i = 0; i < 7; i++) {
         for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[2][i][j] / trials << ", " << entropy[2][i][j] / trials << ") ";
         }
         cerr << endl;
     }
-    cerr << "Exponentially Biased Softmax Selector" << endl;
+    cerr << "Exponentially Biased Softmax Selector : " << time[3] / (trials * 7 * 5) << " clock" << endl;
     for (int i = 0; i < 7; i++) {
         for (int j = 0; j < 5; j++) {
             cerr << "(" << sameProb[3][i][j] / trials << ", " << entropy[3][i][j] / trials << ") ";
