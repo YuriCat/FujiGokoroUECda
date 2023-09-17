@@ -759,7 +759,7 @@ struct ExpBiasedSoftmaxSelector : public StochasticSelector<T> {
         T max_score = *std::max_element(base_t::score_, base_t::score_ + base_t::size_);
         // minus bias by the difference from best score
         for (int i = 0; i < base_t::size_; i++) {
-            base_t::score_[i] -= acoef * std::exp(max_score - base_t::score_[i] / aetemp);
+            base_t::score_[i] -= acoef * std::exp((max_score - base_t::score_[i]) / aetemp);
         }
         for (int i = 0; i < base_t::size_; i++) {
             double es = std::exp(base_t::score_[i] / atemp);
