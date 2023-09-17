@@ -640,19 +640,19 @@ struct TensorIndexType<L> {
 template <typename T>
 struct StochasticSelector {
     T *const score_;
-    const int size_;
-
+    int size_;
+    double max_;
     double sum_;
 
     StochasticSelector(T *const ascore, int asize):
-    score_(ascore), size_(asize), sum_(0) {}
+    score_(ascore), size_(asize), sum_(0) {
+        max_ = *std::max_element(score_, score_ + size_);
+    }
 
     void init_max() {
         // max selector としての初期化
-        if (size_ == 0) return;
-        T maxValue = *std::max_element(score_, score_ + size_);
         for (int i = 0; i < size_; i++) {
-            if (score_[i] == maxValue) {
+            if (score_[i] == max_) {
                 score_[i] = 1;
                 sum_ += 1;
             } else score_[i] = 0;
@@ -692,7 +692,7 @@ struct SoftmaxSelector : public StochasticSelector<T> {
     void init(double atemp) {
         if (atemp == 0) return base_t::init_max();
         for (int i = 0; i < base_t::size_; i++) {
-            double es = std::exp(base_t::score_[i] / atemp);
+            double es = std::exp((base_t::score_[i] - base_t::max_) / atemp);
             base_t::score_[i] = es;
             base_t::sum_ += es;
         }
@@ -709,13 +709,18 @@ struct ThresholdSoftmaxSelector : public StochasticSelector<T> {
     void init(double atemp, double athreshold) {
         if (atemp == 0) return base_t::init_max();
         for (int i = 0; i < base_t::size_; i++) {
-            double es = std::exp(base_t::score_[i] / atemp);
+            double es = std::exp((base_t::score_[i] - base_t::max_) / atemp);
             base_t::score_[i] = es;
+            base_t::sum_ += es;
         }
+        if (base_t::sum_ == 0) return;
+        double new_sum = 0;
         for (int i = 0; i < base_t::size_; i++) {
-            base_t::score_[i] = std::max(base_t::score_[i] - athreshold, 1e-8);
-            base_t::sum_ += base_t::score_[i];
+            double prob = std::max(base_t::score_[i] / base_t::sum_ - athreshold, 0.0);
+            base_t::score_[i] = prob;
+            new_sum += prob;
         }
+        base_t::sum_ = new_sum;
     }
 };
 
@@ -729,13 +734,10 @@ struct BiasedSoftmaxSelector : public StochasticSelector<T> {
     void init(double atemp, double acoef, double arate) {
         if (atemp == 0) return base_t::init_max();
         if (base_t::size_ == 0) return;
-        T max_score = *std::max_element(base_t::score_, base_t::score_ + base_t::size_);
-        // minus bias by the difference from best score
         for (int i = 0; i < base_t::size_; i++) {
-            base_t::score_[i] -= acoef * std::pow(max_score - base_t::score_[i], arate);
-        }
-        for (int i = 0; i < base_t::size_; i++) {
-            double es = std::exp(base_t::score_[i] / atemp);
+            // minus bias by the difference from best score
+            double logit = base_t::score_[i] - base_t::max_;
+            double es = std::exp((logit - acoef * std::pow(-logit, arate)) / atemp);
             base_t::score_[i] = es;
             base_t::sum_ += es;
         }
@@ -752,13 +754,10 @@ struct ExpBiasedSoftmaxSelector : public StochasticSelector<T> {
     void init(double atemp, double acoef, double aetemp) {
         if (atemp == 0) return base_t::init_max();
         if (base_t::size_ == 0) return;
-        T max_score = *std::max_element(base_t::score_, base_t::score_ + base_t::size_);
-        // minus bias by the difference from best score
         for (int i = 0; i < base_t::size_; i++) {
-            base_t::score_[i] -= acoef * std::exp(max_score - base_t::score_[i] / aetemp);
-        }
-        for (int i = 0; i < base_t::size_; i++) {
-            double es = std::exp(base_t::score_[i] / atemp);
+            // minus bias by the difference from best score
+            double logit = base_t::score_[i] - base_t::max_;
+            double es = std::exp((logit - acoef * std::exp(-logit / aetemp)) / atemp);
             base_t::score_[i] = es;
             base_t::sum_ += es;
         }
