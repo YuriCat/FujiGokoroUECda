@@ -30,16 +30,22 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     }
     mt19937 dice(0);
 
-     // カード一致率
-    long long cnt = 0;
-    long long same = 0, all = 0;
     long long time = 0;
-
-    long long perfect = 0; // 完全一致率
-    double total_entropy = 0, total_cross_entropy = 0;
-
-    double entropy = 0, cross_entropy = 0;
+    long long cnt = 0;
     long long ecnt = 0;
+    long long epcnt = 0;
+
+    // 正解との一致
+    long long perfect = 0;
+    double same_cnt = 0, same_ratio = 0;
+
+    // 生成された配置内での一致
+    double same_cnt_gen = 0, same_ratio_gen = 0;
+    long long perfect_gen = 0;
+
+    // 情報量
+    double total_entropy = 0, total_cross_entropy = 0;
+    double entropy = 0, cross_entropy = 0;
 
     for (const auto& game : match.games) {
         shared.initGame();
@@ -64,7 +70,8 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
                     tall += field.hand[p].qty;
                 }
                 if (tsame == tall) perfect++;
-                same += tsame; all += tall;
+                same_cnt += tsame;
+                same_ratio += double(tsame) / tall;
             }
             // 多様性計測
             if (field.turnCount() == tc) {
@@ -85,6 +92,23 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
                 }
                 total_entropy += total_e;
                 total_cross_entropy += total_ce;
+                // 生成された配置内の類似度
+                for (int i = 0; i < N; i++) {
+                    for (int j = 0; j < i; j++) {
+                        int tsame_gen = 0, tall_gen = 0;
+                        for (int p = 0; p < N_PLAYERS; p++) {
+                            if (p == field.turn() || !field.isAlive(p)) continue;
+                            Cards sameCards = worlds[i].cards[p] & worlds[j].cards[p];
+                            tsame_gen += sameCards.count();
+                            tall_gen += field.hand[p].qty;
+                        }
+                        epcnt++;
+                        if (tsame_gen == tall_gen) perfect_gen++;
+                        same_cnt_gen += tsame_gen;
+                        same_ratio_gen += double(tsame_gen) / tall_gen;
+                    }
+                }
+
                 // カードごとの配置確率をまとめる
                 int own[64][N_PLAYERS] = {0};
                 for (int i = 0; i < N; i++) {
@@ -115,7 +139,9 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     }
     cerr << "type " << type << ": ";
     cerr << perfect << " / " << cnt << " (" << double(perfect) / cnt << ") ";
-    cerr << same << " / " << all << " (" << double(same) / all << ") ";
+    cerr << "same " << same_cnt / cnt << " (" << same_ratio / cnt << ") ";
+    cerr << "perf-gen " << double(perfect_gen) / epcnt;
+    cerr << " same-gen " << same_cnt_gen / epcnt << " (" << same_ratio_gen / epcnt << ") ";
     cerr << "entropy " << entropy / ecnt << " centropy " << cross_entropy / ecnt;
     cerr << " in " << time / cnt << " clock" << endl;
 }
