@@ -248,7 +248,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
                                                flag, &record, true));
             }
             for (auto& t : threadPool) t.join();
-            for (int th = 1; th < threads; th++)masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
+            for (int th = 1; th < threads; th++) masterChangeLearner.mergeObjValue(ls.at(th).changeLearner());
             changeTrials += masterChangeLearner.trials(0);
             changeTrials += masterChangeLearner.trials(1);
             changePolicy.fout(outDirName + "change_policy_param.dat");
@@ -266,7 +266,7 @@ int learn(vector<string> logFileNames, string outDirName, int mode) {
                                                flag, &record, false));
             }
             for (auto& t : threadPool) t.join();
-            for (int th = 1; th < threads; th++)masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
+            for (int th = 1; th < threads; th++) masterPlayLearner.mergeObjValue(ls.at(th).playLearner());
             playTrials += masterPlayLearner.trials();
             playPolicy.fout(outDirName + "play_policy_param.dat");
             foutComment(playPolicy, outDirName + "play_policy_comment.txt");

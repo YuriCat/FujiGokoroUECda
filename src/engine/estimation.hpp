@@ -26,7 +26,7 @@ public:
                 dealAllRand(c, ptools->dice); break;
             case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
                 dealWithSubjectiveInfo(c, ptools->dice); break;
-            case DealType::BIAS: // 逆関数法でバイアスを掛けて配る*/
+            case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
                 dealWithBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
                 dealWithRejection(c, game, shared, ptools); break;

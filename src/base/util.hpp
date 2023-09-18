@@ -714,11 +714,10 @@ struct ThresholdSoftmaxSelector : public StochasticSelector<T> {
             base_t::sum_ += es;
         }
         if (base_t::sum_ == 0) return;
-        double new_sum = 0;
+        T new_sum = 0;
         for (int i = 0; i < base_t::size_; i++) {
-            double prob = std::max(base_t::score_[i] / base_t::sum_ - athreshold, 0.0);
-            base_t::score_[i] = prob;
-            new_sum += prob;
+            base_t::score_[i] = std::max(base_t::score_[i] / base_t::sum_ - athreshold, T(0));
+            new_sum += base_t::score_[i];
         }
         base_t::sum_ = new_sum;
     }
