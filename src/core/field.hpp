@@ -284,8 +284,9 @@ struct World {
     Cards cards[N_PLAYERS];
     uint64_t cardKey[N_PLAYERS];
     uint64_t key;
+    double likelihood;
 
-    void set(int turnCount, const Cards *c);
+    void set(int turnCount, const Cards *c, double lh);
 };
 
 // 状態表現に世界情報を設定

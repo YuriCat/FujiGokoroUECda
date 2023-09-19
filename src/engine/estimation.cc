@@ -170,10 +170,11 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
-void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
-                                     const SharedData& shared, ThreadTools *const ptools) {
+double RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
+                                       const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
     Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    double lhs[Settings::BUCKET_MAX];
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
@@ -195,6 +196,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
     }
     for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
     checkDeal(dst);
+    return lhs[bestDeal];
 }
 
 void RandomDealer::set(const Field& field, int playerNum) {

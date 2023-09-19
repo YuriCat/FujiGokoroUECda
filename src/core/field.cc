@@ -437,13 +437,14 @@ void copyField(const Field& arg, Field *const dst) {
     dst->remKey = arg.remKey;
 }
 
-void World::set(int turnCount, const Cards *c) {
+void World::set(int turnCount, const Cards *c, double lh) {
     for (int p = 0; p < N_PLAYERS; p++) {
         cards[p] = c[p];
         cardKey[p] = CardsToHashKey(c[p]);
     }
     key = cross64<N_PLAYERS>(cardKey);
     builtTurn = turnCount;
+    likelihood = lh;
 }
 
 // set estimated information

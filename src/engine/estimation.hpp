@@ -20,6 +20,7 @@ public:
     World create(DealType type, const GameRecord& game,
                  const SharedData& shared, ThreadTools *const ptools) {
         Cards c[N_PLAYERS];
+        double lh = 1;
         // レベル指定からカード分配
         switch (type) {
             case DealType::RANDOM: // 残りカードを完全ランダム分配
@@ -29,19 +30,19 @@ public:
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
                 dealWithBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
-                dealWithRejection(c, game, shared, ptools); break;
+                lh = dealWithRejection(c, game, shared, ptools); break;
             default: exit(1); break;
         }
         World world;
-        world.set(turnCount, c);
+        world.set(turnCount, c, lh);
         return world;
     }
 
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
     void dealWithBias(Cards *const dst, Dice& dice) const;
-    void dealWithRejection(Cards *const dst, const GameRecord& game,
-                           const SharedData& shared, ThreadTools *const ptools);
+    double dealWithRejection(Cards *const dst, const GameRecord& game,
+                             const SharedData& shared, ThreadTools *const ptools);
 
 private:
     // 棋譜
