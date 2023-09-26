@@ -82,7 +82,6 @@ int main(int argc, char* argv[]) { // for UECda
     while (1) {
         // 各試合前の初期化
         engine.initGame();
-        record.initGame();
         auto& game = record.latestGame();
 
         startGame(recv_table); // 自分のカード、初期情報受け取り
