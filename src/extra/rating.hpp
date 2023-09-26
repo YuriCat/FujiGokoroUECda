@@ -39,7 +39,6 @@ void simulationThreadForRating(RateCalculationData *const pdst,
         Field f = *pfield;
         f.setMoveBuffer(ptools->mbuf);
 
-        // シミュレーション終了の条件は試合終了となっているので再設定しなくてよい
         startAllSimulation(f, pshared, ptools);
 
         pdst->lock.lock();
@@ -67,6 +66,8 @@ void doSimulationsToEvaluate(const GameRecord& game,
                              ThreadTools tools[]) {
     Field field;
     field.passPresent(game, -1, true);
+    // 試合終了までシミュレーションを続ける設定
+    for (int p = 0; p < N_PLAYERS; p++) field.addAttractedPlayer(p);
     // シミュレーションにより結果を予測
     std::vector<std::thread> thr;
     for (int ith = 0; ith < N_THREADS; ith++) {
