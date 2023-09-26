@@ -23,6 +23,15 @@ uint64_t worldKey(const Field& f) {
     return key;
 }
 
+long long factorial(int n) { return n > 1 ? n * factorial(n - 1) : 1; }
+
+int patternCount(const Field& field) {
+    if (field.opsHand[field.turn()].qty > 10) return 10000;
+    long long f = factorial(field.opsHand[field.turn()].qty);
+    for (int p = 0; p < N_PLAYERS; p++) if (p != field.turn()) f /= factorial(field.hand[p].qty);
+    return f;
+}
+
 void testEstimationRate(const MatchRecord& match, DealType type) {
     shared.initMatch(-1);
     for (int i = 0; i < 16; i++) {
@@ -56,6 +65,24 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
             //cerr << field.toDebugString() << endl;
             // この手の前までの情報から手札推定を行う
             RandomDealer estimator(field, field.turn());
+            // 最終局面チェック
+            if (type == DealType::REJECTION && patternCount(field) <= 12) {
+                constexpr int N = 64;
+                World worlds[N];
+                map<uint64_t, double> likelihoodMap, countMap;
+                for (int i = 0; i < N; i++) {
+                   worlds[i] = estimator.create(type, game, shared, &tools[0]);
+                   countMap[worlds[i].key]++;
+                   likelihoodMap[worlds[i].key] += worlds[i].likelihood;
+                }
+                cerr << patternCount(field) << endl;
+                for (auto v : likelihoodMap) {
+                    cerr << v.first << " " << countMap[v.first] << " " << v.second
+                    << " (" << v.second / countMap[v.first] << ") "
+                    <<  (v.first == worldKey(field) ? " <-" : "") << endl;
+                }
+                //getchar();
+            }
             // 一致度計測
             for (int j = 0; j < 2; j++) {
                 cl.start();
