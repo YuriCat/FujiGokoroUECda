@@ -212,7 +212,7 @@ public:
     const_iterator end() const { return const_iterator(field, game, game->numChanges); }
 
     ChangeRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
-        presentCount = field->passPresent(*game, game->myPlayerNum);
+        presentCount = field->passPresent(*game, game->myPlayerNum, true);
     }
 protected:
     int presentCount;

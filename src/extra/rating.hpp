@@ -66,7 +66,7 @@ void doSimulationsToEvaluate(const GameRecord& game,
                              SharedData *const pshared,
                              ThreadTools tools[]) {
     Field field;
-    field.passPresent(game, -1);
+    field.passPresent(game, -1, true);
     // シミュレーションにより結果を予測
     std::vector<std::thread> thr;
     for (int ith = 0; ith < N_THREADS; ith++) {
