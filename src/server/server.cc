@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
     /************************************/
     
     for (i=0;i<N_PLAYERS;i++) {
-        sprintf(player_name[i],"Player %i",i+1);
+        snprintf(player_name[i],15,"Player %i",i+1);
     }
     
     /************************************/

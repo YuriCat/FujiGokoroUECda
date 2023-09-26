@@ -249,8 +249,8 @@ struct MoveInfo : public Move {
     void setDM() { set(13); }
     void setDALL() { set(12, 13); }
     void setDomOthers() { setDO(); }
-    void setDomMe() { setDO(); }
-    void setDomAll() { setDO(); }
+    void setDomMe() { setDM(); }
+    void setDomAll() { setDALL(); }
 
     void init() { Move::flags = 0; }
 
