@@ -33,7 +33,8 @@ int testSimulation(const MatchRecord& match) {
             f.addAttractedPlayer(field.turn());
             f.setMoveBuffer(tools.mbuf);
             // 一致度計測
-            for (int j = 0; j < 8; j++) {
+            int n = max(1.0, 10 / sqrt(match.games.size() / 100.0));
+            for (int j = 0; j < n; j++) {
                 cl.start();
                 Field ff = f;
                 simulation(ff, &shared, &tools);
