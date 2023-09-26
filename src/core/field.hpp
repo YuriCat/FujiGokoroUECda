@@ -267,7 +267,7 @@ struct Field {
 
     // recordが定義された時用
     void setBeforeGame(const GameRecord& game, int playerNum);
-    int passPresent(const GameRecord& game, int playerNum);
+    int passPresent(const GameRecord& game, int playerNum, bool sendPresent = false);
     void passChange(const GameRecord& game, int playerNum);
     void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
