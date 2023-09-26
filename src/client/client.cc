@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) { // for UECda
                 if (cl < MIDDLE) numCards -= N_CHANGE_CARDS(cl);
             }
             game.numDealtCards[p] = numCards;
+            game.numOrgCards[p] = numCards;
         }
 
         // カード交換フェーズ
