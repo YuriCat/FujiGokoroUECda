@@ -14,7 +14,7 @@ struct PlayRecord { // 1つの着手の記録
 
 struct ChangeRecord { // 交換の記録
     int from; int to;
-    bool already; // 既に手札が相手型に渡っている
+    bool already; // 既に手札が交換相手に渡っている
     int qty; Cards cards;
 
     void set(int f, int t, int q, Cards c, bool a) {
