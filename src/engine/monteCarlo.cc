@@ -5,12 +5,6 @@
 
 using namespace std;
 
-namespace Settings {
-    const double valuePerClock = 5.0 / (THINKING_LEVEL * THINKING_LEVEL) / pow(10.0, 10);
-    // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
-    const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6);
-}
-
 int selectBanditAction(const RootInfo& root, Dice& dice) {
     // バンディット手法により次に試す行動を選ぶ
     int actions = root.candidates;
@@ -42,7 +36,7 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
     }
 }
 
-bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
+bool finishCheck(const RootInfo& root, double simuTime, double valuePerSec, Dice& dice) {
     // Regretによる打ち切り判定
 
     const int candidates = root.candidates; // 候補数
@@ -50,7 +44,7 @@ bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
     double rewardScale = root.rewardGap;
 
     struct Dist { double mean, sem, reg; };
-    double regretThreshold = 1600.0 * double(2 * simuTime * Settings::valuePerSec) / rewardScale;
+    double regretThreshold = 1600.0 * double(2 * simuTime * valuePerSec) / rewardScale;
 
     // regret check
     Dist d[N_MAX_MOVES];
@@ -103,6 +97,9 @@ void MonteCarloThread(const int threadId, const int numThreads,
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
     uint64_t estTime = 0ULL; // 局面推定にかかった時間
 
+    // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
+    const double valuePerSec = 5e-4 * 3191 / (Settings::thinkingLevel * Settings::thinkingLevel);
+
     // 諸々の準備が終わったので時間計測開始
     ClockMicS clock(0);
 
@@ -148,7 +145,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && threadId == 0
             && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
-            if (finishCheck(*proot, double(simuTime) / pow(10, 6), dice)) {
+            if (finishCheck(*proot, simuTime * 1e-6, valuePerSec, dice)) {
                 proot->exitFlag = 1;
                 return;
             }

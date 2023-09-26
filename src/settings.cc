@@ -11,6 +11,7 @@ namespace Settings {
     int numChangeThreads = max(1, (numPlayThreads + 1) / 2);
     int fixedSimulationCount = -1;
     bool maximizePosition = false;
+    int thinkingLevel = THINKING_LEVEL;
 }
 
 string DIRECTORY_PARAMS_IN = "";

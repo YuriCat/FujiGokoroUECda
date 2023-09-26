@@ -35,6 +35,7 @@ namespace Settings {
     extern int numChangeThreads;
     extern int fixedSimulationCount;
     extern bool maximizePosition;
+    extern int thinkingLevel;
 }
 
 extern std::string DIRECTORY_PARAMS_IN;

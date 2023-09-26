@@ -58,6 +58,9 @@ int main(int argc, char* argv[]) { // for UECda
             Settings::fixedSimulationCount = simulationCount;
         } else if (arg == "-mp") { // maximize position
             Settings::maximizePosition = true;
+        } else if (arg == "-lev") { // thinking level
+            int level = atoi(argv[c + 1]);
+            Settings::thinkingLevel = level;
         }
     }
 
