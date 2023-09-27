@@ -26,23 +26,25 @@ class L2Judge {
 protected:
     const int NODE_LIMIT;
     MoveInfo *const mbuf;
-    int nodes, childs, failed; // 統計情報
 
 public:
+    // 統計情報
+    int nodes, childs, failed;
+    int searchCount, searchIndex;
+
     void init() {
         nodes = childs = failed = 0;
+        searchCount = searchIndex = 0;
     }
 
     L2Judge(int nl, MoveInfo *const mb):
     NODE_LIMIT(nl), mbuf(mb) { init(); }
 
     // 再帰版
-    template <int S_LEVEL, int E_LEVEL>
-    int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+    int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
     int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
     bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
-    int search(const int depth, MoveInfo *const buf, const int numMoves, const Hand& myHand, const Hand& opsHand, const L2Field& field);
 
-    int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);
-    int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fInfo);
+    int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
+    int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
 };
