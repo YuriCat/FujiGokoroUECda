@@ -304,6 +304,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     Cards ops8 = opsHand.cards & CARDS_8;
 
     // 相手に間で上がられる可能性がある場合
+    // TODO: 実際は相手の枚数がぴたり m.qty() と同じでなければ上がられることはない
     if (fieldInfo.getMinNCardsAwake() <= m.qty() && m.qty() <= fieldInfo.getMaxNCardsAwake()) return false;
 
     FieldAddInfo nextFieldInfo;
@@ -311,9 +312,9 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     if (m.isSingle()) {
         // シングルジョーカーは少なくともBNPWではない
         if (m.isSingleJOKER()) return false;
+        // 相手に8切りで返される可能性があればだめ
+        if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
         if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
-            // 相手に8切りで返される可能性があればだめ
-            if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
             // 残り1枚がジョーカーなら勝ち
             if (myHand.qty == m.qty() + 1) return true;
 
@@ -339,8 +340,91 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
                 }
             }
         }
-        // TODO: 他の役で検討
+        // 他のシングル役
+        if (opsHand.jk == 0) {
+            BitCards myUpper = myHand.cards - m.cards();
+            if (curOrder == 0) {
+                int opsHighRank = IntCardToRank(opsHand.cards.highest());
+                myUpper &= RankRangeToCards(opsHighRank + 1, RANK_2);
+            } else {
+                int opsHighRank = IntCardToRank(opsHand.cards.lowest());
+                myUpper &= RankRangeToCards(RANK_3, opsHighRank - 1);
+            }
+
+            if (myUpper) {
+                BitCards opsUpper = opsHand.cards;
+                if (curOrder == 0) {
+                    opsUpper &= RankRangeToCards(m.rank() + 1, RANK_2);
+                } else {
+                    opsUpper &= RankRangeToCards(RANK_3, m.rank() - 1);
+                }
+                BitCards moveSuitCards = SuitsToCards(m.suits());
+                // 出した役と同じスートでのスートしばり
+                BitCards m1 = moveSuitCards & opsUpper;
+                std::array<BitCards, 4> all2 = {m1 & CARDS_C, m1 & CARDS_D, m1 & CARDS_H, m1 & CARDS_S};
+
+                // 出した役と違う役でのスートしばり TODO: 相手が2人以上
+                BitCards c2 = popLsb(opsUpper & CARDS_C);
+                BitCards d2 = popLsb(opsUpper & CARDS_D);
+                BitCards h2 = popLsb(opsUpper & CARDS_H);
+                BitCards s2 = popLsb(opsUpper & CARDS_S);
+                all2[0] |= c2; all2[1] |= d2; all2[2] |= h2; all2[3] |= s2;
+
+                // スートしばりがかからない場合、一つ必勝を見つけられたら勝ち
+                // かけられる可能性がある場合、どのスートでロックをかけられても必勝でないとダメ
+                // 実際にかけられなかった場合、どれか1つで勝てばいいのでその専用チェック不要
+                bool anyLock = all2[0] | all2[1] | all2[2] | all2[3];
+                if (!anyLock) {
+                    for (IntCard ic : Cards(myUpper)) {
+                        assert(myHand.qty > m.qty() + 1); // 完全勝利でないので
+                        Hand nextHand;
+                        makeMove1stHalf(myHand, &nextHand, m);
+                        Move fm; fm.setSingle(ic);
+                        nextHand.makeMove1stHalf(fm, IntCardToCards(ic), 1);
+                        flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                        int n = std::min(fieldInfo.getMinNCards(), fieldInfo.getMinNCardsAwake() - m.qty());
+                        nextFieldInfo.setMinNCards(n);
+                        nextFieldInfo.setMinNCardsAwake(n);
+                        if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
+                            //std::cerr << "no lock " << b << myHand.cards << opsHand.cards << m << "->" << fm; getchar();
+                            return true;
+                        }
+                    }
+                } else {
+                    bool ok = true;
+                    for (int sn = 0; sn < 4; sn++) {
+                        if (all2[sn]) {
+                            bool found = false;
+                            BitCards tmpUpper = myUpper & SuitsToCards(1U << sn);
+                            for (IntCard ic : Cards(tmpUpper)) {
+                                assert(myHand.qty > m.qty() + 1); // 完全勝利でないので
+                                Hand nextHand;
+                                makeMove1stHalf(myHand, &nextHand, m);
+                                Move fm; fm.setSingle(ic);
+                                nextHand.makeMove1stHalf(fm, IntCardToCards(ic), 1);
+                                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                                int n = std::min(fieldInfo.getMinNCards(), fieldInfo.getMinNCardsAwake() - m.qty());
+                                nextFieldInfo.setMinNCards(n);
+                                nextFieldInfo.setMinNCardsAwake(n);
+                                if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) { ok = false; break; }
+                        }
+                    }
+                    if (ok) {
+                        // ここまで来たならOK
+                        //std::cerr << "lock " << b << myHand.cards << opsHand.cards << m << "->>?" << all2 << Cards(myUpper) << IntCardToRank(opsHand.cards.highest()); getchar();
+                        return true;
+                    }
+                }
+            }
+        }
     }
+    // TODO: ダブル以上
+
     return false;
 }
 
