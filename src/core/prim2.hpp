@@ -94,11 +94,13 @@ public:
                                         LCT64_LASTAWAKE,
                                         LCT64_FLUSHLEAD,
                                         LCT64_NPDOM,
-                                        LCT64_PDOM); }
+                                        LCT64_PDOM,
+                                        LCT64_BDOMOTHERS); }
     void setUnrivaled() { set(LCT64_UNRIVALED,
                                        LCT64_FLUSHLEAD,
                                        LCT64_NPDOM,
-                                       LCT64_PDOM); }
+                                       LCT64_PDOM,
+                                       LCT64_BDOMOTHERS); }
     void setLastAwake() { set(LCT64_LASTAWAKE,
                                        LCT64_NPDOM,
                                        LCT64_BDOMOTHERS); }
