@@ -196,7 +196,7 @@ void Field::initGame() {
     recvCards.fill(CARDS_NULL);
 
     remCards = CARDS_ALL;
-    remQty = countCards(CARDS_ALL);
+    remQty = N_CARDS;
     remKey = HASH_CARDS_ALL;
 }
 
