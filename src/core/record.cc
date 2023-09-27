@@ -247,6 +247,7 @@ int loadMatchRecord(const string& path, MatchRecord *const pmatch) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
                 game.dealtCards[p] = c;
+                game.numDealtCards[p] = c.count();
             }
         } else if (cmd == "changed") {
             bool anyChange = false;
@@ -273,6 +274,7 @@ int loadMatchRecord(const string& path, MatchRecord *const pmatch) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
                 game.orgCards[p] = c;
+                game.numOrgCards[p] = c.count();
             }
         } else if (cmd == "play") {
             while (1) {
