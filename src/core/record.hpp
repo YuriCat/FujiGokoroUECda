@@ -37,7 +37,7 @@ struct GameRecord {
 
     void setTerminated() { flags_.set(0); }
     void setInitGame() { flags_.set(1); }
-    void resetInitGame() { flags_.reset(0); }
+    void resetInitGame() { flags_.reset(1); }
 
     bool isTerminated() const { return flags_.test(0); }
     bool isInitGame() const { return flags_.test(1); }
