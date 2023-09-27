@@ -302,10 +302,9 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     if (m.isPASS()) return false; // パスからのBNPWはない
     int curOrder = b.prmOrder();
     Cards ops8 = opsHand.cards & CARDS_8;
-    uint32_t aw = fieldInfo.getMinNCardsAwake();
 
     // 相手に間で上がられる可能性がある場合
-    if (aw <= m.qty()) return false;
+    if (fieldInfo.getMinNCardsAwake() <= m.qty() && m.qty() <= fieldInfo.getMaxNCardsAwake()) return false;
 
     FieldAddInfo nextFieldInfo;
 
@@ -324,8 +323,9 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
             Move sj; sj.setSingleJOKER();
             nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            nextFieldInfo.setMinNCards(aw - m.qty());
-            nextFieldInfo.setMinNCardsAwake(aw - m.qty());
+            int n = std::min(fieldInfo.getMinNCards(), fieldInfo.getMinNCardsAwake() - m.qty());
+            nextFieldInfo.setMinNCards(n);
+            nextFieldInfo.setMinNCardsAwake(n);
             if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                 return true;
             }
