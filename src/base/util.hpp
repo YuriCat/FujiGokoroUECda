@@ -333,12 +333,6 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     }
 }
 
-template <size_t N>
-bool isOnlyValue(std::bitset<N> bs, size_t i) {
-    bs.reset(i);
-    return bs.count() == 0;
-}
-
 class XorShift64 {
 private:
     uint64_t x, y, z, t;
@@ -445,7 +439,7 @@ struct BetaDistribution {
         return *this;
     }
     BetaDistribution& operator/=(const double d) {
-        (*this) *= 1 / d;
+        *this *= 1 / d;
         return *this;
     }
 

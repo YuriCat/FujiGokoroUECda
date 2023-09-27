@@ -526,21 +526,21 @@ union Cards {
     Cards& clear() { c_ = 0; return *this; }
     Cards& fill() { c_ = CARDS_ALL; return *this; }
 
-    Cards& merge(BitCards c) { return (*this) += c; }
-    Cards& mask(BitCards c) { return (*this) &= ~c; }
+    Cards& merge(BitCards c) { return *this += c; }
+    Cards& mask(BitCards c) { return *this &= ~c; }
     Cards& maskJOKER() { return mask(CARDS_JOKER_RANK); }
 
-    Cards& insert(IntCard ic) { return (*this) |= IntCardToCards(ic); }
-    Cards& insertJOKER() { return (*this) |= CARDS_JOKER; }
+    Cards& insert(IntCard ic) { return *this |= IntCardToCards(ic); }
+    Cards& insertJOKER() { return *this |= CARDS_JOKER; }
 
     Cards& remove(IntCard ic) { return mask(IntCardToCards(ic)); }
     Cards& forceRemove(IntCard ic) {
         assert(contains(ic));
-        return (*this) -= IntCardToCards(ic);
+        return *this -= IntCardToCards(ic);
     }
     Cards& forceRemoveAll(BitCards c) {
         assert(holds(c));
-        return (*this) -= c;
+        return *this -= c;
     }
 
     // pick, pop
@@ -870,7 +870,7 @@ struct Move {
         return toInt() == m.toInt();
     }
 
-    void clear()                      { Move tmp = {0}; (*this) = tmp; }
+    void clear()                      { *this = Move({0}); }
     void setPASS()                    { clear(); t = 0; }
     void setSingleJOKER()             { clear(); q = 1; t = 1; jks = SUITS_ALL; } // シングルジョーカーのランクは未定義
     void setS3()                      { setSingle(INTCARD_S3); } // スペ3切りの場合のみ

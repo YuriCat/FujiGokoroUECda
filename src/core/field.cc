@@ -343,7 +343,8 @@ int Field::procImpl(const MoveInfo m) {
         bool agari = m.qty() >= hand[tp].qty;
         if (agari || (FAST && m.isMate())) { // 即上がりまたはMATE宣言のとき
             if (FAST) {
-                if (isOnlyValue(attractedPlayers, tp)) {
+                attractedPlayers.reset(tp);
+                if (attractedPlayers.count() == 0) {
                     // 結果が欲しいプレーヤーがすべて上がったので終了
                     setNewClassOf(tp, bestClass());
                     return -1;
