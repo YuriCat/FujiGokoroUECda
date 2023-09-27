@@ -251,6 +251,7 @@ struct MoveInfo : public Move {
     void setDomOthers() { setDO(); }
     void setDomMe() { setDM(); }
     void setDomAll() { setDALL(); }
+    void setChecked() { set(31); }
 
     void init() { Move::flags = 0; }
 
@@ -273,6 +274,8 @@ struct MoveInfo : public Move {
     uint64_t dominatesOthers() const { return isDO(); }
     uint64_t dominatesMe() const { return isDM(); }
     uint64_t dominatesAll() const { return isDALL(); }
+
+    bool isChecked() const { return test(31); }
 };
 
 static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
