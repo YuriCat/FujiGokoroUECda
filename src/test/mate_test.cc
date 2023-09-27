@@ -130,7 +130,7 @@ int testRecordMoveMate(const Record& record) {
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
 
     // judge(高速判定)
-    uint64_t judgeTime[2] = {0};
+    uint64_t judgeTime[4] = {0};
     uint64_t judgeCount = 0;
     uint64_t judgeMatrix[2][2] = {0};
     Field field;
@@ -145,16 +145,24 @@ int testRecordMoveMate(const Record& record) {
             Board b = field.board;
 
             cl.start();
-            bool mate = judgeHandPW_NF(myHand, opsHand, b);
+            bool mate0 = judgeMate_Easy_NF(myHand);
             judgeTime[0] += cl.stop();
             judgeCount += 1;
+
+            cl.start();
+            bool mate1 = judgeHandPW_NF(myHand, opsHand, b);
+            judgeTime[1] += cl.stop();
+
+            cl.start();
+            bool mate2 = judgeHandMate(0, buffer, myHand, opsHand, b, field.fieldInfo);
+            judgeTime[2] += cl.stop();
 
             cl.start();
             visitedCards.clear();
             bool pw = judgeCardsPWSlow(buffer, turnPlayer,
                                         myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead());
-            judgeTime[1] += cl.stop();
-            judgeMatrix[pw][mate] += 1;
+            judgeTime[3] += cl.stop();
+            judgeMatrix[pw][mate2] += 1;
 
             /*if (mate && !pw) {
                 cerr << field.toDebugString() << endl;
@@ -170,14 +178,16 @@ int testRecordMoveMate(const Record& record) {
         }
         cerr << endl;
     }
-    cerr << "judge time (hand)    = " << judgeTime[0] / (double)judgeCount << endl;
-    cerr << "judge time (pw-slow) = " << judgeTime[1] / (double)judgeCount << endl;
+    cerr << "judge time (easy)    = " << judgeTime[0] / (double)judgeCount << endl;
+    cerr << "judge time (pdr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
+    cerr << "judge time (hand)    = " << judgeTime[2] / (double)judgeCount << endl;
+    cerr << "judge time (pw-slow) = " << judgeTime[3] / (double)judgeCount << endl;
 
     // check
-    uint64_t checkTime[2] = {0};
+    uint64_t checkTime[3] = {0};
     uint64_t checkCount = 0;
 
-    uint64_t checkMatrix[2][2] = {0};
+    uint64_t checkMatrix[2][2][2] = {0};
 
     for (int i = 0; i < record.games(); i++) {
         for (Move move : PlayRoller(field, record.game(i))) {
@@ -190,28 +200,37 @@ int testRecordMoveMate(const Record& record) {
             if (dominatesHand(b, myHand)) continue;
 
             cl.start();
-            bool mate = checkHandMate(1, buffer, mi, myHand, opsHand, b, field.fieldInfo);
+            bool mate0 = checkHandMate(0, buffer, mi, myHand, opsHand, b, field.fieldInfo);
             checkTime[0] += cl.stop();
             checkCount += 1;
+
+            cl.start();
+            bool mate1 = checkHandMate(1, buffer, mi, myHand, opsHand, b, field.fieldInfo);
+            checkTime[1] += cl.stop();
 
             cl.start();
             visitedCards.clear();
             bool pw = checkCardsPWSlow(buffer, turnPlayer, move,
                                         myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead());
-            checkTime[1] += cl.stop();
-            checkMatrix[pw][mate] += 1;
+            checkTime[2] += cl.stop();
+            checkMatrix[0][pw][mate0] += 1;
+            checkMatrix[1][pw][mate1] += 1;
         }
     }
 
     cerr << "check result (hand) = " << endl;
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++) {
-            cerr << checkMatrix[i][j] << " ";
+    for (int d = 0; d < 2; d++) {
+        cerr << "depth" << d << endl;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                cerr << checkMatrix[d][i][j] << " ";
+            }
+            cerr << endl;
         }
-        cerr << endl;
     }
-    cerr << "check time (hand)    = " << checkTime[0] / (double)checkCount << endl;
-    cerr << "check time (pw-slow) = " << checkTime[1] / (double)checkCount << endl;
+    cerr << "check time (hand d0) = " << checkTime[0] / (double)checkCount << endl;
+    cerr << "check time (hand d1) = " << checkTime[1] / (double)checkCount << endl;
+    cerr << "check time (pw-slow) = " << checkTime[2] / (double)checkCount << endl;
 
     // search
     uint64_t searchTime[2] = {0};
