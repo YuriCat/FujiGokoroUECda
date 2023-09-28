@@ -43,8 +43,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
         BitCards ndquad = pqr & PQR_4 & ~CARDS_8 & ~ndpqr & nd[flipOrder(ord)];
         // 支配できない革命が無い
         if (!ndquad) PPW("0(NO-NDQUAD)");
-        // ジョーカーがあるとき革命にジョーカーを加えて大体大丈夫
-        // （革命複数の場合にはアウト）
+        // ジョーカーがあるとき革命が2つ以下ならジョーカーを加えて勝ち
         if (jk) PPW("0(QUAD+JK)");
         return false;
     }
