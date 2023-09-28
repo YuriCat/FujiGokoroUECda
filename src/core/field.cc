@@ -320,6 +320,7 @@ string Field::toDebugString() const {
     oss << "seat = " << infoSeat << endl;
     oss << "board = " << board << endl;
     oss << "state = " << ps << endl;
+    oss << "info = " << fieldInfo << endl;
     oss << "hand = " << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
