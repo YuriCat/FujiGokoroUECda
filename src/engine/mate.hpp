@@ -56,7 +56,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
             // 5枚グループにして勝ち
             if (ndpqr & PQR_4) PPW("1(QUIN)");
             // ndと交差しなければ勝ち
-            if (!((ndpqr << 1) & nd[ord])) PPW("1(+JK)");
+            if (!((ndpqr << 1) & nd[(ndpqr & PQR_3) ? flipOrder(ord) : ord])) PPW("1(+JK)");
             // スペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
             if (ndpqr == (CARDS_3 & PQR_1) && containsS3(cards)) PPW("1(JK-S3)");
         }
