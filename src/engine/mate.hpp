@@ -265,8 +265,8 @@ inline int searchHandMate(const int, MoveInfo *const, const int,
 
 inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                           const Hand& myHand, const Hand& opsHand,
-                          const Board& b, const FieldAddInfo& fieldInfo) {
-    if (b.isNull()) {
+                          const Board& b, const FieldAddInfo& fieldInfo, bool checkedEasy = false) {
+    if (!checkedEasy && b.isNull()) {
         if (judgeMate_Easy_NF(myHand)) return true;
         if (judgeHandPW_NF(myHand, opsHand, b)) return true;
     }
@@ -362,77 +362,64 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
 inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
-
-    if (fieldInfo.isUnrivaled()) { // 独断場のとき
-        m.setDO(); // 支配フラグ付加
-        if (m.isPASS()) {
-            Board nb = b;
-            nb.flush();
-            FieldAddInfo nextFieldInfo;
-            flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            return judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo);
-        } else {
-            if (m.qty() >= myHand.qty) return true; // あがり
-            Hand nextHand;
-            Board nb = b;
-            FieldAddInfo nextFieldInfo;
-            makeMove1stHalf(myHand, &nextHand, m);
-            if (dominatesCards(m, nextHand.cards, b)) { // 自己支配
-                m.setDM(); // 支配フラグ付加
-                nb.procAndFlush(m);
-                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
-            } else { // セルフフォロー必勝を判定
-                nb.proc(m);
-                procUnrivaled(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
-            }
-        }
-        return false;
-    }
-
     if (m.isPASS()) {
-        // パス支配でない場合は判定終了
         if (!fieldInfo.isPassDom()) return false;
-
-        // Unrivaledでないがパス支配の場合がある?
-        // パス支配の場合, 流れてからの必勝を判定
+        // パス支配のとき(独壇場でない場合もある)
+        // 流してからの必勝を判定
         m.setDO(); // 支配フラグ付加
+        Board nb = b;
         FieldAddInfo nextFieldInfo;
-        nextFieldInfo.init();
+        nb.flush();
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-        return judgeHandMate(depth, mbuf, myHand, opsHand,
-                             OrderToNullBoard(b.prmOrder()), nextFieldInfo);
+        return judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo);
     }
 
     // 通常
     if (m.qty() >= myHand.qty) return true; // 即上がり
-    if (dominatesHand(m, opsHand, b)
+    if (fieldInfo.isNonPassDom()
+        || dominatesHand(m, opsHand, b)
         || m.qty() > fieldInfo.maxNumCardsAwake()) { // 支配
         m.setDO(); // 支配フラグ付加
 
-        Board nb = b;
-        nb.proc(m);
         Hand nextHand;
         makeMove1stHalf(myHand, &nextHand, m);
 
-        // セルフフォロー
+        Board nb = b;
+        nb.procAndFlush(m);
+        if (judgeHandPW_NF(nextHand, opsHand, nb)) return true;
+
+        // 自分の出したジョーカーをS3で返してからの必勝チェック
+        if (m.isSingleJOKER()) {
+            if (containsS3(nextHand.cards)) {
+                Move s3; s3.setSingle(INTCARD_S3);
+                Hand nextNextHand;
+                FieldAddInfo nextFieldInfo;
+                makeMove1stHalf(nextHand, &nextNextHand, s3, CARDS_S3, 1);
+                flushFieldAddInfo(fieldInfo, &nextFieldInfo);
+                Board nb = b;
+                nb.flush();
+                if (judgeHandMate(0, mbuf, nextNextHand, opsHand, nb, nextFieldInfo)) return true;
+            } else {
+                m.setDM(); // 支配フラグ付加
+            }
+        } else if (!dominatesCards(m, nextHand.cards, b)) { // それ以外のセルフフォロー
+            FieldAddInfo nextFieldInfo;
+            procUnrivaled(fieldInfo, &nextFieldInfo);
+            Board nb = b;
+            nb.proc(m);
+            if (judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo)) return true;
+        } else {
+            m.setDM(); // 支配フラグ付加
+        }
 
         // 自分の出した役を流してからの必勝チェック
         // 永続的パラメータ変更を起こす場合はBNPW判定を続け、起こさない場合はPWのみ検討
-        nb.flush();
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-        if (judgeHandMate(m.isRev() ? depth : 0,
-                          mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
+        if (judgeHandMate(m.isRev() ? depth : 0, mbuf, nextHand, opsHand, nb, nextFieldInfo, true)) {
             return true;
         }
-        // 自分の出したジョーカーをS3で返してからの必勝チェック
-        if (m.isSingleJOKER() && containsS3(nextHand.cards)) {
-            Move s3; s3.setSingle(INTCARD_S3);
-            nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
-            return judgeHandMate(0, mbuf, nextHand, opsHand, nb, nextFieldInfo);
-        }
+
     } else { // 支配しない
         if (depth <= 0) return false;
 
