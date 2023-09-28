@@ -304,7 +304,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
     Cards ops8 = opsHand.cards & CARDS_8;
 
     // 相手に間で上がられる可能性がある場合
-    if (fieldInfo.getMinNCardsAwake() <= m.qty() && m.qty() <= fieldInfo.getMaxNCardsAwake()) return false;
+    if (fieldInfo.minNumCardsAwake() <= m.qty() && m.qty() <= fieldInfo.maxNumCardsAwake()) return false;
 
     FieldAddInfo nextFieldInfo;
 
@@ -323,9 +323,9 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
             Move sj; sj.setSingleJOKER();
             nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            int n = std::min(fieldInfo.getMinNCards(), fieldInfo.getMinNCardsAwake() - m.qty());
-            nextFieldInfo.setMinNCards(n);
-            nextFieldInfo.setMinNCardsAwake(n);
+            int n = std::min(fieldInfo.minNumCards(), fieldInfo.minNumCardsAwake() - m.qty());
+            nextFieldInfo.setMinNumCards(n);
+            nextFieldInfo.setMinNumCardsAwake(n);
             if (judgeHandMate(depth, mbuf, nextHand, opsHand, OrderToNullBoard(curOrder), nextFieldInfo)) {
                 return true;
             }
@@ -393,7 +393,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
     // 通常
     if (m.qty() >= myHand.qty) return true; // 即上がり
     if (dominatesHand(m, opsHand, b)
-        || m.qty() > fieldInfo.getMaxNCardsAwake()) { // 支配
+        || m.qty() > fieldInfo.maxNumCardsAwake()) { // 支配
         m.setDO(); // 支配フラグ付加
 
         Board nb = b;
@@ -425,7 +425,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
         // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
         if (m.isSingle() // シングルのみ
-            && fieldInfo.getMinNCardsAwake() > 1 // 相手に即上がりされない
+            && fieldInfo.minNumCardsAwake() > 1 // 相手に即上がりされない
             && containsS3(myHand.cards - m.cards())) { // 残り手札にS3がある
             Cards zone = ORToGValidZone(b.order(), m.rank());
             if (b.locksSuits(m)) {
@@ -447,7 +447,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         }
         // BNPWを検討
         if (checkHandBNPW(depth - 1, mbuf, m, myHand, opsHand, b, fieldInfo)) {
-            DERR << "BNPW - " << m << " ( " << fieldInfo.getMinNCardsAwake() << " ) " << std::endl;
+            DERR << "BNPW - " << m << " ( " << fieldInfo.minNumCardsAwake() << " ) " << std::endl;
             return true;
         }
     }

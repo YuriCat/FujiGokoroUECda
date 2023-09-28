@@ -169,7 +169,7 @@ int testRecordMoveMate(const Record& record) {
             bool pw = judgeCardsPWSlow(
                 buffer, turnPlayer,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.getMinNCardsAwake(), field.fieldInfo.getMinNCards()
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             judgeTime[3] += cl.stop();
 
@@ -226,7 +226,7 @@ int testRecordMoveMate(const Record& record) {
             bool pw = checkCardsPWSlow(
                 buffer, turnPlayer, move,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.getMinNCardsAwake(), field.fieldInfo.getMinNCards()
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             checkTime[2] += cl.stop();
 
@@ -281,7 +281,7 @@ int testRecordMoveMate(const Record& record) {
                 buffer, moves, turnPlayer,
                 myHand.cards, opsHand.cards,
                 b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.getMinNCardsAwake(), field.fieldInfo.getMinNCards()
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             searchTime[1] += cl.stop();
 
@@ -346,7 +346,7 @@ int analyzeMateDistribution(const Record& record) {
             bool pw = judgeCardsPWSlow<1>(
                 buffer, turnPlayer,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.getMinNCardsAwake(), field.fieldInfo.getMinNCards()
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
         }

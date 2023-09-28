@@ -109,10 +109,10 @@ public:
                 FieldAddInfo fieldInfo;
                 fieldInfo.init();
                 fieldInfo.setFlushLead();
-                fieldInfo.setMinNCardsAwake(10);
-                fieldInfo.setMinNCards(10);
-                fieldInfo.setMaxNCardsAwake(11);
-                fieldInfo.setMaxNCards(11);
+                fieldInfo.setMinNumCardsAwake(10);
+                fieldInfo.setMinNumCards(10);
+                fieldInfo.setMaxNumCardsAwake(11);
+                fieldInfo.setMaxNumCards(11);
                 Hand mine, ops;
                 mine.set(restCards);
                 ops.set(CARDS_ALL - restCards);
@@ -238,7 +238,7 @@ public:
         for (int i = 0; i < numMoves; i++) {
             MoveInfo& move = mbuf[i];
             // 支配性
-            if (move.qty() > fieldInfo.getMaxNCardsAwake()
+            if (move.qty() > fieldInfo.maxNumCardsAwake()
                 || dominatesCards(move, opsCards, b)) {
                 move.setDO(); // 他支配
             }

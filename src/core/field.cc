@@ -147,10 +147,10 @@ void Field::prepareForPlay() {
             }
         }
     }
-    fieldInfo.setMinNCardsAwake(minNumAwake);
-    fieldInfo.setMinNCards(minNum);
-    fieldInfo.setMaxNCardsAwake(maxNumAwake);
-    fieldInfo.setMaxNCards(maxNum);
+    fieldInfo.setMinNumCardsAwake(minNumAwake);
+    fieldInfo.setMinNumCards(minNum);
+    fieldInfo.setMaxNumCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNumCards(maxNum);
 
     // 場の特徴
     if (isNull()) {
