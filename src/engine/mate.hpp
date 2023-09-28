@@ -209,8 +209,8 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
                     // このとき、まだターンが取れていなかったやつを逆オーダーで考える
 
                     // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
-                    BitCards l = ndpqr_new & -ndpqr_new;
-                    BitCards h = ndpqr_new - l;
+                    BitCards h = ndpqr_new_m;
+                    BitCards l = ndpqr_new - ndpqr_new_m;
                     // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
                     if (   !((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
                         || !((l << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[flipOrder(ord)])) {
