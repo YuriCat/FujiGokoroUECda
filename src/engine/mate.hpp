@@ -137,7 +137,9 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
         // 以下4枚グループ2つ以上 誤りを許容
         // 革命のうち1つにジョーカーを加えれば勝ち
         if (myHand.jk) PW("0(2QUAD+JK)");
-        if (!any2Cards(quad & ~CARDS_8 & opsHand.nd[ord])) PW("0(U1NDQUAD)");
+        // 支配できない革命が1つだけであれば勝ち
+        BitCards ndquad = quad & ~CARDS_8 & opsHand.nd[flipOrder(ord)];
+        if (!any2Cards(ndquad)) PW("0(U1NDQUAD)");
         return false;
     }
 
