@@ -147,10 +147,10 @@ void Field::prepareForPlay() {
             }
         }
     }
-    fieldInfo.setMinNCardsAwake(minNumAwake);
-    fieldInfo.setMinNCards(minNum);
-    fieldInfo.setMaxNCardsAwake(maxNumAwake);
-    fieldInfo.setMaxNCards(maxNum);
+    fieldInfo.setMinNumCardsAwake(minNumAwake);
+    fieldInfo.setMinNumCards(minNum);
+    fieldInfo.setMaxNumCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNumCards(maxNum);
 
     // 場の特徴
     if (isNull()) {
@@ -320,6 +320,7 @@ string Field::toDebugString() const {
     oss << "seat = " << infoSeat << endl;
     oss << "board = " << board << endl;
     oss << "state = " << ps << endl;
+    oss << "info = " << fieldInfo << endl;
     oss << "hand = " << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
