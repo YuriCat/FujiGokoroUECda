@@ -172,8 +172,8 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
             BitCards l = ndpqr & -ndpqr;
             BitCards h = ndpqr - l;
             // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
-            bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? (1 - ord) : ord];
-            bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? (1 - ord) : ord];
+            bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? flipOrder(ord) : ord];
+            bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? flipOrder(ord) : ord];
             if (!jh || !jl) PW("1(+JK)");
 
             // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
