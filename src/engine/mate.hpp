@@ -173,28 +173,30 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
     }
 
     if (!any2Cards(ndpqr_m)) {
-        // 2ビットのみ
+        // ndpqrが2ビットのみ
         // いずれかにジョーカーを加えて必勝になるか確かめる
         if (myHand.jk) {
             // 5枚出しで勝てる
             if (ndpqr & PQR_4) PW("1(QUAD+JK)");
+            // ndpqr以外に革命がない場合
+            if (!(myHand.pqr & PQR_4)) {
+                BitCards h = ndpqr_m;
+                BitCards l = ndpqr - ndpqr_m;
+                // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
+                bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? flipOrder(ord) : ord];
+                bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? flipOrder(ord) : ord];
+                if (!jh || !jl) PW("2(+JK)");
 
-            BitCards l = ndpqr & -ndpqr;
-            BitCards h = ndpqr - l;
-            // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
-            bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? flipOrder(ord) : ord];
-            bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? flipOrder(ord) : ord];
-            if (!jh || !jl) PW("1(+JK)");
-
-            // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
-            // 3はランク最低なのでlだろう
-            if (l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)) PW("1(JK-S3)");
+                // 2ビットのうち片方がスペ3単体であった場合には、ジョーカーと組み合わせて出せるので勝ち
+                // 3はランク最低なのでlだろう
+                if (l == (CARDS_3 & PQR_1) && containsS3(myHand.cards)) PW("2(JK-S3)");
+            }
         }
     }
 
     // 革命によって勝てないか考える
     if (myHand.pqr & PQR_4) {
-        // ジョーカーを使わない革命あり。
+        // ジョーカーを使わない革命あり
         BitCards quad = myHand.pqr & PQR_4;
         BitCards ndpqr_new = ndpqr & ~quad & opsHand.nd[flipOrder(ord)];
 
