@@ -172,8 +172,8 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
             if (ndpqr & PQR_4) PW("1(QUAD+JK)");
             // ndpqr以外に革命がない場合
             if (!(myHand.pqr & PQR_4)) {
-                BitCards l = ndpqr & -ndpqr;
-                BitCards h = ndpqr - l;
+                BitCards h = ndpqr_m;
+                BitCards l = ndpqr - ndpqr_m;
                 // どちらかとndが交差しなければ勝ち ただし革命の場合は逆オーダー
                 bool jh = (h << 1) & opsHand.nd[(h & PQR_3) ? flipOrder(ord) : ord];
                 bool jl = (l << 1) & opsHand.nd[(l & PQR_3) ? flipOrder(ord) : ord];
