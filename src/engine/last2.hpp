@@ -8,6 +8,7 @@
 
 namespace L2 {
     extern void init();
+    extern void stats();
 }
 
 enum L2Result {

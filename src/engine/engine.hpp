@@ -384,6 +384,7 @@ public:
     }
     void closeGame() {
         shared.closeGame();
+        L2::stats();
     }
     void closeMatch() {
         shared.closeMatch();

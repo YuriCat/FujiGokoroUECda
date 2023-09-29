@@ -9,6 +9,9 @@ namespace L2 {
     void init() {
         book.clear();
     }
+    void stats() {
+        book.stats();
+    }
 }
 
 // L2局面表現

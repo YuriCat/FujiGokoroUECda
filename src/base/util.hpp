@@ -539,9 +539,11 @@ template <size_t B, size_t N = 64 / B> using BitArray64 = MiniBitArray<std::uint
 class TwoValuePage32 {
 public:
     uint32_t any() const { return data_; }
-    void regist(uint32_t value, uint64_t key) {
+    bool regist(uint32_t value, uint64_t key) {
         assert(value < 4U);
+        uint32_t prev = data_;
         data_ = ((uint32_t)(key >> 32) & ~3U) | value;
+        return prev == 0;
     }
     uint32_t compareKey(uint64_t key) const {
         return (data_ ^ uint32_t(key >> 32)) & ~3U;
@@ -557,19 +559,26 @@ class TwoValueBook {
 public:
     using page_t = TwoValuePage32;
 
-    void clear() { std::memset(page_, 0, sizeof(page_)); }
+    void clear() { std::memset(page_, 0, sizeof(page_)); count = none = diff = filled = 0; }
     TwoValueBook() { clear(); }
+    void stats() const {
+        std::cerr << "count = " << count << " none = " << none << " diff = " << diff
+        << " hit " << double(count - none - diff) / count << " filled " << double(filled) / N << std::endl;
+    }
 
     int read(uint64_t key) const {
+        count++;
         page_t fpage = page_[KeyToIndex(key)];
-        if (!fpage.any() || fpage.compareKey(key)) return -1;
+        if (!fpage.any()) { none++; return -1; }
+        if (fpage.compareKey(key)) { diff++; return -1; }
         return fpage.value();
     }
     void regist(uint32_t value, uint64_t key) {
         page_t& fpage = page_[KeyToIndex(key)];
-        fpage.regist(value, key);
+        if (fpage.regist(value, key)) filled++;
     }
 private:
+    mutable long long count, none, diff, filled;
     page_t page_[N];
     static constexpr int KeyToIndex(uint64_t key) {
         return key % N;
