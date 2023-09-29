@@ -210,17 +210,17 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     }
 }
 
-int L2Judge::start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo) {
+int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
-    init();
+    L2Judge judge(node_limit, buf);
     L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
-    return judge(0, mbuf, myHand, opsHand, field);
+    return judge.judge(0, buf, myHand, opsHand, field);
 }
 
-int L2Judge::start_check(const MoveInfo m, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo) {
+int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
-    init();
+    L2Judge judge(node_limit, buf);
     L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
-    MoveInfo tm = m;
-    return check(0, mbuf, tm, myHand, opsHand, field);
+    MoveInfo tmp = move;
+    return judge.check(0, buf, tmp, myHand, opsHand, field);
 }
