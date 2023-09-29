@@ -186,7 +186,7 @@ int testRecordMoveMate(const Record& record) {
         }
     }
     cerr << "judge time (easy)    = " << judgeTime[0] / (double)judgeCount << endl;
-    cerr << "judge time (pdr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
+    cerr << "judge time (pqr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
     cerr << "judge time (hand)    = " << judgeTime[2] / (double)judgeCount << endl;
     cerr << "judge time (pw-slow) = " << judgeTime[3] / (double)judgeCount << endl;
 
@@ -360,7 +360,7 @@ int testRecordMoveMate(const Record& record) {
         }
         cerr << endl;
     }
-    cerr << "ppw time (pdr-nd)   = " << ppwTime[0] / (double)ppwCount << endl;
+    cerr << "ppw time (pqr-nd)   = " << ppwTime[0] / (double)ppwCount << endl;
     cerr << "ppw time (ppw-slow) = " << ppwTime[1] / (double)ppwCount << endl;
 
     return 0;
