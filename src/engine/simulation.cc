@@ -16,6 +16,19 @@ namespace Settings {
     const double simulationAmplifyExponent = 2;
 }
 
+namespace Simulation {
+    atomic<long long> count, time;
+    long long total_count = 0, total_time = 0;
+    void init() { count = time = 0; }
+    void stats() {
+        cerr << "Simulation: " << count << " times " << (count ? time / count : 0) << " clock";
+        total_count += count; total_time += time;
+        count = time = 0;
+        cerr << " Total: " << total_count << " times "
+        << (total_count ? total_time / total_count : 0) << " clock " << endl;
+    }
+}
+
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools) {
     int turn = field.turn();
@@ -54,6 +67,8 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
+    Clock clock;
+    clock.start();
     while (1) {
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
             int p[2];
@@ -72,6 +87,8 @@ int simulation(Field& field,
         MoveInfo move = simulationMove(field, *pshared, ptools);
         if (field.procFast(move) < 0) break;
     }
+    Simulation::time += clock.stop();
+    Simulation::count++;
     return 0;
 }
 
