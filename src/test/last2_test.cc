@@ -4,6 +4,7 @@
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
+#include "../engine/mate.hpp"
 #include "../engine/last2.hpp"
 #include "test.h"
 
@@ -183,6 +184,49 @@ int testRecordL2(const Record& record) {
     }
     cerr << "judge time (hand)    = " << judgeTime[0] / judgeCount[0] << endl;
     cerr << "judge time (l2-slow) = " << judgeTime[1] / judgeCount[1] << endl;
+
+    // ラスト2人探索に利用するパーツのチェック
+    long long l2lTime[2] = {0};
+    long long l2lCount = 0;
+    long long l2lMatrix[2][3] = {0};
+
+    for (int i = 0; i < record.games(); i++) {
+        Field field;
+        for (Move move : PlayRoller(field, record.game(i))) {
+            if (field.numPlayersAlive() != 2) continue;
+            const Hand& myHand = field.hand[field.turn()];
+            const Hand& opsHand = field.hand[field.ps.searchOpsPlayer(field.turn())];
+            const Board b = field.board;
+
+            if (b.isNull() && !judgeHandPW_NF(myHand, opsHand, b)) {
+                cl.start();
+                bool giveup = judgeHandL2L_NF(myHand, opsHand, b);
+                l2lTime[0] += cl.stop();
+                l2lCount += 1;
+                if (giveup) {
+                    cl.start();
+                    bool l2mate = judgeLast2Slow(
+                        buffer, myHand.cards, opsHand.cards, b,
+                        field.fieldInfo.isLastAwake(), field.fieldInfo.isFlushLead()
+                    );
+                    l2lTime[1] += cl.stop();
+                    l2lMatrix[!l2mate][giveup] += 1;
+                    //if (!l2mate != giveup) {std::cerr << myHand << opsHand << std::endl; getchar();}
+                }
+            }
+        }
+    }
+
+    cerr << "l2l judge result (hand) = " << endl;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            cerr << l2lMatrix[i][j] << " ";
+        }
+        cerr << endl;
+    }
+    cerr << "l2l time (hand)    = " << l2lTime[0] / double(l2lCount) << endl;
+    cerr << "l2l time (l2-slow) = " << l2lTime[1] / double(l2lCount) << endl;
+
     return 0;
 }
 

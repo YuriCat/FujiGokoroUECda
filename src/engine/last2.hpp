@@ -48,3 +48,5 @@ public:
     int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
     int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
 };
+
+bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b);
