@@ -14,121 +14,69 @@ namespace L2 {
 // L2局面表現
 struct L2Field {
     Board b;
-    FieldAddInfo info;
-
-    bool isNull() const { return b.isNull(); }
-    int order() const { return b.order(); }
-
-    bool isLastAwake() const { return info.isLastAwake(); }
-    bool isFlushLead() const { return info.isFlushLead(); }
-    bool isUnrivaled() const { return info.isUnrivaled(); }
-
-    void setSelfFollow() { info.setSelfFollow(); }
-    void setLastAwake() { info.setLastAwake(); }
-    void setFlushLead() { info.setFlushLead(); }
-
-#ifdef DEBUG
-    int p; // プレーヤー確認用
-    int turn() const { return p; }
-    void flipTurnPlayer() { p = 1 - p; }
-    L2Field(): b(), info(), p(0) {}
-#else
-    int turn() const { return 0; }
-    void flipTurnPlayer() {}
-    L2Field(): b(), info() {}
-#endif
+    bool lastAwake;
+    bool flushLead;
 };
 
 // L2局面表現へのチェンジ
 L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
     L2Field f;
-    f.info = info;
     f.b = b;
+    f.lastAwake = info.isLastAwake();
+    f.flushLead = info.isFlushLead();
     return f;
 }
+
 L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
     L2Field f;
     f.b = cur.b;
-    f.info = cur.info;
-    f.info.init();
     f.b.procAndFlush(m);
+    f.lastAwake = false;
+    f.flushLead = true;
     return f;
 }
+
 int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
-    *pnext = cur;
-    pnext->info.init();
-    if (cur.isUnrivaled()) { // 独壇場
-        if (m.isPASS()) {
-            pnext->b.flush();
-        } else if (m.dominatesMe()) {
-            // 自己支配がかかるので、流れて自分から
-            pnext->b.procAndFlush(m);
+    Board b = cur.b;
+    bool lastAwake = cur.lastAwake;
+    bool flushLead = cur.flushLead;
+    bool flipped = false;
+    if (m.isPASS()) {
+        if (lastAwake) {
+            b.flush();
+            if (!flushLead) flipped = true;
+            lastAwake = false;
+            flushLead = true;
         } else {
-            // 流れなければSFが続く
-            pnext->b.proc(m);
-            if (!pnext->b.isNull()) {
-                pnext->setSelfFollow();
-            }
+            flipped = true;
+            lastAwake = true;
+            flushLead = !flushLead;
         }
-    } else if (cur.isNull()) {
-        if (m.dominatesAll()) {
-            pnext->b.procAndFlush(m);
-        } else if (m.dominatesOthers()) {
-            pnext->b.proc(m);
-            if (!pnext->b.isNull()) {
-                pnext->setSelfFollow();
-            }
+    } else {
+        if (m.dominatesAll()
+            || (lastAwake && m.dominatesMe())) {
+            b.procAndFlush(m);
+            lastAwake = false;
+            flushLead = true;
         } else {
-            pnext->b.proc(m);
-            if (!pnext->b.isNull()) {
-                pnext->flipTurnPlayer(); return 1;
-            }
-        }
-    } else { // 独壇場でない通常場
-        if (m.isPASS()) { // pass
-            if (cur.isLastAwake()) {
-                pnext->b.flush();
-                // ここがFlushLeadになるのは探索入り口のみ
-                if (!cur.isFlushLead()) {
-                    pnext->flipTurnPlayer(); return 1;
-                }
+            b.proc(m);
+            if (b.isNull()) { // 流れた
+                lastAwake = false;
+                flushLead = true;
             } else {
-                pnext->setLastAwake();
-                if (!cur.isFlushLead()) {
-                    pnext->setFlushLead();
-                }
-                pnext->flipTurnPlayer();
-                return 1;
-            }
-        } else { // not pass
-            if (cur.isLastAwake()) {
-                if (m.dominatesMe()) {
-                    // 自己支配がかかるので、流れて自分から
-                    pnext->b.procAndFlush(m);
+                if (lastAwake || m.dominatesOthers()) {
+                    lastAwake = flushLead = true;
                 } else {
-                    pnext->b.proc(m);
-                    if (!pnext->b.isNull()) {
-                        pnext->setSelfFollow();
-                    }
-                }
-            } else {
-                if (m.dominatesAll()) {
-                    pnext->b.procAndFlush(m);
-                } else if (m.dominatesOthers()) {
-                    pnext->b.proc(m);
-                    if (!pnext->b.isNull()) {
-                        pnext->setSelfFollow();
-                    }
-                } else {
-                    pnext->b.proc(m);
-                    if (!pnext->b.isNull()) {
-                        pnext->flipTurnPlayer(); return 1;
-                    }
+                    flipped = true;
+                    lastAwake = flushLead = false;
                 }
             }
         }
     }
-    return 0;
+    pnext->b = b;
+    pnext->lastAwake = lastAwake;
+    pnext->flushLead = flushLead;
+    return int(flipped);
 }
 
 int L2Judge::judge(const int depth, MoveInfo *const buf,
@@ -137,7 +85,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
     nodes++;
     uint64_t fkey = -1;
 
-    if (field.isNull()) {
+    if (field.b.isNull()) {
         if (judgeMate_Easy_NF(myHand)) return L2_WIN;
         // 局面や相手の手札も考えた必勝判定
         assert(myHand.exam1stHalf() && opsHand.exam1stHalf());
@@ -145,7 +93,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         //if (judgeHandMate(0, buf, myHand, opsHand, field.b)) return L2_WIN;
 
         // 簡易必敗判定
-        if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.order() == 0) {
+        if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.b.order() == 0) {
             int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
             int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
             if (myHR < opsLR) return L2_LOSE;
@@ -194,7 +142,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
 
     if (winIndex >= -1) {
         int result = winIndex >= 0 ? L2_WIN : L2_LOSE;
-        if (field.isNull()) L2::book.regist(result, fkey);
+        if (field.b.isNull()) L2::book.regist(result, fkey);
         return result;
     }
     return L2_DRAW;
@@ -202,7 +150,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
 
 bool L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
                            const Hand& myHand, const Hand& opsHand, const L2Field& field) {
-    if (field.isUnrivaled()
+    if ((field.flushLead && field.lastAwake)
         || dominatesCards(tmp, opsHand.cards, field.b)) { // 他支配チェック
         tmp.setDomOthers();
 
@@ -232,14 +180,14 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
         if (checkDomMate(depth, buf, tmp, myHand, opsHand, field)) return L2_WIN;
     }
 
-    if (!field.isLastAwake() && !tmp.dominatesOthers() && tmp.qty() == opsHand.qty) {
+    if (!field.lastAwake && !tmp.dominatesOthers() && tmp.qty() == opsHand.qty) {
         if (!dominatesHand(tmp, opsHand, field.b)) return L2_LOSE;
     }
 
     childs++;
 
     // 支配性判定
-    if (!tmp.isPASS() && (field.isLastAwake() || tmp.dominatesOthers())) {
+    if (!tmp.isPASS() && (field.lastAwake || tmp.dominatesOthers())) {
         if (dominatesCards(tmp, myHand.cards, field.b)) tmp.setDomMe();
     }
 
