@@ -144,6 +144,12 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         if (judgeHandPW_NF(myHand, opsHand, field.b)) return L2_WIN;
         //if (judgeHandMate(0, buf, myHand, opsHand, field.b)) return L2_WIN;
 
+        // 局面登録を検索(NFのみ)
+        assert(myHand.exam_key() && opsHand.exam_key());
+        fkey = knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b));
+        int result = L2::book.read(fkey);
+        if (result != -1) return result; // 結果登録あり
+
         // 簡易必敗判定
         if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.order() == 0) {
             int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
@@ -155,12 +161,6 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
                 if (myHR < opsLR) return L2_LOSE;
             }
         }
-
-        // 局面登録を検索(NFのみ)
-        assert(myHand.exam_key() && opsHand.exam_key());
-        fkey = knitL2NullFieldHashKey(myHand.key, opsHand.key, NullBoardToHashKey(field.b));
-        int result = L2::book.read(fkey);
-        if (result != -1) return result; // 結果登録あり
     } else {
         // フォローで全部出せる場合は勝ち
         //if (field.b.qty() == myHand.qty && !dominatesHand(field.b, myHand)) return L2_WIN;
@@ -215,7 +215,10 @@ bool L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
             if (judgeMate_Easy_NF(nextHand)) return true;
             L2Field nextField = procAndFlushL2Field(field, tmp);
             if (judgeHandPW_NF(nextHand, opsHand, nextField.b)) return true;
-            //nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
+            nodes++;
+            nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
+            uint64_t fkey = knitL2NullFieldHashKey(nextHand.key, opsHand.key, NullBoardToHashKey(nextField.b));
+            if (L2::book.read(fkey) == L2_WIN) return true;
         } else {
             if (judgeMate_Easy_NF(myHand)) return true;
             L2Field nextField = procAndFlushL2Field(field, tmp);
