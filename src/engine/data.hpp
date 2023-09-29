@@ -74,8 +74,8 @@ struct SharedData : public BaseSharedData {
     int L2Result; // L2における判定結果
 
     // クライアントの個人的スタッツ
-    // (勝利, 敗戦) x (勝利宣言, 判定失敗, 敗戦宣言, 無宣言)
-    std::array<std::array<long long, 5>, 2> myL2Result;
+    // (勝利, 敗戦) x (勝利宣言, 判定失敗(引き分け), 敗戦宣言, 無宣言)
+    std::array<std::array<long long, 4>, 2> myL2Result;
     // MATEの宣言結果
     std::array<std::array<long long, N_PLAYERS>, N_PLAYERS> myMateResult;
 
@@ -83,6 +83,7 @@ struct SharedData : public BaseSharedData {
         if (mateClass == -1) mateClass = bestClass;
     }
     void setMyL2Result(int result) { // L2詰み宣言
+        // ゲーム中初めてのL2宣言だけを記録
         if (L2Result == -2) L2Result = result;
     }
     void feedMyResult(int realClass) {

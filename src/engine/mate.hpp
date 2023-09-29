@@ -267,7 +267,6 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo, bool checkedEasy = false) {
     if (!checkedEasy && b.isNull()) {
-        if (judgeMate_Easy_NF(myHand)) return true;
         if (judgeHandPW_NF(myHand, opsHand, b)) return true;
     }
 
