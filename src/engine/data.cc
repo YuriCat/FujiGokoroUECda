@@ -32,10 +32,10 @@ void SharedData::closeMatch() {
     cerr << "change rejection by server : " << SharedData::changeRejection << endl;
     cerr << "play rejection by server : " << SharedData::playRejection << endl;
     cerr << "L2 result : " << endl;
-    for (auto& a : myL2Result) {
-        for (auto i : a) cerr << i << " ";
-        cerr << endl;
-    }
+    cerr << "jwin  " << myL2Result[0][0] << " " << myL2Result[1][0] << endl;
+    cerr << "jfail " << myL2Result[0][1] << " " << myL2Result[1][1] << endl;
+    cerr << "jlose " << myL2Result[0][2] << " " << myL2Result[1][2] << endl;
+    cerr << "jnone " << myL2Result[0][3] << " " << myL2Result[1][3] << endl;
     cerr << "mate result : " << endl;
     for (auto& a : myMateResult) {
         for (auto i : a) cerr << i << " ";

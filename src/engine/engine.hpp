@@ -276,7 +276,7 @@ public:
                 if (fieldInfo.isL2Mate()) {
                     shared.setMyL2Result(1);
                 } else if (l2failure) {
-                    shared.setMyL2Result(-3);
+                    shared.setMyL2Result(0);
                 } else {
                     fieldInfo.setL2GiveUp();
                     shared.setMyL2Result(-1);
