@@ -25,8 +25,7 @@ inline bool judgeMate_Easy_NF(const Hand& myHand) {
     }
     return false;
 }
-
-inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
+inline bool judgeHandPPW_NF(const Cards cards, const BitCards pqr, const int jk,
                             const Cards *const nd, const Board& b) {
     // すでに支配的でない着手があることがわかっており、
     // それ以外が全て支配的かを確認するメソッド
@@ -39,8 +38,13 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
     const BitCards ndpqr = pqr & nd[ord] & ~CARDS_8; // 支配出来ていないpqr
 
     if (!ndpqr) {
+        // ジョーカー->スペ3のときPPWでないのだが、そう判定をする意味がない
+        if (cards == CARDS_JOKER) return false;
+
         // 革命を返される可能性のみ考慮
-        BitCards ndquad = pqr & PQR_4 & ~CARDS_8 & ~ndpqr & nd[flipOrder(ord)];
+        BitCards ndquad = pqr & PQR_4 & ~CARDS_8;
+        //if (!ndquad) PPW("0(NO-QUAD)");
+        ndquad = ndquad & ~ndpqr & nd[flipOrder(ord)];
         // 支配できない革命が無い
         if (!ndquad) PPW("0(NO-NDQUAD)");
         // ジョーカーがあるとき革命が2つ以下ならジョーカーを加えて勝ち
@@ -131,13 +135,19 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
     if (!ndpqr) {
         // このときほぼ必勝なのだが、一応4枚グループが複数ある場合にはそうでないことがある
         BitCards quad = myHand.pqr & PQR_4;
-        // 4枚グループが1つ以下
-        if (!any2Cards(quad)) PW("0(U1QUAD)");
-        // 以下4枚グループ2つ以上 誤りを許容
+        BitCards ndquad = quad & ~CARDS_8;
+        // 返されそうな革命がなければ勝ち
+        if (!ndquad) PW("0(NO-QUAD)");
+        // 4枚グループが1つ以下なら最後に出せば勝ち
+        if (!any2Cards(ndquad)) PW("0(U1QUAD)");
+
+        // 以下4枚グループ2つ
+        // もし3つ以上のときは対応できないがUECdaでは無い
         // 革命のうち1つにジョーカーを加えれば勝ち
         if (myHand.jk) PW("0(2QUAD+JK)");
+
         // 支配できない革命が1つだけであれば勝ち
-        BitCards ndquad = quad & ~CARDS_8 & opsHand.nd[flipOrder(ord)];
+        ndquad = ndquad & opsHand.nd[flipOrder(ord)];
         if (!any2Cards(ndquad)) PW("0(U1NDQUAD)");
         return false;
     }
@@ -146,10 +156,21 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
 
     if (!ndpqr_m) {
         // ndpqrが1ビットだけ
-        // 革命を返される可能性のみ考慮
-        BitCards ndquad = myHand.pqr & PQR_4 & ~CARDS_8 & ~ndpqr & opsHand.nd[flipOrder(ord)];
+        BitCards quad = myHand.pqr & PQR_4;
+        // 返されそうな革命がなければ勝ち
+        BitCards ndquad = quad & ~CARDS_8;
+        if (!ndquad) PW("1(NO-QUAD)");
+
+        ndquad = ndquad & ~ndpqr & opsHand.nd[flipOrder(ord)];
+        // 支配できない革命がないならば
+        // 革命が1つのとき、革命で支配できるので支配できない役は1つ以下で勝ち
+        // 2つのとき、2つのうちどちらかは通常オーダーで支配できるので、革命返しで勝ち
         if (!ndquad) PW("1(NO-NDQUAD)");
-        // （革命複数の場合にはアウト）
+
+        // ここまでで残っているのは、支配できない革命が
+        // 通常オーダー支配側で1つor2つもしくは
+        // 通常オーダー支配側と不支配側で1つずつ
+        // ジョーカーを正しく使えば全て勝ち
         if (myHand.jk) PW("1(QUAD+JK)");
         return false;
     }
