@@ -145,7 +145,7 @@ int testRecordMoveMate(const Record& record) {
             Board b = field.board;
 
             cl.start();
-            bool mate0 = judgeMate_Easy_NF(myHand);
+            bool mate0 = judgeSimplePW_NF(myHand.cards, myHand.qty);
             judgeTime[0] += cl.stop();
             judgeCount += 1;
 
@@ -185,7 +185,7 @@ int testRecordMoveMate(const Record& record) {
             cerr << endl;
         }
     }
-    cerr << "judge time (easy)    = " << judgeTime[0] / (double)judgeCount << endl;
+    cerr << "judge time (simple)  = " << judgeTime[0] / (double)judgeCount << endl;
     cerr << "judge time (pqr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
     cerr << "judge time (hand)    = " << judgeTime[2] / (double)judgeCount << endl;
     cerr << "judge time (pw-slow) = " << judgeTime[3] / (double)judgeCount << endl;

@@ -7,22 +7,10 @@
 #include "../core/action.hpp"
 #include "../core/dominance.hpp"
 
-inline bool judgeMate_Easy_NF(const Hand& myHand) {
-    // とりあえず高速でNF_Mateかどうか判断したい場合
-    if (myHand.qty <= 1) return true;
-    BitCards pqr = myHand.pqr;
-    if (!any2Cards(maskCards(pqr, CARDS_8 | CARDS_JOKER))) return true;
-    if (myHand.jk) { // ジョーカーあり
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakeJokerSeq(myHand.cards.plain(), myHand.jk, myHand.qty)) return true;
-        }
-    } else {
-        if (myHand.seq) {
-            if (myHand.qty == 3) return true;
-            if (canMakePlainSeq(myHand.cards, myHand.qty)) return true;
-        }
-    }
+inline bool judgeSimplePW_NF(const Cards cards, const int qty) {
+    // とりあえず高速でNF完全勝利かどうか判断したい場合
+    if (qty <= 1) return true;
+    if (!any2Cards(maskCards(cards, CARDS_8 | CARDS_JOKER))) return true;
     return false;
 }
 

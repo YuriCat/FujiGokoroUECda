@@ -203,18 +203,16 @@ bool L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
         || dominatesCards(tmp, opsHand.cards, field.b)) { // 他支配チェック
         tmp.setDomOthers();
 
-        // 支配して残り1枚なら勝ち
-        if (myHand.qty - tmp.qty() <= 1) return true;
-
         if (!tmp.isPASS()) {
+            if (myHand.qty - tmp.qty() <= 1) return true; // 支配して残り1枚なら勝ち
+            if (judgeSimplePW_NF(myHand.cards - tmp.cards(), myHand.qty - tmp.qty())) return true;
             Hand nextHand;
             makeMove1stHalf(myHand, &nextHand, tmp);
-            if (judgeMate_Easy_NF(nextHand)) return true;
             L2Field nextField = procAndFlushL2Field(field, tmp);
             if (judgeHandPW_NF(nextHand, opsHand, nextField.b)) return true;
             //nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
         } else {
-            if (judgeMate_Easy_NF(myHand)) return true;
+            if (judgeSimplePW_NF(myHand.cards, myHand.qty)) return true;
             L2Field nextField = procAndFlushL2Field(field, tmp);
             if (judgeHandPW_NF(myHand, opsHand, nextField.b)) return true;
         }
