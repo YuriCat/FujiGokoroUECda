@@ -13,6 +13,55 @@ static MoveInfo buffer[8192];
 static Clock cl;
 static std::mt19937 mt;
 
+bool checkLast2Slow(MoveInfo *const, MoveInfo, Cards, Cards, Board, bool, bool);
+
+bool judgeLast2Slow(MoveInfo *const buf,
+                    const Cards myCards, const Cards opsCards, Board b,
+                    bool lastAwake, bool flushLead) {
+    int numMoves = genMove(buf, myCards, b);
+    for (int i = 0; i < numMoves; i++) if (buf[i].qty() >= myCards.count()) return true;
+    for (int i = numMoves - 1; i >= 0; i--) { // 逆順の方が速い
+        if (checkLast2Slow(buf + numMoves, buf[i], myCards, opsCards, b, lastAwake, flushLead)) return true;
+    }
+    return false;
+}
+
+bool checkLast2Slow(MoveInfo *const buf, MoveInfo move,
+                    Cards myCards, Cards opsCards, Board b,
+                    bool lastAwake, bool flushLead) {
+    myCards -= move.cards();
+    if (!myCards.any()) return true;
+    bool flipped = false;
+    if (move.isPASS()) {
+        if (lastAwake) {
+            b.flush();
+            if (!flushLead) flipped = true;
+            lastAwake = false;
+            flushLead = true;
+        } else {
+            flipped = true;
+            lastAwake = true;
+            flushLead = !flushLead;
+        }
+    } else {
+        b.proc(move);
+        if (b.isNull()) { // 流れた
+            lastAwake = false;
+            flushLead = true;
+        } else {
+            if (lastAwake) {
+                lastAwake = flushLead = true;
+            } else {
+                flipped = true;
+                lastAwake = flushLead = false;
+            }
+        }
+    }
+    if (flipped) swap(myCards, opsCards);
+    bool res = judgeLast2Slow(buf, myCards, opsCards, b, lastAwake, flushLead);
+    return flipped ? !res : res;
+}
+
 int outputL2JudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     //Cards myCards = CARDS_C3 | CARDS_H3 | CARDS_D9 | CARDS_CQ | CARDS_HQ;
@@ -46,33 +95,33 @@ int outputL2JudgeResult() {
     Cards myCards = "s3 s4 h7 h9 dt hq sk";
     Cards oppCards = "h4 c7 d7 s7 h8 c9 st";
     {
-        Hand myHand, oppHand;
+        Hand myHand, opsHand;
         myHand.setAll(myCards);
-        oppHand.setAll(oppCards);
+        opsHand.setAll(oppCards);
         Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
-        cerr << myHand << oppHand << " -> " << judgeResult << endl;
+        int judgeResult = judge.start_judge(myHand, opsHand, b, fieldInfo);
+        cerr << myHand << opsHand << " -> " << judgeResult << endl;
 
         genMove(buffer, myCards, b);
     }
 
     {
-        Hand myHand, oppHand;
+        Hand myHand, opsHand;
         myHand.setAll(oppCards);
-        oppHand.setAll(myCards);
+        opsHand.setAll(myCards);
         Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
         L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
-        cerr << myHand << oppHand << " -> " << judgeResult << endl;
+        int judgeResult = judge.start_judge(myHand, opsHand, b, fieldInfo);
+        cerr << myHand << opsHand << " -> " << judgeResult << endl;
     }
 
     return 0;
@@ -81,55 +130,59 @@ int outputL2JudgeResult() {
 int testRecordL2(const Record& record) {
     // 棋譜中の局面においてL2判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
-    // 正解を調べるのがきついこともあるのでとりあえず棋譜の結果を正解とする
+    // 棋譜の結果とナイーブな探索の結果と比較する
 
     L2::init();
 
     // judge(高速判定)
-    uint64_t judgeTime[2] = {0};
-    uint64_t judgeCount = 0;
-    uint64_t judgeMatrix[2][3] = {0};
+    long long judgeTime[2] = {0};
+    long long judgeCount[2] = {0};
+    long long judgeMatrix[2][2][3] = {0};
 
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        int judgeResult = -1;
-        int l2TurnPlayer = -1;
         for (Move move : PlayRoller(field, record.game(i))) {
             if (field.numPlayersAlive() != 2) continue;
-            const int turnPlayer = field.turn();
-            const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
-            const Hand& myHand = field.getHand(turnPlayer);
-            const Hand& oppHand = field.getHand(oppPlayer);
-            Board b = field.board;
+            const Hand& myHand = field.hand[field.turn()];
+            const Hand& opsHand = field.hand[field.ps.searchOpsPlayer(field.turn())];
+            const Board b = field.board;
+            bool won = record.game(i).newClassOf(field.turn()) == N_PLAYERS - 2;
 
             cl.start();
             L2Judge judge(65536, buffer);
-            judgeResult = judge.start_judge(myHand, oppHand, b, field.fieldInfo);
+            int judgeResult = judge.start_judge(myHand, opsHand, b, field.fieldInfo);
+            int judgeIndex = judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0);
             judgeTime[0] += cl.stop();
-            judgeCount += 1;
+            judgeCount[0] += 1;
+            judgeMatrix[0][won][judgeIndex] += 1;
 
-            l2TurnPlayer = turnPlayer;
+            // 問題が小さいとき完全読み結果をチェック
+            if (myHand.qty + opsHand.qty <= 12) {
+                cl.start();
+                bool l2mate = judgeLast2Slow(
+                    buffer, myHand.cards, opsHand.cards, b,
+                    field.fieldInfo.isLastAwake(), field.fieldInfo.isFlushLead()
+                );
+                judgeTime[1] += cl.stop();
+                judgeCount[1] += 1;
+                judgeMatrix[1][l2mate][judgeIndex] += 1;
+            }
             break;
-        }
-
-        if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
-            int turnResult = field.newClassOf(l2TurnPlayer);
-            judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
-            /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
-                cerr << "bad result" << endl;
-                getchar();
-            }*/
         }
     }
 
     cerr << "judge result (hand) = " << endl;
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 3; j++) {
-            cerr << judgeMatrix[i][j] << " ";
+    for (int d = 0; d < 2; d++) {
+        cerr << (d == 0 ? "real" : "search") << endl;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                cerr << judgeMatrix[d][i][j] << " ";
+            }
+            cerr << endl;
         }
-        cerr << endl;
     }
-    cerr << "judge time (hand)    = " << judgeTime[0] / (double)judgeCount << endl;
+    cerr << "judge time (hand)    = " << judgeTime[0] / judgeCount[0] << endl;
+    cerr << "judge time (l2-slow) = " << judgeTime[1] / judgeCount[1] << endl;
     return 0;
 }
 
