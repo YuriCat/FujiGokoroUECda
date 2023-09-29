@@ -28,14 +28,12 @@ struct L2Field {
     void setFlushLead() { info.setFlushLead(); }
 
 #ifdef DEBUG
-    int p; // プレーヤー確認用
+    int p = 0; // プレーヤー確認用
     int turn() const { return p; }
     void flipTurnPlayer() { p = 1 - p; }
-    L2Field(): b(), info(), p(0) {}
 #else
     int turn() const { return 0; }
     void flipTurnPlayer() {}
-    L2Field(): b(), info() {}
 #endif
 };
 
