@@ -138,7 +138,6 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
     uint64_t fkey = -1;
 
     if (field.isNull()) {
-        if (judgeMate_Easy_NF(myHand)) return L2_WIN;
         // 局面や相手の手札も考えた必勝判定
         assert(myHand.exam1stHalf() && opsHand.exam1stHalf());
         if (judgeHandPW_NF(myHand, opsHand, field.b)) return L2_WIN;
