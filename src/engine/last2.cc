@@ -5,12 +5,21 @@
 using namespace std;
 
 namespace L2 {
+    atomic<long long> count, solved, time;
+    long long total_count = 0, total_solved = 0, total_time = 0;
     TwoValueBook<(1 << 20) - 3> book;
     void init() {
         book.clear();
     }
     void stats() {
         book.stats();
+        cerr << "L2: " << solved << " / " << count << " ("
+        << (count ? solved / (double)count : 0.0) << ") " << (count ? time / count : 0) << " clock";
+        total_count += count; total_solved += solved; total_time += time;
+        count = solved = time = 0;
+        cerr << " Total: " << total_solved << " / " << total_count << " ("
+        << (total_count ? total_solved / (double)total_count : 0) << ") "
+        << (total_count ? total_time / total_count : 0) << " clock " << endl;
     }
 }
 
@@ -267,7 +276,15 @@ int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, con
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
     L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
-    return judge.judge(0, buf, myHand, opsHand, field);
+    Clock clock;
+    if (stats) clock.start();
+    int res = judge.judge(0, buf, myHand, opsHand, field);
+    if (stats) {
+        L2::time += clock.stop();
+        L2::count++;
+        if (res == L2_WIN || res == L2_LOSE) L2::solved++;
+    }
+    return res;
 }
 
 int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
