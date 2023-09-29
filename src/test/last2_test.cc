@@ -103,8 +103,7 @@ int outputL2JudgeResult() {
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
-        L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, opsHand, b, fieldInfo);
+        int judgeResult = judgeLast2(buffer, myHand, opsHand, b, fieldInfo, 300000);
         cerr << myHand << opsHand << " -> " << judgeResult << endl;
 
         genMove(buffer, myCards, b);
@@ -119,8 +118,7 @@ int outputL2JudgeResult() {
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
-        L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, opsHand, b, fieldInfo);
+        int judgeResult = judgeLast2(buffer, myHand, opsHand, b, fieldInfo, 300000);
         cerr << myHand << opsHand << " -> " << judgeResult << endl;
     }
 
@@ -149,8 +147,7 @@ int testRecordL2(const Record& record) {
             bool won = record.game(i).newClassOf(field.turn()) == N_PLAYERS - 2;
 
             cl.start();
-            L2Judge judge(65536, buffer);
-            int judgeResult = judge.start_judge(myHand, opsHand, b, field.fieldInfo);
+            int judgeResult = judgeLast2(buffer, myHand, opsHand, b, field.fieldInfo);
             int judgeIndex = judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0);
             judgeTime[0] += cl.stop();
             judgeCount[0] += 1;
