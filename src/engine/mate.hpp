@@ -45,9 +45,9 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
         if (!ndquad) PPW("0(NO-NDQUAD)");
         // ジョーカーがあるとき革命が2つ以下ならジョーカーを加えて勝ち
         if (jk) PPW("0(QUAD+JK)");
-        // 革命を崩して支配できたら勝ち
-        BitCards nddouble = (ndquad >> 2) & nd[ord];
-        if (!nddouble) PPW("0(QUADDIV)");
+        // 革命を崩して支配できたら勝ち 低頻度
+        //BitCards nddouble = (ndquad >> 2) & nd[ord];
+        //if (!nddouble) PPW("0(QUADDIV)");
         return false;
     }
 
@@ -105,7 +105,6 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
             // 複数ターンが取れる場合は1つを使う
             BitCards dquad = (quad - ndquad) >> 1;
             dquad = dquad & -dquad;
-
             // このとき、まだターンが取れていなかったやつを逆オーダーで考える
             BitCards ndpqr_new = ndpqr & ~dquad & nd[flipOrder(ord)]; // 革命の分も消しとく
             // 全部支配できた場合のみOK
@@ -142,9 +141,9 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
         // 支配できない革命が1つだけであれば勝ち
         BitCards ndquad = quad & ~CARDS_8 & opsHand.nd[flipOrder(ord)];
         if (!any2Cards(ndquad)) PW("0(U1NDQUAD)");
-        // 革命を崩して支配できたら勝ち
-        BitCards nddouble = (ndquad >> 2) & opsHand.nd[ord];
-        if (!nddouble) PW("0(QUADDIV)");
+        // 革命を崩して支配できたら勝ち 低頻度
+        //BitCards nddouble = (ndquad >> 2) & opsHand.nd[ord];
+        //if (!nddouble) PW("0(QUADDIV)");
         return false;
     }
 
@@ -255,7 +254,6 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
 
             // このとき、まだターンが取れていなかったやつを逆オーダーで考える
             BitCards ndpqr_new = ndpqr & ~dquad_used & opsHand.nd[flipOrder(ord)]; // 革命の分も消しとく
-
             // 全部支配できたら勝ち
             if (!ndpqr_new) PW("2(J_QUAD 0)");
             // 1つ残しで勝ち
