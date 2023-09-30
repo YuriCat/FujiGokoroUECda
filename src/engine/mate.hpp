@@ -45,7 +45,7 @@ inline bool judgeHandPPW_NF(const Cards cards, const Cards pqr, const int jk,
         if (!ndquad) PPW("0(NO-NDQUAD)");
         // ジョーカーがあるとき革命が2つ以下ならジョーカーを加えて勝ち
         if (jk) PPW("0(QUAD+JK)");
-        // 革命を崩して支配できたら勝ち 低頻度
+        // 革命を崩して支配できたら勝ち 比較的低頻度
         //BitCards nddouble = (ndquad >> 2) & nd[ord];
         //if (!nddouble) PPW("0(QUADDIV)");
         return false;
@@ -143,7 +143,7 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
         if (!any2Cards(ndquad)) PW("0(U1NDQUAD)");
         // 革命を崩して支配できたら勝ち 低頻度
         //BitCards nddouble = (ndquad >> 2) & opsHand.nd[ord];
-        //if (!nddouble) PW("0(QUADDIV)");
+        //if (!any2Cards(nddouble)) PW("0(QUADDIV)");
         return false;
     }
 
