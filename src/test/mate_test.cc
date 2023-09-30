@@ -25,19 +25,21 @@ std::unordered_map<uint64_t, bool> visitedCards;
 int searchCardsPWSlow(bool, bool,
                       MoveInfo *const, const int, const int,
                       const Cards, const Cards,
-                      Board, PlayersState, bool, int, int);
+                      Board, PlayersState, bool,
+                      int, int, int, int, bool);
 
 bool judgeCardsPWSlow(bool analyze, bool ppw,
                       MoveInfo *const buf,
                       const int p,
                       const Cards myCards, const Cards opsCards,
-                      Board b, PlayersState ps, bool flushLead, int maxNumCardsAwake, int maxNumCards) {
+                      Board b, PlayersState ps, bool flushLead,
+                      int maxNumCardsAwake, int maxNumCards, int minNumCardsAwake, int minNumCards, bool perfect = true) {
     if (!anyCards(myCards)) return true;
     uint64_t key = uint64_t(myCards) ^ -b.toInt();
-    if (b.isNull() && visitedCards.find(key) != visitedCards.end()) return visitedCards[key];
+    if (b.isNull() && perfect && visitedCards.find(key) != visitedCards.end()) return visitedCards[key];
     const int myMoves = genMove(buf, myCards, b);
-    bool pw = searchCardsPWSlow(analyze, ppw, buf, myMoves, p, myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards) >= 0;
-    if (b.isNull()) visitedCards[key] = pw;
+    bool pw = searchCardsPWSlow(analyze, ppw, buf, myMoves, p, myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect) >= 0;
+    if (b.isNull() && perfect) visitedCards[key] = pw;
     return pw;
 }
 
@@ -45,7 +47,8 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
                       MoveInfo *const buf,
                       const int p, const Move move,
                       Cards myCards, const Cards opsCards,
-                      Board b, PlayersState ps, bool flushLead, int maxNumCardsAwake, int maxNumCards) {
+                      Board b, PlayersState ps, bool flushLead,
+                      int maxNumCardsAwake, int maxNumCards, int minNumCardsAwake, int minNumCards, bool perfect = true) {
     // 自分以外のカード集合に対して完全勝利(PW)状態であるか合法着手生成関数を用いてチェック
     myCards = maskCards(myCards, move.cards());
     if (!ppw && !anyCards(myCards)) return true;
@@ -61,6 +64,7 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
         b.flush();
         ps.flush();
         maxNumCardsAwake = maxNumCards;
+        minNumCardsAwake = minNumCards;
     } else {
         b.proc(move);
         if (!b.isNull()) { // 流れていない
@@ -73,51 +77,59 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
                         if (ppw) return false;
                         // ここからBNPW判定
                         // S3分岐必勝
-                        if (opsMoves == 1 && buf[0].isSingleJOKER() && containsS3(myCards) && maxNumCardsAwake > 1) {
+                        if (opsMoves == 1 && buf[0].isSingleJOKER() && containsS3(myCards) && minNumCardsAwake > 1) {
                             Board nb = b; nb.flush();
                             PlayersState nps = ps; nps.flush();
-                            if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, nb, nps, true, maxNumCards, maxNumCards)
-                                && judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_S3, opsCards - CARDS_JOKER, nb, nps, true, maxNumCards, maxNumCards)) return true;
+                            int n = min(minNumCardsAwake - 1, minNumCards);
+                            // この場が流れてもジョーカーを出されてS3で返しても必勝
+                            if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, nb, nps, true, maxNumCards, maxNumCards, minNumCards, minNumCards, perfect)
+                                && judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_S3, opsCards - CARDS_JOKER, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
                         }
-                        return false;
-
-                        /*for (int m = 0; m < opsMoves; m++) {
-                            Move opsMove = buf[m];
-                            Board nb = b;
-                            nb.proc(opsMove);
-                            if (nb.isNull()) { // 相手に流されたらそこで終了
-                                ok = false;
-                                break;
+                        // シングルジョーカーによるBNPW
+                        if (b.isSingle() && containsJOKER(myCards) && minNumCardsAwake > 1) {
+                            // 場を流されないことをチェック
+                            bool ok = true;
+                            for (int i = 0; i < opsMoves; i++) {
+                                if (buf[i].domInevitably() || b.domConditionally(buf[i])) { ok = false; break; }
+                            }
+                            if (ok) {
+                                Board nb = b; nb.flush();
+                                PlayersState nps = ps; nps.flush();
+                                int n = min(minNumCardsAwake - 1, minNumCards);
+                                // 相手の一枚が抜けたことで少し必勝しやすくなったことまで評価する?
+                                if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_JOKER, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
+                                // S3もあるならそれも検討
+                                if (containsS3(myCards)) {
+                                    if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_JOKER - CARDS_S3, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
+                                }
                             }
                         }
-
-                            // ここに対して自分の必勝手があるか調べる
-                            judgeCardsPWSlow(buf + opsMoves, p,
-                                            myCards, subtrCards(opsCards, opsMove.cards()),
-                                            nb, ps,
-                        }*/
                         return false;
+                        // それ以外のBNPWの判定は結構大変
                     }
                 }
                 ps.setAllAsleepExcept(p);
             }
             // セルフフォロー
             maxNumCardsAwake = 0;
+            minNumCardsAwake = 10000; // 適当な大きな値
         } else {
             ps.flush();
             maxNumCardsAwake = maxNumCards;
+            minNumCardsAwake = minNumCards;
         }
     }
     // 支配性の確認が完了
     if (ppw && !anyCards(myCards)) return true;
-    return judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, b, ps, true, maxNumCardsAwake, maxNumCards);
+    return judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, b, ps, true, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect);
 }
 
 int searchCardsPWSlow(bool analyze, bool ppw,
                       MoveInfo *const buf, const int numMoves,
                       const int p,
                       const Cards myCards, const Cards opsCards,
-                      Board b, PlayersState ps, bool flushLead, int maxNumCardsAwake, int maxNumCards) {
+                      Board b, PlayersState ps, bool flushLead,
+                      int maxNumCardsAwake, int maxNumCards, int minNumCardsAwake, int minNumCards, bool perfect = true) {
     int mateIndex = -1;
     for (int i = 0; i < numMoves; i++) {
         if (!ppw && buf[i].qty() >= countCards(myCards)) { // final move
@@ -128,7 +140,7 @@ int searchCardsPWSlow(bool analyze, bool ppw,
     }
     if (mateIndex >= 0) return mateIndex;
     for (int i = 0; i < numMoves; i++) {
-        if (checkCardsPWSlow(analyze, ppw, buf + numMoves, p, buf[i], myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards)) {
+        if (checkCardsPWSlow(analyze, ppw, buf + numMoves, p, buf[i], myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect)) {
             if (analyze) mateIndex = i;
             else return i;
         }
@@ -174,7 +186,8 @@ int testRecordMoveMate(const Record& record) {
                 false, false,
                 buffer, turnPlayer,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
+                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             judgeTime[3] += cl.stop();
 
@@ -235,7 +248,8 @@ int testRecordMoveMate(const Record& record) {
                 false, false,
                 buffer, turnPlayer, move,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
+                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             checkTime[3] += cl.stop();
 
@@ -293,7 +307,8 @@ int testRecordMoveMate(const Record& record) {
                 buffer, moves, turnPlayer,
                 myHand.cards, opsHand.cards,
                 b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
+                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             searchTime[1] += cl.stop();
 
@@ -363,7 +378,8 @@ int testRecordMoveMate(const Record& record) {
                 false, true,
                 buffer, turnPlayer,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
+                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             ppwTime[1] += cl.stop();
 
@@ -402,7 +418,8 @@ int analyzeMateDistribution(const Record& record) {
                 true, false,
                 buffer, turnPlayer,
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
-                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
+                field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
+                field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
             if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
         }
