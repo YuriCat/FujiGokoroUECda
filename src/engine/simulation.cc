@@ -16,6 +16,19 @@ namespace Settings {
     const double simulationAmplifyExponent = 2;
 }
 
+namespace Simulation {
+    atomic<long long> count, time;
+    long long total_count = 0, total_time = 0;
+    void init() { count = time = 0; }
+    void stats() {
+        cerr << "Simulation: " << count << " times " << (count ? time / count : 0) << " clock";
+        total_count += count; total_time += time;
+        count = time = 0;
+        cerr << " Total: " << total_count << " times "
+        << (total_count ? total_time / total_count : 0) << " clock " << endl;
+    }
+}
+
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools) {
     int turn = field.turn();
@@ -54,17 +67,17 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
+    Clock clock;
+    clock.start();
     while (1) {
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
             int p[2];
             p[0] = field.turn();
             p[1] = field.ps.searchOpsPlayer(p[0]);
             assert(field.isAlive(p[0]) && field.isAlive(p[1]));
-
-            L2Judge l2(65536, field.mbuf);
-            int l2Result = l2.start_judge(field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
-            if (l2Result == L2_WIN || l2Result == L2_LOSE) {
-                int winner = l2Result == L2_WIN ? 0 : 1;
+            int res = judgeLast2(field.mbuf, field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
+            if (res == L2_WIN || res == L2_LOSE) {
+                int winner = res == L2_WIN ? 0 : 1;
                 field.setNewClassOf(p[winner],     field.bestClass());
                 field.setNewClassOf(p[1 - winner], field.bestClass() + 1);
                 break;
@@ -74,6 +87,8 @@ int simulation(Field& field,
         MoveInfo move = simulationMove(field, *pshared, ptools);
         if (field.procFast(move) < 0) break;
     }
+    Simulation::time += clock.stop();
+    Simulation::count++;
     return 0;
 }
 

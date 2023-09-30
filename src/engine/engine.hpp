@@ -56,6 +56,7 @@ public:
         const int gbci = numGamesBeforeClassInit(record.getLatestGameNum());
         shared.gameReward = standardReward(std::min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
         L2::init();
+        Simulation::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
         // 1スレッドの場合は関数で、そうでなければスレッドで開く
@@ -253,8 +254,9 @@ public:
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.numPlayersAlive() == 2) { // 残り2人の場合はL2判定
-                    L2Judge lj(Settings::policyMode ? 200000 : 2000000, rootTools.mbuf);
-                    int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
+                    int nodeLimit = Settings::policyMode ? 200000 : 2000000;
+                    int l2Result = L2_LOSE;
+                    if (!(b.isNull() && move.isPASS())) l2Result = checkLast2(rootTools.mbuf, move, myHand, opsHand, b, fieldInfo, nodeLimit);
                     if (l2Result == L2_WIN) { // 勝ち
                         DERR << "l2win!" << std::endl;
                         move.setL2Mate(); fieldInfo.setL2Mate();
@@ -385,6 +387,7 @@ public:
     void closeGame() {
         shared.closeGame();
         L2::stats();
+        Simulation::stats();
     }
     void closeMatch() {
         shared.closeMatch();
