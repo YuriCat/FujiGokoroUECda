@@ -57,6 +57,7 @@ public:
         shared.gameReward = standardReward(std::min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
         L2::init();
         Simulation::init();
+        MonteCarlo::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
         // 1スレッドの場合は関数で、そうでなければスレッドで開く
@@ -388,6 +389,7 @@ public:
         shared.closeGame();
         L2::stats();
         Simulation::stats();
+        MonteCarlo::stats();
     }
     void closeMatch() {
         shared.closeMatch();
