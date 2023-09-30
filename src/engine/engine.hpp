@@ -247,7 +247,7 @@ public:
                 move.setDM(); // 自己支配
             }
             if (Settings::mateSearchOnRoot) { // 多人数必勝判定
-                if (checkHandMate(1, rootTools.mbuf, move, myHand, opsHand, b, fieldInfo)) {
+                if (checkHandMate(2, rootTools.mbuf, move, myHand, opsHand, b, fieldInfo)) {
                     move.setMPMate(); fieldInfo.setMPMate();
                 }
             }
