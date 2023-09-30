@@ -384,6 +384,9 @@ public:
         return playMove;
     }
     void closeGame() {
+        // プレーヤーモデル更新
+        const auto& record = shared.record;
+        shared.playerModel.update(record, record.games.size() - 1, record.myPlayerNum, shared.basePlayPolicy, rootTools.mbuf);
         shared.closeGame();
     }
     void closeMatch() {

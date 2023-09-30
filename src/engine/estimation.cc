@@ -570,6 +570,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
 
     array<double, N_MAX_MOVES> score;
     playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    for (int i = 0; i < numMoves; i++) shared.playerModel.biasScore(field, turn, mbuf[i]);
 
     // Mateの手のスコアを設定
     double maxScore = *max_element(score.begin(), score.begin() + numMoves);

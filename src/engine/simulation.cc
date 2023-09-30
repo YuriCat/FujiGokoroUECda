@@ -42,6 +42,9 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
     // 行動方策を計算
     double score[N_MAX_MOVES];
     playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    if (turn != field.myPlayerNum) {
+        for (int i = 0; i < numMoves; i++) shared.playerModel.biasScore(field, turn, field.mbuf[i]);
+    }
 
     // ランダム選択
     BiasedSoftmaxSelector<double> selector(score, numMoves,
