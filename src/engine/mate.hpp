@@ -218,8 +218,8 @@ inline bool judgeHandPW_NF(const Hand& myHand, const Hand& opsHand, const Board&
                     // このとき、まだターンが取れていなかったやつを逆オーダーで考える
 
                     // ジョーカーを加えて、どちらかをいずれかのオーダーでndと交差しなければよい
-                    BitCards l = ndpqr_new & -ndpqr_new;
-                    BitCards h = ndpqr_new - l;
+                    BitCards h = ndpqr_new_m;
+                    BitCards l = ndpqr_new - ndpqr_new_m;
                     // どちらかが、いずれかのオーダーのndと交差しなければ勝ち
                     if (   !((h << 1) & opsHand.nd[ord]) || !((h << 1) & opsHand.nd[flipOrder(ord)])
                         || !((l << 1) & opsHand.nd[ord]) || !((l << 1) & opsHand.nd[flipOrder(ord)])) {
@@ -276,7 +276,6 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                           const Hand& myHand, const Hand& opsHand,
                           const Board& b, const FieldAddInfo& fieldInfo) {
     if (b.isNull()) {
-        if (judgeMate_Easy_NF(myHand)) return true;
         if (judgeHandPW_NF(myHand, opsHand, b)) return true;
     }
 

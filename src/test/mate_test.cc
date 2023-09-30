@@ -32,6 +32,7 @@ bool judgeCardsPWSlow(bool analyze, bool ppw,
                       const int p,
                       const Cards myCards, const Cards opsCards,
                       Board b, PlayersState ps, bool flushLead, int maxNumCardsAwake, int maxNumCards) {
+    if (!anyCards(myCards)) return true;
     uint64_t key = uint64_t(myCards) ^ -b.toInt();
     if (b.isNull() && visitedCards.find(key) != visitedCards.end()) return visitedCards[key];
     const int myMoves = genMove(buf, myCards, b);
@@ -69,7 +70,17 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
                     const int opsMoves = genFollowExceptPASS(buf, opsCards, b);
                     bool ok = false;
                     if (opsMoves > 0) {
+                        if (ppw) return false;
                         // ここからBNPW判定
+                        // S3分岐必勝
+                        if (opsMoves == 1 && buf[0].isSingleJOKER() && containsS3(myCards) && maxNumCardsAwake > 1) {
+                            Board nb = b; nb.flush();
+                            PlayersState nps = ps; nps.flush();
+                            if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, nb, nps, true, maxNumCards, maxNumCards)
+                                && judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_S3, opsCards - CARDS_JOKER, nb, nps, true, maxNumCards, maxNumCards)) return true;
+                        }
+                        return false;
+
                         /*for (int m = 0; m < opsMoves; m++) {
                             Move opsMove = buf[m];
                             Board nb = b;
@@ -170,7 +181,7 @@ int testRecordMoveMate(const Record& record) {
             judgeMatrix[0][pw][mate0] += 1;
             judgeMatrix[1][pw][mate1] += 1;
             judgeMatrix[2][pw][mate2] += 1;
-            //if (mate2 && !pw && !canMakeSeq(myHand.cards, 5)) { cerr << field.toDebugString() << endl; getchar(); }
+            //if (mate2 && !pw && !canMakeSeq(myHand.cards, 5)) { cerr << field.toDebugString(); getchar(); }
         }
     }
 
@@ -186,14 +197,14 @@ int testRecordMoveMate(const Record& record) {
         }
     }
     cerr << "judge time (easy)    = " << judgeTime[0] / (double)judgeCount << endl;
-    cerr << "judge time (pdr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
+    cerr << "judge time (pqr-nd)  = " << judgeTime[1] / (double)judgeCount << endl;
     cerr << "judge time (hand)    = " << judgeTime[2] / (double)judgeCount << endl;
     cerr << "judge time (pw-slow) = " << judgeTime[3] / (double)judgeCount << endl;
 
     // check
-    long long checkTime[3] = {0};
+    long long checkTime[4] = {0};
     long long checkCount = 0;
-    long long checkMatrix[2][2][2] = {0};
+    long long checkMatrix[3][2][2] = {0};
 
     for (int i = 0; i < record.games(); i++) {
         for (Move move : PlayRoller(field, record.game(i))) {
@@ -201,18 +212,22 @@ int testRecordMoveMate(const Record& record) {
             const Hand& myHand = field.getHand(turnPlayer);
             const Hand& opsHand = field.getOpsHand(turnPlayer);
             Board b = field.board;
-            MoveInfo mi = MoveInfo(move);
+            MoveInfo m = MoveInfo(move);
 
             if (dominatesHand(b, myHand)) continue;
 
             cl.start();
-            bool mate0 = checkHandMate(0, buffer, mi, myHand, opsHand, b, field.fieldInfo);
+            bool mate0 = checkHandMate(0, buffer, m, myHand, opsHand, b, field.fieldInfo);
             checkTime[0] += cl.stop();
             checkCount += 1;
 
             cl.start();
-            bool mate1 = checkHandMate(1, buffer, mi, myHand, opsHand, b, field.fieldInfo);
+            bool mate1 = checkHandMate(1, buffer, m, myHand, opsHand, b, field.fieldInfo);
             checkTime[1] += cl.stop();
+
+            cl.start();
+            bool mate2 = checkHandMate(2, buffer, m, myHand, opsHand, b, field.fieldInfo);
+            checkTime[2] += cl.stop();
 
             cl.start();
             visitedCards.clear();
@@ -222,15 +237,17 @@ int testRecordMoveMate(const Record& record) {
                 myHand.cards, opsHand.cards, b, field.ps, field.fieldInfo.isFlushLead(),
                 field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards()
             );
-            checkTime[2] += cl.stop();
+            checkTime[3] += cl.stop();
 
             checkMatrix[0][pw][mate0] += 1;
             checkMatrix[1][pw][mate1] += 1;
+            checkMatrix[2][pw][mate2] += 1;
+            //if (mate1 && !pw && !canMakeSeq(myHand.cards, 5)) { cerr << field.toDebugString() << move << endl; getchar(); }
         }
     }
 
     cerr << "check result (hand) = " << endl;
-    for (int d = 0; d < 2; d++) {
+    for (int d = 0; d < 3; d++) {
         cerr << "depth" << d << endl;
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
@@ -241,7 +258,8 @@ int testRecordMoveMate(const Record& record) {
     }
     cerr << "check time (hand d0) = " << checkTime[0] / (double)checkCount << endl;
     cerr << "check time (hand d1) = " << checkTime[1] / (double)checkCount << endl;
-    cerr << "check time (pw-slow) = " << checkTime[2] / (double)checkCount << endl;
+    cerr << "check time (hand d2) = " << checkTime[2] / (double)checkCount << endl;
+    cerr << "check time (pw-slow) = " << checkTime[3] / (double)checkCount << endl;
 
     // search
     long long searchTime[2] = {0};
@@ -360,7 +378,7 @@ int testRecordMoveMate(const Record& record) {
         }
         cerr << endl;
     }
-    cerr << "ppw time (pdr-nd)   = " << ppwTime[0] / (double)ppwCount << endl;
+    cerr << "ppw time (pqr-nd)   = " << ppwTime[0] / (double)ppwCount << endl;
     cerr << "ppw time (ppw-slow) = " << ppwTime[1] / (double)ppwCount << endl;
 
     return 0;
