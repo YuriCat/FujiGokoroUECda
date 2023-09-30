@@ -17,7 +17,7 @@ namespace Settings {
 }
 
 MoveInfo simulationMove(Field& field, const SharedData& shared,
-                        ThreadTools *const ptools) {
+                        ThreadTools *const ptools, double progress) {
     int turn = field.turn();
     int numMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
     if (numMoves == 1) return field.mbuf[0];
@@ -43,7 +43,7 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
     double score[N_MAX_MOVES];
     playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
     if (turn != field.myPlayerNum) {
-        for (int i = 0; i < numMoves; i++) shared.playerModel.biasScore(field, turn, field.mbuf[i]);
+        for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.biasScore(field, turn, field.mbuf[i]) * progress;
     }
 
     // ランダム選択
@@ -57,6 +57,7 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 int simulation(Field& field,
                SharedData *const pshared,
                ThreadTools *const ptools) {
+    double progress = 1;
     while (1) {
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
             int p[2];
@@ -72,8 +73,9 @@ int simulation(Field& field,
             }
         }
         // 手を選んで進める
-        MoveInfo move = simulationMove(field, *pshared, ptools);
+        MoveInfo move = simulationMove(field, *pshared, ptools, progress);
         if (field.procFast(move) < 0) break;
+        progress *= 0.95;
     }
     return 0;
 }
