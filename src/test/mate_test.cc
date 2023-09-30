@@ -12,15 +12,14 @@ using namespace std;
 
 static MoveInfo buffer[8192];
 static Clock cl;
-static std::mt19937 mt;
 
 int outputMateJudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
     return 0;
 }
 
-std::set<uint32_t> mateMoves;
-std::unordered_map<uint64_t, bool> visitedCards;
+set<uint32_t> mateMoves;
+unordered_map<uint64_t, bool> visitedCards;
 
 int searchCardsPWSlow(bool, bool,
                       MoveInfo *const, const int, const int,
@@ -82,11 +81,11 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
                             PlayersState nps = ps; nps.flush();
                             int n = min(minNumCardsAwake - 1, minNumCards);
                             // この場が流れてもジョーカーを出されてS3で返しても必勝
-                            if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, nb, nps, true, maxNumCards, maxNumCards, minNumCards, minNumCards, perfect)
-                                && judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_S3, opsCards - CARDS_JOKER, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
+                            if (judgeCardsPWSlow(false, ppw, buf, p, myCards, opsCards, nb, nps, true, maxNumCards, maxNumCards, minNumCards, minNumCards, perfect)
+                                && judgeCardsPWSlow(false, ppw, buf, p, myCards - CARDS_S3, opsCards - CARDS_JOKER, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
                         }
                         // シングルジョーカーによるBNPW
-                        if (b.isSingle() && containsJOKER(myCards) && minNumCardsAwake > 1) {
+                        if (b.isSingle() && containsJOKER(myCards) && !containsS3(opsCards) && minNumCardsAwake > 1) {
                             // 場を流されないことをチェック
                             bool ok = true;
                             for (int i = 0; i < opsMoves; i++) {
@@ -97,10 +96,10 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
                                 PlayersState nps = ps; nps.flush();
                                 int n = min(minNumCardsAwake - 1, minNumCards);
                                 // 相手の一枚が抜けたことで少し必勝しやすくなったことまで評価する?
-                                if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_JOKER, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
+                                if (judgeCardsPWSlow(false, ppw, buf, p, myCards - CARDS_JOKER, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
                                 // S3もあるならそれも検討
                                 if (containsS3(myCards)) {
-                                    if (judgeCardsPWSlow(analyze, ppw, buf, p, myCards - CARDS_JOKER - CARDS_S3, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
+                                    if (judgeCardsPWSlow(false, ppw, buf, p, myCards - CARDS_JOKER - CARDS_S3, opsCards, nb, nps, true, maxNumCards, maxNumCards, n, n, false)) return true;
                                 }
                             }
                         }
@@ -121,7 +120,7 @@ bool checkCardsPWSlow(bool analyze, bool ppw,
     }
     // 支配性の確認が完了
     if (ppw && !anyCards(myCards)) return true;
-    return judgeCardsPWSlow(analyze, ppw, buf, p, myCards, opsCards, b, ps, true, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect);
+    return judgeCardsPWSlow(false, ppw, buf, p, myCards, opsCards, b, ps, true, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect);
 }
 
 int searchCardsPWSlow(bool analyze, bool ppw,
@@ -130,18 +129,16 @@ int searchCardsPWSlow(bool analyze, bool ppw,
                       const Cards myCards, const Cards opsCards,
                       Board b, PlayersState ps, bool flushLead,
                       int maxNumCardsAwake, int maxNumCards, int minNumCardsAwake, int minNumCards, bool perfect = true) {
-    int mateIndex = -1;
-    for (int i = 0; i < numMoves; i++) {
-        if (!ppw && buf[i].qty() >= countCards(myCards)) { // final move
-            mateIndex = i;
-            if (analyze) mateMoves.insert(buf[mateIndex].toInt());
-            else return i;
+    if (!analyze) {
+        for (int i = 0; i < numMoves; i++) {
+            if (!ppw && buf[i].qty() >= countCards(myCards)) return i; // final move
         }
     }
-    if (mateIndex >= 0) return mateIndex;
+    int mateIndex = -1;
     for (int i = 0; i < numMoves; i++) {
-        if (checkCardsPWSlow(analyze, ppw, buf + numMoves, p, buf[i], myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect)) {
-            if (analyze) mateIndex = i;
+        if (checkCardsPWSlow(false, ppw, buf + numMoves, p, buf[i], myCards, opsCards, b, ps, flushLead, maxNumCardsAwake, maxNumCards, minNumCardsAwake, minNumCards, perfect)) {
+            mateIndex = i;
+            if (analyze) mateMoves.insert(buf[i].toInt());
             else return i;
         }
     }
@@ -403,7 +400,7 @@ int testRecordMoveMate(const Record& record) {
 int analyzeMateDistribution(const Record& record) {
 
     // search
-    std::array<uint64_t, 12> mateMovesDistribution = {0};
+    array<long long, 12> mateMovesDistribution = {0};
     Field field;
 
     for (int i = 0; i < record.games(); i++) {
@@ -421,7 +418,7 @@ int analyzeMateDistribution(const Record& record) {
                 field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
                 field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
-            if (pw) mateMovesDistribution[bsf32(mateMoves.size())] += 1;
+            if (pw) mateMovesDistribution[bsr32(mateMoves.size())] += 1;
         }
     }
 
@@ -430,10 +427,6 @@ int analyzeMateDistribution(const Record& record) {
 }
 
 bool MateTest(const vector<string>& recordFiles) {
-    std::vector<std::string> logFileNames;
-
-    mt.seed(1);
-
     if (outputMateJudgeResult()) {
         cerr << "failed case test." << endl;
         return false;
