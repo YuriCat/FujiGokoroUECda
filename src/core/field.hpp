@@ -273,9 +273,6 @@ struct Field {
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
 };
 
-// シミュレーション時の状態コピー
-extern void copyField(const Field& arg, Field *const dst);
-
 /**************************仮想世界**************************/
 
 struct World {

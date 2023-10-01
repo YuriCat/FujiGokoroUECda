@@ -129,8 +129,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
         numSimulationsSum++;
 
         // シミュレーション実行
-        Field f;
-        copyField(pf, &f);
+        Field f = pf;
         setWorld(worlds[world], &f);
         if (proot->isChange) {
             startChangeSimulation(f, myPlayerNum, proot->child[action].changeCards, pshared, ptools);
