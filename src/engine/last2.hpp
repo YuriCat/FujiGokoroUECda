@@ -21,7 +21,6 @@ class L2Judge {
     // L2判定
     // judge...局面L2判定を返す
     // check...着手L2判定を返す
-    // search...与えられた着手集合に勝利着手があればインデックス、なければ-1を返す
 
 protected:
     const int NODE_LIMIT;
@@ -40,11 +39,10 @@ public:
     L2Judge(int nl, MoveInfo *const mb):
     NODE_LIMIT(nl), mbuf(mb) { init(); }
 
-    // 再帰版
     int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
     int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
     bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
-
-    int start_judge(const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
-    int start_check(const MoveInfo mi, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo);
 };
+
+int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
+int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
