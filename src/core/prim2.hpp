@@ -71,9 +71,9 @@ class FieldAddInfo {
     // 23 BDOMME
 
     // info1
-    // 0-3 MinNCards
-    // 4-7 MaxNCards
-    // 8-11 MinNCardsAwake
+    // 0-3 MinNumCards
+    // 4-7 MaxNumCards
+    // 8-11 MinNumCardsAwake
     // 12-15 MaxNCardsAwake
 
 public:
@@ -94,11 +94,13 @@ public:
                                         LCT64_LASTAWAKE,
                                         LCT64_FLUSHLEAD,
                                         LCT64_NPDOM,
-                                        LCT64_PDOM); }
+                                        LCT64_PDOM,
+                                        LCT64_BDOMOTHERS); }
     void setUnrivaled() { set(LCT64_UNRIVALED,
                                        LCT64_FLUSHLEAD,
                                        LCT64_NPDOM,
-                                       LCT64_PDOM); }
+                                       LCT64_PDOM,
+                                       LCT64_BDOMOTHERS); }
     void setLastAwake() { set(LCT64_LASTAWAKE,
                                        LCT64_NPDOM,
                                        LCT64_BDOMOTHERS); }
@@ -110,10 +112,10 @@ public:
     void setBDALL() { set(LCT64_BDOMOTHERS,
                                    LCT64_BDOMME); }
     void setNoChance() { setBDM(); }
-    void setMinNCards(uint32_t n) { i_ |= n & 15U; }
-    void setMaxNCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
-    void setMinNCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
-    void setMaxNCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
+    void setMinNumCards(uint32_t n) { i_ |= n & 15U; }
+    void setMaxNumCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
+    void setMinNumCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
+    void setMaxNumCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
 
     // get
     // 一時情報
@@ -140,10 +142,10 @@ public:
                                                  LCT64_BDOMME); }
     uint64_t isNoChance() const { return isBDM(); }
 
-    uint32_t getMinNCards() const { return i_ & 15U; }
-    uint32_t getMaxNCards() const { return (i_ >> 4) & 15U; }
-    uint32_t getMinNCardsAwake() const { return (i_ >> 8) & 15U; }
-    uint32_t getMaxNCardsAwake() const { return (i_ >> 12) & 15U; }
+    uint32_t minNumCards() const { return i_ & 15U; }
+    uint32_t maxNumCards() const { return (i_ >> 4) & 15U; }
+    uint32_t minNumCardsAwake() const { return (i_ >> 8) & 15U; }
+    uint32_t maxNumCardsAwake() const { return (i_ >> 12) & 15U; }
 
     void initHalf() { i_ = 0; }
 
@@ -203,10 +205,10 @@ static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 
 inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
                        FieldAddInfo *const pnext) {
     pnext->init();
-    pnext->setMinNCardsAwake(fieldInfo.getMinNCards());
-    pnext->setMaxNCardsAwake(fieldInfo.getMaxNCards());
-    pnext->setMinNCards(fieldInfo.getMinNCards());
-    pnext->setMaxNCards(fieldInfo.getMaxNCards());
+    pnext->setMinNumCardsAwake(fieldInfo.minNumCards());
+    pnext->setMaxNumCardsAwake(fieldInfo.maxNumCards());
+    pnext->setMinNumCards(fieldInfo.minNumCards());
+    pnext->setMaxNumCards(fieldInfo.maxNumCards());
     pnext->setFlushLead();
 }
 inline void procUnrivaled(const FieldAddInfo& fieldInfo,
@@ -249,8 +251,9 @@ struct MoveInfo : public Move {
     void setDM() { set(13); }
     void setDALL() { set(12, 13); }
     void setDomOthers() { setDO(); }
-    void setDomMe() { setDO(); }
-    void setDomAll() { setDO(); }
+    void setDomMe() { setDM(); }
+    void setDomAll() { setDALL(); }
+    void setChecked() { set(31); }
 
     void init() { Move::flags = 0; }
 
@@ -273,6 +276,8 @@ struct MoveInfo : public Move {
     uint64_t dominatesOthers() const { return isDO(); }
     uint64_t dominatesMe() const { return isDM(); }
     uint64_t dominatesAll() const { return isDALL(); }
+
+    bool isChecked() const { return test(31); }
 };
 
 static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力

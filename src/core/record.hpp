@@ -14,7 +14,7 @@ struct PlayRecord { // 1つの着手の記録
 
 struct ChangeRecord { // 交換の記録
     int from; int to;
-    bool already; // 既に手札が相手型に渡っている
+    bool already; // 既に手札が交換相手に渡っている
     int qty; Cards cards;
 
     void set(int f, int t, int q, Cards c, bool a) {
@@ -37,7 +37,7 @@ struct GameRecord {
 
     void setTerminated() { flags_.set(0); }
     void setInitGame() { flags_.set(1); }
-    void resetInitGame() { flags_.reset(0); }
+    void resetInitGame() { flags_.reset(1); }
 
     bool isTerminated() const { return flags_.test(0); }
     bool isInitGame() const { return flags_.test(1); }
@@ -91,7 +91,7 @@ struct MatchRecord {
         return pos;
     }
     void initGame() {
-        games.emplace_back(GameRecord());
+        games.emplace_back();
         auto& g = latestGame();
         g.init(myPlayerNum);
         for (int p = 0; p < N_PLAYERS; p++) {
@@ -105,7 +105,7 @@ struct MatchRecord {
         }
     }
     void pushGame(const GameRecord& game) {
-        games.emplace_back(game);
+        games.push_back(game);
     }
     void init(int playerNum = -1) {
         myPlayerNum = playerNum;
@@ -212,7 +212,7 @@ public:
     const_iterator end() const { return const_iterator(field, game, game->numChanges); }
 
     ChangeRoller(Field& f, const GameRecord& g): RollerBase(f, g) {
-        presentCount = field->passPresent(*game, game->myPlayerNum);
+        presentCount = field->passPresent(*game, game->myPlayerNum, true);
     }
 protected:
     int presentCount;
