@@ -184,7 +184,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
             if (!ok && ++failures > 1) failed = true;
         }
     }
-    // 役提出の尤度を計算してし使用する手札配置を決定
+    // 役提出の尤度を計算して使用する手札配置を決定
     if (buckets > 1) {
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
