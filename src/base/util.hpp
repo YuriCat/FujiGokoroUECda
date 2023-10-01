@@ -634,7 +634,7 @@ struct TensorIndexType<L> {
 template <typename T>
 struct StochasticSelector {
     T *const score_;
-    const int size_;
+    int size_;
 
     double sum_;
 
@@ -675,6 +675,24 @@ struct StochasticSelector {
         return ent / std::log(2);
     }
 };
+
+template <typename T>
+struct LinearSelector : public StochasticSelector<T> {
+    using base_t = StochasticSelector<T>;
+
+    LinearSelector(T *const ascore, int asize, double sum = 0.0):
+    base_t(ascore, asize) {
+        base_t::sum_ = sum;
+        if (sum == 0) init();
+    }
+
+    void init() {
+        for (int i = 0; i < base_t::size_; i++) {
+            base_t::sum_ += base_t::score_[i];
+        }
+    }
+};
+
 
 template <typename T>
 struct SoftmaxSelector : public StochasticSelector<T> {

@@ -78,7 +78,7 @@ private:
     Cards dealCardsUnderInWA[16];
     Cards dealCardsOverInWA[16];
 
-    int buckets;
+    int buckets, playBuckets;
 
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;
@@ -97,9 +97,9 @@ private:
     }
     void checkDeal(const Cards *dst, bool sbj = true) const;
     bool okForRejection() const;
-    bool dealWithChangeRejection(Cards *const dst,
-                                 const SharedData& shared,
-                                 ThreadTools *const ptools) const;
+    double dealWithChangeRejection(Cards *const dst,
+                                   const SharedData& shared,
+                                   ThreadTools *const ptools) const;
 
     // 採択棄却法のためのカード交換モデル
     Cards change(const int p, const Cards cards, const int qty,
