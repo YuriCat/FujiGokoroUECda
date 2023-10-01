@@ -536,26 +536,25 @@ protected:
 template <size_t B, size_t N = 32 / B> using BitArray32 = MiniBitArray<std::uint32_t, B, N>;
 template <size_t B, size_t N = 64 / B> using BitArray64 = MiniBitArray<std::uint64_t, B, N>;
 
-class TwoValuePage32 {
-public:
-    uint32_t any() const { return data_; }
+template <typename T>
+struct TwoValuePage {
+    T data;
+    bool any() const { return data; }
     void regist(uint32_t value, uint64_t key) {
         assert(value < 4U);
-        data_ = ((uint32_t)(key >> 32) & ~3U) | value;
+        data = T(key >> (64 - sizeof(T) * 8) & ~T(3)) | value;
     }
-    uint32_t compareKey(uint64_t key) const {
-        return (data_ ^ uint32_t(key >> 32)) & ~3U;
+    T compareKey(uint64_t key) const {
+        return (data ^ T(key >> (64 - sizeof(T) * 8))) & ~T(3);
     }
-    uint32_t value() const { return data_ & 3U; }
-private:
-    uint32_t data_;
+    uint32_t value() const { return data & T(3); }
 };
 
-template <size_t N>
+template <size_t N, typename T = uint64_t>
 class TwoValueBook {
     // 2(+中間1)値を保存するハッシュ表
 public:
-    using page_t = TwoValuePage32;
+    using page_t = TwoValuePage<T>;
 
     void clear() { std::memset(page_, 0, sizeof(page_)); }
     TwoValueBook() { clear(); }

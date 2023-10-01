@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace L2 {
-    TwoValueBook<(1 << 20) - 3> book;
+    TwoValueBook<(1 << 19) - 3> book;
     void init() {
         book.clear();
     }
