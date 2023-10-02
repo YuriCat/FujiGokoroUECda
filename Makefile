@@ -8,11 +8,11 @@ BLD_DIR  = ./out
 OBJ_DIR  = $(BLD_DIR)/obj
 SRCS     = $(wildcard $(SRC_DIR)/*.cc) $(wildcard $(SRC_DIR)/**/*.cc)
 OBJS     = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRCS:.cc=.o))
-EXEOBJS  = $(addprefix $(OBJ_DIR)/, client/client.o server/server.o test/test.o extra/learner.o)
+EXEOBJS  = $(addprefix $(OBJ_DIR)/, client/client.o server/server.o test/test.o extra/learner.o extra/inverse.o)
 SUBOBJS  = $(filter-out $(EXEOBJS), $(OBJS))
 SRC_DIRS = $(shell find $(SRC_DIR) -maxdepth 2 -mindepth 1 -type d)
 OBJ_DIRS = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRC_DIRS))
-TARGET   = $(addprefix $(BLD_DIR)/, client server test learner)
+TARGET   = $(addprefix $(BLD_DIR)/, client server test learner inverse)
 DEPENDS  = $(OBJS:.o=.d)
 
 OPT = -Ofast -DNDEBUG -DMINIMUM
@@ -42,6 +42,9 @@ $(BLD_DIR)/test: $(OBJ_DIR)/test/test.o $(SUBOBJS) $(LIBS)
 
 $(BLD_DIR)/learner: $(OBJ_DIR)/extra/learner.o $(SUBOBJS) $(LIBS)
 	$(CXX) -o $@ $(OBJ_DIR)/extra/learner.o $(SUBOBJS) $(LDFLAGS)
+
+$(BLD_DIR)/inverse: $(OBJ_DIR)/extra/inverse.o $(SUBOBJS) $(LIBS)
+	$(CXX) -o $@ $(OBJ_DIR)/extra/inverse.o $(SUBOBJS) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
 	@if [ ! -d $(OBJ_DIR) ]; \

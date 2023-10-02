@@ -15,6 +15,8 @@ namespace Settings {
     constexpr int BUCKET_MAX = 32;
 }
 
+float estimationTable[EST_FEATURES];
+
 namespace Deal {
     constexpr uint64_t AfterChangeWeight[INTCARD_MAX + 1][5] =
     {
@@ -81,6 +83,38 @@ namespace Deal {
         {129187, 132712, 65779, 1, 1},
     };
 }
+
+#define F(index) { if (v != nullptr) v->push_back(make_pair(index, 1.0f)); score += table[index]; }
+
+float inverseEstimationScore(const Cards orgCards, const Cards usedCards, const Cards sentCards, int playerClass, vector<pair<int, float>> *const v) {
+    const float *const table = estimationTable;
+    float score = 0;
+    int classIndex = playerClass > HEIMIN ? (playerClass - 1) : playerClass;
+
+    if (playerClass != HEIMIN) {
+        Cards tmp = orgCards;
+        Cards lowerCards = CARDS_NULL;
+        for (IntCard ic : tmp) {
+            F(64 * classIndex + ic);
+            Cards tmp2 = lowerCards;
+            for (IntCard ic2 : tmp2) { F(64 * 4 + classIndex * 64 * 64 + ic * 64 + ic2); }
+            lowerCards.insert(ic);
+        }
+    }
+
+    Cards unusedCards = orgCards - usedCards;
+    for (IntCard ic : usedCards) {
+        for (IntCard ic2 : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * ic + ic2);
+    }
+
+    for (IntCard ic : orgCards) {
+        for (IntCard ic2 : sentCards) F(64 * 4 + 64 * 64 * 4 + 64 * 64 + ic * 64 + ic2);
+    }
+
+    return score;
+}
+
+#undef F
 
 // 拘束条件分割
 bool dist2Rest_64(int numRest,
@@ -170,6 +204,26 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
+void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
+    array<Cards, N> cards[64];
+    double score[64] = {0};
+    for (int i = 0; i < 64; i++) dealWithBias(cards[i].data(), dice);
+    for (int i = 0; i < 64; i++) {
+        float s = 0;
+        for (int p = 0; p < N; p++) {
+            if (p != myNum) {
+                int cl = infoClass[p];
+                Cards recv = p == myChangePartner && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
+                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, cl);
+            }
+        }
+        score[i] = s;
+    }
+    SoftmaxSelector<double> selector(score, 64, 0.1);
+    int index = selector.select(dice.random());
+    for (int p = 0; p < N; p++) dst[p] = cards[index][p];
+}
+
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
@@ -177,7 +231,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
-            dealWithBias(deal[i], ptools->dice);
+            dealWithNewBias(deal[i], ptools->dice);
         } else {
             bool ok = dealWithChangeRejection(deal[i], shared, ptools);
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
@@ -224,6 +278,10 @@ void RandomDealer::set(const Field& field, int playerNum) {
     myCards = field.getCards(myNum);
     myClass = infoClass[myNum];
     firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
+    if (!initGame) {
+        if (myClass != MIDDLE) myChangePartner = infoClassPlayer[myClass];
+    }
+
     for (int p = 0; p < N; p++) {
         int cl = infoClass[p];
         int org = field.numCardsOf(p) + field.getUsedCards(p).count();
@@ -467,7 +525,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     } else {
         DERR << "DEAL_REJEC FAILED..." << endl;
         // 失敗の場合は逆関数法に変更
-        dealWithBias(dst, dice);
+        dealWithNewBias(dst, dice);
         return false;
     }
     return true;

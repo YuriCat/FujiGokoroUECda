@@ -154,6 +154,7 @@ bool EstimationTest(const vector<string>& recordFiles) {
         testEstimationRate(match, DealType::RANDOM);
         testEstimationRate(match, DealType::SBJINFO);
         testEstimationRate(match, DealType::BIAS);
+        testEstimationRate(match, DealType::NEW_BIAS);
         testEstimationRate(match, DealType::REJECTION);
     }
 
