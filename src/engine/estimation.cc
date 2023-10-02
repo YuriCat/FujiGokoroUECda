@@ -130,9 +130,23 @@ void RandomDealer::dealAllRand(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
-    // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
+    // 主観情報のうち完全な情報のみ扱い、それ以外は完全ランダムとする
     BitCards tmp[N] = {0};
-    dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    if (!initGame && myClass < MIDDLE) {
+        // 献上が無矛盾になるように交換相手に配布
+        int qty = N_CHANGE_CARDS(myClass);
+        Cards myHigh = highestNBits<uint64_t>(myDealtCards, qty);
+        int partnerClass = getChangePartnerClass(myClass);
+        Cards okCards = pickLower(myHigh) & dealCards;
+        tmp[partnerClass] = pickNBits64(okCards, NDeal[partnerClass], okCards.count() - NDeal[partnerClass], dice);
+        assert(myHigh.lowest() > Cards(detCards[partnerClass] + tmp[partnerClass] - sentCards).highest());
+
+        auto tmpNDeal = NDeal;
+        tmpNDeal[partnerClass] = 0;
+        dist64<N>(tmp, dealCards - tmp[partnerClass], tmpNDeal.data(), dice);
+    } else {
+        dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    }
     for (int cl = 0; cl < N; cl++) {
         dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl] - usedCards[cl];
     }
