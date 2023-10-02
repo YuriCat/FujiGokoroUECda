@@ -211,8 +211,9 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
     for (int i = 0; i < 64; i++) {
         float s = 0;
         for (int p = 0; p < N; p++) {
-            if (p != myNum) {
-                int cl = infoClass[p];
+            int cl = infoClass[p];
+            if (NDeal[cl] > 0) {
+                assert(p != myNum && cards[i][p].count() > 0);
                 Cards recv = p == myChangePartner && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
                 s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, cl);
             }
