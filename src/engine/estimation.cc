@@ -174,7 +174,7 @@ void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
-    //　逆関数法でバイアスを掛けて分配
+    // 逆関数法でバイアスを掛けて分配
     if (initGame) return dealWithSubjectiveInfo(dst, dice);
 
     array<Cards, N> tmp = detCards;
