@@ -169,7 +169,7 @@ void Field::prepareForPlay() {
                 if (fieldInfo.isLastAwake()) {
                     fieldInfo.setUnrivaled();
                 } else {
-                    if (board.qty() > fieldInfo.getMaxNCardsAwake()) {
+                    if (board.qty() > fieldInfo.maxNumCardsAwake()) {
                         fieldInfo.setUnrivaled();
                     } else if (dominatesHand(board, opsHand[tp])) {
                         // 場が全員を支配しているので、パスをすれば自分から
