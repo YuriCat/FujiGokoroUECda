@@ -140,7 +140,7 @@ void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
-    //　逆関数法でバイアスを掛けて分配
+    // 逆関数法でバイアスを掛けて分配
     if (initGame) return dealWithSubjectiveInfo(dst, dice);
 
     array<Cards, N> tmp = detCards;
@@ -184,7 +184,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
             if (!ok && ++failures > 1) failed = true;
         }
     }
-    // 役提出の尤度を計算してし使用する手札配置を決定
+    // 役提出の尤度を計算して使用する手札配置を決定
     if (buckets > 1) {
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
@@ -507,7 +507,7 @@ void RandomDealer::setWeightInWA() {
             // 下界が確定したときの他の献上札のパターン数をかける
             combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
         }
-        dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+        dealCardsUnderInWA[probs.size()] = lowerDist;
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);

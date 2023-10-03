@@ -37,7 +37,7 @@ struct GameRecord {
 
     void setTerminated() { flags_.set(0); }
     void setInitGame() { flags_.set(1); }
-    void resetInitGame() { flags_.reset(0); }
+    void resetInitGame() { flags_.reset(1); }
 
     bool isTerminated() const { return flags_.test(0); }
     bool isInitGame() const { return flags_.test(1); }
@@ -91,7 +91,7 @@ struct MatchRecord {
         return pos;
     }
     void initGame() {
-        games.emplace_back(GameRecord());
+        games.emplace_back();
         auto& g = latestGame();
         g.init(myPlayerNum);
         for (int p = 0; p < N_PLAYERS; p++) {
@@ -105,7 +105,7 @@ struct MatchRecord {
         }
     }
     void pushGame(const GameRecord& game) {
-        games.emplace_back(game);
+        games.push_back(game);
     }
     void init(int playerNum = -1) {
         myPlayerNum = playerNum;

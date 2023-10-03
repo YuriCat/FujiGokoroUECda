@@ -60,11 +60,9 @@ int simulation(Field& field,
             p[0] = field.turn();
             p[1] = field.ps.searchOpsPlayer(p[0]);
             assert(field.isAlive(p[0]) && field.isAlive(p[1]));
-
-            L2Judge l2(65536, field.mbuf);
-            int l2Result = l2.start_judge(field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
-            if (l2Result == L2_WIN || l2Result == L2_LOSE) {
-                int winner = l2Result == L2_WIN ? 0 : 1;
+            int res = judgeLast2(field.mbuf, field.hand[p[0]], field.hand[p[1]], field.board, field.fieldInfo);
+            if (res == L2_WIN || res == L2_LOSE) {
+                int winner = res == L2_WIN ? 0 : 1;
                 field.setNewClassOf(p[winner],     field.bestClass());
                 field.setNewClassOf(p[1 - winner], field.bestClass() + 1);
                 break;

@@ -133,11 +133,11 @@ void Field::prepareForPlay() {
     fieldInfo.init();
 
     // 相手手札枚数情報
-    int minNum = INT_MAX, maxNum = 0;
-    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    unsigned minNum = 15, maxNum = 0;
+    unsigned minNumAwake = 15, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = numCardsOf(p);
+        unsigned num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
@@ -147,10 +147,10 @@ void Field::prepareForPlay() {
             }
         }
     }
-    fieldInfo.setMinNCardsAwake(minNumAwake);
-    fieldInfo.setMinNCards(minNum);
-    fieldInfo.setMaxNCardsAwake(maxNumAwake);
-    fieldInfo.setMaxNCards(maxNum);
+    fieldInfo.setMinNumCardsAwake(minNumAwake);
+    fieldInfo.setMinNumCards(minNum);
+    fieldInfo.setMaxNumCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNumCards(maxNum);
 
     // 場の特徴
     if (isNull()) {
@@ -202,7 +202,7 @@ void Field::initGame() {
     recvCards.fill(CARDS_NULL);
 
     remCards = CARDS_ALL;
-    remQty = countCards(CARDS_ALL);
+    remQty = N_CARDS;
     remKey = HASH_CARDS_ALL;
 }
 
@@ -326,6 +326,7 @@ string Field::toDebugString() const {
     oss << "seat = " << infoSeat << endl;
     oss << "board = " << board << endl;
     oss << "state = " << ps << endl;
+    oss << "info = " << fieldInfo << endl;
     oss << "hand = " << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
@@ -349,7 +350,8 @@ int Field::procImpl(const MoveInfo m) {
         bool agari = m.qty() >= hand[tp].qty;
         if (agari || (FAST && m.isMate())) { // 即上がりまたはMATE宣言のとき
             if (FAST) {
-                if (isOnlyValue(attractedPlayers, tp)) {
+                attractedPlayers.reset(tp);
+                if (attractedPlayers.count() == 0) {
                     // 結果が欲しいプレーヤーがすべて上がったので終了
                     setNewClassOf(tp, bestClass());
                     return -1;

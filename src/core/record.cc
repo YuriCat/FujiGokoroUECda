@@ -247,6 +247,7 @@ int loadMatchRecord(const string& path, MatchRecord *const pmatch) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
                 game.dealtCards[p] = c;
+                game.numDealtCards[p] = c.count();
             }
         } else if (cmd == "changed") {
             bool anyChange = false;
@@ -273,6 +274,7 @@ int loadMatchRecord(const string& path, MatchRecord *const pmatch) {
                 Cards c;
                 if (StringQueueToCardsM(q, &c) < 0) Foo();
                 game.orgCards[p] = c;
+                game.numOrgCards[p] = c.count();
             }
         } else if (cmd == "play") {
             while (1) {
@@ -410,6 +412,7 @@ void Field::setAfterChange(const GameRecord& game,
 }
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
+    assert(playerNum < N_PLAYERS);
     myPlayerNum = game.myPlayerNum;
     if (phase < PHASE_PRESENT) passPresent(game, playerNum);
     if (tcnt < 0) return; // tcnt < 0で交換中まで

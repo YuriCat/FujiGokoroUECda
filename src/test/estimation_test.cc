@@ -11,7 +11,7 @@
 using namespace std;
 
 static SharedData shared;
-static ThreadTools tools[16];
+static ThreadTools tools;
 static Clock cl;
 
 
@@ -25,9 +25,7 @@ uint64_t worldKey(const Field& f) {
 
 void testEstimationRate(const MatchRecord& match, DealType type) {
     shared.initMatch(-1);
-    for (int i = 0; i < 16; i++) {
-        tools[i].dice.srand(1 + i);
-    }
+    tools.dice.srand(1);
     mt19937 dice(0);
 
     long long time = 0;
@@ -59,7 +57,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
             // 一致度計測
             for (int j = 0; j < 2; j++) {
                 cl.start();
-                World world = estimator.create(type, game, shared, &tools[0]);
+                World world = estimator.create(type, game, shared, &tools);
                 time += cl.stop();
                 cnt++;
                 int tsame = 0, tall = 0;
@@ -80,7 +78,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
                 World worlds[N];
                 map<uint64_t, double> worldKeyMap;
                 for (int i = 0; i < N; i++) {
-                    worlds[i] = estimator.create(type, game, shared, &tools[0]);
+                    worlds[i] = estimator.create(type, game, shared, &tools);
                     worldKeyMap[worlds[i].key]++;
                 }
                 // 全体の情報量をまとめる
