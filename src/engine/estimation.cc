@@ -140,7 +140,7 @@ void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
-    //　逆関数法でバイアスを掛けて分配
+    // 逆関数法でバイアスを掛けて分配
     if (initGame) return dealWithSubjectiveInfo(dst, dice);
 
     array<Cards, N> tmp = detCards;
@@ -507,7 +507,7 @@ void RandomDealer::setWeightInWA() {
             // 下界が確定したときの他の献上札のパターン数をかける
             combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
         }
-        dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+        dealCardsUnderInWA[probs.size()] = lowerDist;
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);

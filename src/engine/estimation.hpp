@@ -61,7 +61,7 @@ private:
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
     int myNum, myClass;
-    int myChangePartner, firstTurnClass;
+    int firstTurnClass;
 
     Cards myCards;
     Cards myDealtCards; // 配布時

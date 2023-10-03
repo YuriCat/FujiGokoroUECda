@@ -65,8 +65,8 @@ public:
             for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.srand(rootTools.dice() + i);
             std::vector<std::thread> threads;
             for (int i = 0; i < numThreads; i++) {
-                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared,
-                                     i == 0 ? &rootTools : &threadTools[i - 1]));
+                threads.emplace_back(&MonteCarloThread, i, numThreads, &root, &field, &shared,
+                                     i == 0 ? &rootTools : &threadTools[i - 1]);
             }
             for (auto& t : threads) t.join();
         } else {
