@@ -313,10 +313,11 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // すでに分かっている情報から確実な部分を分配
     prepareSubjectiveInfo();
 
-    // 各メソッドの使用可、不可を設定
-    if (okForRejection()) { // 採択棄却法使用OK
-        if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-    } else failed = true;
+    // 交換相手の献上効果反映準備
+    if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
+
+    // 採択棄却法の使用不可を設定
+    if (!okForRejection()) failed = true;
 }
 
 void RandomDealer::prepareSubjectiveInfo() {
@@ -563,7 +564,7 @@ void RandomDealer::setWeightInWA() {
             // 下界が確定したときの他の献上札のパターン数をかける
             combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
         }
-        dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+        dealCardsUnderInWA[probs.size()] = lowerDist;
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);
