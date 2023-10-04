@@ -112,10 +112,10 @@ public:
     void setBDALL() { set(LCT64_BDOMOTHERS,
                                    LCT64_BDOMME); }
     void setNoChance() { setBDM(); }
-    void setMinNumCards(uint32_t n) { i_ |= n & 15U; }
-    void setMaxNumCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
-    void setMinNumCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
-    void setMaxNumCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
+    void setMinNumCards(uint32_t n) { assert(n < 16U); i_ = (i_ & 0xFFFFFFFFFFFFFFF0) | n; }
+    void setMaxNumCards(uint32_t n) { assert(n < 16U); i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | (n << 4); }
+    void setMinNumCardsAwake(uint32_t n) { assert(n < 16U); i_ = (i_ & 0xFFFFFFFFFFFFF0FF) | (n << 8); }
+    void setMaxNumCardsAwake(uint32_t n) { assert(n < 16U); i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | (n << 12); }
 
     // get
     // 一時情報
