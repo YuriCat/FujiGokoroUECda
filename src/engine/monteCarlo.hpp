@@ -2,6 +2,11 @@
 
 #include "data.hpp"
 
+namespace MonteCarlo {
+    extern void init();
+    extern void stats();
+}
+
 // マルチスレッディングのときはスレッド、
 // シングルの時は関数として呼ぶ
 

@@ -11,6 +11,24 @@ namespace Settings {
     const double valuePerSec = valuePerClock * 3191 * pow(10.0, 6);
 }
 
+namespace MonteCarlo {
+    atomic<long long> count, time, worlds, simulations;
+    long long total_count = 0, total_time = 0;
+    long long total_worlds = 0, total_simulations = 0;
+    void init() {
+        count = time = worlds = simulations = 0;
+    }
+    void stats() {
+        cerr << "MonteCarlo: " << count << " times " << (count ? simulations / count : 0)
+        << " sims on " << worlds / count << " worlds " << time / count << " clock";
+        total_count += count; total_time += time;
+        total_worlds += worlds; total_simulations += simulations;
+        count = time = worlds = simulations = 0;
+        cerr << " Total: " << total_count << " times "
+        << (total_count ? total_time / total_count : 0) << " clock" << endl;
+    }
+}
+
 int selectBanditAction(const RootInfo& root, Dice& dice) {
     // バンディット手法により次に試す行動を選ぶ
     int actions = root.candidates;
@@ -79,6 +97,9 @@ bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
 void MonteCarloThread(const int threadId, const int numThreads,
                       RootInfo *const proot, const Field *const pfield,
                       SharedData *const pshared, ThreadTools *const ptools) {
+    Clock clock_;
+    clock_.start();
+
     const int myPlayerNum = proot->myPlayerNum;
     auto& dice = ptools->dice;
 
@@ -139,7 +160,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
         }
 
         proot->feedSimulationResult(action, f, pshared); // 結果をセット(排他制御は関数内で)
-        if (proot->exitFlag) return;
+        if (proot->exitFlag) break;
 
         simuTime += clock.restart();
 
@@ -150,8 +171,12 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && proot->allSimulations > proot->candidates * 4) {
             if (finishCheck(*proot, double(simuTime) / pow(10, 6), dice)) {
                 proot->exitFlag = 1;
-                return;
+                break;
             }
         }
     }
+    MonteCarlo::time += clock_.stop();
+    MonteCarlo::count++;
+    MonteCarlo::worlds += numWorlds;
+    MonteCarlo::simulations += numSimulationsSum;
 }
