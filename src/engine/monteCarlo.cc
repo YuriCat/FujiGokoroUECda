@@ -20,7 +20,7 @@ namespace MonteCarlo {
     }
     void stats() {
         cerr << "MonteCarlo: " << count << " times " << (count ? simulations / count : 0)
-        << " sims on " << worlds / count << " worlds " << time / count << " clock";
+        << " sims on " << (count ? worlds / count : 0) << " worlds " << (count ? time / count : 0) << " clock";
         total_count += count; total_time += time;
         total_worlds += worlds; total_simulations += simulations;
         count = time = worlds = simulations = 0;
