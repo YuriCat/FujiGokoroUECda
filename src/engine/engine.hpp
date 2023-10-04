@@ -65,8 +65,8 @@ public:
             for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.srand(rootTools.dice() + i);
             std::vector<std::thread> threads;
             for (int i = 0; i < numThreads; i++) {
-                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared,
-                                     i == 0 ? &rootTools : &threadTools[i - 1]));
+                threads.emplace_back(&MonteCarloThread, i, numThreads, &root, &field, &shared,
+                                     i == 0 ? &rootTools : &threadTools[i - 1]);
             }
             for (auto& t : threads) t.join();
         } else {
@@ -253,8 +253,9 @@ public:
             }
             if (Settings::L2SearchOnRoot) {
                 if (field.numPlayersAlive() == 2) { // 残り2人の場合はL2判定
-                    L2Judge lj(Settings::policyMode ? 200000 : 2000000, rootTools.mbuf);
-                    int l2Result = (b.isNull() && move.isPASS()) ? L2_LOSE : lj.start_check(move, myHand, opsHand, b, fieldInfo);
+                    int nodeLimit = Settings::policyMode ? 200000 : 2000000;
+                    int l2Result = L2_LOSE;
+                    if (!(b.isNull() && move.isPASS())) l2Result = checkLast2(rootTools.mbuf, move, myHand, opsHand, b, fieldInfo, nodeLimit);
                     if (l2Result == L2_WIN) { // 勝ち
                         DERR << "l2win!" << std::endl;
                         move.setL2Mate(); fieldInfo.setL2Mate();

@@ -412,6 +412,7 @@ void Field::setAfterChange(const GameRecord& game,
 }
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
+    assert(playerNum < N_PLAYERS);
     myPlayerNum = game.myPlayerNum;
     if (phase < PHASE_PRESENT) passPresent(game, playerNum);
     if (tcnt < 0) return; // tcnt < 0で交換中まで
