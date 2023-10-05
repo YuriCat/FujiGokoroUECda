@@ -147,8 +147,6 @@ public:
     uint32_t minNumCardsAwake() const { return (i_ >> 8) & 15U; }
     uint32_t maxNumCardsAwake() const { return (i_ >> 12) & 15U; }
 
-    void initHalf() { i_ = 0; }
-
     void init() {
         // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
         i_ = 0x0000F0F0ULL;
@@ -254,8 +252,6 @@ struct MoveInfo : public Move {
     void setDomMe() { setDM(); }
     void setDomAll() { setDALL(); }
     void setChecked() { set(31); }
-
-    void init() { Move::flags = 0; }
 
     // get
     uint64_t isFinal() const {    return test(LCT_FINAL); }
