@@ -161,6 +161,20 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     int tmpNDeal[N];
     for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
     Cards fromCards = dealCards;
+
+    if (!initGame && myClass < MIDDLE) {
+        int ptClass = getChangePartnerClass(myClass);
+        if (NDeal[ptClass]) {
+            Cards tmpDist = selectInWA(dice.random());
+            Cards dealt = pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
+            tmp[ptClass] += dealt;
+            assert(dealt.count() == tmpNDeal[ptClass]);
+            assert(fromCards.holds(dealt));
+            tmpNDeal[ptClass] = 0;
+            fromCards -= dealt;
+        }
+    }
+
     while (fromCards) {
         IntCard ic = fromCards.popHighest();
 
