@@ -521,7 +521,7 @@ void RandomDealer::setWeightInWA() {
             // 下界が確定したときの他の献上札のパターン数をかける
             combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
         }
-        dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+        dealCardsUnderInWA[probs.size()] = lowerDist;
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);
