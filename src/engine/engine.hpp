@@ -156,7 +156,6 @@ public:
         // 最高評価の交換を選ぶ
         if (changeCards == CARDS_NULL) changeCards = root.child[0].changeCards;
 
-    DECIDED_CHANGE:
         assert(countCards(changeCards) == changeQty);
         assert(holdsCards(myCards, changeCards));
         if (monitor) {

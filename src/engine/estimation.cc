@@ -393,9 +393,8 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
                 Cards tmpDist = selectInWA(dice.random());
                 R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
             }
-        } else {
+        } else if (myClass > MIDDLE) {
             // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
-            int ptClass = getChangePartnerClass(myClass);
             R[ptClass] = detCards[ptClass] + recvCards;
             BitCards remained = CARDS_NULL;
             int numDealOthers = NdealCards - NDeal[ptClass];
