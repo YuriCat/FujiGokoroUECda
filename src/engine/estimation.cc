@@ -395,16 +395,11 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
             }
         } else if (myClass > MIDDLE) {
             // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
-            R[ptClass] = detCards[ptClass] + recvCards;
-            BitCards remained = CARDS_NULL;
-            int numDealOthers = NdealCards - NDeal[ptClass];
-            int numChangeMine = N_CHANGE_CARDS(myClass);
+            R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
+                BitCards remained = CARDS_NULL;
+                int numDealOthers = NdealCards - NDeal[ptClass];
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
-                // 交換相手の交換尤度を計算
-                Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
-                if (cc != recvCards) continue;
-                R[ptClass] -= recvCards;
             }
         }
 
@@ -444,7 +439,21 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
                               NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
                 ok = false; break;
             }
-            Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
+        }
+        if (!ok) continue;
+
+        // 交換処理
+        if (myClass > MIDDLE) {
+            int ptClass = getChangePartnerClass(myClass);
+            Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
+            if (cc != recvCards) continue;
+        }
+
+        ok = true;
+        for (int cl = FUGO; cl >= 0; cl--) {
+            int rich = cl, poor = getChangePartnerClass(cl);
+            if (rich == myClass || poor == myClass) continue;
+            Cards cc = change(infoClassPlayer[rich], R[rich], N_CHANGE_CARDS(rich), shared, ptools);
             if (!Cards(R[poor] + cc).holds(detCards[poor])
                 || !Cards(R[rich] - cc).holds(detCards[rich])) {
                 ok = false; break;
@@ -453,6 +462,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
             R[poor] += cc;
         }
         if (!ok) continue;
+
         success = true;
         break;
     }
