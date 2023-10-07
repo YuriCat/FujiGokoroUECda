@@ -142,9 +142,23 @@ void RandomDealer::dealAllRand(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
-    // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
+    // 主観情報のうち完全な情報のみ扱い、それ以外は完全ランダムとする
     BitCards tmp[N] = {0};
-    dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    if (!initGame && myClass < MIDDLE) {
+        // 献上が無矛盾になるように交換相手に配布
+        int qty = N_CHANGE_CARDS(myClass);
+        Cards myHigh = highestNBits<uint64_t>(myDealtCards, qty);
+        int partnerClass = getChangePartnerClass(myClass);
+        Cards okCards = pickLower(myHigh) & dealCards;
+        tmp[partnerClass] = pickNBits64(okCards, NDeal[partnerClass], okCards.count() - NDeal[partnerClass], dice);
+        assert(myHigh.lowest() > Cards(detCards[partnerClass] + tmp[partnerClass] - sentCards).highest());
+
+        auto tmpNDeal = NDeal;
+        tmpNDeal[partnerClass] = 0;
+        dist64<N>(tmp, dealCards - tmp[partnerClass], tmpNDeal.data(), dice);
+    } else {
+        dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    }
     for (int cl = 0; cl < N; cl++) {
         dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl] - usedCards[cl];
     }
@@ -159,6 +173,19 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     int tmpNDeal[N];
     for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
     Cards fromCards = dealCards;
+
+    if (!initGame && myClass < MIDDLE) {
+        // 献上によるバイアスを反映して配布
+        int ptClass = getChangePartnerClass(myClass);
+        if (NDeal[ptClass]) {
+            Cards tmpDist = selectInWA(dice.random());
+            Cards dealt = pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
+            tmp[ptClass] += dealt;
+            tmpNDeal[ptClass] = 0;
+            fromCards -= dealt;
+        }
+    }
+
     while (fromCards) {
         IntCard ic = fromCards.popHighest();
 
@@ -269,10 +296,11 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // すでに分かっている情報から確実な部分を分配
     prepareSubjectiveInfo();
 
-    // 各メソッドの使用可、不可を設定
-    if (okForRejection()) { // 採択棄却法使用OK
-        if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-    } else failed = true;
+    // 交換相手の献上効果反映準備
+    if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
+
+    // 採択棄却法の使用不可を設定
+    if (!okForRejection()) failed = true;
 }
 
 void RandomDealer::prepareSubjectiveInfo() {
