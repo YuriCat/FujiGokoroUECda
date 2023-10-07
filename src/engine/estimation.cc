@@ -90,24 +90,36 @@ bool dist2Rest_64(int numRest,
     // 0が交換上手側、1が下手側
     uint64_t tmp0 = 0ULL, tmp1 = 0ULL;
     uint64_t all = arg | rest0 | rest1;
+    uint64_t trest0 = rest0;
+    assert(popcnt64(all) == N0 + N1);
 
     // まず確定ビットを探す
-    if (rest0) {
-        uint64_t low = highestNBits(all, N1 + numRest);
-        uint64_t set0 = rest0 & ~low;
+    if (trest0) {
+        // 全体の中で献上札として考えられる最弱札よりも下の札は上位で確定
+        uint64_t low = lowestNBits(all, N1 - numRest);
+        uint64_t set0 = trest0 & low;
         if (set0) {
-            int NSet0 = popcnt64(set0);
-            tmp0 |= set0; all -= set0; N0 -= NSet0;
+            tmp0 |= set0; all -= set0; trest0 -= set0; N0 -= popcnt64(set0);
         }
     }
-    assert((int)popcnt64(all) == N0 + N1);
+    if (trest0 && popcnt64(rest1) > numRest) {
+        // 下位の確定札から献上札の強さ下界を求め、それより下の札は上位で確定
+        uint64_t high = highestNBits(rest1, numRest);
+        uint64_t tmp = highestNBits(rest1 - high, 1);
+        uint64_t set0 = trest0 & (tmp - 1);
+        if (set0) {
+            tmp0 |= set0; all -= set0; trest0 -= set0; N0 -= popcnt64(set0);
+        }
+    }
+
+    assert(popcnt64(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
     tmp0 |= highNRest; tmp1 -= highNRest;
 
-    if (!holdsBits(tmp0, rest0)
-        || !holdsBits(tmp1, rest1 & ~highNRest)) return false;
+    if (!holdsBits(tmp0, rest0)) return false;
+    if (popcnt64(rest1 & ~tmp1) > numRest) return false;
 
     *goal0 = tmp0;
     *goal1 = tmp1;
