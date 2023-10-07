@@ -413,56 +413,43 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     BitCards R[N] = {0};
 
     for (int t = 0; t < Settings::maxRejection; t++) {
+        // 1. 交換相手に配る
         int ptClass = getChangePartnerClass(myClass);
         if (myClass < MIDDLE) {
-            // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
+            // Walker's Alias methodで献上下界を決めて交換相手に分配
             R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
                 Cards tmpDist = selectInWA(dice.random());
                 R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
             }
         } else if (myClass > MIDDLE) {
-            // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
-            R[ptClass] = detCards[ptClass] + recvCards;
-            BitCards remained = CARDS_NULL;
-            int numDealOthers = NdealCards - NDeal[ptClass];
-            int numChangeMine = N_CHANGE_CARDS(myClass);
+            // 交換相手のカードを決め打ち
+            R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
+                BitCards remained = CARDS_NULL;
+                int numDealOthers = NdealCards - NDeal[ptClass];
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
-                // 交換相手の交換尤度を計算
-                Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
-                if (cc != recvCards) continue;
-                R[ptClass] -= recvCards;
             }
         }
 
         // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-        BitCards rem = dealCards;
-        if (myClass != HEIMIN) {
-            rem -= R[ptClass] - detCards[ptClass];
-            int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
-            int otherPoor = getChangePartnerClass(otherRich);
-            int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
-            BitCards otherPair = CARDS_NULL;
-            R[HEIMIN] = detCards[HEIMIN];
-            if (NDeal[HEIMIN]) {
-                dist2_64(&otherPair, &R[HEIMIN], rem, numDealOtherPair, NDeal[HEIMIN], dice);
-                rem = otherPair;
-            } else {
-                otherPair = rem;
-            }
-        }
-
-        // 3. 自分が関与した以外の交換系の配布
-        // 残り札を自分が関わっていない交換の系で分配
+        Cards rem = dealCards;
         BitCards remained[2] = {0};
         if (myClass == HEIMIN) {
             dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
         } else {
-            // 平民で無いときは自分が関わっていない系に全振り
+            rem -= R[ptClass] - detCards[ptClass];
+            R[HEIMIN] = detCards[HEIMIN];
+            if (NDeal[HEIMIN]) {
+                BitCards otherPair = CARDS_NULL;
+                dist2_64(&otherPair, &R[HEIMIN], rem, rem.count() - NDeal[HEIMIN], NDeal[HEIMIN], dice);
+                rem = otherPair;
+            }
+            // 残りを自分が関わっていない交換系へ
             remained[1 - min(myClass, ptClass)] = rem;
         }
 
+        // 関与しない交換系内での分配
         bool ok = true;
         for (int cl = FUGO; cl >= 0; cl--) {
             int rich = cl, poor = getChangePartnerClass(cl);
@@ -472,7 +459,21 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
                               NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
                 ok = false; break;
             }
-            Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
+        }
+        if (!ok) continue;
+
+        // 交換処理
+        if (myClass > MIDDLE) {
+            int ptClass = getChangePartnerClass(myClass);
+            Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
+            if (cc != recvCards) continue;
+        }
+
+        ok = true;
+        for (int cl = FUGO; cl >= 0; cl--) {
+            int rich = cl, poor = getChangePartnerClass(cl);
+            if (rich == myClass || poor == myClass) continue;
+            Cards cc = change(infoClassPlayer[rich], R[rich], N_CHANGE_CARDS(rich), shared, ptools);
             if (!Cards(R[poor] + cc).holds(detCards[poor])
                 || !Cards(R[rich] - cc).holds(detCards[rich])) {
                 ok = false; break;
@@ -481,6 +482,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
             R[poor] += cc;
         }
         if (!ok) continue;
+
         success = true;
         break;
     }
