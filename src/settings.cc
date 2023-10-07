@@ -1,13 +1,14 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <thread>
 #include "settings.h"
 
 using namespace std;
 
 namespace Settings {
     bool policyMode = false;
-    int numPlayThreads = max(1, N_THREADS);
+    int numPlayThreads = min(N_THREADS, (int)thread::hardware_concurrency());
     int numChangeThreads = max(1, (numPlayThreads + 1) / 2);
     int fixedSimulationCount = -1;
     bool maximizePosition = false;

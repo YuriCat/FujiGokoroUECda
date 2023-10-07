@@ -133,11 +133,11 @@ void Field::prepareForPlay() {
     fieldInfo.init();
 
     // 相手手札枚数情報
-    int minNum = INT_MAX, maxNum = 0;
-    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    unsigned minNum = 15, maxNum = 0;
+    unsigned minNumAwake = 15, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = numCardsOf(p);
+        unsigned num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
