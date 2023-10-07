@@ -70,7 +70,8 @@ void doSimulationsToEvaluate(const GameRecord& game,
     for (int p = 0; p < N_PLAYERS; p++) field.addAttractedPlayer(p);
     // シミュレーションにより結果を予測
     std::vector<std::thread> threads;
-    for (int i = 0; i < N_THREADS; i++) {
+    int numThreads = std::min(N_THREADS, (int)std::thread::hardware_concurrency());
+    for (int i = 0; i < numThreads; i++) {
         threads.emplace_back(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[i]);
     }
     for (auto& th : threads) th.join();
