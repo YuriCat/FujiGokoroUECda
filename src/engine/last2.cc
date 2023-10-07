@@ -85,47 +85,58 @@ bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
     if (myHand.seq) return false;
     if (opsHand.qty == 1) return true;
 
-    if ((myHand.pqr & PQR_234) || (myHand.cards & (CARDS_S3 | CARDS_JOKER))) return false;
-
-    if (b.order() == 0) {
-        /*Cards mine = myHand.cards, ops = opsHand.cards;
-        int myHigh = IntCardToRank(mine.highest());
-        int opsLow = IntCardToRank(ops.lowest());
-        if (myHigh < opsLow) return true;
-        Cards tmp = maskCards(ops, RankToCards(opsLow));
-
-        if (tmp) {
-            int opsLow = IntCardToRank(tmp.lowest());
+    if (!(myHand.pqr & PQR_234) && !(myHand.cards & (CARDS_S3 | CARDS_JOKER))) {
+        if (b.order() == 0) {
+            /*Cards mine = myHand.cards, ops = opsHand.cards;
+            int myHigh = IntCardToRank(mine.highest());
+            int opsLow = IntCardToRank(ops.lowest());
             if (myHigh < opsLow) return true;
-        }*/
-        uint64_t mine = myHand.pqr;
-        CardsAsSet ops = BitCards(opsHand.pqr);
-        assert(opsHand.pqr);
-        //Cards myHigh = mine.popHighest();
-        Cards opsLow = ops.popLowest();
-        if (mine < (uint64_t)opsLow) return true;
-        if (ops.c_) {
-            Cards opsLow = ops.lowest();
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.lowest());
+                if (myHigh < opsLow) return true;
+            }*/
+            uint64_t mine = myHand.pqr;
+            CardsAsSet ops = BitCards(opsHand.pqr);
+            assert(opsHand.pqr);
+            Cards opsLow = ops.popLowest();
             if (mine < (uint64_t)opsLow) return true;
-        }
-        if ((opsHand.pqr & (CARDS_8 | CARDS_JOKER)) && !any2Cards(opsHand.pqr & ~(CARDS_8 | CARDS_JOKER))) {
-            if (any2Cards(myHand.cards & RankRangeToCards(RANK_U, RANK_7))) {
-                //std::cerr << myHand << opsHand << std::endl; getchar();
-                return true;
+            if (ops.c_) {
+                Cards opsLow = ops.lowest();
+                if (mine < (uint64_t)opsLow) return true;
+            }
+        } else {
+            Cards mine = myHand.cards, ops = maskJOKER(opsHand.cards);
+            assert(!ops.any());
+            int myHigh = IntCardToRank(mine.lowest());
+            int opsLow = IntCardToRank(ops.highest());
+            if (myHigh > opsLow) return true;
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.highest());
+                if (myHigh > opsLow) return true;
             }
         }
-    } else {
-        Cards mine = myHand.cards, ops = maskJOKER(opsHand.cards);
-        assert(!ops.any());
-        int myHigh = IntCardToRank(mine.lowest());
-        int opsLow = IntCardToRank(ops.highest());
-        if (myHigh > opsLow) return true;
-        Cards tmp = maskCards(ops, RankToCards(opsLow));
-        if (tmp) {
-            int opsLow = IntCardToRank(tmp.highest());
-            if (myHigh > opsLow) return true;
+    }
+
+    if (!(myHand.pqr & PQR_4) && !(myHand.cards & CARDS_JOKER)) {
+        if (opsHand.pqr & CARDS_8) {
+            BitCards range = b.order() == 0 ? RankRangeToCards(RANK_U, RANK_7) : RankRangeToCards(RANK_9, RANK_O);
+            if (any2Cards(myHand.pqr & PQR_1 & range)) {
+                //std::cerr << myHand << opsHand << std::endl; getchar();
+                BitCards ondpqr = opsHand.pqr & ~CARDS_8 & myHand.nd[b.order()];
+                if (!any2Cards(ondpqr)) return true;
+            }
+        }
+        if (opsHand.sc & PQR_1 & (b.order() == 0 ? (~myHand.nd[b.order()] << 4) : (~myHand.nd[b.order()] >> 4))) {
+            if (any2Cards(myHand.pqr & PQR_1 & ~CARDS_8)) {
+                //std::cerr << myHand << opsHand << std::endl; getchar();
+                BitCards ondpqr = opsHand.pqr & ~CARDS_8 & myHand.nd[b.order()];
+                if (!any2Cards(ondpqr)) return true;
+            }
         }
     }
+
     return false;
 }
 
