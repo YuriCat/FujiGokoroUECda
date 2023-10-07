@@ -991,15 +991,6 @@ int searchMove(const move_buf_t *const buf, const int numMoves, const Move& move
     return -1;
 }
 
-template <class move_buf_t, typename callback_t>
-int searchMove(const move_buf_t *const buf, const int numMoves, const callback_t& callback) {
-    // callback を条件とする着手の探索
-    for (int i = 0; i < numMoves; i++) {
-        if (callback(buf[i])) return i;
-    }
-    return -1;
-}
-
 /**************************場表現**************************/
 
 // 各プレーヤーの情報を持たない場表現

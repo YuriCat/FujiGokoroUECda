@@ -130,9 +130,23 @@ void RandomDealer::dealAllRand(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
-    // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
+    // 主観情報のうち完全な情報のみ扱い、それ以外は完全ランダムとする
     BitCards tmp[N] = {0};
-    dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    if (!initGame && myClass < MIDDLE) {
+        // 献上が無矛盾になるように交換相手に配布
+        int qty = N_CHANGE_CARDS(myClass);
+        Cards myHigh = highestNBits<uint64_t>(myDealtCards, qty);
+        int partnerClass = getChangePartnerClass(myClass);
+        Cards okCards = pickLower(myHigh) & dealCards;
+        tmp[partnerClass] = pickNBits64(okCards, NDeal[partnerClass], okCards.count() - NDeal[partnerClass], dice);
+        assert(myHigh.lowest() > Cards(detCards[partnerClass] + tmp[partnerClass] - sentCards).highest());
+
+        auto tmpNDeal = NDeal;
+        tmpNDeal[partnerClass] = 0;
+        dist64<N>(tmp, dealCards - tmp[partnerClass], tmpNDeal.data(), dice);
+    } else {
+        dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    }
     for (int cl = 0; cl < N; cl++) {
         dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl] - usedCards[cl];
     }
@@ -147,6 +161,19 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     int tmpNDeal[N];
     for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
     Cards fromCards = dealCards;
+
+    if (!initGame && myClass < MIDDLE) {
+        // 献上によるバイアスを反映して配布
+        int ptClass = getChangePartnerClass(myClass);
+        if (NDeal[ptClass]) {
+            Cards tmpDist = selectInWA(dice.random());
+            Cards dealt = pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
+            tmp[ptClass] += dealt;
+            tmpNDeal[ptClass] = 0;
+            fromCards -= dealt;
+        }
+    }
+
     while (fromCards) {
         IntCard ic = fromCards.popHighest();
 
@@ -281,10 +308,11 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // すでに分かっている情報から確実な部分を分配
     prepareSubjectiveInfo();
 
-    // 各メソッドの使用可、不可を設定
-    if (okForRejection()) { // 採択棄却法使用OK
-        if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-    } else failed = true;
+    // 交換相手の献上効果反映準備
+    if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
+
+    // 採択棄却法の使用不可を設定
+    if (!okForRejection()) failed = true;
 }
 
 void RandomDealer::prepareSubjectiveInfo() {
@@ -416,51 +444,40 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     int numChanges[2];
 
     for (int t = 0; t < Settings::maxRejection; t++) {
+        // 1. 交換相手に配る
         int ptClass = getChangePartnerClass(myClass);
         if (myClass < MIDDLE) {
-            // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
+            // Walker's Alias methodで献上下界を決めて交換相手に分配
             R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
                 Cards tmpDist = selectInWA(dice.random());
                 R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
             }
         } else if (myClass > MIDDLE) {
-            // 1. 交換相手のカードを決め打つ
-            int ptClass = getChangePartnerClass(myClass);
-            R[ptClass] = detCards[ptClass] + recvCards;
-            BitCards remained = CARDS_NULL;
-            int numDealOthers = NdealCards - NDeal[ptClass];
+            // 交換相手のカードを決め打ち
+            R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
+                BitCards remained = CARDS_NULL;
+                int numDealOthers = NdealCards - NDeal[ptClass];
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
                 // 実際の交換があり得ることは確定。尤度は後で計算
-                R[ptClass] -= recvCards;
             }
         }
 
         // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-        BitCards rem = dealCards;
-        if (myClass != HEIMIN) {
-            rem -= R[ptClass] - detCards[ptClass];
-            int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
-            int otherPoor = getChangePartnerClass(otherRich);
-            int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
-            BitCards otherPair = CARDS_NULL;
-            R[HEIMIN] = detCards[HEIMIN];
-            if (NDeal[HEIMIN]) {
-                dist2_64(&otherPair, &R[HEIMIN], rem, numDealOtherPair, NDeal[HEIMIN], dice);
-                rem = otherPair;
-            } else {
-                otherPair = rem;
-            }
-        }
-
-        // 3. 自分が関与した以外の交換系の配布
-        // 残り札を自分が関わっていない交換の系で分配
+        Cards rem = dealCards;
         BitCards remained[2] = {0};
         if (myClass == HEIMIN) {
             dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
         } else {
-            // 平民で無いときは自分が関わっていない系に全振り
+            rem -= R[ptClass] - detCards[ptClass];
+            R[HEIMIN] = detCards[HEIMIN];
+            if (NDeal[HEIMIN]) {
+                BitCards otherPair = CARDS_NULL;
+                dist2_64(&otherPair, &R[HEIMIN], rem, rem.count() - NDeal[HEIMIN], NDeal[HEIMIN], dice);
+                rem = otherPair;
+            }
+            // 残りを自分が関わっていない交換系へ
             remained[1 - min(myClass, ptClass)] = rem;
         }
 
@@ -599,7 +616,7 @@ void RandomDealer::setWeightInWA() {
             // 下界が確定したときの他の献上札のパターン数をかける
             combinations *= dCombination(countCards(pickHigher(c) & myDealtCards), N_CHANGE_CARDS(myClass) - 1);
         }
-        dealCardsUnderInWA[probs.size()] = dealCards & pickLower(IntCardToCards(ic));
+        dealCardsUnderInWA[probs.size()] = lowerDist;
         probs.push_back(combinations);
     }
     assert(probs.size() > 0);
