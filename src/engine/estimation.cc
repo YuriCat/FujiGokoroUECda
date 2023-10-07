@@ -9,8 +9,9 @@ using namespace std;
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace Settings {
-    const double estimationTemperatureChange = 1.0;
+    const double estimationTemperatureChange = 1.1;
     const double estimationTemperaturePlay = 1.1;
+    const double eps = 1 / 256.0;
     const int maxRejection = 2400; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 96;
 }
@@ -405,20 +406,20 @@ bool RandomDealer::okForRejection() const {
     if (initGame) return true;
     switch (myClass) {
         case DAIFUGO:
-            if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
+            if (NDet[FUGO] >= 10 || NDet[HINMIN] >= 9) return false;
             break;
         case FUGO:
-            if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
+            if (NDet[DAIFUGO] >= 10 || NDet[DAIHINMIN] >= 10) return false;
             break;
         case HEIMIN:
             if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 7
                 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
             break;
         case HINMIN:
-            if (NDet[DAIFUGO] >= 8 || NDet[FUGO] >= 6 || NDet[DAIHINMIN] >= 8) return false;
+            if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
             break;
         case DAIHINMIN:
-            if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 8 || NDet[HINMIN] >= 8) return false;
+            if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
             break;
         default: exit(1); break;
     }
@@ -452,8 +453,6 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     int trials = 0;
 
     BitCards R[N] = {0};
-    Cards change[2][N_MAX_CHANGES];
-    int numChanges[2];
 
     for (int t = 0; t < Settings::maxRejection; t++) {
         // 1. 交換相手に配る
@@ -503,19 +502,6 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
                               NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
                 ok = false; break;
             }
-
-            numChanges[cl] = genChange(change[cl], R[rich], changeQty);
-            bool found = false;
-            for (int i = 0; i < numChanges[cl]; i++) {
-                if (holdsCards(R[poor] + change[cl][i], detCards[poor])
-                    && holdsCards(R[rich] - change[cl][i], detCards[rich])) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                ok = false; break;
-            }
         }
         if (!ok) continue;
 
@@ -540,35 +526,35 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
         if (rich == myClass || poor == myClass) continue;
         int changeQty = N_CHANGE_CARDS(rich);
 
-        int index = 0;
-        double prob = 1;
-        if (numChanges[cl] > 1) {
-            changePolicyScore(score, change[cl], numChanges[cl], R[rich], changeQty, shared.baseChangePolicy, 0);
-            SoftmaxSelector<double> selector(score, numChanges[cl], Settings::estimationTemperatureChange);
-            // 無矛盾な交換のみを抽出
-            double score2[N_MAX_CHANGES];
-            int indexTable[N_MAX_CHANGES];
-            double sum = 0;
-            int n = 0;
-            for (int i = 0; i < numChanges[cl]; i++) {
-                if (holdsCards(R[poor] + change[cl][i], detCards[poor])
-                    && holdsCards(R[rich] - change[cl][i], detCards[rich])) {
-                    score2[n] = score[i];
-                    indexTable[n] = i;
-                    n++;
-                    sum += score[i];
-                }
+        Cards change[N_MAX_CHANGES];
+        int numChanges = genChange(change, R[rich], changeQty);
+        changePolicyScore(score, change, numChanges, R[rich], changeQty, shared.baseChangePolicy, 0);
+        SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperatureChange);
+
+        // 無矛盾な交換のみを抽出
+        double score2[N_MAX_CHANGES];
+        int indexTable[N_MAX_CHANGES];
+        double sum = 0;
+        int n = 0;
+        for (int i = 0; i < numChanges; i++) {
+            if (holdsCards(R[poor] + change[i], detCards[poor])
+                && holdsCards(R[rich] - change[i], detCards[rich])) {
+                score2[n] = score[i];
+                indexTable[n] = i;
+                n++;
+                sum += score[i];
             }
-            LinearSelector<double> selector_(score2, n, sum);
-            index = indexTable[selector_.select(ptools->dice.random())];
-            prob = selector.prob(index); // 元々の全候補からの選択確率
         }
-        Cards selected = change[cl][index];
+        LinearSelector<double> selector_(score2, n, sum);
+        int index = indexTable[selector_.select(ptools->dice.random())];
+        double prob = selector.prob(index) * (1 - Settings::eps) + Settings::eps; // 元々の全候補からの選択確率
+        assert(0 < prob <= 1);
+
+        Cards selected = change[index];
         assert(holdsCards(R[rich], selected));
         assert(isExclusiveCards(R[poor], selected));
-        R[rich] -= change[cl][index];
-        R[poor] += change[cl][index];
-        assert(prob <= 1);
+        R[rich] -= change[index];
+        R[poor] += change[index];
         changeLikelihood *= prob;
     }
 
@@ -576,13 +562,15 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
         // 交換相手の交換尤度を計算
         int ptClass = getChangePartnerClass(myClass);
         int changeQty = N_CHANGE_CARDS(myClass);
-        int numChanges = genChange(change[ptClass], R[ptClass] + recvCards, changeQty);
-        changePolicyScore(score, change[ptClass], numChanges, R[ptClass] + recvCards, changeQty, shared.baseChangePolicy, 0);
+        Cards change[N_MAX_CHANGES];
+        int numChanges = genChange(change, R[ptClass] + recvCards, changeQty);
+        changePolicyScore(score, change, numChanges, R[ptClass] + recvCards, changeQty, shared.baseChangePolicy, 0);
         SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperatureChange);
-        int index = find(change[ptClass], change[ptClass] + numChanges, recvCards) - change[ptClass];
+        int index = find(change, change + numChanges, recvCards) - change;
         assert(0 <= index && index < numChanges);
-        assert(selector.prob(index) <= 1);
-        changeLikelihood *= selector.prob(index);
+        double prob = selector.prob(index) * (1 - Settings::eps) + Settings::eps;
+        assert(0 < prob <= 1);
+        changeLikelihood *= prob;
     }
 
     for (int p = 0; p < N; p++) {
@@ -699,7 +687,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     }
 
     SoftmaxSelector<double> selector(score.data(), numMoves, Settings::estimationTemperaturePlay);
-    return max(selector.prob(moveIndex), 1 / 256.0);
+    return selector.prob(moveIndex) * (1 - Settings::eps) + Settings::eps;
 }
 
 double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
