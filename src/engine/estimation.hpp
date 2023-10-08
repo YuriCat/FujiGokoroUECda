@@ -79,6 +79,8 @@ private:
     Cards dealCardsOverInWA[16];
 
     int buckets;
+    std::vector<std::pair<std::array<Cards, N>, double>> pool;
+    int dealCount = 0;
 
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;

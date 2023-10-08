@@ -86,7 +86,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     int numSimulationsSum = 0;
 
     int numWorlds = 0; // 作成した世界の数
-    std::array<World, 128> worlds;
+    std::array<World, 160> worlds;
 
     // 世界生成のためのクラスを初期化
     const auto& record = pshared->record.latestGame();

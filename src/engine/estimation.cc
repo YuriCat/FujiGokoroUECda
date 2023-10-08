@@ -10,7 +10,7 @@ using namespace std;
 
 namespace Settings {
     const double eps = 1 / 256.0;
-    const int maxRejection = 800; // 採択棄却法時の棄却回数限度
+    const int maxRejection = 400; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 32;
 }
 
@@ -211,37 +211,44 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
-    Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    dealCount++;
+    array<Cards, N> deal[Settings::BUCKET_MAX]; // カード配置候補
     bool rejectionDeal[Settings::BUCKET_MAX] = {false};
-    int bestDeal = 0;
-    for (int i = 0; i < buckets; i++) {
+
+    int tmpBuckets = int(buckets * pow(dealCount, 0.8)) - pool.size();
+    for (int i = 0; i < tmpBuckets; i++) {
         if (failed) {
-            dealWithBias(deal[i], ptools->dice);
+            dealWithBias(deal[i].data(), ptools->dice);
         } else {
-            bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            bool ok = dealWithChangeRejection(deal[i].data(), shared, ptools);
             if (ok) rejectionDeal[i] = true;
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
             if (!ok && ++failures > 1) failed = true;
         }
     }
     // 役提出の尤度を計算して使用する手札配置を決定
-    if (buckets > 1) {
-        double lhs[Settings::BUCKET_MAX];
-        for (int i = 0; i < buckets; i++) {
-            lhs[i] = playLikelihood(deal[i], game, shared, ptools);
-            if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
-                // 逆関数で配った場合はここで交換相手の交換尤度を評価
-                int ptClass = getChangePartnerClass(myClass);
-                int partner = infoClassPlayer[ptClass];
-                double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
-                //cerr << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << endl;
-                lhs[i] += log(prob);
-            }
+    double lhs[Settings::BUCKET_MAX];
+    for (int i = 0; i < tmpBuckets; i++) {
+        lhs[i] = playLikelihood(deal[i].data(), game, shared, ptools);
+        if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
+            // 逆関数で配った場合はここで交換相手の交換尤度を評価
+            int ptClass = getChangePartnerClass(myClass);
+            int partner = infoClassPlayer[ptClass];
+            double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+            //cerr << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << endl;
+            lhs[i] += log(prob);
         }
-        SoftmaxSelector<double> selector(lhs, buckets, 0.5);
-        bestDeal = selector.select(ptools->dice.random());
     }
-    for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+
+    for (int i = 0; i < tmpBuckets; i++) pool.push_back(make_pair(deal[i], lhs[i]));
+    vector<double> score(pool.size());
+    for (int i = 0; i < (int)pool.size(); i++) score[i] = pool[i].second;
+
+    SoftmaxSelector<double> selector(score.data(), score.size(), 0.5);
+    int bestDeal = selector.select(ptools->dice.random());
+    for (int p = 0; p < N; p++) dst[p] = pool[bestDeal].first[p];
+    pool[bestDeal] = pool.back();
+    pool.pop_back();
     checkDeal(dst);
 }
 
@@ -397,10 +404,10 @@ bool RandomDealer::okForRejection() const {
                 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
             break;
         case HINMIN:
-            if (NDet[DAIFUGO] >= 6 || NDet[FUGO] >= 4 || NDet[DAIHINMIN] >= 6) return false;
+            if (NDet[DAIFUGO] >= 6 || NDet[DAIHINMIN] >= 6) return false;
             break;
         case DAIHINMIN:
-            if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 6 || NDet[HINMIN] >= 6) return false;
+            if (NDet[FUGO] >= 6 || NDet[HINMIN] >= 6) return false;
             break;
         default: exit(1); break;
     }
@@ -485,8 +492,8 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
         // 交換処理
         if (myClass > MIDDLE) {
             int ptClass = getChangePartnerClass(myClass);
-            Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
-            if (cc != recvCards) continue;
+            double prob = oneChangeLikelihood(infoClassPlayer[ptClass], R[ptClass] + recvCards, recvCards, shared);
+            if (dice.random() >= prob) continue;
         }
 
         ok = true;
