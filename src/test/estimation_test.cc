@@ -30,7 +30,6 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
 
     long long time = 0;
     long long cnt = 0;
-    long long ecnt = 0;
     long long epcnt = 0;
 
     // 正解との一致
@@ -40,10 +39,6 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     // 生成された配置内での一致
     double same_cnt_gen = 0, same_ratio_gen = 0;
     long long perfect_gen = 0;
-
-    // 情報量
-    double total_entropy = 0, total_cross_entropy = 0;
-    double entropy = 0, cross_entropy = 0;
 
     for (const auto& game : match.games) {
         shared.initGame();
