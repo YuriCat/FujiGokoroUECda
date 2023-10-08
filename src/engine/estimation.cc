@@ -9,8 +9,7 @@ using namespace std;
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace Settings {
-    const double estimationTemperatureChange = 1.0;
-    const double estimationTemperaturePlay = 1.1;
+    const double eps = 1 / 256.0;
     const int maxRejection = 800; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 32;
 }
@@ -201,12 +200,14 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
     Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    bool rejectionDeal[Settings::BUCKET_MAX] = {false};
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
             dealWithBias(deal[i], ptools->dice);
         } else {
             bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            if (ok) rejectionDeal[i] = true;
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
             if (!ok && ++failures > 1) failed = true;
         }
@@ -216,8 +217,16 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
             lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+            if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
+                // 逆関数で配った場合はここで交換相手の交換尤度を評価
+                int ptClass = getChangePartnerClass(myClass);
+                int partner = infoClassPlayer[ptClass];
+                double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+                //cerr << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << endl;
+                lhs[i] += log(prob);
+            }
         }
-        SoftmaxSelector<double> selector(lhs, buckets, 0.3);
+        SoftmaxSelector<double> selector(lhs, buckets, 0.5);
         bestDeal = selector.select(ptools->dice.random());
     }
     for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
@@ -392,8 +401,7 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     // 交換方策に従った交換を行う
     Cards change[N_MAX_CHANGES];
     int numChanges = genChange(change, cards, qty);
-    int index = changeWithPolicy(change, numChanges, cards, qty, shared.baseChangePolicy,
-                                 Settings::estimationTemperatureChange, ptools->dice);
+    int index = changeWithPolicy(change, numChanges, cards, qty, shared.baseChangePolicy, 1, ptools->dice);
     return change[index];
 }
 
@@ -577,6 +585,19 @@ void RandomDealer::setWeightInWA() {
     candidatesInWA = probs.size();
 }
 
+double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards changeCards, const SharedData& shared) const {
+    Cards change[N_MAX_CHANGES];
+    double score[N_MAX_CHANGES];
+    int qty = changeCards.count();
+    int numChanges = genChange(change, cards, qty);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    SoftmaxSelector<double> selector(score, numChanges, 1);
+    int index = find(change, change + numChanges, changeCards) - change;
+    assert(0 <= index && index < numChanges);
+    double prob = selector.prob(index);
+    return prob * (1 - Settings::eps) + Settings::eps;
+}
+
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
                                        const SharedData& shared, ThreadTools *const ptools) const {
     int turn = field.turn();
@@ -606,8 +627,9 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
 
-    SoftmaxSelector<double> selector(score.data(), numMoves, Settings::estimationTemperaturePlay);
-    return max(selector.prob(moveIndex), 1 / 256.0);
+    SoftmaxSelector<double> selector(score.data(), numMoves, 1);
+    double prob = selector.prob(moveIndex);
+    return prob * (1 - Settings::eps) + Settings::eps;
 }
 
 double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
