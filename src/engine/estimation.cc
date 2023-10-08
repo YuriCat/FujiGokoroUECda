@@ -11,7 +11,7 @@ using namespace std;
 namespace Settings {
     const double estimationTemperatureChange = 1.1;
     const double estimationTemperaturePlay = 1.1;
-    const double eps = 1 / 256.0;
+    const double eps = 1 / 512.0;
     const int maxRejection = 2400; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 96;
 }
@@ -323,9 +323,6 @@ void RandomDealer::set(const Field& field, int playerNum) {
 
     // 交換相手の献上効果反映準備
     if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-
-    // 採択棄却法の使用不可を設定
-    if (!okForRejection()) failed = true;
 }
 
 void RandomDealer::prepareSubjectiveInfo() {
@@ -400,32 +397,6 @@ void RandomDealer::checkDeal(const Cards *dst, bool sbj) const {
     }
 }
 
-bool RandomDealer::okForRejection() const {
-    // 採択棄却法使用可能性
-    // 数値は経験的に決定している
-    if (initGame) return true;
-    switch (myClass) {
-        case DAIFUGO:
-            if (NDet[FUGO] >= 10 || NDet[HINMIN] >= 9) return false;
-            break;
-        case FUGO:
-            if (NDet[DAIFUGO] >= 10 || NDet[DAIHINMIN] >= 10) return false;
-            break;
-        case HEIMIN:
-            if (NDet[DAIFUGO] >= 7 || NDet[FUGO] >= 7
-                || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
-            break;
-        case HINMIN:
-            if (NDet[DAIFUGO] >= 9 || NDet[DAIHINMIN] >= 9) return false;
-            break;
-        case DAIHINMIN:
-            if (NDet[FUGO] >= 9 || NDet[HINMIN] >= 9) return false;
-            break;
-        default: exit(1); break;
-    }
-    return true;
-}
-
 Cards RandomDealer::change(const int p, const Cards cards, const int qty,
                            const SharedData& shared, ThreadTools *const ptools) const {
     // 採択棄却法のためのカード交換モデル
@@ -453,55 +424,65 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     int trials = 0;
 
     BitCards R[N] = {0};
+    Cards changeCards[2];
+    double preLikelihood = 1;
 
     for (int t = 0; t < Settings::maxRejection; t++) {
-        // 1. 交換相手に配る
-        int ptClass = getChangePartnerClass(myClass);
-        if (myClass < MIDDLE) {
-            // Walker's Alias methodで献上下界を決めて交換相手に分配
-            R[ptClass] = detCards[ptClass];
-            if (NDeal[ptClass]) {
-                Cards tmpDist = selectInWA(dice.random());
-                R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
-            }
-        } else if (myClass > MIDDLE) {
-            // 交換相手のカードを決め打ち
-            R[ptClass] = detCards[ptClass];
-            if (NDeal[ptClass]) {
-                BitCards remained = CARDS_NULL;
-                int numDealOthers = NdealCards - NDeal[ptClass];
-                dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
-                // 実際の交換があり得ることは確定。尤度は後で計算
-            }
-        }
-
-        // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-        Cards rem = dealCards;
-        BitCards remained[2] = {0};
-        if (myClass == HEIMIN) {
-            dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
-        } else {
-            rem -= R[ptClass] - detCards[ptClass];
-            R[HEIMIN] = detCards[HEIMIN];
-            if (NDeal[HEIMIN]) {
-                BitCards otherPair = CARDS_NULL;
-                dist2_64(&otherPair, &R[HEIMIN], rem, rem.count() - NDeal[HEIMIN], NDeal[HEIMIN], dice);
-                rem = otherPair;
-            }
-            // 残りを自分が関わっていない交換系へ
-            remained[1 - min(myClass, ptClass)] = rem;
-        }
+        array<Cards, N> deal;
+        dealWithBias(deal.data(), dice);
+        for (int p = 0; p < N; p++) R[infoClass[p]] = deal[p] + usedCards[infoClass[p]];
 
         // 自分が関わらない交換系が無矛盾になるように配布
         bool ok = true;
         for (int cl = 0; cl < MIDDLE; cl++) {
             int rich = cl, poor = getChangePartnerClass(cl);
             if (rich == myClass || poor == myClass) continue;
+            // 逆に交換を決める
             int changeQty = N_CHANGE_CARDS(rich);
-            if (!dist2Rest_64(changeQty, &R[rich], &R[poor], remained[cl],
-                              NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
-                ok = false; break;
+            Cards invChange[N_MAX_CHANGES];
+            int numInvChanges = genChange(invChange, R[poor], changeQty);
+            double patternCount[N_MAX_CHANGES];
+            double score[N_MAX_CHANGES];
+            // 献上矛盾なものを除く
+            for (int i = 0; i < numInvChanges; i++) {
+                Cards icc = invChange[i];
+                Cards richAfterPresent = R[rich] + icc;
+                Cards poorAfterPresent = R[poor] - icc;
+                Cards poorHigh = highestNBits<uint64_t>(poorAfterPresent, 1);
+                Cards possiblePresent = richAfterPresent & ~(poorHigh - 1);
+                if (possiblePresent.count() < changeQty) {
+                    invChange[i] = invChange[--numInvChanges];
+                    i--;
+                } else {
+                    patternCount[i] = dCombination(possiblePresent.count(), changeQty);
+                }
             }
+            if (numInvChanges == 0) { ok = false; break; }
+
+            // 逆交換関数により交換を選択
+            for (int i = 0; i < numInvChanges; i++) {
+                Cards icc = invChange[i];
+                double s = 0;
+                if (containsJOKER(icc)) s -= 5;
+                if (containsS3(icc)) s -= 0.5;
+                if (containsD3(icc)) s -= 3;
+                for (IntCard ic : icc) {
+                    if (IntCardToRank(ic) == RANK_2) s -= 3;
+                    if (IntCardToRank(ic) == RANK_A) s -= 1;
+                    if (IntCardToRank(ic) == RANK_8) s -= 2;
+                    if (IntCardToRank(ic) == RANK_3) s -= 0.3;
+                }
+                if (changeQty == 2 && countCards(CardsToQR(icc)) == 1) s -= 0.5;
+                score[i] = s + log(patternCount[i]);
+            }
+            SoftmaxSelector<double> selector(score, numInvChanges, 1);
+            int index = selector.select(dice.random());
+            changeCards[cl] = invChange[index];
+            double prob = selector.prob(index);
+
+            //cerr << Cards(R[rich]) << Cards(R[poor]) << invChange[index] << " " << prob << " " << patternCount[index] << endl; getchar();
+
+            //preLikelihood *= patternCount[index]; / prob;
         }
         if (!ok) continue;
 
@@ -518,43 +499,22 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     }
 
     double score[N_MAX_CHANGES];
-    double changeLikelihood = 1;
+    double changeLikelihood = preLikelihood;
 
     // 自分に関係ない交換相手の交換の決定と尤度の計算
     for (int cl = FUGO; cl >= 0; cl--) {
         int rich = cl, poor = getChangePartnerClass(cl);
         if (rich == myClass || poor == myClass) continue;
         int changeQty = N_CHANGE_CARDS(rich);
-
         Cards change[N_MAX_CHANGES];
-        int numChanges = genChange(change, R[rich], changeQty);
-        changePolicyScore(score, change, numChanges, R[rich], changeQty, shared.baseChangePolicy, 0);
+        int numChanges = genChange(change, R[rich] + changeCards[rich], changeQty);
+        changePolicyScore(score, change, numChanges, R[rich] + changeCards[rich], changeQty, shared.baseChangePolicy, 0);
         SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperatureChange);
-
-        // 無矛盾な交換のみを抽出
-        double score2[N_MAX_CHANGES];
-        int indexTable[N_MAX_CHANGES];
-        double sum = 0;
-        int n = 0;
-        for (int i = 0; i < numChanges; i++) {
-            if (holdsCards(R[poor] + change[i], detCards[poor])
-                && holdsCards(R[rich] - change[i], detCards[rich])) {
-                score2[n] = score[i];
-                indexTable[n] = i;
-                n++;
-                sum += score[i];
-            }
-        }
-        LinearSelector<double> selector_(score2, n, sum);
-        int index = indexTable[selector_.select(ptools->dice.random())];
-        double prob = selector.prob(index) * (1 - Settings::eps) + Settings::eps; // 元々の全候補からの選択確率
+        int index = find(change, change + numChanges, changeCards[rich]) - change;
+        assert(0 <= index && index < numChanges);
+        double prob = selector.prob(index) * (1 - Settings::eps) + Settings::eps;
+        //cerr << Cards(R[rich] + changeCards[rich]) << changeCards[rich] << prob << endl;
         assert(0 < prob <= 1);
-
-        Cards selected = change[index];
-        assert(holdsCards(R[rich], selected));
-        assert(isExclusiveCards(R[poor], selected));
-        R[rich] -= change[index];
-        R[poor] += change[index];
         changeLikelihood *= prob;
     }
 
@@ -578,7 +538,6 @@ double RandomDealer::dealWithChangeRejection(Cards *const dst,
     }
     dst[myNum] = myCards;
     checkDeal(dst);
-    if (changeLikelihood > 1) exit(1);
     return changeLikelihood;
 }
 
