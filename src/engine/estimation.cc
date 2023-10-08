@@ -388,10 +388,10 @@ bool RandomDealer::okForRejection() const {
                 || NDet[HINMIN] >= 8 || NDet[DAIHINMIN] >= 8) return false;
             break;
         case HINMIN:
-            if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 3 || NDet[DAIHINMIN] >= 5) return false;
+            if (NDet[DAIFUGO] >= 6 || NDet[FUGO] >= 4 || NDet[DAIHINMIN] >= 6) return false;
             break;
         case DAIHINMIN:
-            if (NDet[DAIFUGO] >= 4 || NDet[FUGO] >= 5 || NDet[HINMIN] >= 5) return false;
+            if (NDet[DAIFUGO] >= 5 || NDet[FUGO] >= 6 || NDet[HINMIN] >= 6) return false;
             break;
         default: exit(1); break;
     }
