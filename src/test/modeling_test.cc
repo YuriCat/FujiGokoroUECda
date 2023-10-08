@@ -21,7 +21,7 @@ void testModeling(const MatchRecord& match) {
     PlayerModel model;
 
     for (int i = 0; i < match.games.size(); i++) {
-        model.update(match, i, -1, shared.basePlayPolicy, tools.mbuf);
+        model.update(match, i, -1, shared, tools.mbuf);
     }
     model.stats();
 }

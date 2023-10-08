@@ -1,9 +1,11 @@
 #pragma once
 
+#include "../extra/updator.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 
-const int BIAS_FEATURES = 4 + 5;
+const int PLAY_BIAS_FEATURES = 4 + 5;
+const int BIAS_FEATURES = PLAY_BIAS_FEATURES + 6;
 
 struct ProbDiffUpdator {
     static constexpr double stats_decay = 1e-3;
@@ -41,29 +43,6 @@ struct ProbDiffUpdator {
     }
 };
 
-struct GradientUpdator {
-    static constexpr double lr = 1e-3;
-    static constexpr double decay = 3e-4;
-    static constexpr double stats_decay = 1e-5;
-    double sum[BIAS_FEATURES];
-    double sum2[BIAS_FEATURES];
-    double count[BIAS_FEATURES];
-    double totalCount;
-
-    GradientUpdator() { init(); }
-
-    double var(int i) const { return sum2[i] / totalCount - (sum[i] / totalCount) * (sum[i] / totalCount); }
-    double freq(int i) const { return count[i] / totalCount; }
-
-    void init() {
-        totalCount = 1;
-        for (int j = 0; j < BIAS_FEATURES; j++) sum[j] = 0;
-        for (int j = 0; j < BIAS_FEATURES; j++) sum2[j] = count[j] = 1;
-    }
-
-    void update(double *value, double *prob, int numMoves, int index, const std::vector<std::pair<int, float>> *features);
-};
-
 union PlayerModelStats {
     struct {
         double count[N_PLAYERS];
@@ -78,25 +57,33 @@ union PlayerModelStats {
     std::array<double, 8 * N_PLAYERS> v_; // 加算を簡単にするために
 };
 
+struct SharedData;
+
 struct PlayerModel {
     double bias[N_PLAYERS][BIAS_FEATURES];
     std::vector<PlayerModelStats> stats_;
     PlayerModelStats tmpStats;
+    std::vector<PlayerModelStats> changeStats_;
+    PlayerModelStats tmpChangeStats;
+
     int games;
 
     GradientUpdator updator;
     //ProbDiffUpdator updator;
 
-    PlayerModel() { init(); }
+    PlayerModel(): updator(BIAS_FEATURES, 1e-3, 0, 1e-4, 1e-5) { init(); }
     void init() {
         memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
         updator.init();
         stats_.clear();
         tmpStats = {0};
+        changeStats_.clear();
+        tmpChangeStats = {0};
         games = 0;
     }
-    double biasScore(const Field& field, int player, Move move, std::vector<std::pair<int, float>> *v = nullptr) const;
-    void update(const MatchRecord& record, int gameNum, int playerNum, const PlayPolicy<policy_value_t>& playPolicy, MoveInfo *const buf);
-    void updateGame(const GameRecord& record, int playerNum, const PlayPolicy<policy_value_t>& playPolicy, MoveInfo *const buf, bool computeStats);
+    double playBiasScore(const Field& field, int player, Move move, std::vector<std::pair<int, float>> *v = nullptr) const;
+    double changeBiasScore(int player, const Cards cards, const Cards changeCards, std::vector<std::pair<int, float>> *v = nullptr) const;
+    void update(const MatchRecord& record, int gameNum, int playerNum, const SharedData& shared, MoveInfo *const buf);
+    void updateGame(const GameRecord& record, int playerNum, const SharedData& shared, MoveInfo *const buf, bool computeStats);
     void stats() const;
 };
