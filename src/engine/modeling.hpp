@@ -8,35 +8,40 @@ const int PLAY_BIAS_FEATURES = 4 + 5;
 const int BIAS_FEATURES = PLAY_BIAS_FEATURES + 6;
 
 struct ProbDiffUpdator {
-    static constexpr double stats_decay = 1e-3;
-    double sum[BIAS_FEATURES];
-    double count[BIAS_FEATURES];
+    static constexpr double stats_decay = 1e-4;
+    struct ParameterStats { double count, sum; };
+    std::vector<ParameterStats> s;
 
-    ProbDiffUpdator() { init(); }
-
-    void init() {
-        for (int j = 0; j < BIAS_FEATURES; j++) sum[j] = 0;
-        for (int j = 0; j < BIAS_FEATURES; j++) count[j] = 10;
+    ProbDiffUpdator(int paramCount) {
+        s.resize(paramCount);
+        init();
     }
 
-    void update(double *value, double *prob, int numMoves, int index, const std::vector<std::pair<int, float>> *features) {
+    void init(double _ = 1, double __ = 0, double ___ = 0, double ____ = 0) {
+        for (auto& stat : s) {
+            stat.sum = 0;
+            stat.count = 100;
+        }
+    }
+
+    void update(double *value, double *prob, int numMoves, int index, const std::vector<std::pair<int, float>> *features, double scale = 1) {
         // 統計情報を更新
-        double probDiff[BIAS_FEATURES] = {0};
+        std::vector<double> probDiff(s.size(), 0.0);
         for (int i = 0; i < numMoves; i++) {
             // 特徴量は0,1のみ
             for (auto f : features[i]) probDiff[f.first] += prob[i];
             if (i == index) for (auto f : features[i]) probDiff[f.first] -= 1;
         }
 
-        for (int j = 0; j < BIAS_FEATURES; j++) {
+        for (int j = 0; j < (int)s.size(); j++) {
             if (probDiff[j] != 0) {
-                sum[j] -= probDiff[j];
-                count[j] += 1;
+                s[j].sum -= probDiff[j] * scale;
+                s[j].count += scale;
 
-                sum[j] *= 1 - stats_decay;
-                count[j] *= 1 - stats_decay;
+                s[j].sum *= 1 - stats_decay;
+                s[j].count *= 1 - stats_decay;
 
-                double m = sum[j] / count[j];
+                double m = s[j].sum / s[j].count;
                 value[j] = 2.0 * log((1 + m) / (1 - m));
             }
         }
@@ -71,10 +76,11 @@ struct PlayerModel {
     GradientUpdator updator;
     //ProbDiffUpdator updator;
 
-    PlayerModel(): updator(BIAS_FEATURES, 1e-3, 0, 1e-4, 1e-5) { init(); }
+    PlayerModel(): updator(BIAS_FEATURES) { init(); }
+
     void init() {
         memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
-        updator.init();
+        updator.init(1e-3, 0, 1e-4, 1e-5);
         stats_.clear();
         tmpStats = {0};
         changeStats_.clear();

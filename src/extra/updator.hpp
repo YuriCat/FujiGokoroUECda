@@ -5,7 +5,6 @@ struct ParameterStats { double count, sum, sum2; };
 
 struct GradientUpdator {
     // settings
-    int paramCount;
     double lr;
     double lr_decay;
     double weight_decay;
@@ -16,23 +15,22 @@ struct GradientUpdator {
 
     double lr_, weight_decay_;
 
-    GradientUpdator(int _paramCount, double _lr = 3e-5, double _lr_decay = 1e-6, double _weight_decay = 3e-6, double _stats_decay = 0) {
-        paramCount = _paramCount;
-        lr = _lr;
-        lr_decay = _lr_decay;
-        weight_decay = _weight_decay;
-        stats_decay = _stats_decay;
+    GradientUpdator(int paramCount) {
+        s.resize(paramCount);
         init();
     }
 
     double var(int i) const { return s[i].sum2 / totalCount - (s[i].sum / totalCount) * (s[i].sum / totalCount); }
     double freq(int i) const { return s[i].count / totalCount; }
 
-    void init() {
+    void init(double _lr = 3e-5, double _lr_decay = 1e-6, double _weight_decay = 3e-6, double _stats_decay = 0) {
+        lr = _lr;
+        lr_decay = _lr_decay;
+        weight_decay = _weight_decay;
+        stats_decay = _stats_decay;
+
         totalCount = 1;
-        s.clear();
-        s.reserve(paramCount);
-        for (int i = 0; i < paramCount; i++) s.push_back({1, 0, 1});
+        for (auto& stat : s) stat = {1, 0, 1};
         lr_ = lr;
         weight_decay_ = weight_decay;
     }
