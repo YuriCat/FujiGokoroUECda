@@ -1,84 +1,11 @@
 #include <random>
+#include "updator.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 #include "../core/action.hpp"
 #include "../engine/estimation.hpp"
 
 using namespace std;
-
-struct GradientUpdator {
-    static constexpr double lr = 3e-5;
-    static constexpr double lr_decay = 1e-6;
-    static constexpr double decay = 3e-6;
-    static constexpr double stats_decay = 1e-5;
-    double sum[EST_FEATURES];
-    double sum2[EST_FEATURES];
-    double count[EST_FEATURES];
-    double totalCount;
-    double lr_, decay_;
-
-    GradientUpdator() { init(); }
-
-    double var(int i) const { return sum2[i] / totalCount - (sum[i] / totalCount) * (sum[i] / totalCount); }
-    double freq(int i) const { return count[i] / totalCount; }
-
-    void init() {
-        totalCount = 1;
-        for (int j = 0; j < EST_FEATURES; j++) sum[j] = 0;
-        for (int j = 0; j < EST_FEATURES; j++) sum2[j] = count[j] = 1;
-        lr_ = lr;
-        decay_ = decay;
-    }
-
-    void update(float *value, double *prob, int numMoves, int index, const std::vector<std::pair<int, float>> *features);
-};
-
-void GradientUpdator::update(float *value, double *prob, int num, int index, const vector<pair<int, float>> *features) {
-    // 統計情報を更新
-    for (int i = 0; i < num; i++) {
-        for (auto f : features[i]) {
-            sum[f.first] += f.second;
-            sum2[f.first] += f.second * f.second;
-            count[f.first] += 1;
-        }
-        totalCount += 1;
-    }
-    for (int j = 0; j < EST_FEATURES; j++) {
-        sum[j] *= 1 - stats_decay;
-        sum2[j] *= 1 - stats_decay;
-        count[j] *= 1 - stats_decay;
-    }
-    totalCount *= 1 - stats_decay;
-
-    // 選ばれた手の確率を上げ、全体の手の確率を下げる
-    for (int i = 0; i < num; i++) {
-        for (auto f : features[i]) {
-            double diff = i == index ? (1 - prob[i]) : -prob[i];
-            value[f.first] += lr_ * diff / (1e-3 + var(f.first)) * f.second;
-            value[f.first] *= pow(1 - decay_, 1 / (1e-3 + freq(i)));
-        }
-    }
-    lr_ *= 1 - lr_decay;
-    decay_ *= 1 - lr_decay;
-}
-
-struct GradientUpdatorStats {
-    unsigned long long count, correct;
-    double ent, cent;
-
-    GradientUpdatorStats() { clear(); }
-    void clear() { count = correct = ent = cent = 0; }
-    void update(double *prob, int num, int index) {
-        count += 1;
-        correct += (max_element(prob, prob + num) - prob) == index;
-        cent = -log2(prob[index]);
-        for (int i = 0; i < num; i++) ent += -prob[i] * log2(prob[i]);
-    }
-    void stats() {
-        cerr << "acc: " << correct / (double)count
-        << " (" << correct << " / " << count << ")" << " ent: " << ent / count << " cent: " << cent / count << endl;
-    }
-};
 
 void updateGame(GradientUpdator *const updator, GradientUpdatorStats *const stats, const GameRecord& record, Dice *const pdice) {
     MoveInfo buf[512];
@@ -155,7 +82,7 @@ int main(int argc, char* argv[]) {
     setvbuf(stderr, NULL, _IONBF, 0);
 
     vector<string> recordFiles;
-    GradientUpdator updator;
+    GradientUpdator updator(EST_FEATURES);
     GradientUpdatorStats stats;
     mt19937 mt((uint32_t)time(NULL));
     Dice dice(1);
@@ -172,6 +99,7 @@ int main(int argc, char* argv[]) {
     Record record(recordFiles);
     int games = record.games();
     record.shuffle(mt);
+    updator.init();
 
     for (int i = 0; i < 1000000; i++) {
         updateGame(&updator, &stats, record.rgame(i % games), &dice);

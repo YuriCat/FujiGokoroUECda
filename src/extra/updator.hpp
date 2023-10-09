@@ -1,4 +1,6 @@
-#include <random>
+#pragma once
+
+#include <iostream>
 
 struct GradientUpdator {
     // settings
