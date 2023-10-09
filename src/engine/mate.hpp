@@ -405,7 +405,6 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         // パス支配の場合, 流れてからの必勝を判定
         m.setDO(); // 支配フラグ付加
         FieldAddInfo nextFieldInfo;
-        nextFieldInfo.init();
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
         return judgeHandMate(depth, mbuf, myHand, opsHand,
                              OrderToNullBoard(b.prmOrder()), nextFieldInfo);
