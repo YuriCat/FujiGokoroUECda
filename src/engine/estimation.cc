@@ -419,8 +419,12 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     // 採択棄却法のためのカード交換モデル
     // 交換方策に従った交換を行う
     Cards change[N_MAX_CHANGES];
+    double score[N_MAX_CHANGES];
     int numChanges = genChange(change, cards, qty);
-    int index = changeWithPolicy(change, numChanges, cards, qty, shared.baseChangePolicy, 1, ptools->dice);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
+    SoftmaxSelector<double> selector(score, numChanges, 1);
+    int index = selector.select(ptools->dice.random());
     return change[index];
 }
 
@@ -610,6 +614,7 @@ double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards c
     int qty = changeCards.count();
     int numChanges = genChange(change, cards, qty);
     changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
     SoftmaxSelector<double> selector(score, numChanges, 1);
     int index = find(change, change + numChanges, changeCards) - change;
     assert(0 <= index && index < numChanges);
@@ -639,6 +644,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
 
     array<double, N_MAX_MOVES> score;
     playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]);
 
     // Mateの手のスコアを設定
     double maxScore = *max_element(score.begin(), score.begin() + numMoves);

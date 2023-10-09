@@ -57,8 +57,7 @@ uint32_t rivalPlayers(const Field& field, int playerNum) {
 }
 
 int positionPreferRevolution(const Field& field, int playerNum) {
-
-    uint32_t rivals = rivalPlayers(field, rivals);
+    uint32_t rivals = rivalPlayers(field, playerNum);
     int allClassSum = 0;
     int rivalClassSum = 0;
     int numRivals = 0;
@@ -75,11 +74,9 @@ int positionPreferRevolution(const Field& field, int playerNum) {
     }
     if (numRivals > 0) { // ライバルプレーヤーがもういないときはどうでも良い
         // 革命優先かの判断
-        int rivalBetter = (rivalClassSum * field.numPlayersAlive()
-                           < allClassSum * numRivals) ? 1 : 0;
-
+        bool rivalBetter = rivalClassSum * field.numPlayersAlive() < allClassSum * numRivals;
         // オーダー通常 & RPが良い階級　またはその逆の時革命優先
-        return (rivalBetter ^ field.board.order()) ? 1 : -1;
+        return ((rivalBetter ? 1 : 0) ^ field.board.order()) ? 1 : -1;
     }
     return 0;
 }
