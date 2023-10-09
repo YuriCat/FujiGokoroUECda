@@ -103,6 +103,7 @@ int main(int argc, char* argv[]) { // for UECda
         // 自分のカード設定
         Cards c = TableToCards(recv_table, false);
         game.dealtCards[myPlayerNum] = c;
+        game.orgCards[myPlayerNum] = c;
 
         // カード枚数設定
         // javaサーバーに引っかからないように、最初にjavaなのかCなのか判定
@@ -257,7 +258,7 @@ int main(int argc, char* argv[]) { // for UECda
             game.setNewClassOf(p, field.newClassOf(p));
             game.orgCards[p] = field.usedCards[p];
         }
-        if (field.numPlayersAlive() == 0) { // 先日手でなく通常の終了
+        if (field.numPlayersAlive() == 1) { // 先日手でなく通常の終了
             int lastPlayer = field.ps.searchL1Player();
             game.orgCards[lastPlayer] += field.remCards;
             game.setTerminated();
