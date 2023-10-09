@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
+#include <utility>
 
 struct GradientUpdator {
     // settings
