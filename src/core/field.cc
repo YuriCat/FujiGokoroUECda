@@ -133,11 +133,11 @@ void Field::prepareForPlay() {
     fieldInfo.init();
 
     // 相手手札枚数情報
-    int minNum = INT_MAX, maxNum = 0;
-    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    unsigned minNum = 15, maxNum = 0;
+    unsigned minNumAwake = 15, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = numCardsOf(p);
+        unsigned num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
@@ -373,8 +373,8 @@ int Field::procImpl(const MoveInfo m) {
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (FAST && m.isDO()) { // 他人を支配
-                if (FAST && m.isDM()) { // 自分も支配したので流れる
+            if (FAST && m.dominatesOthers()) { // 他人を支配
+                if (FAST && m.dominatesMe()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
