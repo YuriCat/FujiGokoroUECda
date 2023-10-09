@@ -186,8 +186,6 @@ struct MoveInfo : public Move {
     void setDomAll() { setDALL(); }
     void setChecked() { set(LCT_CHECKED); }
 
-    void init() { Move::flags = 0; }
-
     // get
     bool isFinal() const {    return test(LCT_FINAL); }
     bool isPW() const {       return test(LCT_PW); }

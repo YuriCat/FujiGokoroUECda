@@ -69,11 +69,12 @@ void doSimulationsToEvaluate(const GameRecord& game,
     // 試合終了までシミュレーションを続ける設定
     for (int p = 0; p < N_PLAYERS; p++) field.addAttractedPlayer(p);
     // シミュレーションにより結果を予測
-    std::vector<std::thread> thr;
-    for (int ith = 0; ith < N_THREADS; ith++) {
-        thr.emplace_back(std::thread(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[ith]));
+    std::vector<std::thread> threads;
+    int numThreads = std::min(N_THREADS, (int)std::thread::hardware_concurrency());
+    for (int i = 0; i < numThreads; i++) {
+        threads.emplace_back(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[i]);
     }
-    for (auto& th : thr) th.join();
+    for (auto& th : threads) th.join();
 }
 
 std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const GameRecord& game,
