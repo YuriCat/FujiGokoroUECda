@@ -89,7 +89,7 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 
             double baseScore[N_MAX_CHANGES], score[N_MAX_CHANGES];
             changePolicyScore(score, buf, numChanges, dealtCards, changeQty, shared.baseChangePolicy, 0);
-            if (1 ||computeStats) for (int i = 0; i < numChanges; i++) baseScore[i] = score[i];
+            if (computeStats) for (int i = 0; i < numChanges; i++) baseScore[i] = score[i];
 
             // プレーヤーに対応したバイアスを足す
             vector<pair<int, float>> features[N_MAX_CHANGES];
