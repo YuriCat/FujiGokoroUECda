@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
     shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
 
     PolicyTest(recordFiles);
+    ModelingTest(recordFiles);
     SimulationTest(recordFiles);
     EstimationTest(recordFiles);
 
