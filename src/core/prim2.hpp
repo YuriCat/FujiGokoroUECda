@@ -8,24 +8,24 @@
 
 // 試合結果の宣言情報
 
-constexpr int LCT_FINAL    = 0;
-constexpr int LCT_PW       = 1;
-constexpr int LCT_MPMATE   = 2;
-constexpr int LCT_L2MATE   = 3;
-constexpr int LCT_MPGIVEUP = 4;
-constexpr int LCT_L2GIVEUP = 5;
+constexpr int LCT_FINAL    = 16;
+constexpr int LCT_PW       = 17;
+constexpr int LCT_MPMATE   = 18;
+constexpr int LCT_L2MATE   = 19;
+constexpr int LCT_MPGIVEUP = 20;
+constexpr int LCT_L2GIVEUP = 21;
 
 // 場の一時状況に対するする宣言情報
-constexpr int LCT_SELFFOLLOW = 6;
-constexpr int LCT_UNRIVALED = 7;
-constexpr int LCT_LASTAWAKE = 8;
-constexpr int LCT_FLUSHLEAD = 9;
-constexpr int LCT_NPDOM = 10;
-constexpr int LCT_PDOM = 11;
-constexpr int LCT_DOMOTHERS = 12;
-constexpr int LCT_DOMME = 13;
+constexpr int LCT_SELFFOLLOW = 22;
+constexpr int LCT_UNRIVALED = 23;
+constexpr int LCT_LASTAWAKE = 24;
+constexpr int LCT_FLUSHLEAD = 25;
+constexpr int LCT_NPDOM = 26;
+constexpr int LCT_PDOM = 27;
+constexpr int LCT_DOMOTHERS = 28;
+constexpr int LCT_DOMME = 29;
 
-constexpr int LCT_CHECKED = 15;
+constexpr int LCT_CHECKED = 31;
 
 struct FieldAddInfo {
     // 着手決定のためにこの程度は調べておきたい場情報
@@ -52,10 +52,10 @@ struct FieldAddInfo {
     void setBDALL() { set(LCT_DOMOTHERS, LCT_DOMME); }
     void setNoChance() { setBDM(); }
 
-    void setMinNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFFF0FFFFU) | (n << 16); }
-    void setMaxNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFF0FFFFFU) | (n << 20); }
-    void setMinNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0xF0FFFFFFU) | (n << 24); }
-    void setMaxNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0x0FFFFFFFU) | (n << 28); }
+    void setMinNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFFFF0U) | n; }
+    void setMaxNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFFF0FU) | (n << 4); }
+    void setMinNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFF0FFU) | (n << 8); }
+    void setMaxNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0xFFFF0FFFU) | (n << 12); }
 
     // get
     // 一時情報
@@ -79,17 +79,17 @@ struct FieldAddInfo {
     bool isBDALL() const { return holds(LCT_DOMOTHERS, LCT_DOMME); }
     bool isNoChance() const { return isBDM(); }
 
-    uint32_t minNumCards() const { return (data >> 16) & 15U; }
-    uint32_t maxNumCards() const { return (data >> 20) & 15U; }
-    uint32_t minNumCardsAwake() const { return (data >> 24) & 15U; }
-    uint32_t maxNumCardsAwake() const { return (data >> 28) & 15U; }
+    uint32_t minNumCards() const { return data & 15U; }
+    uint32_t maxNumCards() const { return (data >> 4) & 15U; }
+    uint32_t minNumCardsAwake() const { return (data >> 8) & 15U; }
+    uint32_t maxNumCardsAwake() const { return (data >> 12) & 15U; }
 
     void init() {
         // カード枚数については、無設定の場合はmaxが15、minの場合は0になるようにする
-        data = 0xF0F00000U;
+        data = 0x0000F0F0U;
     }
     void procTmpInfo() {
-        data &= 0xFFFF0000U;
+        data &= 0x0000FFFFU;
     }
 
     constexpr FieldAddInfo(): data() {}
