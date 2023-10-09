@@ -373,8 +373,8 @@ int Field::procImpl(const MoveInfo m) {
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (FAST && m.isDO()) { // 他人を支配
-                if (FAST && m.isDM()) { // 自分も支配したので流れる
+            if (FAST && m.dominatesOthers()) { // 他人を支配
+                if (FAST && m.dominatesMe()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配

@@ -265,13 +265,9 @@ struct MoveInfo : public Move {
     uint64_t isMate() const {     return Move::flags & FLAG_MATE; }
     uint64_t isGiveUp() const {   return Move::flags & FLAG_GIVEUP; }
 
-    uint64_t isDO() const { return test(12); }
-    uint64_t isDM() const { return test(13); }
-    bool isDALL() const { return holds(12, 13); }
-
-    uint64_t dominatesOthers() const { return isDO(); }
-    uint64_t dominatesMe() const { return isDM(); }
-    uint64_t dominatesAll() const { return isDALL(); }
+    uint64_t dominatesOthers() const { return test(12); }
+    uint64_t dominatesMe() const { return test(13); }
+    bool dominatesAll() const { return holds(12, 13); }
 
     bool isChecked() const { return test(31); }
 };
