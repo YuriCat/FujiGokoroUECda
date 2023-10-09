@@ -23,6 +23,17 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
     if (numMoves == 1) return field.mbuf[0];
     if (Settings::MateSearchInSimulation) {
         int mateIndice[N_MAX_MOVES];
+        int finalMoves = 0;
+        for (int i = 0; i < numMoves; i++) {
+            if (field.mbuf[i].qty() >= field.hand[turn].qty) mateIndice[finalMoves++] = i;
+        }
+        if (finalMoves > 0) {
+            int index = mateIndice[finalMoves > 1 ? (ptools->dice() % finalMoves) : 0];
+            MoveInfo move = field.mbuf[index];
+            field.fieldInfo.setFinal();
+            move.setFinal();
+            return move;
+        }
         int mates = 0;
         for (int i = 0; i < numMoves; i++) {
             bool mate = checkHandMate(0, field.mbuf + numMoves, field.mbuf[i],
