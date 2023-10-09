@@ -196,13 +196,9 @@ struct MoveInfo : public Move {
     bool isMate() const {     return test(LCT_FINAL, LCT_PW, LCT_MPMATE, LCT_L2MATE); }
     bool isGiveUp() const {   return test(LCT_MPGIVEUP, LCT_L2GIVEUP); }
 
-    bool isDO() const { return test(LCT_DOMOTHERS); }
-    bool isDM() const { return test(LCT_DOMME); }
-    bool isDALL() const { return holds(LCT_DOMME, LCT_DOMOTHERS); }
-
-    bool dominatesOthers() const { return isDO(); }
-    bool dominatesMe() const { return isDM(); }
-    bool dominatesAll() const { return isDALL(); }
+    bool dominatesOthers() const { return test(LCT_DOMOTHERS); }
+    bool dominatesMe() const { return test(LCT_DOMME); }
+    bool dominatesAll() const { return holds(LCT_DOMME, LCT_DOMOTHERS); }
 
     bool isChecked() const { return test(LCT_CHECKED); }
 };

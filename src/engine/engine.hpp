@@ -366,7 +366,7 @@ public:
             // 8. 即切り役を優先
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
             // 9. 自分を支配していないものを優先
-            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
+            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.dominatesMe(); });
 
             playMove = root.child[0].move; // 必勝手から選ぶ
         }
