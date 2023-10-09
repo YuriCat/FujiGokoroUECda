@@ -485,13 +485,12 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
                             }
                         }
                     } else {
-                        for (int f = RANK_MIN; f <= RANK_MAX; f++) {
+                        for (IntCard ic : afterPqr) { // ここは速度に関係するのでスパース用ループに
+                            int f = IntCardToRank(ic);
                             uint32_t as = afterCards[f];
-                            if (as) {
-                                int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
-                                                            f, SSIndex[m.suits()][as]);
-                                Foo(key)
-                            }
+                            int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
+                                                        f, SSIndex[m.suits()][as]);
+                            Foo(key)
                         }
                         if (containsJOKER(afterCards)) {
                             int key = base + Index::get(order, m.rank(), b.locksSuits(m) ? 1 : 0,
