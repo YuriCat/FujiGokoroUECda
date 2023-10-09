@@ -319,13 +319,13 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 間に他プレーヤーの着手を含んだ必勝を検討
     // 支配的でないことは前提とする
-    if (!b.isNull()) return false; // 未実装
     if (m.isPASS()) return false; // パスからのBNPWはない
-    int curOrder = b.prmOrder();
-    Cards ops8 = opsHand.cards & CARDS_8;
 
     // 相手に間で上がられる可能性がある場合
     if (fieldInfo.minNumCardsAwake() <= m.qty() && m.qty() <= fieldInfo.maxNumCardsAwake()) return false;
+
+    int curOrder = b.prmOrder();
+    Cards ops8 = opsHand.cards & CARDS_8;
 
     FieldAddInfo nextFieldInfo;
 
@@ -334,6 +334,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
         if (m.isSingleJOKER()) return false;
         if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
             // 相手に8切りで返される可能性があればだめ
+            if (b.afterSuitsLocked(m)) ops8 &= SuitsToCards(m.suits());
             if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
             // 残り1枚がジョーカーなら勝ち
             if (myHand.qty == m.qty() + 1) return true;
