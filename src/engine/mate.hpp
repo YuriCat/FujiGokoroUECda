@@ -376,9 +376,11 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
             nb.flush();
             FieldAddInfo nextFieldInfo;
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-            return judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo);
+            if (judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo)) {
+                m.setPW(); return true;
+            }
         } else {
-            if (m.qty() >= myHand.qty) return true; // あがり
+            if (m.qty() >= myHand.qty) { m.setFinal(); return true; } // あがり
             Hand nextHand;
             Board nb = b;
             FieldAddInfo nextFieldInfo;
@@ -387,11 +389,15 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                 m.setDM(); // 支配フラグ付加
                 nb.procAndFlush(m);
                 flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
+                if (judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
+                    m.setPW(); return true;
+                }
             } else { // セルフフォロー必勝を判定
                 nb.proc(m);
                 procUnrivaled(fieldInfo, &nextFieldInfo);
-                return judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo);
+                if (judgeHandMate(depth, mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
+                    m.setPW(); return true;
+                }
             }
         }
         return false;
@@ -406,12 +412,15 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         m.setDO(); // 支配フラグ付加
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-        return judgeHandMate(depth, mbuf, myHand, opsHand,
-                             OrderToNullBoard(b.prmOrder()), nextFieldInfo);
+        Board nb = OrderToNullBoard(b.prmOrder());
+        if (judgeHandMate(depth, mbuf, myHand, opsHand, nb, nextFieldInfo)) {
+            m.setPW(); return true;
+        }
+        return false;
     }
 
     // 通常
-    if (m.qty() >= myHand.qty) return true; // 即上がり
+    if (m.qty() >= myHand.qty) { m.setFinal(); return true; } // 即上がり
     if (dominatesHand(m, opsHand, b)
         || m.qty() > fieldInfo.maxNumCardsAwake()) { // 支配
         m.setDO(); // 支配フラグ付加
@@ -430,14 +439,17 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
         if (judgeHandMate(m.isRev() ? depth : 0,
                           mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
-            return true;
+            m.setPW(); return true;
         }
         // 自分の出したジョーカーをS3で返してからの必勝チェック
         if (m.isSingleJOKER() && containsS3(nextHand.cards)) {
             Move s3; s3.setSingle(INTCARD_S3);
             nextHand.makeMove1stHalf(s3, CARDS_S3, 1);
-            return judgeHandMate(0, mbuf, nextHand, opsHand, nb, nextFieldInfo);
+            if (judgeHandMate(0, mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
+                m.setPW(); return true;
+            }
         }
+        return false;
     } else { // 支配しない
         if (depth <= 0) return false;
 
@@ -460,7 +472,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
                     if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
                         // 両方で勝ったので必勝
                         DERR << "BRPW(S3)!!!" << std::endl;
-                        return true;
+                        m.setMPMate(); return true;
                     }
                 }
             }
@@ -468,7 +480,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         // BNPWを検討
         if (checkHandBNPW(depth - 1, mbuf, m, myHand, opsHand, b, fieldInfo)) {
             DERR << "BNPW - " << m << " ( " << fieldInfo.minNumCardsAwake() << " ) " << std::endl;
-            return true;
+            m.setMPMate(); return true;
         }
     }
     return false;
