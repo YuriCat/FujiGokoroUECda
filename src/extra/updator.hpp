@@ -1,8 +1,5 @@
 #include <random>
 
-
-struct ParameterStats { double count, sum, sum2; };
-
 struct GradientUpdator {
     // settings
     double lr;
@@ -10,6 +7,7 @@ struct GradientUpdator {
     double weight_decay;
     double stats_decay;
 
+    struct ParameterStats { double count, sum, sum2; };
     std::vector<ParameterStats> s;
     double totalCount;
 
