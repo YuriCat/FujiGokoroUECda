@@ -71,7 +71,8 @@ struct PlayerModel {
     std::vector<PlayerModelStats> changeStats_;
     PlayerModelStats tmpChangeStats;
 
-    int games;
+    int games = 0;
+    bool trained = false;
 
     GradientUpdator updator;
     //ProbDiffUpdator updator;
@@ -86,6 +87,7 @@ struct PlayerModel {
         changeStats_.clear();
         tmpChangeStats = {0};
         games = 0;
+        trained = false;
     }
     double playBiasScore(const Field& field, int player, Move move, std::vector<std::pair<int, float>> *v = nullptr) const;
     double changeBiasScore(int player, const Cards cards, const Cards changeCards, std::vector<std::pair<int, float>> *v = nullptr) const;

@@ -164,6 +164,7 @@ void PlayerModel::update(const MatchRecord& record, int gameNum, int playerNum,
         int g = gameNum - i;
         if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, i == 0);
     }
+    trained = true;
     games += 1;
     if (games % 100 == 0) {
         stats_.push_back(tmpStats);

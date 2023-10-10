@@ -42,7 +42,7 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
     // 行動方策を計算
     double score[N_MAX_MOVES];
     playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
-    if (turn != field.myPlayerNum) {
+    if (turn != field.myPlayerNum && shared.playerModel.trained) {
         for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, field.mbuf[i]) * progress;
     }
 
