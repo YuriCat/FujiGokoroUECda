@@ -122,6 +122,8 @@ private:
                  const SharedData& shared, ThreadTools *const ptools) const;
     Cards selectInWA(double urand) const;
 
+    double oneChangeLikelihood(int p, const Cards cards, const Cards changeCards,
+                               const SharedData& shared) const;
     double onePlayLikelihood(const Field& field, Move move,
                              const SharedData& shared, ThreadTools *const ptools) const;
     double playLikelihood(const Cards *c, const GameRecord& game,

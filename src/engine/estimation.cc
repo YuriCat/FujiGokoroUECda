@@ -256,12 +256,14 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
     Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    bool rejectionDeal[Settings::BUCKET_MAX] = {false};
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
             dealWithNewBias(deal[i], ptools->dice);
         } else {
             bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            if (ok) rejectionDeal[i] = true;
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
             if (!ok && ++failures > 1) failed = true;
         }
@@ -271,6 +273,16 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
             lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+            if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
+                // 逆関数で配った場合はここで交換相手の交換尤度を評価
+                int ptClass = getChangePartnerClass(myClass);
+                if (NDeal[ptClass]) {
+                    int partner = infoClassPlayer[ptClass];
+                    double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+                    //cerr << NDeal << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << " " << lhs[i] << endl;
+                    lhs[i] += log(prob);
+                }
+            }
         }
         SoftmaxSelector<double> selector(lhs, buckets, 0.3);
         bestDeal = selector.select(ptools->dice.random());
@@ -638,6 +650,22 @@ void RandomDealer::setWeightInWA() {
         thresholdInWA[l] = 1;
     }
     candidatesInWA = probs.size();
+}
+
+double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards changeCards, const SharedData& shared) const {
+    Cards change[N_MAX_CHANGES];
+    double score[N_MAX_CHANGES];
+    int qty = changeCards.count();
+    int numChanges = genChange(change, cards, qty);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    if (shared.playerModel.trained) {
+        for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
+    }
+    SoftmaxSelector<double> selector(score, numChanges, 1.1);
+    int index = find(change, change + numChanges, changeCards) - change;
+    assert(0 <= index && index < numChanges);
+    double prob = selector.prob(index);
+    return max(prob, 1 / 128.0);
 }
 
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
