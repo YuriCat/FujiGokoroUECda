@@ -23,8 +23,9 @@ uint64_t worldKey(const Field& f) {
     return key;
 }
 
-void testEstimationRate(const MatchRecord& match, DealType type) {
+void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pmodel = nullptr) {
     shared.initMatch(-1);
+    if (pmodel != nullptr) shared.playerModel = *pmodel;
     tools.dice.srand(1);
     mt19937 dice(0);
 
@@ -93,7 +94,7 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     cerr << "in " << time / cnt << " clock" << endl;
 }
 
-bool EstimationTest(const vector<string>& recordFiles) {
+bool EstimationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
 
     shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
     shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
@@ -104,6 +105,7 @@ bool EstimationTest(const vector<string>& recordFiles) {
         testEstimationRate(match, DealType::SBJINFO);
         testEstimationRate(match, DealType::BIAS);
         testEstimationRate(match, DealType::REJECTION);
+        testEstimationRate(match, DealType::REJECTION, pmodel);
     }
 
     return 0;
