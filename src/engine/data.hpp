@@ -4,6 +4,7 @@
 #include "../core/record.hpp"
 #include "../core/field.hpp"
 #include "policy.hpp"
+#include "modeling.hpp"
 
 // Field以外のデータ構造
 // Fieldは基本盤面情報+盤面を進めたり戻したりするときに値が変化するもの
@@ -68,6 +69,9 @@ struct SharedData : public BaseSharedData {
     // 基本方策
     ChangePolicy<policy_value_t> baseChangePolicy;
     PlayPolicy<policy_value_t> basePlayPolicy;
+
+    // 相手モデリング
+    PlayerModel playerModel;
 
     // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
     int mateClass; // 初めてMATEと判定した階級の宣言
