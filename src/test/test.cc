@@ -1,9 +1,6 @@
 #include "test.h"
-#include "../engine/data.hpp"
 
 using namespace std;
-
-SharedData shared;
 
 int main(int argc, char* argv[]) {
     vector<string> recordFiles;
@@ -27,13 +24,12 @@ int main(int argc, char* argv[]) {
     MateTest(recordFiles);
     Last2Test(recordFiles);
 
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-
+    // 機械学習モデルを利用するテスト
     PolicyTest(recordFiles);
-    ModelingTest(recordFiles);
-    SimulationTest(recordFiles);
-    EstimationTest(recordFiles);
+    PlayerModel model;
+    ModelingTest(recordFiles, &model);
+    SimulationTest(recordFiles, &model);
+    EstimationTest(recordFiles, &model);
 
     return 0;
 }
