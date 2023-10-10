@@ -250,9 +250,8 @@ int testSelector(const MatchRecord& match) {
 }
 
 bool PolicyTest(const vector<string>& recordFiles) {
-
-    changePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    playPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+    changePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    playPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     outputParams();
 

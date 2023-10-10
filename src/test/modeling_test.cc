@@ -24,8 +24,8 @@ void testModeling(const MatchRecord& match, PlayerModel& model) {
 }
 
 bool ModelingTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     PlayerModel model;
     for (string rf : recordFiles) {

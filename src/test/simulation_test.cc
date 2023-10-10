@@ -64,9 +64,8 @@ int testSimulation(const MatchRecord& match, PlayerModel *pmodel = nullptr) {
 }
 
 bool SimulationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
-
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     for (string rf : recordFiles) {
         MatchRecord mrecord(rf);

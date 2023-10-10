@@ -95,9 +95,9 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
 }
 
 bool EstimationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
-
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+    loadEstimationParams(DIRECTORY_PARAMS_IN + "est_score.bin");
 
     for (string rf : recordFiles) {
         MatchRecord match(rf);

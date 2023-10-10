@@ -19,14 +19,18 @@ constexpr int EST_FEATURES =
 extern float estimationTable[EST_FEATURES];
 extern float inverseEstimationScore(const Cards, const Cards, const Cards, int, std::vector<std::pair<int, float>> *const = nullptr);
 
+static void loadEstimationParams(std::string path) {
+    std::fstream file(path, std::ios::in | std::ios::binary);
+    file.read(reinterpret_cast<char*>(estimationTable), EST_FEATURES * 4);
+    if (file.fail()) std::cerr << "failed to load " << path << "!" << std::endl;
+}
+
 class RandomDealer {
     // ランダムに手札配置を作る
     // 基本的に連続分配を想定しているので、異なるプレーヤーが互いに分配するような状況ではインスタンスを複数作るべき
     static constexpr int N = N_PLAYERS;
 public:
     RandomDealer(const Field& f, int turn) {
-        std::fstream file("param.bin", std::ios::in | std::ios::binary);
-        file.read(reinterpret_cast<char*>(estimationTable), EST_FEATURES * 4);
         set(f, turn);
     }
 

@@ -307,8 +307,8 @@ int main(int argc, char *argv[]) {
     
     if (rating) {
         // レート計算のためシミュレーションに使用するデータを準備
-        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+        shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
         XorShift64 tdice;
         tdice.srand((unsigned int)time(NULL));
         for (int th = 0; th < N_THREADS; th++) {

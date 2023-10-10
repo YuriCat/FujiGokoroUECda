@@ -11,6 +11,7 @@
 #include "mate.hpp"
 #include "last2.hpp"
 #include "policy.hpp"
+#include "estimation.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
 
@@ -44,8 +45,9 @@ public:
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
 
-        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+        shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+        loadEstimationParams(DIRECTORY_PARAMS_IN + "est_score.bin");
     }
     void initGame() {
         // 汎用変数の設定
