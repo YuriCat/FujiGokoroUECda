@@ -524,8 +524,10 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
         // 交換処理
         if (myClass > MIDDLE) {
             int ptClass = getChangePartnerClass(myClass);
-            Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
-            if (cc != recvCards) continue;
+            if (NDeal[ptClass]) {
+                Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
+                if (cc != recvCards) continue;
+            }
         }
 
         ok = true;
