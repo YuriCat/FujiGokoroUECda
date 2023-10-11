@@ -41,7 +41,7 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 
     // 行動方策を計算
     double score[N_MAX_MOVES];
-    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy);
     if (turn != field.myPlayerNum && shared.playerModel.trained) {
         for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, field.mbuf[i]) * progress;
     }
@@ -109,7 +109,7 @@ int startAllSimulation(Field& field,
             Cards change[N_MAX_CHANGES];
             double score[N_MAX_CHANGES];
             const int numChanges = genChange(change, field.getCards(from), qty);
-            changePolicyScore(score, change, numChanges, field.getCards(from), qty, pshared->baseChangePolicy, 0);
+            changePolicyScore(score, change, numChanges, field.getCards(from), qty, pshared->baseChangePolicy);
             SoftmaxSelector<double> selector(score, numChanges, Settings::simulationTemperatureChange);
             int index = selector.select(ptools->dice.random());
             field.makeChange(from, to, qty, change[index], false);

@@ -145,7 +145,7 @@ public:
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy, 0);
+        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy);
         root.feedPolicyScore(score, numCands);
 
         // モンテカルロ法による評価
@@ -305,7 +305,7 @@ public:
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
-        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy, 0);
+        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy);
         root.feedPolicyScore(score, numMoves);
 
         // モンテカルロ法による評価(結果確定のとき以外)

@@ -138,12 +138,12 @@ int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
 }
 
 extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
-                           const Field& field, const PlayPolicy<policy_value_t>& pol, int mode = 1);
+                           const Field& field, const PlayPolicy<policy_value_t>& pol, int mode = 0);
 extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
                            const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode = 1);
 extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
                              const Cards myCards, int numChangeCards,
-                             const ChangePolicy<policy_value_t>& pol, int mode = 1);
+                             const ChangePolicy<policy_value_t>& pol, int mode = 0);
 extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
                              const Cards myCards, int numChangeCards,
                              ChangePolicyLearner<policy_value_t>& pol, int mode = 1);
@@ -153,7 +153,7 @@ int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
                          const Cards myCards, int numChangeCards,
                          const policy_t& pol, Dice& dice) {
     double score[N_MAX_CHANGES + 1];
-    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
+    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol);
 
     int bestIndex[N_MAX_CHANGES];
     bestIndex[0] = -1;

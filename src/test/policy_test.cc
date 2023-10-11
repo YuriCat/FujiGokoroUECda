@@ -143,7 +143,7 @@ int testSelector(const MatchRecord& match) {
             const int turnPlayer = field.turn();
             const int numMoves = genMove(play, field.getCards(turnPlayer), field.board);
 
-            playPolicyScore(score, play, numMoves, field, playPolicy, 0);
+            playPolicyScore(score, play, numMoves, field, playPolicy);
 
             int recordIndex = searchMove(play, numMoves, move);
 

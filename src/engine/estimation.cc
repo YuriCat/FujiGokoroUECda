@@ -461,7 +461,7 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     Cards change[N_MAX_CHANGES];
     double score[N_MAX_CHANGES];
     int numChanges = genChange(change, cards, qty);
-    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy);
     if (shared.playerModel.trained) {
         for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
     }
@@ -657,7 +657,7 @@ double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards c
     double score[N_MAX_CHANGES];
     int qty = changeCards.count();
     int numChanges = genChange(change, cards, qty);
-    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy, 0);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy);
     if (shared.playerModel.trained) {
         for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
     }
@@ -689,7 +689,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     if (moveIndex == -1) return 0.1 / double(numMoves + 1);
 
     array<double, N_MAX_MOVES> score;
-    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy);
     if (shared.playerModel.trained) {
         for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]);
     }

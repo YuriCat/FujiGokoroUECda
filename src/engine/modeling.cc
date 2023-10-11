@@ -88,7 +88,7 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
             if (index == numChanges) continue;
 
             double baseScore[N_MAX_CHANGES], score[N_MAX_CHANGES];
-            changePolicyScore(score, buf, numChanges, dealtCards, changeQty, shared.baseChangePolicy, 0);
+            changePolicyScore(score, buf, numChanges, dealtCards, changeQty, shared.baseChangePolicy);
             if (computeStats) for (int i = 0; i < numChanges; i++) baseScore[i] = score[i];
 
             // プレーヤーに対応したバイアスを足す
@@ -137,7 +137,7 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 
         // ベース方策を計算
         double baseScore[N_MAX_MOVES], score[N_MAX_MOVES];
-        playPolicyScore(score, buf, numMoves, field, shared.basePlayPolicy, 0);
+        playPolicyScore(score, buf, numMoves, field, shared.basePlayPolicy);
         if (computeStats) for (int i = 0; i < numMoves; i++) baseScore[i] = score[i];
 
         // プレーヤーに対応したバイアスを足す
