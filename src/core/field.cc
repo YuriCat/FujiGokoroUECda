@@ -80,7 +80,7 @@ void Field::procHand(int tp, Move m) {
         if (p == tp) {
             if (know(p)) {
                 assert(hand[p].holds(dc));
-                if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
+                if (dq >= hand[p].qty) hand[p].clear();
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
             }
             else hand[p].qty -= dq;
