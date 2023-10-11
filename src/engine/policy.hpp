@@ -67,7 +67,7 @@ namespace PlayPolicySpace {
         2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
         2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
         2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
-        2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターンåå
+        2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
     };
 
     static_assert(FEA_ALL == sizeof(feaNumTable) / sizeof(int), "");

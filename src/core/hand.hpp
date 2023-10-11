@@ -281,7 +281,7 @@ inline std::ostream& operator <<(std::ostream& out, const Hand& hand) { // 出�
 
 template <bool HALF = false>
 inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_t dq) {
-    // 普通、パスやカードが0枚になるときはこの関数には入らない。
+    // 普通、パスやカードが0枚になるときはこの関数には入らない
 
     // 更新するものは最初にチェック
     if (HALF) assert(arg.exam1stHalf());
