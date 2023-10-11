@@ -174,10 +174,10 @@ int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
     else return bestIndex[dice() % numBestMoves];
 }
 
-template <int STOCK = 0, class policy_t>
+template <class policy_t>
 int playWithBestPolicy(MoveInfo *const mbuf, int numMoves, const Field& field, const policy_t& pol, Dice& dice) {
     double score[N_MAX_MOVES + 1];
-    playPolicyScore(score, mbuf, numMoves, field, pol, STOCK ? 2 : 0);
+    playPolicyScore(score, mbuf, numMoves, field, pol);
 
     int bestIndex[N_MAX_MOVES];
     bestIndex[0] = -1;
