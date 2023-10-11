@@ -107,9 +107,11 @@ int startAllSimulation(Field& field,
             int to = field.classPlayer(getChangePartnerClass(cl));
             int qty = N_CHANGE_CARDS(cl);
             Cards change[N_MAX_CHANGES];
-            const int changes = genChange(change, field.getCards(from), qty);
-            int index = changeWithPolicy(change, changes, field.getCards(from), qty,
-                                         pshared->baseChangePolicy, Settings::simulationTemperatureChange, ptools->dice);
+            double score[N_MAX_CHANGES];
+            const int numChanges = genChange(change, field.getCards(from), qty);
+            changePolicyScore(score, change, numChanges, field.getCards(from), qty, pshared->baseChangePolicy, 0);
+            SoftmaxSelector<double> selector(score, numChanges, Settings::simulationTemperatureChange);
+            int index = selector.select(ptools->dice.random());
             field.makeChange(from, to, qty, change[index], false);
         }
     }

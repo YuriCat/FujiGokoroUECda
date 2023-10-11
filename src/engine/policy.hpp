@@ -148,27 +148,6 @@ extern int changePolicyScore(double *const dst, const Cards *const change, int n
                              const Cards myCards, int numChangeCards,
                              ChangePolicyLearner<policy_value_t>& pol, int mode = 1);
 
-template <int STOCK = 0, class policy_t>
-int playWithPolicy(Move *const mbuf, int numMoves,
-                   const policy_t& pol, double temperature, Dice& dice,
-                   double *const pentropy = nullptr) {
-    double score[N_MAX_MOVES];
-    playPolicyScore(score, mbuf, numMoves, pol, STOCK ? 2 : 0);
-    SoftmaxSelector<double> selector(score, numMoves, temperature);
-    if (pentropy != nullptr) *pentropy = selector.entropy();
-    return selector.select(dice.random());
-}
-
-template <class policy_t>
-int changeWithPolicy(Cards *const cbuf, const int numChanges,
-                     const Cards myCards, const int numChangeCards,
-                     const policy_t& pol, double temperature, Dice& dice) {
-    double score[N_MAX_CHANGES];
-    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
-    SoftmaxSelector<double> selector(score, numChanges, temperature);
-    return selector.select(dice.random());
-}
-
 template <class policy_t>
 int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
                          const Cards myCards, int numChangeCards,
