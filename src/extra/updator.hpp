@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <algorithm>
 
 struct GradientUpdator {
     // settings
