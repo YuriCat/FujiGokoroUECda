@@ -97,14 +97,6 @@ constexpr int N_PATTERNS_SUITS_SUITS = 35;
 
 extern void initSuits();
 
-struct SuitsInitializer {
-    SuitsInitializer() {
-        initSuits();
-    }
-};
-
-extern SuitsInitializer suitsInitializer;
-
 /**************************カード整数**************************/
 
 // U3456789TJQKA2O、CDHSの順番で0-59　ジョーカーは60
@@ -835,14 +827,6 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
 
 extern void initCards();
 
-struct CardsInitializer {
-    CardsInitializer() {
-        initCards();
-    }
-};
-
-extern CardsInitializer cardsInitializer;
-
 /**************************着手表現**************************/
 
 struct Move {
@@ -1114,3 +1098,13 @@ inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board b) {
 inline uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
     return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
 }
+
+/**************************初期化**************************/
+
+struct DaifugoInitializer {
+    DaifugoInitializer() {
+        initSuits();
+        initCards();
+        if (Move({1, 1, 1, 1, 3, 2}).toInt() != 2298129) exit(1);
+    }
+};
