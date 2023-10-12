@@ -789,7 +789,6 @@ inline bool canMakeGroup(BitCards c, int n) {
 
 // 一枚一枚に乱数をあてたゾブリストハッシュ
 // 線形のため合成や進行が楽
-constexpr uint64_t HASH_CARDS_NULL = 0ULL;
 constexpr uint64_t cardsHashKeyTable[64] = {
     // インデックスがIntCard番号に対応
     0x15cc5ec4cae423e2, 0xa1373ceae861f22a, 0x7b60ee1280de0951, 0x970b602e9f0a831a,
@@ -820,7 +819,7 @@ constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
     return a - b;
 }
 inline uint64_t CardsToHashKey(Cards c) {
-    uint64_t key = HASH_CARDS_NULL;
+    uint64_t key = 0ULL;
     for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic));
     return key;
 }
