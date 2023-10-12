@@ -266,7 +266,7 @@ bool Field::exam() const {
                 cerr << "hand[" << p << "]excl" << endl;
                 return false;
             }
-            // 包括性
+            // 包含関係
             if (!holdsCards(r, c)) {
                 cerr << remCards << endl;
                 cerr << hand[p] << endl;

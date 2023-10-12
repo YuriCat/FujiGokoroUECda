@@ -408,7 +408,7 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     return res;
 }
 
-// 許容包括
+// 許容包含
 // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
 // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
 inline bool isValidGroupRank(int moveRank, int order, int boardRank) {
