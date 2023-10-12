@@ -812,12 +812,9 @@ constexpr uint64_t cardsHashKeyTable[64] = {
 constexpr uint64_t IntCardToHashKey(IntCard ic) {
     return cardsHashKeyTable[ic];
 }
-constexpr uint64_t addCardKey(uint64_t a, uint64_t b) {
-    return a + b;
-}
-constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
-    return a - b;
-}
+constexpr uint64_t addCardKey(uint64_t a, uint64_t b) { return a + b; }
+constexpr uint64_t addCardKey(uint64_t a, uint64_t b, uint64_t c) { return a + b + c; }
+constexpr uint64_t subCardKey(uint64_t a, uint64_t b) { return a - b; }
 inline uint64_t CardsToHashKey(Cards c) {
     uint64_t key = 0ULL;
     for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic));

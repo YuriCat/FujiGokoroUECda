@@ -87,6 +87,9 @@ private:
     Cards myDealtCards; // 配布時
     Cards recvCards, sentCards;
 
+    uint64_t recvCardKey;
+    std::array<uint64_t, N> usedCardKey;
+
     bool inChange;
     bool initGame;
     bool failed;
@@ -102,6 +105,9 @@ private:
 
     // 着手について検討の必要があるプレーヤーフラグ
     std::bitset<N_PLAYERS> playFlag;
+
+    std::unordered_map<uint64_t, double> changeLikelihoodMap;
+    std::unordered_map<uint64_t, double> playLikelihoodMap;
 
     // inner function
     void set(const Field& field, int playerNum);
@@ -130,6 +136,6 @@ private:
                                const SharedData& shared) const;
     double onePlayLikelihood(const Field& field, Move move,
                              const SharedData& shared, ThreadTools *const ptools) const;
-    double playLikelihood(const Cards *c, const GameRecord& game,
-                          const SharedData& shared, ThreadTools *const ptools) const;
+    double playLikelihood(const World& world, const GameRecord& game,
+                          const SharedData& shared, ThreadTools *const ptools);
 };

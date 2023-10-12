@@ -256,30 +256,41 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
-    Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    World world[Settings::BUCKET_MAX]; // 配置候補
     bool rejectionDeal[Settings::BUCKET_MAX] = {false};
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
+        Cards deal[N];
         if (failed) {
-            dealWithNewBias(deal[i], ptools->dice);
+            dealWithNewBias(deal, ptools->dice);
         } else {
-            bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            bool ok = dealWithChangeRejection(deal, shared, ptools);
             if (ok) rejectionDeal[i] = true;
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
             if (!ok && ++failures > 1) failed = true;
         }
+        world[i].set(turnCount, deal);
     }
     // 役提出の尤度を計算して使用する手札配置を決定
     if (buckets > 1) {
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
-            lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+            lhs[i] = playLikelihood(world[i], game, shared, ptools);
             if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
                 // 逆関数で配った場合はここで交換相手の交換尤度を評価
                 int ptClass = getChangePartnerClass(myClass);
                 if (NDeal[ptClass]) {
+                    double prob = -1;
                     int partner = infoClassPlayer[ptClass];
-                    double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+                    uint64_t dealtKey = addCardKey(usedCardKey[partner], world[i].cardKey[partner], recvCardKey);
+                    uint64_t changeKey = cross64(dealtKey, recvCardKey);
+                    auto itr = changeLikelihoodMap.find(changeKey);
+                    if (itr != changeLikelihoodMap.end()) {
+                        prob = itr->second;
+                    } else {
+                        prob = oneChangeLikelihood(partner, world[i].cards[partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+                        changeLikelihoodMap[changeKey] = prob;
+                    }
                     //cerr << NDeal << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << " " << lhs[i] << endl;
                     lhs[i] += log(prob);
                 }
@@ -288,7 +299,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
         SoftmaxSelector<double> selector(lhs, buckets, 0.3);
         bestDeal = selector.select(ptools->dice.random());
     }
-    for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
+    for (int p = 0; p < N; p++) dst[p] = world[bestDeal].cards[p];
     checkDeal(dst);
 }
 
@@ -338,6 +349,8 @@ void RandomDealer::set(const Field& field, int playerNum) {
         NDet[cl] = org - own;
         usedCards[cl] = field.getUsedCards(p);
         detCards[cl] += usedCards[cl]; // 既に使用されたカードは確定
+
+        usedCardKey[p] = CardsToHashKey(field.getUsedCards(p));
     }
     // サーバー視点の場合はdealtとrecvが分かれて入っていて、
     // プレーヤー視点ではdealtに全て入っているので足す処理にする
@@ -348,6 +361,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
     if (!initGame && !inChange && myClass != MIDDLE) {
         sentCards = field.getSentCards(myNum);
         recvCards = field.getRecvCards(myNum);
+        recvCardKey = CardsToHashKey(recvCards);
     }
 
     // すでに分かっている情報から確実な部分を分配
@@ -665,8 +679,8 @@ double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards c
     SoftmaxSelector<double> selector(score, numChanges, 1.1);
     int index = find(change, change + numChanges, changeCards) - change;
     assert(0 <= index && index < numChanges);
-    double prob = selector.prob(index);
-    return max(prob, 1 / 128.0);
+    double prob = max(selector.prob(index), 1 / 128.0);
+    return prob;
 }
 
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
@@ -705,27 +719,47 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 
-double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
-                                    const SharedData& shared, ThreadTools *const ptools) const {
+double RandomDealer::playLikelihood(const World& world, const GameRecord& game,
+                                    const SharedData& shared, ThreadTools *const ptools) {
     // 想定した手札配置から、試合進行がどの程度それっぽいか考える
     if (inChange) return 0;
-    double playllh = 0; // 対数尤度
 
     array<Cards, N> orgCards;
+    array<uint64_t, N> orgCardkey;
     for (int p = 0; p < N; p++) {
-        orgCards[p] = c[p] + usedCards[infoClass[p]];
+        orgCards[p] = world.cards[p] + usedCards[infoClass[p]];
+        orgCardkey[p] = addCardKey(usedCardKey[p], world.cardKey[p]);
     }
 
-    Field field;
-    for (Move move : PlayRoller(field, game, orgCards)) {
-        int turn = field.turn();
-        if (field.turnCount() >= turnCount) break; // 決めたところまで読み終えた(オフラインでの判定用)
-        if (!holdsCards(field.getCards(turn), move.cards())) break; // 終了(エラー)
-        // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)以外を考慮
-        if (playFlag.test(turn)) {
-            double lh = onePlayLikelihood(field, move, shared, ptools);
-            if (lh < 1) playllh += log(lh);
+    array<double, N> playerLogLh = {0};
+    auto tmpPlayFlag = playFlag;
+    for (int p = 0; p < N; p++) {
+        if (tmpPlayFlag.test(p)) {
+            auto itr = playLikelihoodMap.find(orgCardkey[p]);
+            if (itr != playLikelihoodMap.end()) {
+                playerLogLh[p] = itr->second;
+                tmpPlayFlag.reset(p);
+            }
         }
     }
-    return playllh;
+
+    if (tmpPlayFlag.count() > 0) {
+        Field field;
+        for (Move move : PlayRoller(field, game, orgCards)) {
+            int turn = field.turn();
+            if (field.turnCount() >= turnCount) break; // 決めたところまで読み終えた(オフラインでの判定用)
+            if (!holdsCards(field.getCards(turn), move.cards())) break; // 終了(エラー)
+            // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)以外を考慮
+            if (tmpPlayFlag.test(turn)) {
+                double lh = onePlayLikelihood(field, move, shared, ptools);
+                if (lh < 1) playerLogLh[turn] += log(lh);
+            }
+        }
+
+        for (int p = 0; p < N; p++) {
+            if (tmpPlayFlag.test(p)) playLikelihoodMap[orgCardkey[p]] = playerLogLh[p];
+        }
+    }
+
+    return accumulate(playerLogLh.begin(), playerLogLh.end(), 0.0);
 }
