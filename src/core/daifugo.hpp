@@ -868,6 +868,11 @@ struct Move {
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
     }
+    static Move fromInt(uint32_t a) {
+        Move m;
+        *reinterpret_cast<uint64_t*>(&m) = uint64_t(a);
+        return m;
+    }
 
     void clear()                      { *this = Move({0}); }
     void setPASS()                    { clear(); t = 0; }
