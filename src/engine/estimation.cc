@@ -232,10 +232,11 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
-    array<Cards, N> cards[64];
-    double score[64] = {0};
-    for (int i = 0; i < 64; i++) dealWithBias(cards[i].data(), dice);
-    for (int i = 0; i < 64; i++) {
+    const int K = 64;
+    array<Cards, N> cards[K];
+    double score[K] = {0};
+    for (int i = 0; i < K; i++) dealWithBias(cards[i].data(), dice);
+    for (int i = 0; i < K; i++) {
         float s = 0;
         for (int p = 0; p < N; p++) {
             int cl = infoClass[p];
@@ -247,7 +248,7 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
         }
         score[i] = s;
     }
-    SoftmaxSelector<double> selector(score, 64, 0.1);
+    SoftmaxSelector<double> selector(score, K, 0.1);
     int index = selector.select(dice.random());
     for (int p = 0; p < N; p++) dst[p] = cards[index][p];
 }
