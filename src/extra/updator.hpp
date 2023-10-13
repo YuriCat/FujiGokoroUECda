@@ -81,7 +81,7 @@ struct GradientUpdatorStats {
     void update(double *prob, int num, int index) {
         count += 1;
         correct += (std::max_element(prob, prob + num) - prob) == index;
-        cent = -log2(prob[index]);
+        cent += -log2(prob[index]);
         for (int i = 0; i < num; i++) ent += -prob[i] * log2(prob[i]);
     }
     void stats() {
