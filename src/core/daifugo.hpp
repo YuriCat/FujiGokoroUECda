@@ -107,7 +107,7 @@ extern SuitsInitializer suitsInitializer;
 
 /**************************カード整数**************************/
 
-// U3456789TJQKA2O、CDHSの順番で0-59　ジョーカーは60
+// U3456789TJQKA2O、CDHSの順番で0-59 ジョーカーは60
 
 // 定数
 enum IntCard : int {
