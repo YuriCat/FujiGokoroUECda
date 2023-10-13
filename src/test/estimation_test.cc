@@ -106,7 +106,7 @@ bool EstimationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
         testEstimationRate(match, DealType::BIAS);
         testEstimationRate(match, DealType::NEW_BIAS);
         testEstimationRate(match, DealType::REJECTION);
-        testEstimationRate(match, DealType::REJECTION, pmodel);
+        if (pmodel->trained) testEstimationRate(match, DealType::REJECTION, pmodel);
     }
 
     return 0;

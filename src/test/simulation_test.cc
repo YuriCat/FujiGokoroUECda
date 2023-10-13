@@ -70,7 +70,7 @@ bool SimulationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
     for (string rf : recordFiles) {
         MatchRecord mrecord(rf);
         testSimulation(mrecord);
-        testSimulation(mrecord, pmodel);
+        if (pmodel->trained) testSimulation(mrecord, pmodel);
     }
     return 0;
 }
