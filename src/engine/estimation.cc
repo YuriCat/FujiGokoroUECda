@@ -97,7 +97,7 @@ float inverseEstimationScore(const Cards orgCards, const Cards usedCards, const 
         for (IntCard ic : tmp) {
             F(64 * classIndex + ic);
             Cards tmp2 = lowerCards;
-            for (IntCard ic2 : tmp2) { F(64 * 4 + classIndex * 64 * 64 + ic * 64 + ic2); }
+            for (IntCard ic2 : tmp2) F(64 * 4 + classIndex * 64 * 64 + ic * 64 + ic2);
             lowerCards.insert(ic);
         }
     }
