@@ -23,14 +23,14 @@ uint64_t worldKey(const Field& f) {
     return key;
 }
 
-void testEstimationRate(const MatchRecord& match, DealType type) {
+void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pmodel = nullptr) {
     shared.initMatch(-1);
+    if (pmodel != nullptr) shared.playerModel = *pmodel;
     tools.dice.srand(1);
     mt19937 dice(0);
 
     long long time = 0;
     long long cnt = 0;
-    long long ecnt = 0;
     long long epcnt = 0;
 
     // 正解との一致
@@ -40,10 +40,6 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     // 生成された配置内での一致
     double same_cnt_gen = 0, same_ratio_gen = 0;
     long long perfect_gen = 0;
-
-    // 情報量
-    double total_entropy = 0, total_cross_entropy = 0;
-    double entropy = 0, cross_entropy = 0;
 
     for (const auto& game : match.games) {
         shared.initGame();
@@ -98,17 +94,19 @@ void testEstimationRate(const MatchRecord& match, DealType type) {
     cerr << "in " << time / cnt << " clock" << endl;
 }
 
-bool EstimationTest(const vector<string>& recordFiles) {
-
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+bool EstimationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+    loadEstimationParams(DIRECTORY_PARAMS_IN + "est_score.bin");
 
     for (string rf : recordFiles) {
         MatchRecord match(rf);
         testEstimationRate(match, DealType::RANDOM);
         testEstimationRate(match, DealType::SBJINFO);
         testEstimationRate(match, DealType::BIAS);
+        testEstimationRate(match, DealType::NEW_BIAS);
         testEstimationRate(match, DealType::REJECTION);
+        if (pmodel->trained) testEstimationRate(match, DealType::REJECTION, pmodel);
     }
 
     return 0;

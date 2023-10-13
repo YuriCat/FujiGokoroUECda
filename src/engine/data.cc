@@ -81,7 +81,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     bestReward = shared.gameReward[field.bestClass()];
     worstReward = shared.gameReward[field.worstClass()];
     rewardGap = bestReward - worstReward;
-    if (Settings::maximizePosition) {
+    if (Settings::maximizePosition && shared.record.positionOf(myPlayerNum) < 2) {
         uint32_t rivals = rivalPlayers(field, myPlayerNum);
         if (popcnt(rivals) == 1) {
             int rnum = bsf(rivals);
