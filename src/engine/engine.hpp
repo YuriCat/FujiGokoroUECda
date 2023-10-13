@@ -11,6 +11,7 @@
 #include "mate.hpp"
 #include "last2.hpp"
 #include "policy.hpp"
+#include "estimation.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
 
@@ -44,8 +45,9 @@ public:
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
 
-        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+        shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+        loadEstimationParams(DIRECTORY_PARAMS_IN + "est_score.bin");
     }
     void initGame() {
         // 汎用変数の設定
@@ -65,8 +67,8 @@ public:
             for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.srand(rootTools.dice() + i);
             std::vector<std::thread> threads;
             for (int i = 0; i < numThreads; i++) {
-                threads.emplace_back(std::thread(&MonteCarloThread, i, numThreads, &root, &field, &shared,
-                                     i == 0 ? &rootTools : &threadTools[i - 1]));
+                threads.emplace_back(&MonteCarloThread, i, numThreads, &root, &field, &shared,
+                                     i == 0 ? &rootTools : &threadTools[i - 1]);
             }
             for (auto& t : threads) t.join();
         } else {
@@ -143,7 +145,7 @@ public:
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy, 0);
+        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy);
         root.feedPolicyScore(score, numCands);
 
         // モンテカルロ法による評価
@@ -156,7 +158,6 @@ public:
         // 最高評価の交換を選ぶ
         if (changeCards == CARDS_NULL) changeCards = root.child[0].changeCards;
 
-    DECIDED_CHANGE:
         assert(countCards(changeCards) == changeQty);
         assert(holdsCards(myCards, changeCards));
         if (monitor) {
@@ -304,7 +305,7 @@ public:
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
-        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy, 0);
+        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy);
         root.feedPolicyScore(score, numMoves);
 
         // モンテカルロ法による評価(結果確定のとき以外)
@@ -367,7 +368,7 @@ public:
             // 8. 即切り役を優先
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
             // 9. 自分を支配していないものを優先
-            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
+            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.dominatesMe(); });
 
             playMove = root.child[0].move; // 必勝手から選ぶ
         }
@@ -384,6 +385,9 @@ public:
         return playMove;
     }
     void closeGame() {
+        // プレーヤーモデル更新
+        const auto& record = shared.record;
+        shared.playerModel.update(record, record.games.size() - 1, record.myPlayerNum, shared, rootTools.mbuf);
         shared.closeGame();
     }
     void closeMatch() {

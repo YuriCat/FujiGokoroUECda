@@ -97,17 +97,9 @@ constexpr int N_PATTERNS_SUITS_SUITS = 35;
 
 extern void initSuits();
 
-struct SuitsInitializer {
-    SuitsInitializer() {
-        initSuits();
-    }
-};
-
-extern SuitsInitializer suitsInitializer;
-
 /**************************カード整数**************************/
 
-// U3456789TJQKA2O、CDHSの順番で0-59　ジョーカーは60
+// U3456789TJQKA2O、CDHSの順番で0-59 ジョーカーは60
 
 // 定数
 enum IntCard : int {
@@ -408,7 +400,7 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     return res;
 }
 
-// 許容包括
+// 許容包含
 // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
 // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
 inline bool isValidGroupRank(int moveRank, int order, int boardRank) {
@@ -789,7 +781,6 @@ inline bool canMakeGroup(BitCards c, int n) {
 
 // 一枚一枚に乱数をあてたゾブリストハッシュ
 // 線形のため合成や進行が楽
-constexpr uint64_t HASH_CARDS_NULL = 0ULL;
 constexpr uint64_t cardsHashKeyTable[64] = {
     // インデックスがIntCard番号に対応
     0x15cc5ec4cae423e2, 0xa1373ceae861f22a, 0x7b60ee1280de0951, 0x970b602e9f0a831a,
@@ -820,7 +811,7 @@ constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
     return a - b;
 }
 inline uint64_t CardsToHashKey(Cards c) {
-    uint64_t key = HASH_CARDS_NULL;
+    uint64_t key = 0ULL;
     for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic));
     return key;
 }
@@ -835,14 +826,6 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
 }
 
 extern void initCards();
-
-struct CardsInitializer {
-    CardsInitializer() {
-        initCards();
-    }
-};
-
-extern CardsInitializer cardsInitializer;
 
 /**************************着手表現**************************/
 
@@ -868,6 +851,11 @@ struct Move {
     }
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
+    }
+    static Move fromInt(uint32_t a) {
+        Move m;
+        *reinterpret_cast<uint64_t*>(&m) = uint64_t(a);
+        return m;
     }
 
     void clear()                      { *this = Move({0}); }
@@ -991,15 +979,6 @@ int searchMove(const move_buf_t *const buf, const int numMoves, const Move& move
     return -1;
 }
 
-template <class move_buf_t, typename callback_t>
-int searchMove(const move_buf_t *const buf, const int numMoves, const callback_t& callback) {
-    // callback を条件とする着手の探索
-    for (int i = 0; i < numMoves; i++) {
-        if (callback(buf[i])) return i;
-    }
-    return -1;
-}
-
 /**************************場表現**************************/
 
 // 各プレーヤーの情報を持たない場表現
@@ -1119,3 +1098,13 @@ inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board b) {
 inline uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
     return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
 }
+
+/**************************初期化**************************/
+
+struct DaifugoInitializer {
+    DaifugoInitializer() {
+        initSuits();
+        initCards();
+        if (Move({1, 1, 1, 1, 3, 2}).toInt() != 2298129) exit(1);
+    }
+};
