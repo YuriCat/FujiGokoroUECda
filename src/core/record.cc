@@ -24,7 +24,7 @@ namespace Recorder {
 
 string PlayRecord::toString() const {
     ostringstream oss;
-    oss << toRecordString(move) << "[" << time << "]";
+    oss << toRecordString(move()) << "[" << time << "]";
     return oss.str();
 }
 
@@ -423,5 +423,5 @@ void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
 
     // 役提出の処理
     tcnt = min(game.numPlays, tcnt);
-    for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move);
+    for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move());
 }

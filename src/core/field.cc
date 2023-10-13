@@ -80,7 +80,7 @@ void Field::procHand(int tp, Move m) {
         if (p == tp) {
             if (know(p)) {
                 assert(hand[p].holds(dc));
-                if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
+                if (dq >= hand[p].qty) hand[p].clear();
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
             }
             else hand[p].qty -= dq;
@@ -266,7 +266,7 @@ bool Field::exam() const {
                 cerr << "hand[" << p << "]excl" << endl;
                 return false;
             }
-            // 包括性
+            // 包含関係
             if (!holdsCards(r, c)) {
                 cerr << remCards << endl;
                 cerr << hand[p] << endl;
@@ -337,52 +337,55 @@ int Field::procImpl(const MoveInfo m) {
         if (numPlayersAwake() == 1) {
             flush();
         } else {
-             ps.setAsleep(tp);
+            ps.setAsleep(tp);
             rotateTurnPlayer(tp);
         }
     } else {
         bool agari = m.qty() >= hand[tp].qty;
-        if (agari || (FAST && m.isMate())) { // 即上がりまたはMATE宣言のとき
-            if (FAST) {
-                attractedPlayers.reset(tp);
-                if (attractedPlayers.count() == 0) {
-                    // 結果が欲しいプレーヤーがすべて上がったので終了
-                    setNewClassOf(tp, bestClass());
-                    return -1;
-                } else if (numPlayersAlive() == 2) {
-                    // ゲーム終了
-                    setNewClassOf(tp, bestClass());
-                    setNewClassOf(ps.searchOpsPlayer(tp), bestClass() + 1);
-                    return -1;
-                }
+        // 速度重視での即上がりまたはMATE処理
+        if (FAST && (agari || m.isMate())) {
+            if (numPlayersAlive() == 2) { // ゲーム終了
+                setNewClassOf(tp, bestClass());
+                setNewClassOf(ps.searchOpsPlayer(tp), bestClass() + 1);
+                return -1;
             }
-            // 通常の上がり処理
-            if (agari) { // 即上がり
+            attractedPlayers.reset(tp);
+            // 結果が欲しいプレーヤーがすべて上がったので終了
+            if (attractedPlayers.count() == 0) {
+                setNewClassOf(tp, bestClass());
+                return -1;
+            }
+            // ゲーム継続
+            if (agari) {
                 setNewClassOf(tp, bestClass());
                 ps.setDead(tp);
-                if (!FAST && numPlayersAlive() == 1) {
-                    setNewClassOf(ps.searchL1Player(), bestClass());
-                    return -1;
-                }
-                attractedPlayers.reset(tp);
             }
         }
         procHand(tp, m);
         board.proc(m);
         setOwner(tp);
+        // 通常の上がり処理
+        if (!FAST && agari) {
+            setNewClassOf(tp, bestClass());
+            ps.setDead(tp);
+            if (numPlayersAlive() == 1) {
+                setNewClassOf(ps.searchL1Player(), bestClass());
+                // 最後のプレーヤーはあえてsetDeadしない
+                return -1;
+            }
+            attractedPlayers.reset(tp);
+        }
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (FAST && m.isDO()) { // 他人を支配
-                if (FAST && m.isDM()) { // 自分も支配したので流れる
+            if (FAST && m.dominatesOthers()) { // 他人を支配
+                if (FAST && m.dominatesMe()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
-                    if (isAwake(tp)) {
-                        // 自分以外全員をasleepにして自分の手番
+                    if (isAwake(tp)) { // 自分以外全員をasleepにして自分の手番
                         ps.setAllAsleepExcept(tp);
-                    } else {
-                        // 流れる
+                    } else { // 流れる
                         flush();
                     }
                 }
