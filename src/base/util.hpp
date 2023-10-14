@@ -240,71 +240,54 @@ inline uint64_t pick1Bit64(uint64_t arg, dice64_t& dice) {
     return tmp;
 }
 
+inline uint64_t _addBits(uint64_t a, uint64_t b) { return a ^ b; }
+inline uint64_t _subBits(uint64_t a, uint64_t b) { return a ^ b; }
+
 template <class dice64_t>
-static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
+static uint64_t pickNBits64(const uint64_t arg, int n0, int n1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
-    assert((int)popcnt(arg) == N0 + N1);
-
-    uint64_t res = 0;
-
-    if (N0 < N1) {
-        if (N0 == 0) return res;
-        if (N0 == 1) return pick1Bit64(arg, dice);
+    assert((int)popcnt(arg) == n0 + n1);
+    if (n0 < n1) {
+        if (n0 == 0) return 0;
+        if (n0 == 1) return pick1Bit64(arg, dice);
     } else {
-        if (N1 == 0) return arg;
-        if (N1 == 1) return arg - pick1Bit64(arg, dice);
+        if (n1 == 0) return arg;
+        if (n1 == 1) return _subBits(arg, pick1Bit64(arg, n0 + 1, dice));
     }
+
+    uint64_t b0 = 0, bs = arg;
     while (1) {
-        uint64_t dist = arg & dice();
-        int NDist = popcnt(dist);
+        assert((int)popcnt(bs) == n0 + n1);
+
+        uint64_t t = bs & dice();
+        int nt = popcnt(t);
 
         // まずは一致チェック
-        if (NDist == N0) {
-            res |= dist; break;
-        }
-        if (NDist == N1) {
-            res |= arg - dist; break;
-        }
-        if (NDist < N0) {
-            if (NDist < N1) { // NDistが小さく、鋭い
-                if (N0 > N1) {
-                    res |= dist;
-                    N0 -= NDist;
-                } else N1 -= NDist;
-                arg -= dist;
-            } else { // 鈍い
-                int NRDist = N0 + N1 - NDist;
-                if (NDist > NRDist) { // NDistが大きい
-                    N0 -= NDist;
-                    res |= dist;
-                    arg -= dist;
-                } else { // NRDistが大きい
-                    N0 -= NRDist;
-                    res |= arg - dist;
-                    arg = dist;
-                }
+        if (nt == n0) return _addBits(b0, t);
+        if (nt == n1) return _addBits(b0, _subBits(bs, t));
+
+        if (n0 <= n1) {
+            if (nt < n0 || (n0 + n1 - nt <= nt && nt < n1)) {
+                bs = _subBits(bs, t);
+                n1 -= nt;
+            } else {
+                bs = t;
+                n1 = nt - n0;
             }
         } else {
-            if (NDist < N1) { // 鈍い
-                int NRDist = N0 + N1 - NDist;
-                if (NDist > NRDist) { // NDistが大きい
-                    N1 -= NDist;
-                    arg -= dist;
-                } else { // NRDistが大きい
-                    N1 -= NRDist;
-                    arg = dist;
-                }
-            } else { // NDistが大きく、鋭い
-                if (N0 > N1) {
-                    res |= arg - dist;
-                    N0 = NDist - N1;
-                } else N1 = NDist - N0;
-                arg = dist;
+            if (nt < n1 || (n0 + n1 - nt <= nt && nt < n0)) {
+                b0 = _addBits(b0, t);
+                bs = _subBits(bs, t);
+                n0 -= nt;
+            } else {
+                b0 = _addBits(b0, _subBits(bs, t));
+                bs = t;
+                n0 = nt - n1;
             }
         }
     }
-    return res;
+    return b0;
 }
 
 template <class dice64_t>
