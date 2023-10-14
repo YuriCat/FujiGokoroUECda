@@ -989,9 +989,6 @@ struct Board : public Move {
     int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
     }
-    bool afterSuitsLocked(Move m) const {
-        return suitsLocked() || locksSuits(m);
-    }
 
     // get
     int prmOrder()   const { return Move::po; }
