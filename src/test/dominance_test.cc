@@ -56,10 +56,9 @@ int testRecordMoveDominance(const Record& record) {
             judgeTime[2] += cl.stop();
 
             /*if (dom != ans) {
-                cerr << "judge " << dom << " <-> " << " answer " << ans << endl;
+                cerr << "judge " << dom << " <-> answer " << ans << endl;
                 cerr << move << " on " << b << endl;
-                cerr << OutCardTable(opsCards);
-                cerr << endl;
+                cerr << opsCards << endl;
                 getchar();
             }*/
 
