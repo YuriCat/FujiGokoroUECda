@@ -688,32 +688,13 @@ inline BitCards CardsToER(BitCards c) {
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
-inline BitCards CardsToPQR(BitCards arg) {
-    // ランクごとの枚数を示す位置にビットが立つようにする
-    // 2ビットごとの枚数を計算
-    BitCards a = (arg & PQR_13) + ((arg >> 1) & PQR_13);
-    // 4ビットあったところを4に配置
-    BitCards r = a & (a << 2) & PQR_4;
-    // 3ビットあったところを3に配置
-    BitCards r3 = (a << 2) & (a >> 1) & PQR_3;
-    r3 |= a & (a << 1) & PQR_3;
-
-    // 残りは足すだけ。ただし3,4ビットがすでにあったところにはビットを置かない。
-    BitCards r12 = ((a & PQR_12) + ((a >> 2) & PQR_12)) & PQR_12;
-    if (r3) {
-        r |= r3;
-        r |= ~((r3 >> 1) | (r3 >> 2)) & r12;
-    } else {
-        r |= r12;
-    }
-    return r;
-}
-inline BitCards QRToPQR(const CardArray qr) {
+inline BitCards QRToPQR(CardArray qr) {
     // qr -> pqr 変換
-    const BitCards iqr = ~qr;
-    const BitCards qr_l1 = (qr << 1);
-    const BitCards r = (PQR_1 & qr & (iqr >> 1)) | (PQR_2 & qr & (iqr << 1)) | ((qr & qr_l1) << 1) | (qr_l1 & PQR_4);
-    return r;
+    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
+}
+inline BitCards CardsToPQR(BitCards c) {
+    // ランクごとの枚数を示す位置にビットが立つようにする
+    return QRToPQR(CardsToQR(c));
 }
 inline BitCards PQRToSC(BitCards pqr) {
     // pqr -> sc はビットを埋めていくだけ
