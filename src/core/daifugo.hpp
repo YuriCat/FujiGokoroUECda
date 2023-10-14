@@ -710,10 +710,7 @@ inline BitCards CardsToPQR(BitCards arg) {
 }
 inline BitCards QRToPQR(const CardArray qr) {
     // qr -> pqr 変換
-    const BitCards iqr = ~qr;
-    const BitCards qr_l1 = (qr << 1);
-    const BitCards r = (PQR_1 & qr & (iqr >> 1)) | (PQR_2 & qr & (iqr << 1)) | ((qr & qr_l1) << 1) | (qr_l1 & PQR_4);
-    return r;
+    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
 }
 inline BitCards PQRToSC(BitCards pqr) {
     // pqr -> sc はビットを埋めていくだけ
