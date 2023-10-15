@@ -19,8 +19,6 @@ OPT = -Ofast -DNDEBUG -DMINIMUM
 ifdef mode
 	ifeq ($(mode),teacher)
 		OPT := -Ofast -DNDEBUG -DMINIMUM -DTEACHER
-	else ifeq ($(mode),match)	
-		OPT := -Ofast -DNDEBUG -DMINIMUM -DMATCH
 	else ifeq ($(mode),default)
 		OPT := -Ofast -g -ggdb -fno-fast-math
 	else ifeq ($(mode),debug)
