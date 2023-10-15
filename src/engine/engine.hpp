@@ -209,17 +209,26 @@ public:
             std::cerr << "No valid move." << std::endl;
             return MOVE_PASS;
         }
-        if (numMoves == 1) {
-            // 合法着手1つ。パスのみか、自分スタートで手札1枚
-            // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
-            if (monitor) {
-                if (!mbuf[0].isPASS()) std::cerr << "final move. " << mbuf[0] << std::endl;
-                else std::cerr << "no chance. PASS" << std::endl;
-            }
-            if (!mbuf[0].isPASS()) {
+        std::shuffle(mbuf.begin(), mbuf.begin() + numMoves, rootTools.dice);
+
+        // 即上がりチェック
+        for (int i = 0; i < numMoves; i++) {
+            if (mbuf[i].qty() >= myHand.qty) {
+                if (monitor) {
+                    std::cerr << "\033[1m\033[31m";
+                    std::cerr << "Final Move : " << mbuf[i];
+                    std::cerr << "\033[39m\033[0m" << std::endl;
+                }
                 shared.setMyMate(field.bestClass()); // 上がり
                 shared.setMyL2Result(1);
+                return mbuf[i];
             }
+        }
+
+        if (numMoves == 1) {
+            // 合法着手1つ。パスのみ
+            // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
+            if (monitor) std::cerr << "no chance. PASS" << std::endl;
             return mbuf[0];
         }
 
@@ -378,9 +387,9 @@ public:
 
         if (monitor) {
             std::cerr << root.toString();
-            std::cerr << "\033[1m\033[" << 31 << "m";
-            std::cerr << "Best Move : " << playMove << std::endl;
-            std::cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << "\033[1m\033[31m";
+            std::cerr << "Best Move : " << playMove;
+            std::cerr << "\033[39m\033[0m" << std::endl;
         }
         return playMove;
     }
