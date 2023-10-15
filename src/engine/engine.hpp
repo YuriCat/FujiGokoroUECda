@@ -169,14 +169,7 @@ public:
         return changeCards;
     }
 
-    Move play() {
-        // 自分のプレーについての変数を更新
-        ClockMicS clms;
-        clms.start();
-        Move ret = playImpl();
-        return ret;
-    }
-    Move playImpl() { // ここがプレー関数
+    Move play() { // ここがプレー関数
         const auto& game = shared.record.latestGame();
 
         Move playMove = MOVE_NONE;
