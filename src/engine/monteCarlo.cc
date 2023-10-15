@@ -26,13 +26,7 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
         double sqAllSize = sqrt(root.monteCarloAllScore.size());
         for (int i = 0; i < actions; i++) {
             double score;
-            if (a[i].simulations < 4) {
-                // 最低プレイアウト数をこなしていないものは、大きな値にする
-                // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                score = (double)((1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6)));
-            } else {
-                score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
-            }
+            score = a[i].mean() + 0.5 * sqrt(sqAllSize / a[i].size()); // ucbr値
             if (score > bestScore) {
                 bestScore = score;
                 index = i;

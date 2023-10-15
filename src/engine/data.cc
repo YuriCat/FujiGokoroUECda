@@ -4,8 +4,7 @@
 using namespace std;
 
 namespace Settings {
-    const double rootPriorCoef = 4;
-    const double rootPriorExponent = 0.6;
+    const double rootPriorCoef = 8;
 }
 
 void BaseSharedData::closeMatch() {
@@ -103,17 +102,11 @@ void RootInfo::setPlay(const MoveInfo *const a, int num,
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {
     // 方策関数の出力をモンテカルロ結果の事前分布として加算
-    // 0 ~ 1 の値にする
-    double maxScore = -DBL_MAX, minScore = DBL_MAX;
+    double n = Settings::rootPriorCoef;
     for (int i = 0; i < candidates; i++) {
-        maxScore = max(maxScore, child[i].policyScore + 0.000001);
-        minScore = min(minScore, child[i].policyScore);
-    }
-    // 初期値として加算
-    double n = Settings::rootPriorCoef * pow(double(candidates - 1), Settings::rootPriorExponent);
-    for (int i = 0; i < candidates; i++) {
-        double r = (child[i].policyScore - minScore) / (maxScore - minScore);
-        child[i].monteCarloScore += BetaDistribution(r, 1 - r) * n;
+        double t = n * child[i].policyProb;
+        double r = 1.0;
+        child[i].monteCarloScore += BetaDistribution(r, 1 - r) * t;
     }
     for (int i = 0; i < candidates; i++) {
         monteCarloAllScore += child[i].monteCarloScore;
