@@ -43,37 +43,16 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootAction::clear() {
-    move = MOVE_NONE;
-    changeCards = CARDS_NULL;
-    simulations = 0;
-    turnSum = 0;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        for (int cl = 0; cl < N_CLASSES; cl++) {
-            classDistribution[p][cl] = 0;
-        }
-    }
-    monteCarloScore.set(1, 1);
-    naiveScore.set(0, 0);
-    myScore.set(1, 1);
-    rivalScore.set(1, 1);
-    policyScore = 0;
-    policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
-}
-
 string RootAction::toString() const {
     ostringstream oss;
     oss << "size = " << size();
     oss << " mean = " << mean();
-    oss << " var = " << var();
+    oss << " std = " << std();
     return oss.str();
 }
 
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     candidates = num;
-    for (int i = 0; i < candidates; i++) {
-        monteCarloAllScore += child[i].monteCarloScore;
-    }
     myPlayerNum = shared.record.myPlayerNum;
     rivalPlayerNum = -1;
     bestReward = shared.gameReward[field.bestClass()];
@@ -112,11 +91,14 @@ void RootInfo::addPolicyScoreToMonteCarloScore() {
     // 初期値として加算
     double n = Settings::rootPriorCoef * pow(double(candidates - 1), Settings::rootPriorExponent);
     for (int i = 0; i < candidates; i++) {
-        double r = (child[i].policyScore - minScore) / (maxScore - minScore);
-        child[i].monteCarloScore += BetaDistribution(r, 1 - r) * n;
-    }
-    for (int i = 0; i < candidates; i++) {
-        monteCarloAllScore += child[i].monteCarloScore;
+        double ratio = (child[i].policyScore - minScore) / (maxScore - minScore);
+        double r = rewardGap * ratio + worstReward;
+        child[i].n += n;
+        child[i].sum += n * r;
+        child[i].sum2 += n * r * r;
+        allN += n;
+        allSum += n * r;
+        allSum2 += n * r * r;
     }
     policyAdded = true;
 }
@@ -141,31 +123,27 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 新たに得た証拠分布
     BetaDistribution myScore, rivalScore, totalScore;
 
-    double myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
-    myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
+    double reward = pshared->gameReward[field.newClassOf(myPlayerNum)];
     if (rivalPlayerNum >= 0) {
         double rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
-        rivalScore.set((rivalReward - worstReward) / rewardGap, (bestReward - rivalReward) / rewardGap);
-
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
-        totalScore = myScore * (1 - RIVAL_RATE) + rivalScore.reversed() * RIVAL_RATE;
-    } else {
-        totalScore = myScore;
+        reward = reward * (1 - RIVAL_RATE) + -rivalReward * RIVAL_RATE;
     }
 
     lock();
 
-    child[triedIndex].monteCarloScore += totalScore;
-    child[triedIndex].naiveScore += totalScore;
-    monteCarloAllScore += totalScore;
+    child[triedIndex].simulations += 1;
+    child[triedIndex].sum += reward;
+    child[triedIndex].sum2 += reward * reward;
 
     if (rivalPlayerNum >= 0) {
-        child[triedIndex].myScore += myScore;
-        child[triedIndex].rivalScore += rivalScore;
+        child[triedIndex].rivalSum += reward;
+        child[triedIndex].rivalSum2 += reward * reward;
     }
 
-    child[triedIndex].simulations += 1;
     allSimulations += 1;
+    allSum += reward;
+    allSum2 += reward * reward;
 
     // 参考にする統計量
     child[triedIndex].turnSum += field.turnCount();
@@ -189,15 +167,16 @@ void RootInfo::sort() { // 評価が高い順に候補行動をソート
 
 string RootInfo::toString(int num) const {
     if (num == -1) num = candidates; // numで表示最大数を設定
-    ostringstream oss;
     // 先にソートしておく必要あり
+    ostringstream oss;
+    oss << std::fixed << std::setprecision(3);
     oss << "Reward Zone [ " << worstReward << " ~ " << bestReward << " ] ";
     oss << allSimulations << " trials." << endl;
+
     for (int i = 0; i < min(candidates, num); i++) {
-        double rew = worstReward + child[i].mean() * rewardGap;
-        double nrew = worstReward + child[i].naive_mean() * rewardGap;
-        double sem = sqrt(child[i].mean_var());
-        double rewZone[2] = {rew - sem * rewardGap, rew + sem * rewardGap};
+        double mean = child[i].mean();
+        //double nrew = worstReward + child[i].naive_mean() * rewardGap;
+        double sem = child[i].sem();
 
         if (i == 0) oss << "\033[1m";
         oss << i << " ";
@@ -207,14 +186,13 @@ string RootInfo::toString(int num) const {
         oss << " : ";
 
         if (child[i].simulations > 0) {
-            const int K = 100;
             // 総合評価点を表示
-            oss << int(K * rew) << " ( " << int(K * rewZone[0]) << " ~ " << int(K * rewZone[1]) << " ) ";
-            oss << "{mc: " << int(K * nrew) << "} ";
+            oss << mean << " ( " << (mean - sem) << " ~ " << (mean + sem) << " ) ";
+            //oss << "{mc: " <<  << "} ";
             if (rivalPlayerNum >= 0) {
                 // 自分とライバルの評価点を表示
-                oss << " [mine = " << int(K * worstReward + child[i].myScore.mean() * rewardGap) << "] ";
-                oss << " [rival = " << int(K * worstReward + child[i].rivalScore.mean() * rewardGap) << "] ";
+                //oss << " [mine = " << int(K * worstReward + child[i].myScore.mean() * rewardGap) << "] ";
+                //oss << " [rival = " << int(K * worstReward + child[i].rivalScore.mean() * rewardGap) << "] ";
             }
         }
         oss << "prob = " << child[i].policyProb; // 方策関数の確率出力
@@ -226,5 +204,6 @@ string RootInfo::toString(int num) const {
 
         if (i == 0) oss << "\033[0m";
     }
+    oss << std::defaultfloat << std::setprecision(6);
     return oss.str();
 }

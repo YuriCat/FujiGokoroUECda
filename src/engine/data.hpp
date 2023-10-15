@@ -142,25 +142,36 @@ struct RootAction {
     double policyScore, policyProb;
 
     // モンテカルロ結果
-    BetaDistribution monteCarloScore;
-    BetaDistribution naiveScore;
+    int simulations;
+    double n, sum, sum2;
 
     // モンテカルロの詳細な結果
-    BetaDistribution myScore, rivalScore;
-    uint64_t simulations;
-    std::array<std::array<int64_t, N_CLASSES>, N_PLAYERS> classDistribution;
-    uint64_t turnSum;
+    double rivalSum, rivalSum2;
+    int turnSum;
 
-    double mean() const { return monteCarloScore.mean(); }
-    double size() const { return monteCarloScore.size(); }
-    double mean_var() const { return monteCarloScore.var(); }
-    double var() const { return monteCarloScore.var() * size(); }
-    double naive_mean() const { return naiveScore.mean(); }
+    double mean() const { return sum / n; }
+    double size() const { return n; }
+    double sem() const { return std() / n; }
+    double std() const {
+        double m = mean();
+        return std::sqrt(std::max(0.0, (sum2 / n) - m * m));
+    }
 
-    void clear();
     void setChange(Cards cc) { clear(); changeCards = cc; }
     void setPlay(MoveInfo m) { clear(); move = m; }
     std::string toString() const;
+
+    void clear() {
+        move = MOVE_NONE;
+        changeCards = CARDS_NULL;
+        simulations = 0;
+        n = sum2 = 1;
+        sum = 0;
+        rivalSum = rivalSum2 = 0;
+        turnSum = 0;
+        policyScore = 0;
+        policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
+    }
 };
 
 /**************************ルートの全体の情報**************************/
@@ -179,7 +190,8 @@ struct RootInfo {
     // モンテカルロ用の情報
     std::atomic<bool> exitFlag;
     uint64_t limitSimulations;
-    BetaDistribution monteCarloAllScore;
+
+    double allN, allSum, allSum2;
     uint64_t allSimulations;
 
     // 排他処理
@@ -232,8 +244,9 @@ struct RootInfo {
 
     RootInfo() {
         candidates = -1;
-        monteCarloAllScore.set(0, 0);
         allSimulations = 0;
+        allN = allSum2 = 1;
+        allSum = 0;
         rivalPlayerNum = -1;
         exitFlag = false;
         unlock();

@@ -23,7 +23,7 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
         // UCB-root アルゴリズム
         int index = 0;
         double bestScore = -DBL_MAX;
-        double sqAllSize = sqrt(root.monteCarloAllScore.size());
+        double sqAllSize = sqrt(root.allN);
         for (int i = 0; i < actions; i++) {
             double score;
             if (a[i].simulations < 4) {
@@ -31,7 +31,8 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
                 // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
                 score = (double)((1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6)));
             } else {
-                score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
+                double v = (a[i].sum + root.bestReward) / a[i].n;
+                score = v + 0.7 * root.rewardGap * sqrt(sqAllSize / a[i].n); // ucbr値
             }
             if (score > bestScore) {
                 bestScore = score;
@@ -55,7 +56,7 @@ bool finishCheck(const RootInfo& root, double simuTime, Dice& dice) {
     // regret check
     Dist d[N_MAX_MOVES];
     for (int i = 0; i < candidates; i++) {
-        d[i] = {child[i].mean(), sqrt(child[i].mean_var()), 0};
+        d[i] = {child[i].mean(), child[i].sem(), 0};
     }
     for (int t = 0; t < 1600; t++) {
         double bestValue = -100;
