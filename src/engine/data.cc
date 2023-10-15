@@ -141,10 +141,10 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 新たに得た証拠分布
     BetaDistribution myScore, rivalScore, totalScore;
 
-    int myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
+    double myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
     myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
     if (rivalPlayerNum >= 0) {
-        int rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
+        double rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
         rivalScore.set((rivalReward - worstReward) / rewardGap, (bestReward - rivalReward) / rewardGap);
 
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
