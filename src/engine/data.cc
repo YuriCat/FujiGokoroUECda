@@ -4,10 +4,8 @@
 using namespace std;
 
 namespace Settings {
-    const double rootPlayPriorCoef = 4;
-    const double rootPlayPriorExponent = 0.6;
-    const double rootChangePriorCoef = 4;
-    const double rootChangePriorExponent = 0.6;
+    const double rootPriorCoef = 4;
+    const double rootPriorExponent = 0.6;
 }
 
 void BaseSharedData::closeMatch() {
@@ -112,12 +110,7 @@ void RootInfo::addPolicyScoreToMonteCarloScore() {
         minScore = min(minScore, child[i].policyScore);
     }
     // 初期値として加算
-    double n = 0;
-    if (isChange) {
-        n = Settings::rootChangePriorCoef * pow(double(candidates - 1), Settings::rootChangePriorExponent);
-    } else {
-        n = Settings::rootPlayPriorCoef * pow(double(candidates - 1), Settings::rootPlayPriorExponent);
-    }
+    double n = Settings::rootPriorCoef * pow(double(candidates - 1), Settings::rootPriorExponent);
     for (int i = 0; i < candidates; i++) {
         double r = (child[i].policyScore - minScore) / (maxScore - minScore);
         child[i].monteCarloScore += BetaDistribution(r, 1 - r) * n;
@@ -148,10 +141,10 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 新たに得た証拠分布
     BetaDistribution myScore, rivalScore, totalScore;
 
-    int myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
+    double myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
     myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
     if (rivalPlayerNum >= 0) {
-        int rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
+        double rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
         rivalScore.set((rivalReward - worstReward) / rewardGap, (bestReward - rivalReward) / rewardGap);
 
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
