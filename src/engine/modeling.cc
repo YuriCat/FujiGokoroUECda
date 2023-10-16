@@ -12,15 +12,19 @@ double PlayerModel::playBiasScore(const Field& field, int player, Move move,
                                   vector<pair<int, float>> *v) const {
     const double *table = bias[player];
     double score = 0;
+    const Board b = field.board;
     if (move.isPASS()) F(0);
-    if (move.isSingle()) F(1);
-    if (move.isGroup()) F(2);
-    if (move.isSeq()) F(3);
+    if (b.isNull()) {
+        if (move.isSingle()) F(1);
+        if (move.isGroup() && move.qty() >= 2) F(2);
+        if (move.isSeq()) F(3);
+    } else {
+        if (!b.suitsLocked() && b.locksSuits(move)) F(8);
+    }
     if (move.containsJOKER()) F(4);
     if (move.isRev()) F(5);
     if (move.domInevitably()) F(6);
     if (field.board.domConditionally(move)) F(7);
-    if (field.board.locksSuits(move)) F(8);
     return score;
 }
 
@@ -160,9 +164,11 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 
 void PlayerModel::update(const MatchRecord& record, int gameNum, int playerNum,
                          const SharedData& shared, MoveInfo *const buf) {
-    for (int i = 0; i < 10; i++) {
-        int g = gameNum - i;
-        if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, i == 0);
+    updateGame(record.games[gameNum], playerNum, shared, buf, true);
+    const int N = 10;
+    for (int i = 0; i < N; i++) {
+        int g = gameNum - N + 1 + i;
+        if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, false);
     }
     trained = true;
     games += 1;
