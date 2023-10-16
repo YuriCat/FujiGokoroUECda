@@ -12,6 +12,7 @@ namespace L2 {
         book.clear();
     }
     void stats() {
+        cerr << "L2Book: ";
         book.stats();
         cerr << "L2: " << solved << " / " << count << " ("
         << (count ? solved / (double)count : 0.0) << ") " << (count ? time / count : 0) << " clock";

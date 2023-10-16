@@ -176,7 +176,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
         }
     }
     MonteCarlo::time += clock_.stop();
-    MonteCarlo::count++;
     MonteCarlo::worlds += numWorlds;
     MonteCarlo::simulations += numSimulationsSum;
+    if (threadId == 0) MonteCarlo::count++;
 }
