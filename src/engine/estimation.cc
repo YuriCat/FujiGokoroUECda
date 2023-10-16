@@ -15,6 +15,8 @@ namespace Settings {
     constexpr int BUCKET_MAX = 32;
 }
 
+float estimationTable[EST_FEATURES];
+
 namespace Deal {
     constexpr uint64_t AfterChangeWeight[INTCARD_MAX + 1][5] =
     {
@@ -82,6 +84,36 @@ namespace Deal {
     };
 }
 
+#define F(index) { if (v != nullptr) v->push_back(make_pair(index, 1.0f)); score += table[index]; }
+
+float inverseEstimationScore(const Cards orgCards, const Cards usedCards, const Cards sentCards, int playerClass, vector<pair<int, float>> *const v) {
+    const float *const table = estimationTable;
+    float score = 0;
+    int classIndex = playerClass > HEIMIN ? (playerClass - 1) : playerClass;
+
+    if (playerClass != HEIMIN) {
+        Cards lowerCards = CARDS_NULL;
+        for (IntCard ic : orgCards) {
+            F(64 * classIndex + ic);
+            for (IntCard ic2 : lowerCards) F(64 * 4 + classIndex * 64 * 64 + ic * 64 + ic2);
+            lowerCards.insert(ic);
+        }
+    }
+
+    Cards unusedCards = orgCards - usedCards;
+    for (IntCard ic : usedCards) {
+        for (IntCard ic2 : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * ic + ic2);
+    }
+
+    for (IntCard ic2 : sentCards) {
+        for (IntCard ic : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * 64 + ic * 64 + ic2);
+    }
+
+    return score;
+}
+
+#undef F
+
 // 拘束条件分割
 bool dist2Rest_64(int numRest,
                   uint64_t *const goal0, uint64_t *const goal1,
@@ -130,9 +162,23 @@ void RandomDealer::dealAllRand(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const {
-    // 主観情報のうち完全な（と定義した）情報のみ扱い、それ以外は完全ランダムとする
+    // 主観情報のうち完全な情報のみ扱い、それ以外は完全ランダムとする
     BitCards tmp[N] = {0};
-    dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    if (!initGame && myClass < MIDDLE) {
+        // 献上が無矛盾になるように交換相手に配布
+        int qty = N_CHANGE_CARDS(myClass);
+        Cards myHigh = highestNBits<uint64_t>(myDealtCards, qty);
+        int partnerClass = getChangePartnerClass(myClass);
+        Cards okCards = pickLower(myHigh) & dealCards;
+        tmp[partnerClass] = pickNBits64(okCards, NDeal[partnerClass], okCards.count() - NDeal[partnerClass], dice);
+        assert(myHigh.lowest() > Cards(detCards[partnerClass] + tmp[partnerClass] - sentCards).highest());
+
+        auto tmpNDeal = NDeal;
+        tmpNDeal[partnerClass] = 0;
+        dist64<N>(tmp, dealCards - tmp[partnerClass], tmpNDeal.data(), dice);
+    } else {
+        dist64<N>(tmp, dealCards, NDeal.data(), dice);
+    }
     for (int cl = 0; cl < N; cl++) {
         dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl] - usedCards[cl];
     }
@@ -147,6 +193,19 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     int tmpNDeal[N];
     for (int r = 0; r < N; r++) tmpNDeal[r] = NDeal[r];
     Cards fromCards = dealCards;
+
+    if (!initGame && myClass < MIDDLE) {
+        // 献上によるバイアスを反映して配布
+        int ptClass = getChangePartnerClass(myClass);
+        if (NDeal[ptClass]) {
+            Cards tmpDist = selectInWA(dice.random());
+            Cards dealt = pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
+            tmp[ptClass] += dealt;
+            tmpNDeal[ptClass] = 0;
+            fromCards -= dealt;
+        }
+    }
+
     while (fromCards) {
         IntCard ic = fromCards.popHighest();
 
@@ -170,16 +229,40 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
     checkDeal(dst);
 }
 
+void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
+    const int K = 64;
+    array<Cards, N> cards[K];
+    double score[K] = {0};
+    for (int i = 0; i < K; i++) dealWithBias(cards[i].data(), dice);
+    for (int i = 0; i < K; i++) {
+        float s = 0;
+        for (int p = 0; p < N; p++) {
+            int cl = infoClass[p];
+            if (NDeal[cl] > 0) {
+                assert(p != myNum && cards[i][p].count() > 0);
+                Cards recv = cl == getChangePartnerClass(myClass) && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
+                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, cl);
+            }
+        }
+        score[i] = s;
+    }
+    SoftmaxSelector<double> selector(score, K, 0.1);
+    int index = selector.select(dice.random());
+    for (int p = 0; p < N; p++) dst[p] = cards[index][p];
+}
+
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
     // 採択棄却法メイン
     Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
+    bool rejectionDeal[Settings::BUCKET_MAX] = {false};
     int bestDeal = 0;
     for (int i = 0; i < buckets; i++) {
         if (failed) {
-            dealWithBias(deal[i], ptools->dice);
+            dealWithNewBias(deal[i], ptools->dice);
         } else {
             bool ok = dealWithChangeRejection(deal[i], shared, ptools);
+            if (ok) rejectionDeal[i] = true;
             // 失敗の回数が一定値を超えた以降は逆関数法に移行
             if (!ok && ++failures > 1) failed = true;
         }
@@ -189,6 +272,16 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
         double lhs[Settings::BUCKET_MAX];
         for (int i = 0; i < buckets; i++) {
             lhs[i] = playLikelihood(deal[i], game, shared, ptools);
+            if (!rejectionDeal[i] && !initGame && myClass > MIDDLE) {
+                // 逆関数で配った場合はここで交換相手の交換尤度を評価
+                int ptClass = getChangePartnerClass(myClass);
+                if (NDeal[ptClass]) {
+                    int partner = infoClassPlayer[ptClass];
+                    double prob = oneChangeLikelihood(partner, deal[i][partner] + usedCards[ptClass] + recvCards, recvCards, shared);
+                    //cerr << NDeal << Cards(deal[i][partner] + usedCards[ptClass] + recvCards) << " -> " << recvCards << " " << prob << " " << lhs[i] << endl;
+                    lhs[i] += log(prob);
+                }
+            }
         }
         SoftmaxSelector<double> selector(lhs, buckets, 0.3);
         bestDeal = selector.select(ptools->dice.random());
@@ -224,6 +317,7 @@ void RandomDealer::set(const Field& field, int playerNum) {
     myCards = field.getCards(myNum);
     myClass = infoClass[myNum];
     firstTurnClass = inChange ? -1 : infoClass[field.firstTurn()];
+
     for (int p = 0; p < N; p++) {
         int cl = infoClass[p];
         int org = field.numCardsOf(p) + field.getUsedCards(p).count();
@@ -257,10 +351,11 @@ void RandomDealer::set(const Field& field, int playerNum) {
     // すでに分かっている情報から確実な部分を分配
     prepareSubjectiveInfo();
 
-    // 各メソッドの使用可、不可を設定
-    if (okForRejection()) { // 採択棄却法使用OK
-        if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
-    } else failed = true;
+    // 交換相手の献上効果反映準備
+    if (!field.isInitGame() && myClass < MIDDLE) setWeightInWA();
+
+    // 採択棄却法の使用不可を設定
+    if (!okForRejection()) failed = true;
 }
 
 void RandomDealer::prepareSubjectiveInfo() {
@@ -363,9 +458,14 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     // 採択棄却法のためのカード交換モデル
     // 交換方策に従った交換を行う
     Cards change[N_MAX_CHANGES];
+    double score[N_MAX_CHANGES];
     int numChanges = genChange(change, cards, qty);
-    int index = changeWithPolicy(change, numChanges, cards, qty, shared.baseChangePolicy,
-                                 Settings::estimationTemperatureChange, ptools->dice);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy);
+    if (shared.playerModel.trained) {
+        for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
+    }
+    SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperatureChange);
+    int index = selector.select(ptools->dice.random());
     return change[index];
 }
 
@@ -385,57 +485,43 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     BitCards R[N] = {0};
 
     for (int t = 0; t < Settings::maxRejection; t++) {
+        // 1. 交換相手に配る
         int ptClass = getChangePartnerClass(myClass);
         if (myClass < MIDDLE) {
-            // 1. Walker's Alias methodで献上下界を決めて交換相手に分配
+            // Walker's Alias methodで献上下界を決めて交換相手に分配
             R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
                 Cards tmpDist = selectInWA(dice.random());
                 R[ptClass] += pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], dice);
             }
-        } else {
-            // 1. 交換相手のカードを決め打って期待した交換が選ばれるか調べる
-            int ptClass = getChangePartnerClass(myClass);
-            R[ptClass] = detCards[ptClass] + recvCards;
-            BitCards remained = CARDS_NULL;
-            int numDealOthers = NdealCards - NDeal[ptClass];
-            int numChangeMine = N_CHANGE_CARDS(myClass);
+        } else if (myClass > MIDDLE) {
+            // 交換相手のカードを決め打ち
+            R[ptClass] = detCards[ptClass];
             if (NDeal[ptClass]) {
+                BitCards remained = CARDS_NULL;
+                int numDealOthers = NdealCards - NDeal[ptClass];
                 dist2_64(&remained, &R[ptClass], dealCards, numDealOthers, NDeal[ptClass], dice);
-                // 交換相手の交換尤度を計算
-                Cards cc = change(infoClassPlayer[ptClass], R[ptClass], numChangeMine, shared, ptools);
-                if (cc != recvCards) continue;
-                R[ptClass] -= recvCards;
             }
         }
 
         // 2. 残りカードを平民と自分が関与した以外の交換系にそれぞれ分ける
-        BitCards rem = dealCards;
-        if (myClass != HEIMIN) {
-            rem -= R[ptClass] - detCards[ptClass];
-            int otherRich = DAIFUGO + FUGO - min(myClass, ptClass);
-            int otherPoor = getChangePartnerClass(otherRich);
-            int numDealOtherPair = NDeal[otherRich] + NDeal[otherPoor];
-            BitCards otherPair = CARDS_NULL;
-            R[HEIMIN] = detCards[HEIMIN];
-            if (NDeal[HEIMIN]) {
-                dist2_64(&otherPair, &R[HEIMIN], rem, numDealOtherPair, NDeal[HEIMIN], dice);
-                rem = otherPair;
-            } else {
-                otherPair = rem;
-            }
-        }
-
-        // 3. 自分が関与した以外の交換系の配布
-        // 残り札を自分が関わっていない交換の系で分配
+        Cards rem = dealCards;
         BitCards remained[2] = {0};
         if (myClass == HEIMIN) {
             dist2_64(&remained[0], &remained[1], rem, NDeal[0] + NDeal[4], NDeal[1] + NDeal[3], dice);
         } else {
-            // 平民で無いときは自分が関わっていない系に全振り
+            rem -= R[ptClass] - detCards[ptClass];
+            R[HEIMIN] = detCards[HEIMIN];
+            if (NDeal[HEIMIN]) {
+                BitCards otherPair = CARDS_NULL;
+                dist2_64(&otherPair, &R[HEIMIN], rem, rem.count() - NDeal[HEIMIN], NDeal[HEIMIN], dice);
+                rem = otherPair;
+            }
+            // 残りを自分が関わっていない交換系へ
             remained[1 - min(myClass, ptClass)] = rem;
         }
 
+        // 関与しない交換系内での分配
         bool ok = true;
         for (int cl = FUGO; cl >= 0; cl--) {
             int rich = cl, poor = getChangePartnerClass(cl);
@@ -445,7 +531,23 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
                               NOrg[rich], NOrg[poor], detCards[rich], detCards[poor], dice)) {
                 ok = false; break;
             }
-            Cards cc = change(infoClassPlayer[rich], R[rich], numChange, shared, ptools);
+        }
+        if (!ok) continue;
+
+        // 交換処理
+        if (myClass > MIDDLE) {
+            int ptClass = getChangePartnerClass(myClass);
+            if (NDeal[ptClass]) {
+                Cards cc = change(infoClassPlayer[ptClass], R[ptClass] + recvCards, N_CHANGE_CARDS(ptClass), shared, ptools);
+                if (cc != recvCards) continue;
+            }
+        }
+
+        ok = true;
+        for (int cl = FUGO; cl >= 0; cl--) {
+            int rich = cl, poor = getChangePartnerClass(cl);
+            if (rich == myClass || poor == myClass) continue;
+            Cards cc = change(infoClassPlayer[rich], R[rich], N_CHANGE_CARDS(rich), shared, ptools);
             if (!Cards(R[poor] + cc).holds(detCards[poor])
                 || !Cards(R[rich] - cc).holds(detCards[rich])) {
                 ok = false; break;
@@ -454,6 +556,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
             R[poor] += cc;
         }
         if (!ok) continue;
+
         success = true;
         break;
     }
@@ -467,7 +570,7 @@ bool RandomDealer::dealWithChangeRejection(Cards *const dst,
     } else {
         DERR << "DEAL_REJEC FAILED..." << endl;
         // 失敗の場合は逆関数法に変更
-        dealWithBias(dst, dice);
+        dealWithNewBias(dst, dice);
         return false;
     }
     return true;
@@ -548,6 +651,22 @@ void RandomDealer::setWeightInWA() {
     candidatesInWA = probs.size();
 }
 
+double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards changeCards, const SharedData& shared) const {
+    Cards change[N_MAX_CHANGES];
+    double score[N_MAX_CHANGES];
+    int qty = changeCards.count();
+    int numChanges = genChange(change, cards, qty);
+    changePolicyScore(score, change, numChanges, cards, qty, shared.baseChangePolicy);
+    if (shared.playerModel.trained) {
+        for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
+    }
+    SoftmaxSelector<double> selector(score, numChanges, 1.1);
+    int index = find(change, change + numChanges, changeCards) - change;
+    assert(0 <= index && index < numChanges);
+    double prob = selector.prob(index);
+    return max(prob, 1 / 128.0);
+}
+
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
                                        const SharedData& shared, ThreadTools *const ptools) const {
     int turn = field.turn();
@@ -569,7 +688,10 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     if (moveIndex == -1) return 0.1 / double(numMoves + 1);
 
     array<double, N_MAX_MOVES> score;
-    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy);
+    if (shared.playerModel.trained) {
+        for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]);
+    }
 
     // Mateの手のスコアを設定
     double maxScore = *max_element(score.begin(), score.begin() + numMoves);

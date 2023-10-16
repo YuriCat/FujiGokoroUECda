@@ -8,12 +8,12 @@ int genChange(Cards *const pc0, const Cards myCards, const int changeQty) {
     Cards *pc = pc0;
     Cards tmp = myCards;
     if (changeQty == 1) {
-        for (Cards c : myCards.divide()) *(pc++) = c;
+        while (tmp.any()) *(pc++) = tmp.popLowestCard();
     } else if (changeQty == 2) {
         while (tmp.any()) {
-            Cards c = tmp.divide().lowest();
-            tmp -= c;
-            for (Cards c1 : tmp.divide()) *(pc++) = c | c1;
+            Cards c = tmp.popLowestCard();
+            Cards tmp2 = tmp;
+            while (tmp2.any()) *(pc++) = c | tmp2.popLowestCard();
         }
     }
     return pc - pc0;

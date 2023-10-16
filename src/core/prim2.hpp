@@ -8,178 +8,109 @@
 
 // 試合結果の宣言情報
 
-constexpr int LCT_FINAL    = 0;
-constexpr int LCT_PW       = 1;
-constexpr int LCT_BNPW     = 2;
-constexpr int LCT_BRPW     = 3;
-constexpr int LCT_MPMATE   = 4;
-constexpr int LCT_L2MATE   = 5;
-constexpr int LCT_MPGIVEUP = 6;
-constexpr int LCT_L2GIVEUP = 7;
+constexpr int LCT_FINAL    = 16;
+constexpr int LCT_PW       = 17;
+constexpr int LCT_MPMATE   = 18;
+constexpr int LCT_L2MATE   = 19;
+constexpr int LCT_MPGIVEUP = 20;
+constexpr int LCT_L2GIVEUP = 21;
 
 // 場の一時状況に対するする宣言情報
-constexpr int LCT_SELFFOLLOW = 16;
-constexpr int LCT_UNRIVALED = 17;
-constexpr int LCT_LASTAWAKE = 18;
-constexpr int LCT_FLUSHLEAD = 19;
-constexpr int LCT_NPDOM = 20;
-constexpr int LCT_PDOM = 21;
-constexpr int LCT_BDOMOTHERS = 22;
-constexpr int LCT_BDOMME = 23; // <-NoChanceのこと
+constexpr int LCT_SELFFOLLOW = 22;
+constexpr int LCT_UNRIVALED = 23;
+constexpr int LCT_LASTAWAKE = 24;
+constexpr int LCT_FLUSHLEAD = 25;
+constexpr int LCT_NPDOM = 26;
+constexpr int LCT_PDOM = 27;
+constexpr int LCT_DOMOTHERS = 28;
+constexpr int LCT_DOMME = 29;
 
-constexpr uint32_t FLAG_MATE   = 0x3fU;
-constexpr uint32_t FLAG_GIVEUP = 0xc0U;
+constexpr int LCT_CHECKED = 31;
 
-constexpr int LCT64_FINAL    = 0 + 32;
-constexpr int LCT64_PW       = 1 + 32;
-constexpr int LCT64_BNPW     = 2 + 32;
-constexpr int LCT64_BRPW     = 3 + 32;
-constexpr int LCT64_MPMATE   = 4 + 32;
-constexpr int LCT64_L2MATE   = 5 + 32;
-constexpr int LCT64_MPGIVEUP = 6 + 32;
-constexpr int LCT64_L2GIVEUP = 7 + 32;
-
-constexpr int LCT64_SELFFOLLOW = 16 + 32;
-constexpr int LCT64_UNRIVALED = 17 + 32;
-constexpr int LCT64_LASTAWAKE = 18 + 32;
-constexpr int LCT64_FLUSHLEAD = 19 + 32;
-constexpr int LCT64_NPDOM = 20 + 32;
-constexpr int LCT64_PDOM = 21 + 32;
-constexpr int LCT64_BDOMOTHERS = 22 + 32;
-constexpr int LCT64_BDOMME = 23 + 32; // <-NoChanceのこと
-
-constexpr int LCT_MINNCARDS = 0;
-constexpr int LCT_MAXNCARDS = 4;
-constexpr int LCT_MINNCARDSAWAKE = 8;
-constexpr int LCT_MAXNCARDSAWAKE = 12;
-
-constexpr uint64_t FLAG64_MATE   = 0x3fULL << 32;
-constexpr uint64_t FLAG64_GIVEUP = 0xc0ULL << 32;
-
-class FieldAddInfo {
-
+struct FieldAddInfo {
     // 着手決定のためにこの程度は調べておきたい場情報
     // 着手ごとの情報と被る場合もあるけれども、検索が面倒な場合はこちらに記録しておく
 
-    // 16 セルフフォロー
-    // 17 独壇場(ALLDOM)
-    // 18 LastAwake
-    // 19 流れ場主
-    // 20 NPDOM
-    // 21 PDOM
-    // 22 BDOMOTHERS
-    // 23 BDOMME
-
-    // info1
-    // 0-3 MinNumCards
-    // 4-7 MaxNumCards
-    // 8-11 MinNumCardsAwake
-    // 12-15 MaxNCardsAwake
-
-public:
-    using data_t = uint64_t;
+    uint32_t data;
 
     // set
-    void setFinal() {    set(LCT64_FINAL, LCT64_PW, LCT64_MPMATE); }
-    void setPW() {       set(LCT64_PW, LCT64_MPMATE); }
-    void setBNPW() {     set(LCT64_BNPW, LCT64_MPMATE); }
-    void setBRPW() {     set(LCT64_BRPW, LCT64_MPMATE); }
-    void setMPMate() {   set(LCT64_MPMATE); }
-    void setL2Mate() {   set(LCT64_L2MATE); }
-    void setMPGiveUp() { set(LCT64_MPGIVEUP); }
-    void setL2GiveUp() { set(LCT64_L2GIVEUP); }
+    void setFinal() {    set(LCT_FINAL, LCT_PW, LCT_MPMATE); }
+    void setPW() {       set(LCT_PW, LCT_MPMATE); }
+    void setMPMate() {   set(LCT_MPMATE); }
+    void setL2Mate() {   set(LCT_L2MATE); }
+    void setMPGiveUp() { set(LCT_MPGIVEUP); }
+    void setL2GiveUp() { set(LCT_L2GIVEUP); }
 
-    void setSelfFollow() { set(LCT64_SELFFOLLOW,
-                                        LCT64_UNRIVALED,
-                                        LCT64_LASTAWAKE,
-                                        LCT64_FLUSHLEAD,
-                                        LCT64_NPDOM,
-                                        LCT64_PDOM,
-                                        LCT64_BDOMOTHERS); }
-    void setUnrivaled() { set(LCT64_UNRIVALED,
-                                       LCT64_FLUSHLEAD,
-                                       LCT64_NPDOM,
-                                       LCT64_PDOM,
-                                       LCT64_BDOMOTHERS); }
-    void setLastAwake() { set(LCT64_LASTAWAKE,
-                                       LCT64_NPDOM,
-                                       LCT64_BDOMOTHERS); }
-    void setFlushLead() { set(LCT64_FLUSHLEAD); }
-    void setNPDom() { set(LCT64_NPDOM); }
-    void setPassDom() { set(LCT64_PDOM); }
-    void setBDO() { set(LCT64_BDOMOTHERS); }
-    void setBDM() { set(LCT64_BDOMME); }
-    void setBDALL() { set(LCT64_BDOMOTHERS,
-                                   LCT64_BDOMME); }
+    void setSelfFollow() { set(LCT_SELFFOLLOW, LCT_UNRIVALED, LCT_LASTAWAKE, LCT_FLUSHLEAD, LCT_NPDOM, LCT_PDOM, LCT_DOMOTHERS); }
+    void setUnrivaled() { set(LCT_UNRIVALED, LCT_FLUSHLEAD, LCT_NPDOM, LCT_PDOM, LCT_DOMOTHERS); }
+    void setLastAwake() { set(LCT_LASTAWAKE, LCT_NPDOM, LCT_DOMOTHERS); }
+    void setFlushLead() { set(LCT_FLUSHLEAD); }
+    void setNPDom() { set(LCT_NPDOM); }
+    void setPassDom() { set(LCT_PDOM); }
+    void setBDO() { set(LCT_DOMOTHERS); }
+    void setBDM() { set(LCT_DOMME); }
+    void setBDALL() { set(LCT_DOMOTHERS, LCT_DOMME); }
     void setNoChance() { setBDM(); }
-    void setMinNumCards(uint32_t n) { i_ |= n & 15U; }
-    void setMaxNumCards(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFFFF0F) | ((n & 15U) << 4); }
-    void setMinNumCardsAwake(uint32_t n) { i_ |= (n & 15U) << 8; }
-    void setMaxNumCardsAwake(uint32_t n) { i_ = (i_ & 0xFFFFFFFFFFFF0FFF) | ((n & 15U) << 12); }
+
+    void setMinNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFFFF0U) | n; }
+    void setMaxNumCards(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFFF0FU) | (n << 4); }
+    void setMinNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0xFFFFF0FFU) | (n << 8); }
+    void setMaxNumCardsAwake(uint32_t n) { assert(n < 16U); data = (data & 0xFFFF0FFFU) | (n << 12); }
 
     // get
     // 一時情報
-    uint64_t isFinal() const {    return test(LCT64_FINAL); }
-    uint64_t isPW() const {       return test(LCT64_PW); }
-    uint64_t isBNPW() const {     return test(LCT64_BNPW); }
-    uint64_t isBRPW() const {     return test(LCT64_BRPW); }
-    uint64_t isMPMate() const {   return test(LCT64_MPMATE); }
-    uint64_t isMPGiveUp() const { return test(LCT64_MPGIVEUP); }
-    uint64_t isL2Mate() const {   return test(LCT64_L2MATE); }
-    uint64_t isL2GiveUp() const { return test(LCT64_L2GIVEUP); }
-    uint64_t isMate() const {     return i_ & FLAG64_MATE; }
-    uint64_t isGiveUp() const {   return i_ & FLAG64_GIVEUP; }
+    bool isFinal() const {    return test(LCT_FINAL); }
+    bool isPW() const {       return test(LCT_PW); }
+    bool isMPMate() const {   return test(LCT_MPMATE); }
+    bool isMPGiveUp() const { return test(LCT_MPGIVEUP); }
+    bool isL2Mate() const {   return test(LCT_L2MATE); }
+    bool isL2GiveUp() const { return test(LCT_L2GIVEUP); }
+    bool isMate() const {     return test(LCT_FINAL, LCT_PW, LCT_MPMATE, LCT_L2MATE); }
+    bool isGiveUp() const {   return test(LCT_MPGIVEUP, LCT_L2GIVEUP); }
 
-    uint64_t isSelfFollow() const { return test(LCT64_SELFFOLLOW); }
-    uint64_t isUnrivaled() const { return test(LCT64_UNRIVALED); }
-    uint64_t isLastAwake() const { return test(LCT64_LASTAWAKE); }
-    uint64_t isFlushLead() const { return test(LCT64_FLUSHLEAD); }
-    uint64_t isNonPassDom() const { return test(LCT64_NPDOM); }
-    uint64_t isPassDom() const { return test(LCT64_PDOM); }
-    uint64_t isBDO() const { return test(LCT64_BDOMOTHERS); }
-    uint64_t isBDM() const { return test(LCT64_BDOMME); }
-    bool isBDALL() const { return holds(LCT64_BDOMOTHERS,
-                                                 LCT64_BDOMME); }
-    uint64_t isNoChance() const { return isBDM(); }
+    bool isSelfFollow() const { return test(LCT_SELFFOLLOW); }
+    bool isUnrivaled() const { return test(LCT_UNRIVALED); }
+    bool isLastAwake() const { return test(LCT_LASTAWAKE); }
+    bool isFlushLead() const { return test(LCT_FLUSHLEAD); }
+    bool isNonPassDom() const { return test(LCT_NPDOM); }
+    bool isPassDom() const { return test(LCT_PDOM); }
+    bool isBDO() const { return test(LCT_DOMOTHERS); }
+    bool isBDM() const { return test(LCT_DOMME); }
+    bool isBDALL() const { return holds(LCT_DOMOTHERS, LCT_DOMME); }
+    bool isNoChance() const { return isBDM(); }
 
-    uint32_t minNumCards() const { return i_ & 15U; }
-    uint32_t maxNumCards() const { return (i_ >> 4) & 15U; }
-    uint32_t minNumCardsAwake() const { return (i_ >> 8) & 15U; }
-    uint32_t maxNumCardsAwake() const { return (i_ >> 12) & 15U; }
-
-    void initHalf() { i_ = 0; }
+    uint32_t minNumCards() const { return data & 15U; }
+    uint32_t maxNumCards() const { return (data >> 4) & 15U; }
+    uint32_t minNumCardsAwake() const { return (data >> 8) & 15U; }
+    uint32_t maxNumCardsAwake() const { return (data >> 12) & 15U; }
 
     void init() {
-        // カード枚数については、無設定の場合はmaxが15、minの場合は０になるようにする
-        i_ = 0x0000F0F0ULL;
+        // カード枚数については、無設定の場合はmaxが15、minの場合は0になるようにする
+        data = 0x0000F0F0U;
     }
     void procTmpInfo() {
-        i_ &= 0xFFFFULL;
+        data &= 0x0000FFFFU;
     }
 
-    constexpr data_t data() const { return i_; }
-    constexpr FieldAddInfo(): i_() {}
-    constexpr FieldAddInfo(const FieldAddInfo& arg): i_(arg.data()) {}
+    constexpr FieldAddInfo(): data() {}
+    constexpr FieldAddInfo(const FieldAddInfo& arg): data(arg.data) {}
 
-protected:
-    data_t i_;
-
-    void set(size_t i) { i_ |= 1ULL << i; }
+    void set(size_t i) { data |= 1U << i; }
     template <class... args_t>
     void set(size_t i0, args_t... args) { set(i0); set(args...); }
     bool holds(size_t i0, size_t i1) const {
-        uint64_t dst = (1ULL << i0) | (1ULL << i1);
-        return !(~i_ & dst);
+        uint32_t dst = (1U << i0) | (1U << i1);
+        return !(~data & dst);
     }
-    uint64_t test(size_t i) const { return i_ & (1ULL << i); }
+    bool test(size_t i) const { return data & (1U << i); }
+    template <class... args_t>
+    bool test(size_t i0, args_t... args) const { return test(i0) || test(args...); }
 };
 
 static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 出力
     out << "Field :";
     if (i.isFinal()) out << " -FIN";
     else if (i.isPW()) out << " -PW";
-    else if (i.isBNPW()) out << " -BNPW";
-    else if (i.isBRPW()) out << " -BRPW";
     else if (i.isMPMate()) out << " -MPMATE";
 
     if (i.isL2Mate()) out << " -L2MATE";
@@ -235,49 +166,41 @@ struct MoveInfo : public Move {
         uint32_t dst = (1U << i0) | (1U << i1);
         return !(~Move::flags & dst);
     }
-    uint32_t test(size_t i) const { return Move::flags & (1U << i); }
+    bool test(size_t i) const { return Move::flags & (1U << i); }
+    template <class... args_t>
+    bool test(size_t i0, args_t... args) const { return test(i0) || test(args...); }
 
     void setFinal() {    set(LCT_FINAL, LCT_PW, LCT_MPMATE); }
     void setPW() {       set(LCT_PW, LCT_MPMATE); }
-    void setBNPW() {     set(LCT_BNPW, LCT_MPMATE); }
-    void setBRPW() {     set(LCT_BRPW, LCT_MPMATE); }
     void setMPMate() {   set(LCT_MPMATE); }
     void setL2Mate() {   set(LCT_L2MATE); }
     void setMPGiveUp() { set(LCT_MPGIVEUP); }
     void setL2GiveUp() { set(LCT_L2GIVEUP); }
 
     // 当座支配
-    void setDO() { set(12); }
-    void setDM() { set(13); }
-    void setDALL() { set(12, 13); }
+    void setDO() { set(LCT_DOMOTHERS); }
+    void setDM() { set(LCT_DOMME); }
+    void setDALL() { set(LCT_DOMOTHERS, LCT_DOMME); }
     void setDomOthers() { setDO(); }
     void setDomMe() { setDM(); }
     void setDomAll() { setDALL(); }
-    void setChecked() { set(31); }
-
-    void init() { Move::flags = 0; }
+    void setChecked() { set(LCT_CHECKED); }
 
     // get
-    uint64_t isFinal() const {    return test(LCT_FINAL); }
-    uint64_t isPW() const {       return test(LCT_PW); }
-    uint64_t isBNPW() const {     return test(LCT_BNPW); }
-    uint64_t isBRPW() const {     return test(LCT_BRPW); }
-    uint64_t isMPMate() const {   return test(LCT_MPMATE); }
-    uint64_t isMPGiveUp() const { return test(LCT_MPGIVEUP); }
-    uint64_t isL2Mate() const {   return test(LCT_L2MATE); }
-    uint64_t isL2GiveUp() const { return test(LCT_L2GIVEUP); }
-    uint64_t isMate() const {     return Move::flags & FLAG_MATE; }
-    uint64_t isGiveUp() const {   return Move::flags & FLAG_GIVEUP; }
+    bool isFinal() const {    return test(LCT_FINAL); }
+    bool isPW() const {       return test(LCT_PW); }
+    bool isMPMate() const {   return test(LCT_MPMATE); }
+    bool isMPGiveUp() const { return test(LCT_MPGIVEUP); }
+    bool isL2Mate() const {   return test(LCT_L2MATE); }
+    bool isL2GiveUp() const { return test(LCT_L2GIVEUP); }
+    bool isMate() const {     return test(LCT_FINAL, LCT_PW, LCT_MPMATE, LCT_L2MATE); }
+    bool isGiveUp() const {   return test(LCT_MPGIVEUP, LCT_L2GIVEUP); }
 
-    uint64_t isDO() const { return test(12); }
-    uint64_t isDM() const { return test(13); }
-    bool isDALL() const { return holds(12, 13); }
+    bool dominatesOthers() const { return test(LCT_DOMOTHERS); }
+    bool dominatesMe() const { return test(LCT_DOMME); }
+    bool dominatesAll() const { return holds(LCT_DOMME, LCT_DOMOTHERS); }
 
-    uint64_t dominatesOthers() const { return isDO(); }
-    uint64_t dominatesMe() const { return isDM(); }
-    uint64_t dominatesAll() const { return isDALL(); }
-
-    bool isChecked() const { return test(31); }
+    bool isChecked() const { return test(LCT_CHECKED); }
 };
 
 static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
@@ -285,8 +208,6 @@ static std::string toInfoString(const MoveInfo& i, const Board b) { // 出力
     // 勝敗
     if (i.isFinal()) oss << " -FIN";
     else if (i.isPW()) oss << " -PW";
-    else if (i.isBNPW()) oss << " -BNPW";
-    else if (i.isBRPW()) oss << " -BRPW";
     else if (i.isMPMate()) oss << " -MPMATE";
 
     if (i.isL2Mate()) oss << " -L2MATE";

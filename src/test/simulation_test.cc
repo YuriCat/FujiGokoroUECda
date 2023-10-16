@@ -13,8 +13,9 @@ static SharedData shared;
 static ThreadTools tools;
 static Clock cl;
 
-int testSimulation(const MatchRecord& match) {
+int testSimulation(const MatchRecord& match, PlayerModel *pmodel = nullptr) {
     // 棋譜を読んでシミュレーションを行う
+    if (pmodel != nullptr) shared.playerModel = *pmodel;
     tools.dice.srand(1);
     mt19937 dice(0);
 
@@ -62,14 +63,14 @@ int testSimulation(const MatchRecord& match) {
     return 0;
 }
 
-bool SimulationTest(const vector<string>& recordFiles) {
-
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+bool SimulationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     for (string rf : recordFiles) {
         MatchRecord mrecord(rf);
         testSimulation(mrecord);
+        if (pmodel->trained) testSimulation(mrecord, pmodel);
     }
     return 0;
 }
