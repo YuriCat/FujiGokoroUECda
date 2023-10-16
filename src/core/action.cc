@@ -10,12 +10,10 @@ int genChange(Cards *const pc0, const Cards myCards, const int changeQty) {
     if (changeQty == 1) {
         while (tmp.any()) *(pc++) = tmp.popLowestCard();
     } else if (changeQty == 2) {
-        Cards lowerCards = CARDS_NULL;
         while (tmp.any()) {
             Cards c = tmp.popLowestCard();
-            Cards tmp2 = lowerCards;
-            while (tmp2.any()) *(pc++) = c + tmp2.popLowestCard();
-            lowerCards += c;
+            Cards tmp2 = tmp;
+            while (tmp2.any()) *(pc++) = c | tmp2.popLowestCard();
         }
     }
     return pc - pc0;
