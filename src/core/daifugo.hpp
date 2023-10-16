@@ -97,17 +97,9 @@ constexpr int N_PATTERNS_SUITS_SUITS = 35;
 
 extern void initSuits();
 
-struct SuitsInitializer {
-    SuitsInitializer() {
-        initSuits();
-    }
-};
-
-extern SuitsInitializer suitsInitializer;
-
 /**************************カード整数**************************/
 
-// U3456789TJQKA2O、CDHSの順番で0-59　ジョーカーは60
+// U3456789TJQKA2O、CDHSの順番で0-59 ジョーカーは60
 
 // 定数
 enum IntCard : int {
@@ -408,7 +400,7 @@ inline BitCards ORQToSCValidZone(int ord, int rank, int qty) { // ランク限�
     return res;
 }
 
-// 許容包括
+// 許容包含
 // あるランクやスートを指定して、そのランクが許容ゾーンに入るか判定する
 // MINやMAXとの比較は変な値が入らない限りする必要がないので省略している
 inline bool isValidGroupRank(int moveRank, int order, int boardRank) {
@@ -421,44 +413,6 @@ inline bool isValidSeqRank(int moveRank, int order, int boardRank, int qty) {
 }
 
 /**************************カード集合表現(クラス版)**************************/
-
-struct CardsAsSet {
-    // ビット単位で1つずつ取り出す用
-    BitCards c_;
-    constexpr CardsAsSet(BitCards c): c_(c) {}
-
-    BitCards lowest() const { assert(c_); return c_ & -c_; }
-    BitCards popLowest() {
-        assert(c_);
-        BitCards l = lowest();
-        c_ -= l;
-        return l;
-    }
-
-    class const_iterator : public std::iterator<std::input_iterator_tag, BitCards> {
-        friend CardsAsSet;
-    public:
-        BitCards operator *() const {
-            // 下1ビットを取り出す
-            return c_ & -c_;
-        }
-        bool operator !=(const const_iterator& itr) const {
-            return pclass_ != itr.pclass_ || c_ != itr.c_;
-        }
-        const_iterator& operator ++() {
-            c_ = popLsb<BitCards>(c_);
-            return *this;
-        }
-    protected:
-        explicit const_iterator(const CardsAsSet *pclass): pclass_(pclass), c_(pclass->c_) {}
-        explicit const_iterator(const CardsAsSet *pclass, BitCards c): pclass_(pclass), c_(c) {}
-        const CardsAsSet *const pclass_;
-        BitCards c_;
-    };
-
-    const_iterator begin() const { return const_iterator(this); }
-    const_iterator end() const { return const_iterator(this, 0); }
-};
 
 union Cards {
     BitCards c_;
@@ -564,6 +518,16 @@ union Cards {
         remove(ic);
         return ic;
     }
+    Cards lowestCard() const {
+        assert(any());
+        return lsb(c_);
+    }
+    Cards popLowestCard() {
+        assert(any());
+        BitCards l = lowestCard();
+        c_ -= l;
+        return l;
+    }
     Cards exceptLowest() const { return popLsb(c_); }
 
     class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
@@ -588,8 +552,6 @@ union Cards {
 
     const_iterator begin() const { return const_iterator(this); }
     const_iterator end() const { return const_iterator(this, 0); }
-
-    constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
 
     bool exam() const {
         return joker_ <= N_JOKERS && examPlainCards(plain());
@@ -696,32 +658,13 @@ inline BitCards CardsToER(BitCards c) {
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
-inline BitCards CardsToPQR(BitCards arg) {
-    // ランクごとの枚数を示す位置にビットが立つようにする
-    // 2ビットごとの枚数を計算
-    BitCards a = (arg & PQR_13) + ((arg >> 1) & PQR_13);
-    // 4ビットあったところを4に配置
-    BitCards r = a & (a << 2) & PQR_4;
-    // 3ビットあったところを3に配置
-    BitCards r3 = (a << 2) & (a >> 1) & PQR_3;
-    r3 |= a & (a << 1) & PQR_3;
-
-    // 残りは足すだけ。ただし3,4ビットがすでにあったところにはビットを置かない。
-    BitCards r12 = ((a & PQR_12) + ((a >> 2) & PQR_12)) & PQR_12;
-    if (r3) {
-        r |= r3;
-        r |= ~((r3 >> 1) | (r3 >> 2)) & r12;
-    } else {
-        r |= r12;
-    }
-    return r;
-}
-inline BitCards QRToPQR(const CardArray qr) {
+inline BitCards QRToPQR(CardArray qr) {
     // qr -> pqr 変換
-    const BitCards iqr = ~qr;
-    const BitCards qr_l1 = (qr << 1);
-    const BitCards r = (PQR_1 & qr & (iqr >> 1)) | (PQR_2 & qr & (iqr << 1)) | ((qr & qr_l1) << 1) | (qr_l1 & PQR_4);
-    return r;
+    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
+}
+inline BitCards CardsToPQR(BitCards c) {
+    // ランクごとの枚数を示す位置にビットが立つようにする
+    return QRToPQR(CardsToQR(c));
 }
 inline BitCards PQRToSC(BitCards pqr) {
     // pqr -> sc はビットを埋めていくだけ
@@ -789,7 +732,6 @@ inline bool canMakeGroup(BitCards c, int n) {
 
 // 一枚一枚に乱数をあてたゾブリストハッシュ
 // 線形のため合成や進行が楽
-constexpr uint64_t HASH_CARDS_NULL = 0ULL;
 constexpr uint64_t cardsHashKeyTable[64] = {
     // インデックスがIntCard番号に対応
     0x15cc5ec4cae423e2, 0xa1373ceae861f22a, 0x7b60ee1280de0951, 0x970b602e9f0a831a,
@@ -820,7 +762,7 @@ constexpr uint64_t subCardKey(uint64_t a, uint64_t b) {
     return a - b;
 }
 inline uint64_t CardsToHashKey(Cards c) {
-    uint64_t key = HASH_CARDS_NULL;
+    uint64_t key = 0ULL;
     for (IntCard ic : c) key = addCardKey(key, IntCardToHashKey(ic));
     return key;
 }
@@ -835,14 +777,6 @@ constexpr uint64_t knitCardsCardsHashKey(uint64_t key0, uint64_t key1) {
 }
 
 extern void initCards();
-
-struct CardsInitializer {
-    CardsInitializer() {
-        initCards();
-    }
-};
-
-extern CardsInitializer cardsInitializer;
 
 /**************************着手表現**************************/
 
@@ -868,6 +802,11 @@ struct Move {
     }
     bool operator ==(const Move& m) const {
         return toInt() == m.toInt();
+    }
+    static Move fromInt(uint32_t a) {
+        Move m;
+        *reinterpret_cast<uint64_t*>(&m) = uint64_t(a);
+        return m;
     }
 
     void clear()                      { *this = Move({0}); }
@@ -1110,3 +1049,13 @@ inline uint64_t L2NullFieldToHashKey(Cards c0, Cards c1, Board b) {
 inline uint64_t knitL2NullFieldHashKey(uint64_t ckey0, uint64_t ckey1, uint64_t boardKey) {
     return knitCardsCardsHashKey(ckey0, ckey1) ^ boardKey;
 }
+
+/**************************初期化**************************/
+
+struct DaifugoInitializer {
+    DaifugoInitializer() {
+        initSuits();
+        initCards();
+        if (Move({1, 1, 1, 1, 3, 2}).toInt() != 2298129) exit(1);
+    }
+};
