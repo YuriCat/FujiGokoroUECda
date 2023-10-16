@@ -156,6 +156,10 @@ constexpr unsigned int IntCardToSuits(IntCard ic) { return SuitNumToSuits(IntCar
 extern std::ostream& operator <<(std::ostream& ost, const IntCard& ic);
 extern IntCard StringToIntCard(const std::string& str);
 
+// (カード, カード)のパターン
+extern uint16_t C2Index[64][64];
+constexpr int N_PATTERNS_2CARDS = 1378;
+
 /**************************カード集合**************************/
 
 // 下位からIntCard番目にビットをたてる

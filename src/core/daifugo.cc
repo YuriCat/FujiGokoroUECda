@@ -124,6 +124,8 @@ ostream& operator <<(ostream& ost, const Cards& c) {
 BitCards ORQ_NDTable[2][16][4]; // (order, rank, qty - 1)
 uint64_t HASH_CARDS_ALL;
 
+uint16_t C2Index[64][64];
+
 void initCards() {
     // カード集合関係の初期化
     HASH_CARDS_ALL = CardsToHashKey(CARDS_ALL);
@@ -135,6 +137,21 @@ void initCards() {
             ORQ_NDTable[1][r][q] = RankRangeToCards(r, RANK_IMG_MAX) & mask;
         }
     }
+
+    // パターンインデックス
+    memset(C2Index, 0, sizeof(C2Index));
+    int n = 0;
+    for (int i = 0; i < 64; i++) {
+        if (CARDS_ALL & (1ULL << i)) {
+            for(int j = 0; j < i; j++) {
+                if (CARDS_ALL & (1ULL << j)) {
+                    C2Index[i][j] = C2Index[j][i] = n;
+                    n++;
+                }
+            }
+        }
+    }
+    assert(n == N_PATTERNS_2CARDS);
 }
 
 // 着手
