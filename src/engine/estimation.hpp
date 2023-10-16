@@ -13,7 +13,9 @@ enum DealType {
 constexpr int EST_FEATURES =
       64 * 4 // 階級ごとのカード所持
     + 64 * 64 * 4 // 階級ごとのカードxカード所持
-    + 64 * 64 // 残りカードx出したカード
+   // + 64 * 64 // 残りカードx出したカード
+    + 64 * 1378 // 出したカードx残りカードx残りカード
+    + 64 * 1378 // 残りカードx出したカードx出したカード
     + 64 * 64; // 交換で渡したカード
 
 extern float estimationTable[EST_FEATURES];

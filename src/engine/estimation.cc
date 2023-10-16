@@ -94,19 +94,34 @@ float inverseEstimationScore(const Cards orgCards, const Cards usedCards, const 
     if (playerClass != HEIMIN) {
         Cards lowerCards = CARDS_NULL;
         for (IntCard ic : orgCards) {
-            F(64 * classIndex + ic);
+            //F(64 * classIndex + ic);
             for (IntCard ic2 : lowerCards) F(64 * 4 + classIndex * 64 * 64 + ic * 64 + ic2);
             lowerCards.insert(ic);
         }
     }
 
+    // UCC
     Cards unusedCards = orgCards - usedCards;
     for (IntCard ic : usedCards) {
-        for (IntCard ic2 : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * ic + ic2);
+        Cards lowerCards = CARDS_NULL;
+        for (IntCard ic2 : unusedCards) {
+            //F(64 * 4 + 64 * 64 * 4 + 64 * ic + ic2);
+            for (IntCard ic3 : lowerCards) F(64 * 4 + 64 * 64 * 4 + 1378 * ic + C2Index[ic2][ic3]);
+            lowerCards.insert(ic);
+        }
     }
 
-    for (IntCard ic2 : sentCards) {
-        for (IntCard ic : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * 64 + ic * 64 + ic2);
+    // CUU
+    for (IntCard ic : unusedCards) {
+        Cards lowerCards = CARDS_NULL;
+        for (IntCard ic2 : usedCards) {
+            for (IntCard ic3 : lowerCards) F(64 * 4 + 64 * 64 * 4 + 64 * 1378 + 1378 * ic + C2Index[ic2][ic3]);
+            lowerCards.insert(ic);
+        }
+    }
+
+    for (IntCard ic : sentCards) {
+        for (IntCard ic2 : unusedCards) F(64 * 4 + 64 * 64 * 4 + 64 * 1378 * 2 + ic * 64 + ic2);
     }
 
     return score;
@@ -206,8 +221,14 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
         }
     }
 
-    while (fromCards) {
-        IntCard ic = fromCards.popHighest();
+    int n = 0;
+    IntCard cards[N_CARDS];
+    for (IntCard ic : fromCards) cards[n++] = ic;
+
+    while (n > 0) {
+        int index = dice() % n;
+        IntCard ic = cards[index];
+        cards[index] = cards[--n];
 
         uint64_t weightSum[N + 1];
         weightSum[0] = 0;
@@ -230,7 +251,7 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
 }
 
 void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
-    const int K = 64;
+    const int K = 48;
     array<Cards, N> cards[K];
     double score[K] = {0};
     for (int i = 0; i < K; i++) dealWithBias(cards[i].data(), dice);
@@ -247,7 +268,7 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
         }
         score[i] = s;
     }
-    SoftmaxSelector<double> selector(score, K, 0.1);
+    SoftmaxSelector<double> selector(score, K, 0.2);
     int index = selector.select(dice.random());
     for (int p = 0; p < N; p++) dst[p] = cards[index][p];
 }
