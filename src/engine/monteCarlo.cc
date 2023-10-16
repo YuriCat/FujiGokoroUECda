@@ -142,8 +142,8 @@ void MonteCarloThread(const int threadId, const int numThreads,
             estTime += clock.restart();
             world = numWorlds++;
         } else {
-            // ランダム選択
-            world = dice() % numWorlds;
+            // 順番に選択
+            world = numSimulations[action] % numWorlds;
         }
 
         numSimulations[action]++;

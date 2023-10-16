@@ -79,8 +79,6 @@ void initSuits() {
     }
 }
 
-SuitsInitializer suitsInitializer;
-
 // カード
 
 ostream& operator <<(ostream& ost, const IntCard& ic) {
@@ -138,8 +136,6 @@ void initCards() {
         }
     }
 }
-
-CardsInitializer cardsInitializer;
 
 // 着手
 
@@ -344,3 +340,5 @@ bool isSubjectivelyValid(Board b, Move m, const Cards& c, const int q) {
     }
     return true;
 }
+
+DaifugoInitializer daifugoInitializer;

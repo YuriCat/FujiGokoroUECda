@@ -30,7 +30,7 @@ namespace Simulation {
 }
 
 MoveInfo simulationMove(Field& field, const SharedData& shared,
-                        ThreadTools *const ptools) {
+                        ThreadTools *const ptools, double progress) {
     int turn = field.turn();
     int numMoves = genMove(field.mbuf, field.hand[turn].cards, field.board);
     if (numMoves == 1) return field.mbuf[0];
@@ -54,7 +54,10 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 
     // 行動方策を計算
     double score[N_MAX_MOVES];
-    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy, 0);
+    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy);
+    if (turn != field.myPlayerNum && shared.playerModel.trained) {
+        for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, field.mbuf[i]) * progress;
+    }
 
     // ランダム選択
     BiasedSoftmaxSelector<double> selector(score, numMoves,
@@ -69,6 +72,7 @@ int simulation(Field& field,
                ThreadTools *const ptools) {
     Clock clock;
     clock.start();
+    double progress = 1;
     while (1) {
         if (Settings::L2SearchInSimulation && field.isL2Situation()) {
             int p[2];
@@ -84,8 +88,9 @@ int simulation(Field& field,
             }
         }
         // 手を選んで進める
-        MoveInfo move = simulationMove(field, *pshared, ptools);
+        MoveInfo move = simulationMove(field, *pshared, ptools, progress);
         if (field.procFast(move) < 0) break;
+        progress *= 0.95;
     }
     Simulation::time += clock.stop();
     Simulation::count++;
@@ -119,9 +124,11 @@ int startAllSimulation(Field& field,
             int to = field.classPlayer(getChangePartnerClass(cl));
             int qty = N_CHANGE_CARDS(cl);
             Cards change[N_MAX_CHANGES];
-            const int changes = genChange(change, field.getCards(from), qty);
-            int index = changeWithPolicy(change, changes, field.getCards(from), qty,
-                                         pshared->baseChangePolicy, Settings::simulationTemperatureChange, ptools->dice);
+            double score[N_MAX_CHANGES];
+            const int numChanges = genChange(change, field.getCards(from), qty);
+            changePolicyScore(score, change, numChanges, field.getCards(from), qty, pshared->baseChangePolicy);
+            SoftmaxSelector<double> selector(score, numChanges, Settings::simulationTemperatureChange);
+            int index = selector.select(ptools->dice.random());
             field.makeChange(from, to, qty, change[index], false);
         }
     }
