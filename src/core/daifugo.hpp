@@ -525,7 +525,7 @@ union Cards {
     Cards popLowestCard() {
         assert(any());
         BitCards l = lowestCard();
-        c_ = popLsb(c_);
+        c_ -= l;
         return l;
     }
     Cards exceptLowest() const { return popLsb(c_); }
