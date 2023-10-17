@@ -144,6 +144,7 @@ struct RootAction {
     // モンテカルロ結果
     BetaDistribution monteCarloScore;
     BetaDistribution naiveScore;
+    double vloss;
 
     // モンテカルロの詳細な結果
     BetaDistribution myScore, rivalScore;
@@ -152,7 +153,9 @@ struct RootAction {
     uint64_t turnSum;
 
     double mean() const { return monteCarloScore.mean(); }
+    double meanvl() const { return monteCarloScore.a / (monteCarloScore.a + monteCarloScore.b + vloss); }
     double size() const { return monteCarloScore.size(); }
+    double sizevl() const { return monteCarloScore.a + monteCarloScore.b + vloss; }
     double mean_var() const { return monteCarloScore.var(); }
     double var() const { return monteCarloScore.var() * size(); }
     double naive_mean() const { return naiveScore.mean(); }
@@ -176,6 +179,7 @@ struct RootAction {
         rivalScore.set(1, 1);
         policyScore = 0;
         policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
+        vloss = 0;
     }
 };
 
@@ -222,6 +226,7 @@ struct RootInfo {
     void feedPolicyScore(const double *const score, int num);
 
     void feedSimulationResult(int triedIndex, const Field& field, SharedData *const pshared);
+    void addVirtualLoss(int index) { lock(); child[index].vloss += 1; unlock(); }
 
     void sort();
 

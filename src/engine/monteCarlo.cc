@@ -17,8 +17,8 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
     const auto& a = root.child;
     if (actions == 2) {
         // 2つの時は同数(分布サイズ単位)に割り振る
-        if (a[0].size() == a[1].size()) return dice() % 2;
-        else return a[0].size() < a[1].size() ? 0 : 1;
+        if (a[0].sizevl() == a[1].sizevl()) return dice() % 2;
+        else return a[0].sizevl() < a[1].sizevl() ? 0 : 1;
     } else {
         // UCB-root アルゴリズム
         int index = 0;
@@ -29,9 +29,9 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
             if (a[i].simulations < 4) {
                 // 最低プレイアウト数をこなしていないものは、大きな値にする
                 // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                score = (double)((1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6)));
+                score = (double)((1U << 16) - ((int)a[i].sizevl() << 8) + (dice() % (1U << 6)));
             } else {
-                score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
+                score = a[i].meanvl() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
             }
             if (score > bestScore) {
                 bestScore = score;
@@ -110,6 +110,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
 
         int world = 0;
         int action = selectBanditAction(*proot, dice);
+        proot->addVirtualLoss(action);
 
         if (numSimulations[action] < numWorlds) {
             // まだ全ての世界でこの着手を検討していない

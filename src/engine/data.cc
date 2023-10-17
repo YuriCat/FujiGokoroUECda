@@ -120,6 +120,7 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     child[triedIndex].monteCarloScore += totalScore;
     child[triedIndex].naiveScore += totalScore;
     monteCarloAllScore += totalScore;
+    child[triedIndex].vloss -= 1;
 
     if (rivalPlayerNum >= 0) {
         child[triedIndex].myScore += myScore;
