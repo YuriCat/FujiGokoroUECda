@@ -69,7 +69,7 @@ struct GradientUpdator {
                 double diff = i == index ? (1 - prob[i]) : -prob[i];
                 value[f.first] += lr_ * scale * diff / (1e-3 + var(f.first)) * f.second;
                 if (ent_reg != 0) value[f.first] += lr_ * scale * ent_reg * prob[i] * (-log2(prob[i]) - ent);
-                if (weight_decay_ != 0) value[f.first] *= pow(1 - weight_decay_, 1 / (1e-3 + freq(i)));
+                if (weight_decay_ != 0) value[f.first] *= pow(1 - weight_decay_, scale / (1e-3 + freq(i)));
             }
         }
         lr_ *= 1 - lr_decay;
