@@ -43,24 +43,6 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootAction::clear() {
-    move = MOVE_NONE;
-    changeCards = CARDS_NULL;
-    simulations = 0;
-    turnSum = 0;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        for (int cl = 0; cl < N_CLASSES; cl++) {
-            classDistribution[p][cl] = 0;
-        }
-    }
-    monteCarloScore.set(1, 1);
-    naiveScore.set(0, 0);
-    myScore.set(1, 1);
-    rivalScore.set(1, 1);
-    policyScore = 0;
-    policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
-}
-
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     candidates = num;
     for (int i = 0; i < candidates; i++) {

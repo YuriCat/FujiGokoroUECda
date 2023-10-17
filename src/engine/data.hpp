@@ -157,9 +157,26 @@ struct RootAction {
     double var() const { return monteCarloScore.var() * size(); }
     double naive_mean() const { return naiveScore.mean(); }
 
-    void clear();
     void setChange(Cards cc) { clear(); changeCards = cc; }
     void setPlay(MoveInfo m) { clear(); move = m; }
+
+    void clear() {
+        move = MOVE_NONE;
+        changeCards = CARDS_NULL;
+        simulations = 0;
+        turnSum = 0;
+        for (int p = 0; p < N_PLAYERS; p++) {
+            for (int cl = 0; cl < N_CLASSES; cl++) {
+                classDistribution[p][cl] = 0;
+            }
+        }
+        monteCarloScore.set(1, 1);
+        naiveScore.set(0, 0);
+        myScore.set(1, 1);
+        rivalScore.set(1, 1);
+        policyScore = 0;
+        policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
+    }
 };
 
 /**************************ルートの全体の情報**************************/
