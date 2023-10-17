@@ -160,7 +160,6 @@ struct RootAction {
     void clear();
     void setChange(Cards cc) { clear(); changeCards = cc; }
     void setPlay(MoveInfo m) { clear(); move = m; }
-    std::string toString() const;
 };
 
 /**************************ルートの全体の情報**************************/

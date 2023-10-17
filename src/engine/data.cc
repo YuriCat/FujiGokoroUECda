@@ -61,14 +61,6 @@ void RootAction::clear() {
     policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
 }
 
-string RootAction::toString() const {
-    ostringstream oss;
-    oss << "size = " << size();
-    oss << " mean = " << mean();
-    oss << " var = " << var();
-    return oss.str();
-}
-
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     candidates = num;
     for (int i = 0; i < candidates; i++) {
