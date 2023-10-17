@@ -12,19 +12,28 @@ double PlayerModel::playBiasScore(const Field& field, int player, Move move,
                                   vector<pair<int, float>> *v) const {
     const double *table = bias[player];
     double score = 0;
+    const Cards cards = field.getCards(field.turn());
     const Board b = field.board;
     if (move.isPASS()) F(0);
     if (b.isNull()) {
         if (move.isSingle()) F(1);
         if (move.isGroup() && move.qty() >= 2) F(2);
         if (move.isSeq()) F(3);
+        if ((b.order() == 0 && (IntCardToRank(cards.lowest()) == move.rank()))
+            && (b.order() == 1 && (IntCardToRank(cards.plain().highest()) == move.rank()))) F(12);
     } else {
         if (!b.suitsLocked() && b.locksSuits(move)) F(8);
+        if (field.fieldInfo.isSelfFollow() && !move.isPASS()) F(10);
     }
-    if (move.containsJOKER()) F(4);
+    if (move.containsJOKER()) {
+        F(4);
+        if (move.isSingleJOKER()) F(11);
+    }
     if (move.isRev()) F(5);
     if (move.domInevitably()) F(6);
-    if (field.board.domConditionally(move)) F(7);
+    if (b.domConditionally(move)) F(7);
+    if (!b.domConditionally(move) && (move.cards() & CARDS_S3)) F(9);
+    if (!move.isGroup() && move.rank() <= RANK_2) F(13 + b.order() * 13 + move.rank() - RANK_3);
     return score;
 }
 
@@ -45,6 +54,7 @@ double PlayerModel::changeBiasScore(int player, const Cards cards, const Cards c
         if (rank == RANK_3) F(3);
         if (rank == RANK_8) F(4);
         if (RankToCards(rank) & afterCards) F(5);
+        //if (ic != INTCARD_JOKER) F(6 + rank - RANK_3);
     }
     return score;
 }
@@ -108,7 +118,7 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
             for (int i = 0; i < numChanges; i++) prob[i] = selector.prob(i);
 
             // バイアスパラメータ更新
-            updator.update(bias[change.from], prob, numChanges, index, features, 3);
+            updator.update(bias[change.from], prob, numChanges, index, features, 10);
             // スタッツ更新
             if (computeStats) updateStats(tmpChangeStats, change.from, baseScore, score, numChanges, index);
         }

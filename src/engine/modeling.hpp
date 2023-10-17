@@ -4,7 +4,7 @@
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 
-const int PLAY_BIAS_FEATURES = 4 + 5;
+const int PLAY_BIAS_FEATURES = 13 + 13 * 2;
 const int BIAS_FEATURES = PLAY_BIAS_FEATURES + 6;
 
 struct ProbDiffUpdator {
@@ -88,7 +88,7 @@ struct PlayerModel {
 
     void init() {
         memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
-        updator.init(1e-3, 0, 1e-4, 1e-5);
+        updator.init(3e-4, 0, 3e-5, 1e-5);
         stats_.clear();
         tmpStats = {0};
         changeStats_.clear();
