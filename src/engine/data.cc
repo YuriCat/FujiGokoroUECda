@@ -62,18 +62,6 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
 }
-void RootInfo::setChange(const Cards *const a, int num,
-                         const Field& field, const SharedData& shared, int limSim) {
-    isChange = true;
-    for (int i = 0; i < num; i++) child[i].setChange(a[i]);
-    setCommonInfo(num, field, shared, limSim);
-}
-void RootInfo::setPlay(const MoveInfo *const a, int num,
-                       const Field& field, const SharedData& shared, int limSim) {
-    isChange = false;
-    for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
-    setCommonInfo(num, field, shared, limSim);
-}
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {
     // 方策関数の出力をモンテカルロ結果の事前分布として加算

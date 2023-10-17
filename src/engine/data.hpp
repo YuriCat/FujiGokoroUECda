@@ -206,9 +206,17 @@ struct RootInfo {
 
     void setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim);
     void setChange(const Cards *const a, int num,
-                   const Field& field, const SharedData& shared, int limSim = -1);
+                   const Field& field, const SharedData& shared, int limSim = -1) {
+        isChange = true;
+        for (int i = 0; i < num; i++) child[i].setChange(a[i]);
+        setCommonInfo(num, field, shared, limSim);
+    }
     void setPlay(const MoveInfo *const a, int num,
-                 const Field& field, const SharedData& shared, int limSim = -1);
+                 const Field& field, const SharedData& shared, int limSim = -1) {
+        isChange = false;
+        for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
+        setCommonInfo(num, field, shared, limSim);
+    }
 
     void addPolicyScoreToMonteCarloScore();
     void feedPolicyScore(const double *const score, int num);
