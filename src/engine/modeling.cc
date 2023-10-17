@@ -57,17 +57,18 @@ void updateStats(PlayerModelStats& tmpStats, int turn, double *baseScore, double
     tmpStats.updatedEntropy[turn] += selector.entropy();
     tmpStats.updatedCrossEntropy[turn] += -log2(selector.prob(index));
     tmpStats.updatedAccuracy[turn] += index == (max_element(score, score + numMoves) - score) ? 1.0 : 0.0;
-    {
-        SoftmaxSelector<double> selector2(baseScore, numMoves, 1);
-        tmpStats.baseEntropy[turn] += selector2.entropy();
-        tmpStats.baseCrossEntropy[turn] += -log2(selector2.prob(index));
-        tmpStats.baseAccuracy[turn] += index == (max_element(baseScore, baseScore + numMoves) - baseScore) ? 1.0 : 0.0;
-        double kldiv = 0;
-        for (int i = 0; i < numMoves; i++) {
-            kldiv += selector2.prob(i) * (log2(selector2.prob(i)) - log2(selector.prob(i)));
-        }
-        tmpStats.KLDivergence[turn] += kldiv;
+    tmpStats.updatedSoftAccuracy[turn] += selector.prob(index);
+
+    SoftmaxSelector<double> selector2(baseScore, numMoves, 1);
+    tmpStats.baseEntropy[turn] += selector2.entropy();
+    tmpStats.baseCrossEntropy[turn] += -log2(selector2.prob(index));
+    tmpStats.baseAccuracy[turn] += index == (max_element(baseScore, baseScore + numMoves) - baseScore) ? 1.0 : 0.0;
+    tmpStats.baseSoftAccuracy[turn] += selector2.prob(index);
+    double kldiv = 0;
+    for (int i = 0; i < numMoves; i++) {
+        kldiv += selector2.prob(i) * (log2(selector2.prob(i)) - log2(selector.prob(i)));
     }
+    tmpStats.KLDivergence[turn] += kldiv;
 }
 
 void PlayerModel::updateGame(const GameRecord& record, int playerNum,
@@ -185,33 +186,35 @@ void PlayerModel::stats() const {
     cerr << std::fixed << std::setprecision(3);
     int block = games < 1000 ? 1 : 10;
 
-    // 交換
-    cerr << "  ";
-    for (int p = 0; p < N_PLAYERS; p++) cerr << "Player " << p << "     ";
-    cerr << endl;
-    for (int i = 0; i < changeStats_.size(); i += block) {
-        PlayerModelStats t = {0};
-        for (int j = i; j < min(i + block, (int)changeStats_.size()); j++) {
-            for (int k = 0; k < t.v_.size(); k++) t.v_[k] += changeStats_[j].v_[k];
+    for (int phase = 0; phase < 2; phase++) {
+        const auto& stats = phase == 0 ? changeStats_ : stats_;
+        cerr << "  ";
+        for (int p = 0; p < N_PLAYERS; p++) cerr << "Player " << p << "     ";
+        cerr << endl;
+        for (int i = 0; i < stats.size(); i += block) {
+            PlayerModelStats t = {0};
+            for (int j = i; j < min(i + block, (int)stats.size()); j++) t += stats[j];
+            cerr << "CP"[phase] << " ";
+            for (int p = 0; p < N_PLAYERS; p++) {
+                double n = 1e-6 + t.count[p];
+                cerr << t.updatedAccuracy[p] / n << "(" << t.baseAccuracy[p] / n << ") ";
+            }
+            cerr << endl;
         }
-        cerr << "C ";
+        // 合計
+        cerr << "sum ";
+        PlayerModelStats t = {0};
+        for (auto s : stats) t += s;
         for (int p = 0; p < N_PLAYERS; p++) {
             double n = 1e-6 + t.count[p];
             cerr << t.updatedAccuracy[p] / n << "(" << t.baseAccuracy[p] / n << ") ";
         }
         cerr << endl;
-    }
-
-    // 着手
-    for (int i = 0; i < stats_.size(); i += block) {
-        PlayerModelStats t = {0};
-        for (int j = i; j < min(i + block, (int)stats_.size()); j++) {
-            for (int k = 0; k < t.v_.size(); k++) t.v_[k] += stats_[j].v_[k];
-        }
-        cerr << "P ";
+        cerr << "KL/SOFT ";
         for (int p = 0; p < N_PLAYERS; p++) {
             double n = 1e-6 + t.count[p];
-            cerr << t.updatedAccuracy[p] / n << "(" << t.baseAccuracy[p] / n << ") ";
+            cerr << t.KLDivergence[p] / n << "/" << t.updatedSoftAccuracy[p] / n;
+            cerr << "(" << t.baseSoftAccuracy[p] / n << ") ";
         }
         cerr << endl;
     }
