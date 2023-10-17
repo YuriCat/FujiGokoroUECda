@@ -118,7 +118,7 @@ public:
                 Hand mine, ops;
                 mine.set(restCards);
                 ops.set(CARDS_ALL - restCards);
-                if (judgeHandMate(1, rootTools.mbuf, mine, ops, b, fieldInfo)) {
+                if (judgeHandMate(2, rootTools.mbuf, mine, ops, b, fieldInfo)) {
                     CERR << "CHANGE MATE!" << std::endl;
                     return cand[i]; // 必勝
                 }
@@ -250,7 +250,7 @@ public:
                 move.setDM(); // 自己支配
             }
             if (Settings::mateSearchOnRoot) { // 多人数必勝判定
-                if (checkHandMate(1, rootTools.mbuf, move, myHand, opsHand, b, fieldInfo)) {
+                if (checkHandMate(2, rootTools.mbuf, move, myHand, opsHand, b, fieldInfo)) {
                     move.setMPMate(); fieldInfo.setMPMate();
                 }
             }

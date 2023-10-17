@@ -277,7 +277,7 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
         if (judgeHandPW_NF(myHand, opsHand, b)) return true;
     }
 
-    if (b.isNull() && depth == 0) {
+    if (b.isNull() && depth <= 0) {
         // 階段パターンのみ検討
         // 階段と革命が絡む場合は勝ちと判定出来ない場合が多い
         if (myHand.seq) {
@@ -436,7 +436,8 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
     // 通常
     if (m.qty() >= myHand.qty) return true; // 即上がり
     if (dominatesHand(m, opsHand, b)
-        || m.qty() > fieldInfo.maxNumCardsAwake()) { // 支配
+        || m.qty() > fieldInfo.maxNumCardsAwake()
+        || (m.isSeq() && m.qty() > 4)) { // 支配
         m.setDO(); // 支配フラグ付加
 
         Board nb = b;
@@ -451,7 +452,7 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         nb.flush();
         FieldAddInfo nextFieldInfo;
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
-        if (judgeHandMate(m.isRev() ? depth : 0,
+        if (judgeHandMate(m.isRev() ? depth : depth - 1,
                           mbuf, nextHand, opsHand, nb, nextFieldInfo)) {
             return true;
         }
