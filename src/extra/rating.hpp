@@ -34,8 +34,7 @@ void simulationThreadForRating(RateCalculationData *const pdst,
                                const int simulations,
                                SharedData *const pshared,
                                ThreadTools *const ptools) {
-    while (pdst->trials++ < simulations)
-    {
+    while (pdst->trials++ < simulations) {
         Field f = *pfield;
         f.setMoveBuffer(ptools->mbuf);
 
