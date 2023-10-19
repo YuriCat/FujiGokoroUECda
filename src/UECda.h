@@ -284,3 +284,8 @@ template <int N = N_PLAYERS>
 constexpr unsigned int getPreviousSeat(unsigned int s) {
     return (s + N - 1) % (unsigned int)cmax(N, 1);
 }
+
+inline Cards getPresentCards(Cards c, int qty) {
+    // TODO: javaサーバ用ルール
+    return pickHigh(c, qty);
+}

@@ -86,7 +86,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     int numSimulationsSum = 0;
 
     int numWorlds = 0; // 作成した世界の数
-    std::array<World, 128> worlds;
+    std::array<World, 256> worlds;
 
     // 世界生成のためのクラスを初期化
     const auto& record = pshared->record.latestGame();
@@ -110,11 +110,12 @@ void MonteCarloThread(const int threadId, const int numThreads,
 
         int world = 0;
         int action = selectBanditAction(*proot, dice);
+        int maxNumWorlds = (proot->isChange || pf.turnCount() == 0) ? (int)worlds.size() : 128;
 
         if (numSimulations[action] < numWorlds) {
             // まだ全ての世界でこの着手を検討していない
             world = numSimulations[action];
-        } else if (numThreads * numWorlds + threadId < (int)worlds.size()) {
+        } else if (numThreads * numWorlds + threadId < maxNumWorlds) {
             // 新しい世界を作成
             simuTime += clock.restart();
             worlds[numWorlds] = estimator.create(DealType::REJECTION, record, *pshared, ptools);

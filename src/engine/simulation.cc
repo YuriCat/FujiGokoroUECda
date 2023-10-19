@@ -16,6 +16,22 @@ namespace Settings {
     const double simulationAmplifyExponent = 2;
 }
 
+Cards simulationChange(Field& field, int p, int qty, const SharedData& shared,
+                       ThreadTools *const ptools) {
+    Cards change[N_MAX_CHANGES];
+    Cards myCards = field.hand[p].cards;
+    int numChanges = genChange(change, myCards, qty);
+    // 行動方策を計算
+    double score[N_MAX_CHANGES];
+    changePolicyScore(score, change, numChanges, myCards, qty, shared.baseChangePolicy);
+    if (p != field.myPlayerNum && shared.playerModel.trained) {
+        for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, myCards, qty);
+    }
+    SoftmaxSelector<double> selector(score, numChanges, Settings::simulationTemperatureChange);
+    int index = selector.select(ptools->dice.random());
+    return change[index];
+}
+
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools, double progress) {
     int turn = field.turn();
@@ -90,8 +106,19 @@ int startPlaySimulation(Field& field, MoveInfo m,
 int startChangeSimulation(Field& field, int p, Cards c,
                           SharedData *const pshared,
                           ThreadTools *const ptools) {
-    int changePartner = field.classPlayer(getChangePartnerClass(field.classOf(p)));
-    field.makeChange(p, changePartner, c.count(), c, false);
+    // 自分の交換
+    int myClass = field.classOf(p);
+    int changePartner = field.classPlayer(getChangePartnerClass(myClass));
+    field.makeChange(p, changePartner, N_CHANGE_CARDS(myClass), c, false);
+    // 自分以外の交換
+    for (int cl = 0; cl < MIDDLE; cl++) {
+        if (cl == myClass) continue;
+        int from = field.classPlayer(cl);
+        int to = field.classPlayer(getChangePartnerClass(cl));
+        int qty = N_CHANGE_CARDS(cl);
+        Cards changeCards = simulationChange(field, from, qty, *pshared, ptools);
+        field.makeChange(from, to, qty, changeCards, false);
+    }
     field.prepareAfterChange();
     return simulation(field, pshared, ptools);
 }

@@ -254,6 +254,33 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
 
 void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                                      const SharedData& shared, ThreadTools *const ptools) {
+    if (inChange) {
+        // 交換時は献上まで
+        // 献上によるバイアスを反映して配布
+        BitCards tmp[N] = {0};
+        Cards fromCards = dealCards;
+        auto tmpNDeal = NDeal;
+        int ptClass = getChangePartnerClass(myClass);
+        if (NDeal[ptClass]) {
+            Cards tmpDist = selectInWA(ptools->dice.random());
+            Cards dealt = pickNBits64(tmpDist, NDeal[ptClass], tmpDist.count() - NDeal[ptClass], ptools->dice);
+            tmp[ptClass] += dealt;
+            tmpNDeal[ptClass] = 0;
+            fromCards -= dealt;
+        }
+        dist64<N>(tmp, fromCards, tmpNDeal.data(), ptools->dice);
+        for (int cl = MIDDLE + 1; cl < N; cl++) {
+            if (cl == ptClass) continue;
+            Cards presented = getPresentCards(tmp[cl] + detCards[cl], N_CHANGE_RISE_CARDS(cl));
+            tmp[cl] -= presented;
+            tmp[getChangePartnerClass(cl)] += presented;
+        }
+        for (int cl = 0; cl < N; cl++) {
+            dst[infoClassPlayer[cl]] = detCards[cl] + tmp[cl];
+        }
+        return;
+    }
+
     // 採択棄却法メイン
     Cards deal[Settings::BUCKET_MAX][N]; // カード配置候補
     bool rejectionDeal[Settings::BUCKET_MAX] = {false};
