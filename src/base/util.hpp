@@ -576,25 +576,16 @@ private:
     }
 };
 
-template <typename T = int>
 class SpinLock {
 public:
     void lock() {
-        while (true) {
-            while (data_);
-            T tmp = 1;
-            if (data_.exchange(tmp, std::memory_order_acquire) == 0) return;
-        }
+        while (locked_.test_and_set(std::memory_order_acquire));
     }
-    bool try_lock() {
-        T tmp = 1;
-        if (data_.exchange(tmp, std::memory_order_acquire) == 0) return true;
-        return false;
+    void unlock() {
+        locked_.clear(std::memory_order_release);
     }
-    void unlock() { data_ = 0; }
-    SpinLock() { unlock(); }
 private:
-    std::atomic<T> data_;
+    std::atomic_flag locked_ = ATOMIC_FLAG_INIT;
 };
 
 template <int L, int ... shape_t>

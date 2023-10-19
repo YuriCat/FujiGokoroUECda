@@ -8,7 +8,7 @@
 #include "../engine/simulation.hpp"
 
 struct RateCalculationData {
-    SpinLock<uint32_t> lock;
+    SpinLock lock;
     std::atomic<int> trials;
 
     // プレーヤー間の相対的な勝ち数
