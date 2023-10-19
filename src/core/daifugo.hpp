@@ -414,44 +414,6 @@ inline bool isValidSeqRank(int moveRank, int order, int boardRank, int qty) {
 
 /**************************カード集合表現(クラス版)**************************/
 
-struct CardsAsSet {
-    // ビット単位で1つずつ取り出す用
-    BitCards c_;
-    constexpr CardsAsSet(BitCards c): c_(c) {}
-
-    BitCards lowest() const { assert(c_); return c_ & -c_; }
-    BitCards popLowest() {
-        assert(c_);
-        BitCards l = lowest();
-        c_ -= l;
-        return l;
-    }
-
-    class const_iterator : public std::iterator<std::input_iterator_tag, BitCards> {
-        friend CardsAsSet;
-    public:
-        BitCards operator *() const {
-            // 下1ビットを取り出す
-            return c_ & -c_;
-        }
-        bool operator !=(const const_iterator& itr) const {
-            return pclass_ != itr.pclass_ || c_ != itr.c_;
-        }
-        const_iterator& operator ++() {
-            c_ = popLsb<BitCards>(c_);
-            return *this;
-        }
-    protected:
-        explicit const_iterator(const CardsAsSet *pclass): pclass_(pclass), c_(pclass->c_) {}
-        explicit const_iterator(const CardsAsSet *pclass, BitCards c): pclass_(pclass), c_(c) {}
-        const CardsAsSet *const pclass_;
-        BitCards c_;
-    };
-
-    const_iterator begin() const { return const_iterator(this); }
-    const_iterator end() const { return const_iterator(this, 0); }
-};
-
 union Cards {
     BitCards c_;
     struct {
@@ -556,6 +518,16 @@ union Cards {
         remove(ic);
         return ic;
     }
+    Cards lowestCard() const {
+        assert(any());
+        return lsb(c_);
+    }
+    Cards popLowestCard() {
+        assert(any());
+        BitCards l = lowestCard();
+        c_ -= l;
+        return l;
+    }
     Cards exceptLowest() const { return popLsb(c_); }
 
     class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
@@ -580,8 +552,6 @@ union Cards {
 
     const_iterator begin() const { return const_iterator(this); }
     const_iterator end() const { return const_iterator(this, 0); }
-
-    constexpr CardsAsSet divide() const { return CardsAsSet(c_); }
 
     bool exam() const {
         return joker_ <= N_JOKERS && examPlainCards(plain());
@@ -987,9 +957,6 @@ struct Board : public Move {
     }
     int nextOrder(Move m) const {
         return order() ^ bool(m.isRev()) ^ bool(m.isBack());
-    }
-    bool afterSuitsLocked(Move m) const {
-        return suitsLocked() || locksSuits(m);
     }
 
     // get
