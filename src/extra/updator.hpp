@@ -68,7 +68,7 @@ struct GradientUpdator {
             for (auto f : features[i]) {
                 double diff = i == index ? (1 - prob[i]) : -prob[i];
                 double v = value[f.first];
-                v += lr_ * scale * diff / (1e-3 + var(f.first)) * f.second;
+                v += lr_ * scale * diff / (1e-4 + var(f.first)) * f.second;
                 if (ent_reg != 0) v += lr_ * scale * ent_reg * prob[i] * (-log2(prob[i]) - ent);
                 if (weight_decay_ != 0) v *= pow(1 - weight_decay_, 1 / (1e-3 + freq(i)));
                 value[f.first] = v;
