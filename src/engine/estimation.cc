@@ -206,8 +206,14 @@ void RandomDealer::dealWithBias(Cards *const dst, Dice& dice) const {
         }
     }
 
-    while (fromCards) {
-        IntCard ic = fromCards.popHighest();
+    int n = 0;
+    IntCard cards[N_CARDS];
+    for (IntCard ic : fromCards) cards[n++] = ic;
+
+    while (n > 0) {
+        int index = dice() % n;
+        IntCard ic = cards[index];
+        cards[index] = cards[--n];
 
         uint64_t weightSum[N + 1];
         weightSum[0] = 0;
