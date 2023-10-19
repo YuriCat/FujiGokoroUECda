@@ -126,10 +126,10 @@ struct Field {
     uint32_t remQty;
     uint64_t remKey;
 
-    std::array<Hand, N_PLAYERS> hand, opsHand;
     std::array<Cards, N_PLAYERS> usedCards;
     std::array<Cards, N_PLAYERS> dealtCards;
     std::array<Cards, N_PLAYERS> sentCards, recvCards;
+    std::array<Hand, N_PLAYERS> hand, opsHand;
 
     bool isSubjective() const { return myPlayerNum >= 0; }
     bool know(int p) const { return !isSubjective() || myPlayerNum == p; }
@@ -271,10 +271,11 @@ struct Field {
     void passChange(const GameRecord& game, int playerNum);
     void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
-};
 
-// シミュレーション時の状態コピー
-extern void copyField(const Field& arg, Field *const dst);
+    void copyFrom(const Field& f) {
+        std::memcpy(this, &f, sizeof(Field) - sizeof(Hand) * N_PLAYERS * 2);
+    }
+};
 
 /**************************仮想世界**************************/
 

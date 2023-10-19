@@ -407,41 +407,6 @@ int Field::procImpl(const MoveInfo m) {
 int Field::procFast(const MoveInfo m) { return procImpl<true>(m); }
 int Field::proceed(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
-void copyField(const Field& arg, Field *const dst) {
-    dst->myPlayerNum = arg.myPlayerNum;
-    dst->phase = arg.phase;
-
-    // playout info
-    dst->mbuf = arg.mbuf;
-    dst->attractedPlayers = arg.attractedPlayers;
-
-    // game info
-    dst->board = arg.board;
-    dst->ps = arg.ps;
-
-    dst->infoSeat = arg.infoSeat;
-    dst->infoSeatPlayer = arg.infoSeatPlayer;
-    dst->infoNewClass = arg.infoNewClass;
-    dst->infoNewClassPlayer = arg.infoNewClassPlayer;
-    dst->infoClass = arg.infoClass;
-    dst->infoClassPlayer = arg.infoClassPlayer;
-
-    dst->infoPosition = arg.infoPosition;
-
-    dst->common = arg.common;
-
-    // we don't have to copy each player's hand,
-    // because card-position will be set in the opening of playout.
-    dst->usedCards = arg.usedCards;
-    dst->sentCards = arg.sentCards;
-    dst->recvCards = arg.recvCards;
-    dst->dealtCards = arg.dealtCards;
-
-    dst->remCards = arg.remCards;
-    dst->remQty = arg.remQty;
-    dst->remKey = arg.remKey;
-}
-
 void World::set(int turnCount, const Cards *c) {
     for (int p = 0; p < N_PLAYERS; p++) {
         cards[p] = c[p];
