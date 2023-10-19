@@ -203,7 +203,7 @@ struct RootInfo {
     uint64_t allSimulations;
 
     // 排他処理
-    SpinLock<int> lock_;
+    SpinLock lock_;
 
     void lock() { lock_.lock(); }
     void unlock() { lock_.unlock(); }
