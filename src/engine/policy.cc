@@ -132,7 +132,6 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
     const Hand& opsHand = field.getOpsHand(tp);
     const Cards myCards = myHand.cards;
     const int numMyCards = myHand.qty;
-    const uint32_t oq = myHand.qty;
     const Cards curPqr = myHand.pqr;
     const FieldAddInfo& fieldInfo = field.fieldInfo;
     const int numPartition = divisionCount(mbuf + numMoves, myCards);
@@ -174,6 +173,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             const int q4 = min(m.qty(), 4);
 
             const Cards afterCards = myCards - m.cards();
+            const int numAfterCards = numMyCards - m.qty();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
 
@@ -247,7 +247,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             {
                 constexpr int base = FEA_IDX(FEA_HAND_PQR_RANK);
                 double rs = pqrRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
-                FooX(base, oq * log(max(rs / rankScore, 0.000001)))
+                FooX(base, numMyCards * log(max(rs / rankScore, 0.000001)))
             }
 
             // nf min party
@@ -456,9 +456,9 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             {
                 if (m.domInevitably()) {
                     int key = FEA_IDX(FEA_MOVE_EIGHT_QTY);
-                    FooX(key, (oq - m.qty()) * (oq - m.qty()))
+                    FooX(key, numAfterCards * numAfterCards)
                     key = FEA_IDX(FEA_MOVE_EIGHT_QTY) + 1;
-                    FooX(key, oq - m.qty())
+                    FooX(key, numAfterCards)
                 }
             }
 
