@@ -128,11 +128,10 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
     const int turnSeat = field.seatOf(tp);
     const int owner = field.owner();
     const int ownerSeat = field.seatOf(owner);
-    const Hand& myHand = field.getHand(tp);
-    const Hand& opsHand = field.getOpsHand(tp);
-    const Cards myCards = myHand.cards;
-    const int numMyCards = myHand.qty;
-    const Cards curPqr = myHand.pqr;
+    const Cards myCards = field.getCards(tp);
+    const int numMyCards = field.numCardsOf(tp);
+    const CardArray curQr = CardsToQR(myCards);
+    const Cards curPqr = QRToPQR(curQr);
     const FieldAddInfo& fieldInfo = field.fieldInfo;
     const int numPartition = divisionCount(mbuf + numMoves, myCards);
 
@@ -154,8 +153,9 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
     }
 
     // 自分以外のプレーヤーの手札の和
-    const Cards opsCards = opsHand.cards;
+    const Cards opsCards = field.getOpsCards(tp);
     const Cards opsPlainCards = maskJOKER(opsCards);
+    const Cards opsPqr = CardsToPQR(opsCards);
 
     pol.initCalculatingScore(numMoves);
 
@@ -408,7 +408,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             {
                 constexpr int base = FEA_IDX(FEA_MOVE_RF_GROUP_BREAK);
                 if (!b.isNull() && !fieldInfo.isUnrivaled() && m.isGroup() && !m.containsJOKER()) {
-                    if (myHand.qr[m.rank()] != m.qty()) { // 崩して出した
+                    if (curQr[m.rank()] != m.qty()) { // 崩して出した
                         if (m.domInevitably()) Foo(base) // 8切り
                         else {
                             if (aftOrd == 0) {
@@ -430,7 +430,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             // NF_Dominance Move On PassDom
             {
                 if (fieldInfo.isPassDom()) {
-                    if (m.domInevitably() || dominatesHand(m, opsHand, OrderToNullBoard(order))) {
+                    if (m.domInevitably() || dominatesCards(m, opsCards, OrderToNullBoard(order))) {
                         int key = FEA_IDX(FEA_MOVE_NFDOM_PASSDOM);
                         Foo(key)
                     }
@@ -525,7 +525,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
                     using Index = TensorIndexType<2, 16, 2, 16, N_PATTERNS_SUITS_SUITS>;
                     if (m.isSingleJOKER()) {
                         for (int f = RANK_MIN; f <= RANK_MAX; f++) {
-                            uint32_t qb = opsHand.pqr[f];
+                            uint32_t qb = opsPqr[f];
                             if (qb) {
                                 int key = base + Index::get(order, RANK_JOKER, 0, f, qb);
                                 // suits - suits のパターン数より少ないのでOK
