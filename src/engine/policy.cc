@@ -131,11 +131,11 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
     const Hand& myHand = field.getHand(tp);
     const Hand& opsHand = field.getOpsHand(tp);
     const Cards myCards = myHand.cards;
-    const int NMyCards = myHand.qty;
+    const int numMyCards = myHand.qty;
     const uint32_t oq = myHand.qty;
     const Cards curPqr = myHand.pqr;
     const FieldAddInfo& fieldInfo = field.fieldInfo;
-    const int NParty = divisionCount(mbuf + numMoves, myCards);
+    const int numPartition = divisionCount(mbuf + numMoves, myCards);
 
     // 元々の手札の最低、最高ランク
     const int myLR = IntCardToRank(pickIntCardLow(myCards));
@@ -253,8 +253,8 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             // nf min party
             {
                 constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
-                if (b.isNull()) FooX(base, divisionCount(mbuf + numMoves, afterCards) - NParty)
-                else FooX(base + 1, divisionCount(mbuf + numMoves, afterCards) - NParty)
+                if (b.isNull()) FooX(base, divisionCount(mbuf + numMoves, afterCards) - numPartition)
+                else FooX(base + 1, divisionCount(mbuf + numMoves, afterCards) - numPartition)
             }
 
             // after hand joker - p8
@@ -397,7 +397,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
                 if (b.isNull()) {
                     if (m.isSeq()) {
                         Foo(base)
-                        FooX(base + 2, NMyCards)
+                        FooX(base + 2, numMyCards)
                     }
                 } else {
                     if (b.isSeq()) Foo(base + 1)
