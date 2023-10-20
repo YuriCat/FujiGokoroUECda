@@ -141,8 +141,8 @@ int testRecordL2(const Record& record) {
         Field field;
         for (Move move : PlayRoller(field, record.game(i))) {
             if (field.numPlayersAlive() != 2) continue;
-            const Hand& myHand = field.hand[field.turn()];
-            const Hand& opsHand = field.hand[field.ps.searchOpsPlayer(field.turn())];
+            const Hand& myHand = field.getHand(field.turn());
+            const Hand& opsHand = field.getHand(field.ps.searchOpsPlayer(field.turn()));
             const Board b = field.board;
             bool won = record.game(i).newClassOf(field.turn()) == N_PLAYERS - 2;
 

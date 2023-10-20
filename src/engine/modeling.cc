@@ -117,20 +117,22 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
         // 除外ルール
         if (turn == playerNum) continue;
         if (field.numPlayersAlive() <= 2) continue;
-        if (!field.hand[turn].cards.holds(move.cards())) continue;
+        if (!field.getCards(turn).holds(move.cards())) continue;
 
         // ゲームが正常終了せずこのプレーヤーの手札が判明しなかったケース
         // ただ、本来は相手手札が判明しなくても統計情報から相手の傾向を判断することはできるはず
         if (record.orgCards[turn].count() != record.numOrgCards[turn]) continue;
 
-        int numMoves = genMove(buf, field.hand[turn].cards, field.board);
+        int numMoves = genMove(buf, field.getCards(turn), field.board);
         if (numMoves <= 1) continue;
 
         int index = -1;
         bool mate = false;
+        Hand myHand = field.getHand(turn);
+        Hand opsHand = field.getOpsHand(turn);
         for (int i = 0; i < numMoves; i++) {
             if (buf[i] == move) index = i;
-            if (!mate && checkHandMate(0, buf + numMoves, buf[i], field.hand[turn], field.opsHand[turn],
+            if (!mate && checkHandMate(0, buf + numMoves, buf[i], myHand, opsHand,
                                        field.board, field.fieldInfo)) mate = true;
         }
         if (index < 0) continue;

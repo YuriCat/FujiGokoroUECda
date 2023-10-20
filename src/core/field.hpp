@@ -125,7 +125,8 @@ struct Field {
     uint32_t remQty;
     uint64_t remKey;
 
-    std::array<Hand, N_PLAYERS> hand, opsHand;
+    std::array<Cards, N_PLAYERS> cards;
+    std::array<uint32_t, N_PLAYERS> numCards;
     std::array<Cards, N_PLAYERS> usedCards;
     std::array<Cards, N_PLAYERS> dealtCards;
     std::array<Cards, N_PLAYERS> sentCards, recvCards;
@@ -191,13 +192,14 @@ struct Field {
     void setOwner(int p) { common.owner = p; }
     void setFirstTurn(int p) { common.firstTurn = p; }
 
-    Cards getCards(int p) const { return hand[p].cards; }
-    Cards getOpsCards(int p) const { return opsHand[p].cards; }
-    unsigned numCardsOf(int p) const { return hand[p].qty; }
+    Cards getCards(int p) const { return cards[p]; }
+    Cards getOpsCards(int p) const { return remCards - cards[p]; }
+    Hand getHand(int p) const { Hand hand; hand.setAll(getCards(p)); return hand; }
+    Hand getOpsHand(int p) const { Hand hand; hand.setAll(getOpsCards(p)); return hand; }
+
+    unsigned numCardsOf(int p) const { return numCards[p]; }
     Cards getRemCards() const { return remCards; }
     Cards getNumRemCards() const { return remQty; }
-    const Hand& getHand(int p) const { return hand[p]; }
-    const Hand& getOpsHand(int p) const { return opsHand[p]; }
 
     Cards getDealtCards(int p) const { return dealtCards[p]; }
     Cards getUsedCards(int p) const { return usedCards[p]; }
@@ -239,16 +241,9 @@ struct Field {
     void makeChange(int from, int to, int dq, Cards dc,
                     bool sendOnly = false, bool recvOnly = false);
 
-    void setHand(int p, Cards c) { hand[p].setAll(c); }
-    void setOpsHand(int p, Cards c) { opsHand[p].setAll(c); }
-    void setBothHand(int p, Cards c) {
-        hand[p].setAll(c);
-        opsHand[p].setAll(remCards - c, remQty - hand[p].qty, subCardKey(remKey, hand[p].key));
-    }
-    void setBothHandQty(int p, int qty) {
-        hand[p].qty = qty;
-        opsHand[p].qty = remQty - qty;
-    }
+    void setHand(int p, Cards c) { cards[p] = c; numCards[p] = c.count(); }
+    void setBothHand(int p, Cards c) { setHand(p, c); }
+    void setBothHandQty(int p, int qty) { numCards[p] = qty; }
     void setRemHand(Cards c) {
         remCards = c;
         remQty = c.count();
@@ -271,9 +266,6 @@ struct Field {
     void setAfterChange(const GameRecord& game, const std::array<Cards, N_PLAYERS>& cards);
     void fromRecord(const GameRecord& game, int playerNum, int tcnt = 256);
 };
-
-// シミュレーション時の状態コピー
-extern void copyField(const Field& arg, Field *const dst);
 
 /**************************仮想世界**************************/
 

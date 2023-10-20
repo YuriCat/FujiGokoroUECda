@@ -17,14 +17,14 @@ void updateGame(GradientUpdator *const updator, GradientUpdatorStats *const stat
 
     // 除外ルール
     if (field.numPlayersAlive() <= 2) return;
-    int numMoves = genMove(buf, field.hand[turn].cards, field.board);
+    int numMoves = genMove(buf, field.getCards(turn), field.board);
 
     // 他のプレーヤーにランダムに配布
     array<Cards, N_PLAYERS> randomCards;
     for (int p = 0; p < N_PLAYERS; p++) {
         randomCards[p] = p == turn ? record.orgCards[p] : field.usedCards[p];
     }
-    Cards remained = field.getRemCards() - field.hand[turn].cards;
+    Cards remained = field.getRemCards() - field.getCards(turn);
 
     // 自分が上位でカード交換した場合には、自分があげたカードは確定
     int partner = -1;

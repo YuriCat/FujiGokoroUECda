@@ -678,9 +678,10 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     if (numMoves <= 1) return 1;
 
     // 場の情報をまとめる
+    Hand myHand(field.getCards(turn));
+    Hand opsHand(field.getOpsCards(turn), true);
     for (int i = 0; i < numMoves; i++) {
-        bool mate = checkHandMate(0, mbuf + numMoves, mbuf[i], field.hand[turn],
-                                  field.opsHand[turn], b, field.fieldInfo);
+        bool mate = checkHandMate(0, mbuf + numMoves, mbuf[i], myHand, opsHand, b, field.fieldInfo);
         if (mate) mbuf[i].setMPMate();
     }
 

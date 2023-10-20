@@ -211,14 +211,18 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     }
 }
 
-int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
+int judgeLast2(MoveInfo *const buf, const Cards myCards, const Cards opsCards, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
+    Hand myHand(myCards, true, CardsToHashKey(myCards));
+    Hand opsHand(opsCards, true, CardsToHashKey(opsCards));
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
     L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
     return judge.judge(0, buf, myHand, opsHand, field);
 }
 
-int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
+int checkLast2(MoveInfo *const buf, const MoveInfo move, const Cards myCards, const Cards opsCards, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
+    Hand myHand(myCards, true, CardsToHashKey(myCards));
+    Hand opsHand(opsCards, true, CardsToHashKey(opsCards));
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
     L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ

@@ -19,7 +19,7 @@ static Clock cl;
 uint64_t worldKey(const Field& f) {
     uint64_t key = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
-        key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & f.hand[p].key;
+        key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & CardsToHashKey(f.getCards(p));
     }
     return key;
 }
@@ -77,9 +77,9 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
                 int tsame = 0, tall = 0;
                 for (int p = 0; p < N_PLAYERS; p++) {
                     if (p == field.turn() || !field.isAlive(p)) continue;
-                    Cards sameCards = field.hand[p].cards & worlds[j].cards[p];
+                    Cards sameCards = field.getCards(p) & worlds[j].cards[p];
                     tsame += sameCards.count();
-                    tall += field.hand[p].qty;
+                    tall += field.numCardsOf(p);
                 }
                 if (tsame == tall) perfect++;
                 same_cnt += tsame;
@@ -93,7 +93,7 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
                         if (p == field.turn() || !field.isAlive(p)) continue;
                         Cards sameCards = worlds[i].cards[p] & worlds[j].cards[p];
                         tsame_gen += sameCards.count();
-                        tall_gen += field.hand[p].qty;
+                        tall_gen += field.numCardsOf(p);
                     }
                     epcnt++;
                     if (tsame_gen == tall_gen) perfect_gen++;
@@ -108,7 +108,7 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
                         if (p == field.turn() || !field.isAlive(p)) continue;
                         Cards dealt = worlds[i].cards[p];
                         for (IntCard ic : dealt) distribution[field.classOf(p)][cardIndex(ic)]++;
-                        Cards real = field.hand[p].cards;
+                        Cards real = field.getCards(p);
                         for (IntCard ic : real) realDistribution[field.classOf(p)][cardIndex(ic)]++;
                     }
                 }
@@ -119,7 +119,7 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
                     if (p == field.turn() || !field.isAlive(p)) continue;
                     handCount++;
                     Cards dealt = worlds[i].cards[p];
-                    Cards real = field.hand[p].cards;
+                    Cards real = field.getCards(p);
                     for (int r = RANK_3; r <= RANK_2; r++) eachRankDist[0][popcnt(dealt[r])]++;
                     for (int r = RANK_3; r <= RANK_2; r++) eachRankDist[1][popcnt(real[r])]++;
                     if (canMakeSeq(dealt.plain(), 0, 3)) plainSeq[0]++;
@@ -135,7 +135,7 @@ void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pm
                 for (int p = 0; p < N_PLAYERS; p++) {
                     if (p == field.turn() || !field.isAwake(p)) continue;
                     if (!dominatesCards(move, worlds[i].cards[p], field.board)) dominant = false;
-                    if (!dominatesCards(move, field.hand[p].cards, field.board)) realDominant = false;
+                    if (!dominatesCards(move, field.getCards(p), field.board)) realDominant = false;
                 }
                 dominanceMatrix[realDominant][dominant]++;
             }

@@ -75,23 +75,11 @@ void Field::procHand(int tp, Move m) {
     remQty -= dq;
     remKey = subCardKey(remKey, dkey);
 
-    // 出したプレーヤーの手札とそれ以外のプレーヤーの相手手札を更新
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p == tp) {
-            if (know(p)) {
-                assert(hand[p].holds(dc));
-                if (dq >= hand[p].qty) hand[p].clear();
-                else hand[p].makeMoveAll(m, dc, dq, dkey);
-            }
-            else hand[p].qty -= dq;
-        } else if (isAlive(p)) {
-            if (know(p)) {
-                assert(opsHand[p].holds(dc));
-                opsHand[p].makeMoveAll(m, dc, dq, dkey);
-            }
-            else opsHand[p].qty -= dq;
-        }
+    if (know(tp)) {
+        assert(cards[tp].holds(dc));
+        cards[tp] -= dc;
     }
+    numCards[tp] -= dq;
 }
 
 void Field::makeChange(int from, int to, int dq, Cards dc,
@@ -101,25 +89,16 @@ void Field::makeChange(int from, int to, int dq, Cards dc,
     uint64_t dkey = CardsToHashKey(dc);
     if (!recvOnly) {
         if (dc.any() && know(from)) {
-            assert(hand[from].holds(dc));
-            hand[from].subtrAll(dc, dq, dkey);
-            opsHand[from].addAll(dc, dq, dkey);
-            assert(opsHand[from].exam());
-        } else {
-            hand[from].qty -= dq;
-            opsHand[from].qty += dq;
+            assert(cards[from].holds(dc));
+            cards[from] -= dc;
         }
+        numCards[from] -= dq;
     }
     if (!sendOnly) {
         if (dc.any() && know(to)) {
-            assert(opsHand[to].holds(dc));
-            hand[to].addAll(dc, dq, dkey);
-            opsHand[to].subtrAll(dc, dq, dkey);
-            assert(hand[to].exam());
-        } else {
-            hand[to].qty += dq;
-            opsHand[to].qty -= dq;
+            cards[to] += dc;
         }
+        numCards[to] += dq;
     }
     if (dc.any()) {
         if (!recvOnly) sentCards[from] = dc;
@@ -167,7 +146,7 @@ void Field::prepareForPlay() {
             if (tp == flushLeadPlayer()) { // 全員パスしたら自分から
                 fieldInfo.setFlushLead();
                 if (!fieldInfo.isLastAwake()
-                    && dominatesHand(board, opsHand[tp])) {
+                    && dominatesCards(board, getOpsCards(tp))) {
                     // 場が全員を支配しているので、パスをすれば自分から
                     fieldInfo.setBDO();
                     fieldInfo.setPassDom(); // fl && bdo ならパス支配
@@ -204,7 +183,7 @@ void Field::prepareAfterChange() {
     // 初手のプレーヤーを探す
     for (int p = 0; p < N_PLAYERS; p++) {
         if (!know(p)) continue;
-        if (containsD3(hand[p].cards)) {
+        if (containsD3(cards[p])) {
             setTurn(p);
             setFirstTurn(p);
             setOwner(p);
@@ -246,36 +225,35 @@ bool Field::exam() const {
             // 上がっていないのに手札が無い場合
             // ただし主観的に使う場合には仕方が無い
             if (!isSubjective()) {
-                if (!hand[p].any()) {
+                if (!cards[p].any()) {
                     cerr << "Field::exam() alive but no card" << endl;
                     return false;
                 }
-                if (!hand[p].exam()) {
+                if (!cards[p].exam()) {
                     cerr << "Field::exam() alive but invalid hand" << endl;
                     return false;
                 }
             }
 
-            Cards c = hand[p].cards;
             // 排他性
-            if (!sum.isExclusive(c)) {
+            if (!sum.isExclusive(cards[p])) {
                 cerr << sum << endl;
-                cerr << hand[p] << endl;
+                cerr << cards[p] << endl;
                 cerr << "hand[" << p << "]excl" << endl;
                 return false;
             }
             // 包含関係
-            if (!remCards.holds(c)) {
+            if (!remCards.holds(cards[p])) {
                 cerr << remCards << endl;
-                cerr << hand[p] << endl;
+                cerr << cards[p] << endl;
                 cerr << "hand[" << p << "]hol" << endl;
                 return false;
             }
-            sum += c;
-            sumQty += hand[p].qty;
+            sum += cards[p];
+            sumQty += numCards[p];
         } else {
             // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
-            if (hand[p].qty > 0) {
+            if (numCards[p] > 0) {
                 cerr << "dead but qty > 0" << endl;
             }
         }
@@ -283,7 +261,7 @@ bool Field::exam() const {
     if (!isSubjective()) {
         if (sum != remCards) {
             for (int p = 0; p < N_PLAYERS; p++) {
-                cerr << hand[p].cards << endl;
+                cerr << cards[p] << endl;
             }
             cerr << "sum cards - rem cards" << endl;
             return false;
@@ -300,8 +278,8 @@ string Field::toString() const {
     ostringstream oss;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": ";
-        if (hand[p].qty > 0) {
-            oss << hand[p].cards << "(" << hand[p].qty << ")";
+        if (numCardsOf(p) > 0) {
+            oss << cards[p] << "(" << numCardsOf(p) << ")";
         } else {
             oss << "{}(0)";
         }
@@ -321,7 +299,7 @@ string Field::toDebugString() const {
     oss << "info = " << fieldInfo << endl;
     oss << "hand = " << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
-        oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
+        oss << p << (isAwake(p) ? " " : "*") << ": " << cards[p] << "(" << numCards[p] << ")" << endl;
     }
     return oss.str();
 }
@@ -339,7 +317,7 @@ int Field::procImpl(const MoveInfo m) {
             rotateTurnPlayer(tp);
         }
     } else {
-        bool agari = m.qty() >= hand[tp].qty;
+        bool agari = m.qty() >= numCardsOf(tp);
         // 速度重視での即上がりまたはMATE処理
         if (FAST && (agari || m.isMate())) {
             if (numPlayersAlive() == 2) { // ゲーム終了
@@ -405,41 +383,6 @@ int Field::procImpl(const MoveInfo m) {
 int Field::procFast(const MoveInfo m) { return procImpl<true>(m); }
 int Field::proceed(const Move m) { return procImpl<false>(MoveInfo(m)); }
 
-void copyField(const Field& arg, Field *const dst) {
-    dst->myPlayerNum = arg.myPlayerNum;
-    dst->phase = arg.phase;
-
-    // playout info
-    dst->mbuf = arg.mbuf;
-    dst->attractedPlayers = arg.attractedPlayers;
-
-    // game info
-    dst->board = arg.board;
-    dst->ps = arg.ps;
-
-    dst->infoSeat = arg.infoSeat;
-    dst->infoSeatPlayer = arg.infoSeatPlayer;
-    dst->infoNewClass = arg.infoNewClass;
-    dst->infoNewClassPlayer = arg.infoNewClassPlayer;
-    dst->infoClass = arg.infoClass;
-    dst->infoClassPlayer = arg.infoClassPlayer;
-
-    dst->infoPosition = arg.infoPosition;
-
-    dst->common = arg.common;
-
-    // we don't have to copy each player's hand,
-    // because card-position will be set in the opening of playout.
-    dst->usedCards = arg.usedCards;
-    dst->sentCards = arg.sentCards;
-    dst->recvCards = arg.recvCards;
-    dst->dealtCards = arg.dealtCards;
-
-    dst->remCards = arg.remCards;
-    dst->remQty = arg.remQty;
-    dst->remKey = arg.remKey;
-}
-
 void World::set(int turnCount, const Cards *c) {
     for (int p = 0; p < N_PLAYERS; p++) {
         cards[p] = c[p];
@@ -451,19 +394,5 @@ void World::set(int turnCount, const Cards *c) {
 
 // set estimated information
 void setWorld(const World& world, Field *const dst) {
-    Cards remCards = dst->remCards;
-    uint64_t remKey = dst->remKey;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (dst->isAlive(p)) {
-            // only alive players
-            uint64_t myKey = world.cardKey[p];
-            dst->hand[p].set(world.cards[p]);
-            dst->hand[p].setKey(myKey);
-            dst->opsHand[p].set(remCards - world.cards[p]);
-            dst->opsHand[p].setKey(subCardKey(remKey, myKey));
-        } else {
-            // alive でないプレーヤーも手札枚数だけセットしておく
-            dst->hand[p].qty = 0;
-        }
-    }
+    for (int p = 0; p < N_PLAYERS; p++) dst->setHand(p, world.cards[p]);
 }

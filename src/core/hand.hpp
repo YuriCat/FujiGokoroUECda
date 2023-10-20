@@ -31,6 +31,14 @@ struct Hand {
     // その他
     // key
 
+    Hand() {}
+    Hand(const Hand& hand) { *this = hand; }
+    Hand(Cards c, bool all=false) {
+        if (!all) set1stHalf(c);
+        else setAll(c);
+    }
+    Hand(Cards c, bool all, uint64_t key): Hand(c, all) { setKey(key); }
+
     constexpr operator Cards() const { return cards; }
     bool holds(Cards c) const { return cards.holds(c); }
     constexpr bool any() const { return cards.any(); }
