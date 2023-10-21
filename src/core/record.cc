@@ -24,7 +24,7 @@ namespace Recorder {
 
 string PlayRecord::toString() const {
     ostringstream oss;
-    oss << toRecordString(move) << "[" << time << "]";
+    oss << toRecordString(move()) << "[" << time << "]";
     return oss.str();
 }
 
@@ -412,6 +412,7 @@ void Field::setAfterChange(const GameRecord& game,
 }
 
 void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
+    assert(playerNum < N_PLAYERS);
     myPlayerNum = game.myPlayerNum;
     if (phase < PHASE_PRESENT) passPresent(game, playerNum);
     if (tcnt < 0) return; // tcnt < 0で交換中まで
@@ -422,5 +423,5 @@ void Field::fromRecord(const GameRecord& game, int playerNum, int tcnt) {
 
     // 役提出の処理
     tcnt = min(game.numPlays, tcnt);
-    for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move);
+    for (int t = 0; t < tcnt; t++) proceed(game.plays[t].move());
 }

@@ -365,7 +365,7 @@ int testND(const std::vector<Cards>& sample) {
 }
 
 bool CardsTest() {
-
+    cerr << "sizeof(IntCard) = " << sizeof(IntCard) << endl;
     cerr << "sizeof(BitCards) = " << sizeof(BitCards) << endl;
     cerr << "sizeof(Cards) = " << sizeof(Cards) << endl;
 
