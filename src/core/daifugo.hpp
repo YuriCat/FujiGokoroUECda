@@ -1176,8 +1176,7 @@ static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 
     return out;
 }
 
-inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
-                       FieldAddInfo *const pnext) {
+inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo, FieldAddInfo *const pnext) {
     pnext->init();
     pnext->setMinNumCardsAwake(fieldInfo.minNumCards());
     pnext->setMaxNumCardsAwake(fieldInfo.maxNumCards());
@@ -1185,8 +1184,7 @@ inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
     pnext->setMaxNumCards(fieldInfo.maxNumCards());
     pnext->setFlushLead();
 }
-inline void procUnrivaled(const FieldAddInfo& fieldInfo,
-                   FieldAddInfo *const pnext) {
+inline void procUnrivaled(const FieldAddInfo& fieldInfo, FieldAddInfo *const pnext) {
     *pnext = fieldInfo;
     pnext->procTmpInfo();
     pnext->setUnrivaled();
