@@ -290,7 +290,7 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                 makeMove1stHalf(myHand, &nextHand, m);
 
                 // 5枚以上の階段は支配としておく
-                if (!depth && m.qty() > 4) {
+                if (m.qty() > 4) {
                     Board nb = b;
                     nb.procOrder(m);
                     // いずれかのオーダーで必勝ならOK
@@ -319,21 +319,43 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
                           const Board& b, const FieldAddInfo& fieldInfo) {
     // 間に他プレーヤーの着手を含んだ必勝を検討
     // 支配的でないことは前提とする
-    if (!b.isNull()) return false; // 未実装
     if (m.isPASS()) return false; // パスからのBNPWはない
-    int curOrder = b.prmOrder();
-    Cards ops8 = opsHand.cards & CARDS_8;
 
     // 相手に間で上がられる可能性がある場合
     if (fieldInfo.minNumCardsAwake() <= m.qty() && m.qty() <= fieldInfo.maxNumCardsAwake()) return false;
 
-    FieldAddInfo nextFieldInfo;
+    // S3分岐必勝を検討
+    // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
+    // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
+    if (m.isSingle() // シングルのみ
+        && containsS3(myHand.cards - m.cards())) { // 残り手札にS3がある
+        Cards zone = ORToGValidZone(b.order(), m.rank());
+        if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
+        if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
+            Hand nextHand;
+            makeMove1stHalf(myHand, &nextHand, m);
+            if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
+                Move s3; s3.setSingle(INTCARD_S3);
+                nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
+                if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
+                    // 両方で勝ったので必勝
+                    DERR << "BRPW(S3)!!!" << std::endl;
+                    return true;
+                }
+            }
+        }
+    }
 
+    int curOrder = b.prmOrder();
+    Cards ops8 = opsHand.cards & CARDS_8;
+
+    // BNPWを検討
     if (m.isSingle()) {
         // シングルジョーカーは少なくともBNPWではない
         if (m.isSingleJOKER()) return false;
         if (myHand.jk && !containsS3(opsHand.cards)) { // まずジョーカーを検討
             // 相手に8切りで返される可能性があればだめ
+            if (b.locksSuits(m)) ops8 &= SuitsToCards(m.suits());
             if (ops8 && isValidGroupRank(RANK_8, curOrder, m.rank())) return false;
             // 残り1枚がジョーカーなら勝ち
             if (myHand.qty == m.qty() + 1) return true;
@@ -343,6 +365,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
             makeMove1stHalf(myHand, &nextHand, m);
             Move sj; sj.setSingleJOKER();
             nextHand.makeMove1stHalf(sj, CARDS_JOKER, 1);
+            FieldAddInfo nextFieldInfo;
             flushFieldAddInfo(fieldInfo, &nextFieldInfo);
             int n = std::min(fieldInfo.minNumCards(), fieldInfo.minNumCardsAwake() - m.qty());
             nextFieldInfo.setMinNumCards(n);
@@ -405,7 +428,6 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
         // パス支配の場合, 流れてからの必勝を判定
         m.setDO(); // 支配フラグ付加
         FieldAddInfo nextFieldInfo;
-        nextFieldInfo.init();
         flushFieldAddInfo(fieldInfo, &nextFieldInfo);
         return judgeHandMate(depth, mbuf, myHand, opsHand,
                              OrderToNullBoard(b.prmOrder()), nextFieldInfo);
@@ -442,31 +464,8 @@ inline bool checkHandMate(const int depth, MoveInfo *const mbuf, MoveInfo& m,
     } else { // 支配しない
         if (depth <= 0) return false;
 
-        // S3分岐必勝を検討
-        // awakeな相手の最小枚数2以上、ジョーカー以外に返せる着手が存在しない場合、
-        // ジョーカー -> S3の場合とそのまま流れた場合にともに必勝なら必勝(ぱおーん氏の作より)
-        if (m.isSingle() // シングルのみ
-            && fieldInfo.minNumCardsAwake() > 1 // 相手に即上がりされない
-            && containsS3(myHand.cards - m.cards())) { // 残り手札にS3がある
-            Cards zone = ORToGValidZone(b.order(), m.rank());
-            if (b.locksSuits(m)) {
-                zone &= SuitsToCards(m.suits());
-            }
-            if (!(zone & opsHand.cards)) { // ジョーカー以外は出せない
-                Hand nextHand;
-                makeMove1stHalf(myHand, &nextHand, m);
-                if (judgeHandPW_NF(nextHand, opsHand, b)) { // 流れた場合
-                    Move s3; s3.setSingle(INTCARD_S3);
-                    nextHand.makeMove1stHalf(s3, CARDS_S3, 1); // S3 で進める
-                    if (judgeHandPW_NF(nextHand, opsHand, b)) { // S3で返した場合
-                        // 両方で勝ったので必勝
-                        DERR << "BRPW(S3)!!!" << std::endl;
-                        return true;
-                    }
-                }
-            }
-        }
         // BNPWを検討
+        assert(!fieldInfo.isLastAwake());
         if (checkHandBNPW(depth - 1, mbuf, m, myHand, opsHand, b, fieldInfo)) {
             DERR << "BNPW - " << m << " ( " << fieldInfo.minNumCardsAwake() << " ) " << std::endl;
             return true;

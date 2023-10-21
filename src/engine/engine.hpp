@@ -11,6 +11,7 @@
 #include "mate.hpp"
 #include "last2.hpp"
 #include "policy.hpp"
+#include "estimation.hpp"
 #include "simulation.hpp"
 #include "monteCarlo.hpp"
 
@@ -44,8 +45,9 @@ public:
         auto& playPolicy = shared.basePlayPolicy;
         auto& changePolicy = shared.baseChangePolicy;
 
-        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+        shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+        loadEstimationParams(DIRECTORY_PARAMS_IN + "est_score.bin");
     }
     void initGame() {
         // 汎用変数の設定
@@ -143,7 +145,7 @@ public:
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy, 0);
+        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy);
         root.feedPolicyScore(score, numCands);
 
         // モンテカルロ法による評価
@@ -156,7 +158,6 @@ public:
         // 最高評価の交換を選ぶ
         if (changeCards == CARDS_NULL) changeCards = root.child[0].changeCards;
 
-    DECIDED_CHANGE:
         assert(countCards(changeCards) == changeQty);
         assert(holdsCards(myCards, changeCards));
         if (monitor) {
@@ -168,14 +169,7 @@ public:
         return changeCards;
     }
 
-    Move play() {
-        // 自分のプレーについての変数を更新
-        ClockMicS clms;
-        clms.start();
-        Move ret = playImpl();
-        return ret;
-    }
-    Move playImpl() { // ここがプレー関数
+    Move play() { // ここがプレー関数
         const auto& game = shared.record.latestGame();
 
         Move playMove = MOVE_NONE;
@@ -208,17 +202,26 @@ public:
             std::cerr << "No valid move." << std::endl;
             return MOVE_PASS;
         }
-        if (numMoves == 1) {
-            // 合法着手1つ。パスのみか、自分スタートで手札1枚
-            // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
-            if (monitor) {
-                if (!mbuf[0].isPASS()) std::cerr << "final move. " << mbuf[0] << std::endl;
-                else std::cerr << "no chance. PASS" << std::endl;
-            }
-            if (!mbuf[0].isPASS()) {
+        std::shuffle(mbuf.begin(), mbuf.begin() + numMoves, rootTools.dice);
+
+        // 即上がりチェック
+        for (int i = 0; i < numMoves; i++) {
+            if (mbuf[i].qty() >= myHand.qty) {
+                if (monitor) {
+                    std::cerr << "\033[1m\033[31m";
+                    std::cerr << "Final Move : " << mbuf[i];
+                    std::cerr << "\033[39m\033[0m" << std::endl;
+                }
                 shared.setMyMate(field.bestClass()); // 上がり
                 shared.setMyL2Result(1);
+                return mbuf[i];
             }
+        }
+
+        if (numMoves == 1) {
+            // 合法着手1つ。パスのみ
+            // 本当はそういう場合にすぐ帰ると手札がばれるのでよくない
+            if (monitor) std::cerr << "no chance. PASS" << std::endl;
             return mbuf[0];
         }
 
@@ -304,7 +307,7 @@ public:
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
-        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy, 0);
+        playPolicyScore(score, mbuf.data(), numMoves, field, shared.basePlayPolicy);
         root.feedPolicyScore(score, numMoves);
 
         // モンテカルロ法による評価(結果確定のとき以外)
@@ -367,7 +370,7 @@ public:
             // 8. 即切り役を優先
             next = root.binary_sort(next, [](const RootAction& a) { return a.move.domInevitably(); });
             // 9. 自分を支配していないものを優先
-            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.isDM(); });
+            next = root.binary_sort(next, [](const RootAction& a) { return !a.move.dominatesMe(); });
 
             playMove = root.child[0].move; // 必勝手から選ぶ
         }
@@ -377,13 +380,16 @@ public:
 
         if (monitor) {
             std::cerr << root.toString();
-            std::cerr << "\033[1m\033[" << 31 << "m";
-            std::cerr << "Best Move : " << playMove << std::endl;
-            std::cerr << "\033[" << 39 << "m\033[0m";
+            std::cerr << "\033[1m\033[31m";
+            std::cerr << "Best Move : " << playMove;
+            std::cerr << "\033[39m\033[0m" << std::endl;
         }
         return playMove;
     }
     void closeGame() {
+        // プレーヤーモデル更新
+        const auto& record = shared.record;
+        shared.playerModel.update(record, record.games.size() - 1, record.myPlayerNum, shared, rootTools.mbuf);
         shared.closeGame();
     }
     void closeMatch() {
