@@ -8,9 +8,9 @@
 #include "../engine/simulation.hpp"
 
 struct RateCalculationData {
-    SpinLock<uint32_t> lock;
+    SpinLock lock;
     std::atomic<int> trials;
-
+    std::array<std::array<int, N_PLAYERS>, N_PLAYERS> results;
     // プレーヤー間の相対的な勝ち数
     std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> relativeWins;
     std::array<BetaDistribution, N_PLAYERS> absoluteWins;
@@ -18,8 +18,10 @@ struct RateCalculationData {
     RateCalculationData() {
         lock.unlock();
         trials = 0;
+
         for (int p = 0; p < N_PLAYERS; p++) {
             for (int pp = 0; pp < N_PLAYERS; pp++) {
+                results[p][pp] = 0;
                 relativeWins[p][pp].set(0.5, 0.5);
             }
         }
@@ -34,14 +36,17 @@ void simulationThreadForRating(RateCalculationData *const pdst,
                                const int simulations,
                                SharedData *const pshared,
                                ThreadTools *const ptools) {
-    while (pdst->trials++ < simulations)
-    {
+    while (pdst->trials++ < simulations) {
         Field f = *pfield;
         f.setMoveBuffer(ptools->mbuf);
 
         startAllSimulation(f, pshared, ptools);
 
         pdst->lock.lock();
+
+        for (int p = 0; p < N_PLAYERS; p++) {
+            pdst->results[p][f.newClassOf(p)] += 1;
+        }
         // 相対勝ち数を加算
         for (int p0 = 0; p0 < N_PLAYERS; p0++) {
             for (int p1 = 0; p1 < N_PLAYERS; p1++) {
@@ -75,6 +80,14 @@ void doSimulationsToEvaluate(const GameRecord& game,
         threads.emplace_back(&simulationThreadForRating, presult, &field, simulations, pshared, &tools[i]);
     }
     for (auto& th : threads) th.join();
+    std::cerr << std::fixed;
+    for (int p = 0; p < N_PLAYERS; p++) {
+        for (int cl = 0; cl < N_PLAYERS; cl++) {
+            std::cerr << presult->results[p][cl] / double(simulations) << " ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << std::defaultfloat;
 }
 
 std::array<std::array<BetaDistribution, N_PLAYERS>, N_PLAYERS> doSimulationsToGetRalativeWp(const GameRecord& game,
@@ -143,13 +156,13 @@ std::array<double, N_PLAYERS> calcDiffRateByRelativeWp(const GameRecord& game,
     for (int p0 = 0; p0 < N_PLAYERS; p0++) {
         double sum = 0;
         for (int p1 = 0; p1 < N_PLAYERS; p1++) {
-            std::cerr << expectedWp[p0][p1] << " ";
+            //std::cerr << expectedWp[p0][p1] << " ";
             if (p0 != p1) {
                 double realWin = (game.newClassOf(p0) < game.newClassOf(p1)) ? 1 : 0;
                 sum += realWin - expectedWp[p0][p1];
             }
         }
-        std::cerr << std::endl;
+        //std::cerr << std::endl;
         diffRate[p0] = coef * sum / (N_PLAYERS - 1);
     }
     return diffRate;

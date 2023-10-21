@@ -95,15 +95,15 @@ public:
         if (tmp.count() == changeQty) return tmp;
 
         // 合法交換候補生成
-        std::array<Cards, N_MAX_CHANGES> cand;
-        int numCands = genChange(cand.data(), tmp, changeQty);
-        if (numCands == 1) return cand[0];
-        std::shuffle(cand.begin(), cand.begin() + numCands, rootTools.dice);
+        std::array<Cards, N_MAX_CHANGES> change;
+        int numChanges = genChange(change.data(), tmp, changeQty);
+        if (numChanges == 1) return change[0];
+        std::shuffle(change.begin(), change.begin() + numChanges, rootTools.dice);
 
         // 必勝チェック&枝刈り
-        for (int i = 0; i < numCands; i++) {
+        for (int i = 0; i < numChanges; i++) {
             // 交換後の自分のカード
-            Cards restCards = myCards - cand[i];
+            Cards restCards = myCards - change[i];
 
             // D3を持っている場合、自分からなので必勝チェック
             if (Settings::mateSearchOnRoot && containsD3(restCards)) {
@@ -120,19 +120,19 @@ public:
                 ops.set(CARDS_ALL - restCards);
                 if (judgeHandMate(1, rootTools.mbuf, mine, ops, b, fieldInfo)) {
                     CERR << "CHANGE MATE!" << std::endl;
-                    return cand[i]; // 必勝
+                    return change[i]; // 必勝
                 }
             }
         }
 
         if (Settings::changeHeuristicsOnRoot) {
-            for (int i = 0; i < numCands; i++) {
-                Cards restCards = myCards - cand[i];
+            for (int i = 0; i < numChanges; i++) {
+                Cards restCards = myCards - change[i];
                 // 残り札に革命が無い場合,Aもダメ
                 if (isNoRev(restCards)) {
-                    if (cand[i] & CARDS_A) std::swap(cand[i], cand[--numCands]);
+                    if (change[i] & CARDS_A) std::swap(change[i], change[--numChanges]);
                 }
-                if (numCands == 1) return cand[0];
+                if (numChanges == 1) return change[0];
             }
         }
 
@@ -140,13 +140,13 @@ public:
         Field field;
         field.fromRecord(game, myPlayerNum, -1);
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
-                               : std::min(10000, (int)(pow((double)numCands, 0.8) * 700));
-        root.setChange(cand.data(), numCands, field, shared, limitSimulations);
+                               : std::min(10000, (int)(pow((double)numChanges, 0.8) * 700));
+        root.setChange(change.data(), numChanges, field, shared, limitSimulations);
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
-        changePolicyScore(score, cand.data(), numCands, myCards, changeQty, shared.baseChangePolicy);
-        root.feedPolicyScore(score, numCands);
+        changePolicyScore(score, change.data(), numChanges, myCards, changeQty, shared.baseChangePolicy);
+        root.feedPolicyScore(score, numChanges);
 
         // モンテカルロ法による評価
         if (!Settings::policyMode && changeCards == CARDS_NULL) {
