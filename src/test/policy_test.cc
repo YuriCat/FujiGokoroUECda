@@ -12,8 +12,8 @@ using namespace std;
 
 static XorShift64 dice((unsigned int)time(NULL));
 
-static ChangePolicy<policy_value_t> changePolicy;
-static PlayPolicy<policy_value_t> playPolicy;
+static ChangePolicy changePolicy;
+static PlayPolicy playPolicy;
 
 int outputParams() {
     // 方策関数中で気になるパラメータを出力

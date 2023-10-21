@@ -67,8 +67,8 @@ struct SharedData : public BaseSharedData {
     std::array<double, N_PLAYERS> gameReward;
 
     // 基本方策
-    ChangePolicy<policy_value_t> baseChangePolicy;
-    PlayPolicy<policy_value_t> basePlayPolicy;
+    ChangePolicy baseChangePolicy;
+    PlayPolicy basePlayPolicy;
 
     // 相手モデリング
     PlayerModel playerModel;
