@@ -120,6 +120,7 @@ public:
                 ops.set(CARDS_ALL - restCards);
                 if (judgeHandMate(1, rootTools.mbuf, mine, ops, b, fieldInfo)) {
                     CERR << "CHANGE MATE!" << std::endl;
+                    shared.setMyMate(DAIFUGO);
                     return change[i]; // 必勝
                 }
             }
