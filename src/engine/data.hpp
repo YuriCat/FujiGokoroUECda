@@ -4,6 +4,7 @@
 #include "../core/record.hpp"
 #include "../core/field.hpp"
 #include "policy.hpp"
+#include "modeling.hpp"
 
 // Field以外のデータ構造
 // Fieldは基本盤面情報+盤面を進めたり戻したりするときに値が変化するもの
@@ -68,6 +69,9 @@ struct SharedData : public BaseSharedData {
     // 基本方策
     ChangePolicy<policy_value_t> baseChangePolicy;
     PlayPolicy<policy_value_t> basePlayPolicy;
+
+    // 相手モデリング
+    PlayerModel playerModel;
 
     // 1ゲーム中に保存する一次データのうち棋譜に含まれないもの
     int mateClass; // 初めてMATEと判定した階級の宣言
@@ -153,10 +157,26 @@ struct RootAction {
     double var() const { return monteCarloScore.var() * size(); }
     double naive_mean() const { return naiveScore.mean(); }
 
-    void clear();
     void setChange(Cards cc) { clear(); changeCards = cc; }
     void setPlay(MoveInfo m) { clear(); move = m; }
-    std::string toString() const;
+
+    void clear() {
+        move = MOVE_NONE;
+        changeCards = CARDS_NULL;
+        simulations = 0;
+        turnSum = 0;
+        for (int p = 0; p < N_PLAYERS; p++) {
+            for (int cl = 0; cl < N_CLASSES; cl++) {
+                classDistribution[p][cl] = 0;
+            }
+        }
+        monteCarloScore.set(1, 1);
+        naiveScore.set(0, 0);
+        myScore.set(1, 1);
+        rivalScore.set(1, 1);
+        policyScore = 0;
+        policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
+    }
 };
 
 /**************************ルートの全体の情報**************************/
@@ -179,16 +199,24 @@ struct RootInfo {
     uint64_t allSimulations;
 
     // 排他処理
-    SpinLock<int> lock_;
+    SpinLock lock_;
 
     void lock() { lock_.lock(); }
     void unlock() { lock_.unlock(); }
 
     void setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim);
     void setChange(const Cards *const a, int num,
-                   const Field& field, const SharedData& shared, int limSim = -1);
+                   const Field& field, const SharedData& shared, int limSim = -1) {
+        isChange = true;
+        for (int i = 0; i < num; i++) child[i].setChange(a[i]);
+        setCommonInfo(num, field, shared, limSim);
+    }
     void setPlay(const MoveInfo *const a, int num,
-                 const Field& field, const SharedData& shared, int limSim = -1);
+                 const Field& field, const SharedData& shared, int limSim = -1) {
+        isChange = false;
+        for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
+        setCommonInfo(num, field, shared, limSim);
+    }
 
     void addPolicyScoreToMonteCarloScore();
     void feedPolicyScore(const double *const score, int num);

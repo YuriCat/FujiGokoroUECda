@@ -5,10 +5,12 @@
 #include "field.hpp"
 
 struct PlayRecord { // 1つの着手の記録
-    Move move; unsigned time;
+    uint32_t move_;
+    uint32_t time;
 
-    operator Move() const { return move; }
-    void set(Move m, unsigned t) { move = m; time = t; }
+    operator Move() const { return move(); }
+    Move move() const { return Move::fromInt(move_); }
+    void set(Move m, unsigned t) { move_ = m.toInt(); time = t; }
     std::string toString() const;
 };
 

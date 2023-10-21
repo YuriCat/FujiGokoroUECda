@@ -4,10 +4,8 @@
 using namespace std;
 
 namespace Settings {
-    const double rootPlayPriorCoef = 4;
-    const double rootPlayPriorExponent = 0.6;
-    const double rootChangePriorCoef = 4;
-    const double rootChangePriorExponent = 0.6;
+    const double rootPriorCoef = 4;
+    const double rootPriorExponent = 0.6;
 }
 
 void BaseSharedData::closeMatch() {
@@ -45,32 +43,6 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootAction::clear() {
-    move = MOVE_NONE;
-    changeCards = CARDS_NULL;
-    simulations = 0;
-    turnSum = 0;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        for (int cl = 0; cl < N_CLASSES; cl++) {
-            classDistribution[p][cl] = 0;
-        }
-    }
-    monteCarloScore.set(1, 1);
-    naiveScore.set(0, 0);
-    myScore.set(1, 1);
-    rivalScore.set(1, 1);
-    policyScore = 0;
-    policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
-}
-
-string RootAction::toString() const {
-    ostringstream oss;
-    oss << "size = " << size();
-    oss << " mean = " << mean();
-    oss << " var = " << var();
-    return oss.str();
-}
-
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     candidates = num;
     for (int i = 0; i < candidates; i++) {
@@ -81,7 +53,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     bestReward = shared.gameReward[field.bestClass()];
     worstReward = shared.gameReward[field.worstClass()];
     rewardGap = bestReward - worstReward;
-    if (Settings::maximizePosition) {
+    if (Settings::maximizePosition && shared.record.positionOf(myPlayerNum) < 2) {
         uint32_t rivals = rivalPlayers(field, myPlayerNum);
         if (popcnt(rivals) == 1) {
             int rnum = bsf(rivals);
@@ -89,18 +61,6 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
         }
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
-}
-void RootInfo::setChange(const Cards *const a, int num,
-                         const Field& field, const SharedData& shared, int limSim) {
-    isChange = true;
-    for (int i = 0; i < num; i++) child[i].setChange(a[i]);
-    setCommonInfo(num, field, shared, limSim);
-}
-void RootInfo::setPlay(const MoveInfo *const a, int num,
-                       const Field& field, const SharedData& shared, int limSim) {
-    isChange = false;
-    for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
-    setCommonInfo(num, field, shared, limSim);
 }
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {
@@ -112,12 +72,7 @@ void RootInfo::addPolicyScoreToMonteCarloScore() {
         minScore = min(minScore, child[i].policyScore);
     }
     // 初期値として加算
-    double n = 0;
-    if (isChange) {
-        n = Settings::rootChangePriorCoef * pow(double(candidates - 1), Settings::rootChangePriorExponent);
-    } else {
-        n = Settings::rootPlayPriorCoef * pow(double(candidates - 1), Settings::rootPlayPriorExponent);
-    }
+    double n = Settings::rootPriorCoef * pow(double(candidates - 1), Settings::rootPriorExponent);
     for (int i = 0; i < candidates; i++) {
         double r = (child[i].policyScore - minScore) / (maxScore - minScore);
         child[i].monteCarloScore += BetaDistribution(r, 1 - r) * n;
@@ -148,10 +103,10 @@ void RootInfo::feedSimulationResult(int triedIndex, const Field& field, SharedDa
     // 新たに得た証拠分布
     BetaDistribution myScore, rivalScore, totalScore;
 
-    int myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
+    double myReward = pshared->gameReward[field.newClassOf(myPlayerNum)];
     myScore.set((myReward - worstReward) / rewardGap, (bestReward - myReward) / rewardGap);
     if (rivalPlayerNum >= 0) {
-        int rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
+        double rivalReward = pshared->gameReward[field.newClassOf(rivalPlayerNum)];
         rivalScore.set((rivalReward - worstReward) / rewardGap, (bestReward - rivalReward) / rewardGap);
 
         constexpr double RIVAL_RATE = 1 / 16.0; // ライバルの結果を重視する割合 0.5 で半々
