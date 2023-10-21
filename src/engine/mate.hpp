@@ -290,7 +290,7 @@ inline bool judgeHandMate(const int depth, MoveInfo *const mbuf,
                 makeMove1stHalf(myHand, &nextHand, m);
 
                 // 5枚以上の階段は支配としておく
-                if (!depth && m.qty() > 4) {
+                if (m.qty() > 4) {
                     Board nb = b;
                     nb.procOrder(m);
                     // いずれかのオーダーで必勝ならOK

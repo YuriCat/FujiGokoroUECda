@@ -240,9 +240,7 @@ bool Field::exam() const {
 
     // 手札
     Cards sum = CARDS_NULL;
-    int NSum = 0;
-    Cards r = remCards;
-    int NR = remQty;
+    int sumQty = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (isAlive(p)) {
             // 上がっていないのに手札が無い場合
@@ -260,21 +258,21 @@ bool Field::exam() const {
 
             Cards c = hand[p].cards;
             // 排他性
-            if (!isExclusiveCards(sum, c)) {
+            if (!sum.isExclusive(c)) {
                 cerr << sum << endl;
                 cerr << hand[p] << endl;
                 cerr << "hand[" << p << "]excl" << endl;
                 return false;
             }
             // 包含関係
-            if (!holdsCards(r, c)) {
+            if (!remCards.holds(c)) {
                 cerr << remCards << endl;
                 cerr << hand[p] << endl;
                 cerr << "hand[" << p << "]hol" << endl;
                 return false;
             }
             sum += c;
-            NSum += hand[p].qty;
+            sumQty += hand[p].qty;
         } else {
             // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
             if (hand[p].qty > 0) {
@@ -283,15 +281,15 @@ bool Field::exam() const {
         }
     }
     if (!isSubjective()) {
-        if (sum != r) {
+        if (sum != remCards) {
             for (int p = 0; p < N_PLAYERS; p++) {
                 cerr << hand[p].cards << endl;
             }
             cerr << "sum cards - rem cards" << endl;
             return false;
         }
-        if (NR != NSum) {
-            cerr << "nsum cards - nrem cards" << endl;
+        if (sumQty != remQty) {
+            cerr << "num sum cards - num rem cards" << endl;
             return false;
         }
     }
