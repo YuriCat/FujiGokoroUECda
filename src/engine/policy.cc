@@ -730,24 +730,24 @@ int changePolicyScore(double *const dst, const Cards *const change, const int nu
 #undef Foo
 
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
-                    const Field& field, const PlayPolicy<policy_value_t>& pol, int mode) {
+                    const Field& field, const PlayPolicy& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
     else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
-                    const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode) {
+                    const Field& field, PlayPolicyLearner& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
     else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int numChanges,
                       const Cards myCards, const int numChangeCards,
-                      const ChangePolicy<policy_value_t>& pol, int mode) {
+                      const ChangePolicy& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, numChanges, myCards, numChangeCards, pol);
     else return changePolicyScore<1>(dst, change, numChanges, myCards, numChangeCards, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int numChanges,
                       const Cards myCards, const int numChangeCards,
-                      ChangePolicyLearner<policy_value_t>& pol, int mode) {
+                      ChangePolicyLearner& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, numChanges, myCards, numChangeCards, pol);
     else return changePolicyScore<1>(dst, change, numChanges, myCards, numChangeCards, pol);
 }
