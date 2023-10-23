@@ -347,7 +347,7 @@ public:
     double random() {
         return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
     }
-    void srand(uint64_t s) {
+    void seed(uint64_t s) {
         // seedが0だとまずい
         if (!s) x = 0x0123456789ABCDEFULL;
         else x = (s << 32) ^ s;
@@ -359,7 +359,7 @@ public:
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
     constexpr XorShift64(): x(), y(), z(), t() {}
-    XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
+    XorShift64(uint64_t s): x(), y(), z(), t() { seed(s); }
 };
 
 static double dFactorial(int n) {

@@ -16,7 +16,7 @@ struct ThreadTools {
     Dice dice; // サイコロ
     MoveInfo mbuf[8192]; // 着手生成バッファ
     ThreadTools() {
-        dice.srand(0);
+        dice.seed(0);
         memset(mbuf, 0, sizeof(mbuf));
     }
 };

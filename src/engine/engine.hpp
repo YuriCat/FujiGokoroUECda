@@ -34,7 +34,7 @@ public:
 
     void setRandomSeed(uint64_t s) {
         // 乱数系列を初期化
-        rootTools.dice.srand(s);
+        rootTools.dice.seed(s);
     }
 
     void initMatch(int playerNum) {
@@ -64,7 +64,7 @@ public:
         if (numThreads > 1) {
             // スレッド数に合わせたThreadToolsを準備
             if ((int)threadTools.size() < numThreads - 1) threadTools.resize(numThreads - 1);
-            for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.srand(rootTools.dice() + i);
+            for (int i = 1; i < numThreads; i++) threadTools[i - 1].dice.seed(rootTools.dice() + i);
             std::vector<std::thread> threads;
             for (int i = 0; i < numThreads; i++) {
                 threads.emplace_back(&MonteCarloThread, i, numThreads, &root, &field, &shared,
