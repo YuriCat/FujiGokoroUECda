@@ -335,14 +335,15 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
 
 class XorShift64 {
 private:
-    uint64_t x, y, z, t;
+    uint64_t x, y;
 public:
     using result_type = uint64_t;
     uint64_t operator ()() {
-        uint64_t tmp = x ^ (x << 11);
-        x = y; y = z; z = t;
-        t = (t ^ (t >> 19)) ^ (tmp ^ (tmp >> 8));
-        return t;
+        uint64_t r = x + y;
+        uint64_t z = x ^ (x << 23);
+        x = y;
+        y ^= z ^ (z >> 18) ^ (y >> 5);
+        return r;
     }
     double random() {
         return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
@@ -352,14 +353,12 @@ public:
         if (!s) x = 0x0123456789ABCDEFULL;
         else x = (s << 32) ^ s;
         y = (x << 8) | ((x & 0xff00000000000000ULL) >> 56);
-        z = (y << 8) | ((y & 0xff00000000000000ULL) >> 56);
-        t = (z << 8) | ((z & 0xff00000000000000ULL) >> 56);
     }
     static constexpr uint64_t min() { return 0ULL; }
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
-    constexpr XorShift64(): x(), y(), z(), t() {}
-    XorShift64(uint64_t s): x(), y(), z(), t() { seed(s); }
+    constexpr XorShift64(): x(), y() {}
+    XorShift64(uint64_t s): x(), y() { seed(s); }
 };
 
 static double dFactorial(int n) {
