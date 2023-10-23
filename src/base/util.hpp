@@ -321,7 +321,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     if (N <= 1) dst[0] = arg;
     else if (N == 2) dist2_64(dst, dst + 1, arg, argNum[0], argNum[1], dice);
     else {
-        const int NH = N / 2;
+        constexpr int NH = N / 2;
         int num[2] = {0};
         for (int i = 0; i < NH; i++) num[0] += argNum[i];
         for (int i = NH; i < N; i++) num[1] += argNum[i];
