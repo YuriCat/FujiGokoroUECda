@@ -160,8 +160,8 @@ template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v);
 template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
 template <> inline size_t bsr<std::uint64_t>(std::uint64_t v) { return bsr64(v); }
 
-template <typename T> inline T lsb(T v) { return v & -v; }
-template <typename T> inline T popLsb(T v) { return v & (v - T(1)); }
+template <typename T> constexpr T lsb(T v) { return v & -v; }
+template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
 template <typename T> inline T rsb(T v) { return T(1) << bsr(v); }
 
 constexpr size_t popcnt32CE(uint32_t v) {
@@ -176,7 +176,7 @@ constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全
     return ~v & (v - T(1));
 }
 template <typename T> inline T allHigherBits(T a) {
-    return ~((T(1) << bsr<T>(a)) - T(1));
+    return ~(rsb(a) - T(1)) << 1;
 }
 
 template <typename T>
