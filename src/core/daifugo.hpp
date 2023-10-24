@@ -660,7 +660,7 @@ inline BitCards CardsToER(BitCards c) {
 }
 inline BitCards QRToPQR(CardArray qr) {
     // qr -> pqr 変換
-    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
+    return qr + (qr & PQR_3) + (qr & (qr >> 1));
 }
 inline BitCards CardsToPQR(BitCards c) {
     // ランクごとの枚数を示す位置にビットが立つようにする
