@@ -103,14 +103,8 @@ private:
     double t_;
 };
 
-template <typename T>
-constexpr bool holdsBits(T a, T b) {
-    return (~a & b) == T(0);
-}
-template <typename T>
-constexpr bool isExclusive(T a, T b) {
-    return (a & b) == T(0);
-}
+template <typename T> constexpr bool holdsBits(T a, T b) { return !(~a & b); }
+template <typename T> constexpr bool isExclusive(T a, T b) { return !(a & b); }
 
 template <typename T> inline int popcnt(T a) { return std::popcount(a); };
 template <typename T> inline int bsf(T v) { return std::countr_zero(v); }
