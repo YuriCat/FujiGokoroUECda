@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <climits>
@@ -116,60 +117,13 @@ constexpr bool isExclusive(T a, T b) {
     return (a & b) == T(0);
 }
 
-inline size_t popcnt32(std::uint32_t v) {
-    return __builtin_popcount(v);
-}
-inline size_t popcnt64(std::uint64_t v) {
-    return __builtin_popcountll(v);
-}
-
-template <typename T> inline size_t popcnt(T a);
-template <> inline size_t popcnt<std::uint8_t >(std::uint8_t  v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint16_t>(std::uint16_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint32_t>(std::uint32_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint64_t>(std::uint64_t v) { return popcnt64(v); }
-
-inline size_t bsf32(std::uint32_t v) {
-    return __builtin_ctz(v);
-}
-inline size_t bsf64(std::uint64_t v) {
-    return __builtin_ctzll(v);
-}
-
-inline size_t bsr32(std::uint32_t v) {
-    std::int32_t r;
-    __asm__("bsrl %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-inline size_t bsr64(std::uint64_t v) {
-    std::int64_t r;
-    __asm__("bsrq %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-
-template <typename T> inline size_t bsf(T v);
-template <typename T> inline size_t bsr(T v);
-
-template <> inline size_t bsf<std::uint8_t >(std::uint8_t  v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint16_t>(std::uint16_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint32_t>(std::uint32_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint64_t>(std::uint64_t v) { return bsf64(v); }
-
-template <> inline size_t bsr<std::uint8_t >(std::uint8_t  v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint64_t>(std::uint64_t v) { return bsr64(v); }
+template <typename T> inline int popcnt(T a) { return std::popcount(a); };
+template <typename T> inline int bsf(T v) { return std::countr_zero(v); }
+template <typename T> inline int bsr(T v) { return sizeof(T) * 8 - 1 - std::countl_zero(v); }
 
 template <typename T> constexpr T lsb(T v) { return v & -v; }
 template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
-template <typename T> inline T rsb(T v) { return T(1) << bsr(v); }
-
-constexpr size_t popcnt32CE(uint32_t v) {
-    return v ? (1 + popcnt32CE(popLsb(v))) : 0;
-}
-constexpr size_t popcnt64CE(uint64_t v) {
-    return v ? (1 + popcnt64CE(popLsb(v))) : 0;
-}
+template <typename T> inline T rsb(T v) { return std::bit_floor(v); }
 
 template <typename T>
 constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全て
