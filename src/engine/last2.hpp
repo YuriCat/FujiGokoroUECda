@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../core/daifugo.hpp"
-#include "../core/prim2.hpp"
 #include "../core/hand.hpp"
 
 // ラスト二人探索

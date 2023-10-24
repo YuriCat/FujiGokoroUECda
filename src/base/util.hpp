@@ -160,8 +160,8 @@ template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v);
 template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
 template <> inline size_t bsr<std::uint64_t>(std::uint64_t v) { return bsr64(v); }
 
-template <typename T> inline T lsb(T v) { return v & -v; }
-template <typename T> inline T popLsb(T v) { return v & (v - T(1)); }
+template <typename T> constexpr T lsb(T v) { return v & -v; }
+template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
 template <typename T> inline T rsb(T v) { return T(1) << bsr(v); }
 
 constexpr size_t popcnt32CE(uint32_t v) {
@@ -176,7 +176,7 @@ constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全
     return ~v & (v - T(1));
 }
 template <typename T> inline T allHigherBits(T a) {
-    return ~((T(1) << bsr<T>(a)) - T(1));
+    return ~(rsb(a) - T(1)) << 1;
 }
 
 template <typename T>
@@ -321,7 +321,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     if (N <= 1) dst[0] = arg;
     else if (N == 2) dist2_64(dst, dst + 1, arg, argNum[0], argNum[1], dice);
     else {
-        const int NH = N / 2;
+        constexpr int NH = N / 2;
         int num[2] = {0};
         for (int i = 0; i < NH; i++) num[0] += argNum[i];
         for (int i = NH; i < N; i++) num[1] += argNum[i];
@@ -347,7 +347,7 @@ public:
     double random() {
         return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
     }
-    void srand(uint64_t s) {
+    void seed(uint64_t s) {
         // seedが0だとまずい
         if (!s) x = 0x0123456789ABCDEFULL;
         else x = (s << 32) ^ s;
@@ -359,7 +359,7 @@ public:
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
     constexpr XorShift64(): x(), y(), z(), t() {}
-    XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
+    XorShift64(uint64_t s): x(), y(), z(), t() { seed(s); }
 };
 
 static double dFactorial(int n) {
@@ -585,25 +585,16 @@ private:
     }
 };
 
-template <typename T = int>
 class SpinLock {
 public:
     void lock() {
-        while (true) {
-            while (data_);
-            T tmp = 1;
-            if (data_.exchange(tmp, std::memory_order_acquire) == 0) return;
-        }
+        while (locked_.test_and_set(std::memory_order_acquire));
     }
-    bool try_lock() {
-        T tmp = 1;
-        if (data_.exchange(tmp, std::memory_order_acquire) == 0) return true;
-        return false;
+    void unlock() {
+        locked_.clear(std::memory_order_release);
     }
-    void unlock() { data_ = 0; }
-    SpinLock() { unlock(); }
 private:
-    std::atomic<T> data_;
+    std::atomic_flag locked_ = ATOMIC_FLAG_INIT;
 };
 
 template <int L, int ... shape_t>

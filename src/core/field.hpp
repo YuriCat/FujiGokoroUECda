@@ -3,7 +3,6 @@
 // 盤の情報表現
 #include "../UECda.h"
 #include "daifugo.hpp"
-#include "prim2.hpp"
 #include "hand.hpp"
 
 /**************************完全情報空間**************************/

@@ -126,7 +126,6 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         //if (field.b.qty() == myHand.qty && !dominatesHand(field.b, myHand)) return L2_WIN;
     }
 
-    //if (depth <= 0) return L2_DRAW;
     if (nodes > NODE_LIMIT) { failed = 1; return L2_DRAW; }
 
     int numMoves = genMove(buf, myHand, field.b);
@@ -213,13 +212,13 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
         if (nextPlayer == 0) {
             return judge(depth + 1, buf, nextHand, opsHand, nextField, true);
         } else {
-            return L2_WIN + L2_LOSE - judge(depth - 1, buf, opsHand, nextHand, nextField);
+            return L2_WIN + L2_LOSE - judge(depth + 1, buf, opsHand, nextHand, nextField);
         }
     } else { // PASS
         if (nextPlayer == 0) {
             return judge(depth + 1, buf, myHand, opsHand, nextField, true);
         } else {
-            return L2_WIN + L2_LOSE - judge(depth - 1, buf, opsHand, myHand, nextField);
+            return L2_WIN + L2_LOSE - judge(depth + 1, buf, opsHand, myHand, nextField);
         }
     }
 }

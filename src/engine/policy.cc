@@ -131,11 +131,10 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
     const Hand& myHand = field.getHand(tp);
     const Hand& opsHand = field.getOpsHand(tp);
     const Cards myCards = myHand.cards;
-    const int NMyCards = myHand.qty;
-    const uint32_t oq = myHand.qty;
+    const int numMyCards = myHand.qty;
     const Cards curPqr = myHand.pqr;
     const FieldAddInfo& fieldInfo = field.fieldInfo;
-    const int NParty = divisionCount(mbuf + numMoves, myCards);
+    const int numPartition = divisionCount(mbuf + numMoves, myCards);
 
     // 元々の手札の最低、最高ランク
     const int myLR = IntCardToRank(pickIntCardLow(myCards));
@@ -174,6 +173,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             const int q4 = min(m.qty(), 4);
 
             const Cards afterCards = myCards - m.cards();
+            const int numAfterCards = numMyCards - m.qty();
             const Cards afterPqr = CardsToPQR(afterCards);
             const Cards myAfterSeqCards = polymRanks<3>(afterCards);
 
@@ -247,14 +247,14 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             {
                 constexpr int base = FEA_IDX(FEA_HAND_PQR_RANK);
                 double rs = pqrRankScore(afterPqr, containsJOKER(afterCards) ? 1 : 0, aftOrd);
-                FooX(base, oq * log(max(rs / rankScore, 0.000001)))
+                FooX(base, numMyCards * log(max(rs / rankScore, 0.000001)))
             }
 
             // nf min party
             {
                 constexpr int base = FEA_IDX(FEA_HAND_NF_PARTY);
-                if (b.isNull()) FooX(base, divisionCount(mbuf + numMoves, afterCards) - NParty)
-                else FooX(base + 1, divisionCount(mbuf + numMoves, afterCards) - NParty)
+                if (b.isNull()) FooX(base, divisionCount(mbuf + numMoves, afterCards) - numPartition)
+                else FooX(base + 1, divisionCount(mbuf + numMoves, afterCards) - numPartition)
             }
 
             // after hand joker - p8
@@ -397,7 +397,7 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
                 if (b.isNull()) {
                     if (m.isSeq()) {
                         Foo(base)
-                        FooX(base + 2, NMyCards)
+                        FooX(base + 2, numMyCards)
                     }
                 } else {
                     if (b.isSeq()) Foo(base + 1)
@@ -456,9 +456,9 @@ int playPolicyScore(double *const dst, Move *const mbuf, const int numMoves,
             {
                 if (m.domInevitably()) {
                     int key = FEA_IDX(FEA_MOVE_EIGHT_QTY);
-                    FooX(key, (oq - m.qty()) * (oq - m.qty()))
+                    FooX(key, numAfterCards * numAfterCards)
                     key = FEA_IDX(FEA_MOVE_EIGHT_QTY) + 1;
-                    FooX(key, oq - m.qty())
+                    FooX(key, numAfterCards)
                 }
             }
 
@@ -730,24 +730,24 @@ int changePolicyScore(double *const dst, const Cards *const change, const int nu
 #undef Foo
 
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
-                    const Field& field, const PlayPolicy<policy_value_t>& pol, int mode) {
+                    const Field& field, const PlayPolicy& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
     else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int playPolicyScore(double *const dst, MoveInfo *const mbuf, const int numMoves,
-                    const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode) {
+                    const Field& field, PlayPolicyLearner& pol, int mode) {
     if (mode == 0) return playPolicyScore<0>(dst, mbuf, numMoves, field, pol);
     else return playPolicyScore<1>(dst, mbuf, numMoves, field, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int numChanges,
                       const Cards myCards, const int numChangeCards,
-                      const ChangePolicy<policy_value_t>& pol, int mode) {
+                      const ChangePolicy& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, numChanges, myCards, numChangeCards, pol);
     else return changePolicyScore<1>(dst, change, numChanges, myCards, numChangeCards, pol);
 }
 int changePolicyScore(double *const dst, const Cards *const change, const int numChanges,
                       const Cards myCards, const int numChangeCards,
-                      ChangePolicyLearner<policy_value_t>& pol, int mode) {
+                      ChangePolicyLearner& pol, int mode) {
     if (mode == 0) return changePolicyScore<0>(dst, change, numChanges, myCards, numChangeCards, pol);
     else return changePolicyScore<1>(dst, change, numChanges, myCards, numChangeCards, pol);
 }

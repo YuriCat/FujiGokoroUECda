@@ -1,4 +1,5 @@
 #include <random>
+#include <thread>
 #include "updator.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
@@ -76,6 +77,19 @@ void updateGame(GradientUpdator *const updator, GradientUpdatorStats *const stat
     updator->update(estimationTable, prob, 2, 1, features);
 }
 
+void trainThread(atomic<long long> *count, GradientUpdator *updator, GradientUpdatorStats *stats, const Record *record, Dice *pdice) {
+    int i;
+    while ((i = (*count)++) < 40000000) {
+        updateGame(updator, stats, record->rgame(i % record->games()), pdice);
+        if ((i + 1) % 200000 == 0) {
+            std::cerr << "lr = " << updator->lr_ << " ";
+            stats->stats();
+            stats->clear();
+        }
+    }
+}
+
+
 int main(int argc, char* argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
@@ -86,6 +100,7 @@ int main(int argc, char* argv[]) {
     GradientUpdatorStats stats;
     mt19937 mt((uint32_t)time(NULL));
     Dice dice(1);
+    int parallel = thread::hardware_concurrency();
 
     for (int c = 1; c < argc; c++) {
         if (!strcmp(argv[c], "-l")) {
@@ -101,13 +116,13 @@ int main(int argc, char* argv[]) {
     record.shuffle(mt);
     updator.init();
 
-    for (int i = 0; i < 1000000; i++) {
-        updateGame(&updator, &stats, record.rgame(i % games), &dice);
-        if ((i + 1) % 10000 == 0) {
-            stats.stats();
-            stats.clear();
-        }
-    }
+    atomic<long long> count;
+    count = 0;
+    updator.init();
+
+    vector<thread> threads;
+    for (int i = 0; i < parallel; i++) threads.emplace_back(&trainThread, &count, &updator, &stats, &record, &dice);
+    for (auto& t : threads) t.join();
 
     ofstream ofs("param.bin", ios::out | ios::binary);
     ofs.write(reinterpret_cast<char*>(estimationTable), EST_FEATURES * 4);
