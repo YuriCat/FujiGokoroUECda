@@ -42,11 +42,6 @@ assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 // 標準ライブラリ使用
 using std::size_t;
 
-template <typename T>
-constexpr T cmax(const T& a, const T& b) { return a < b ? b : a; }
-template <typename T>
-constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
-
 // 出力
 #ifdef DEBUG
 #define DERR std::cerr
