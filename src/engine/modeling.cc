@@ -128,8 +128,8 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 
         int index = -1;
         bool mate = false;
-        Hand myHand = field.getHand(turn);
-        Hand opsHand = field.getOpsHand(turn);
+        Hand myHand(field.getCards(turn));
+        Hand opsHand(field.getOpsCards(turn), true);
         for (int i = 0; i < numMoves; i++) {
             if (buf[i] == move) index = i;
             if (!mate && checkHandMate(0, buf + numMoves, buf[i], myHand, opsHand,
