@@ -97,12 +97,12 @@ bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
                 if (myHigh < opsLow) return true;
             }*/
             uint64_t mine = myHand.pqr;
-            CardsAsSet ops = BitCards(opsHand.pqr);
+            Cards ops = BitCards(opsHand.pqr);
             assert(opsHand.pqr);
-            Cards opsLow = ops.popLowest();
+            Cards opsLow = ops.popLowestCard();
             if (mine < (uint64_t)opsLow) return true;
             if (ops.c_) {
-                Cards opsLow = ops.lowest();
+                Cards opsLow = ops.lowestCard();
                 if (mine < (uint64_t)opsLow) return true;
             }
         } else {
