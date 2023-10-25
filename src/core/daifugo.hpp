@@ -248,13 +248,13 @@ inline unsigned countCards(BitCards c) { return popcnt(c); }
 constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
 
 // 排他性
-constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
+constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return isExclusiveBits(c0, c1); }
 
 // 包含関係
 constexpr BitCards containsJOKER(BitCards c) { return c & CARDS_JOKER_RANK; }
 constexpr BitCards containsS3(BitCards c) { return c & CARDS_S3; }
 constexpr BitCards containsD3(BitCards c) { return c & CARDS_D3; }
-constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
+constexpr bool holdsCards(BitCards c0, BitCards c1) { return holdsBits(c0, c1); }
 
 // 空判定
 constexpr BitCards anyCards(BitCards c) { return c; }
@@ -445,7 +445,6 @@ union Cards {
     unsigned count() const { return joker_ + countPlain(); }
     unsigned countPlain() const { return countCards(plain_); }
 
-    constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
     constexpr bool holds(Cards c) const {
         return joker_ >= c.joker_ && holdsCards(plain_, c.plain_);
     }
