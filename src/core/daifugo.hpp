@@ -72,7 +72,7 @@ constexpr int suitsIdx[18] = {
     -1, 0, 1, 0, 2, 1, 3, 0, 3, 2, 4, 1, 5, 2, 3, 0, 0, 5
 };
 
-inline int SuitToSuitNum(unsigned int suit) { return bsf32(suit); }
+inline int SuitToSuitNum(unsigned int suit) { return bsf(suit); }
 
 // 単スート番号からスート集合への変換
 constexpr unsigned SuitNumToSuits(int sn0) { return 1U << sn0; }
@@ -244,8 +244,7 @@ constexpr BitCards maskCards(BitCards c0, BitCards c1) { return c0 & ~c1; }
 constexpr BitCards maskJOKER(BitCards c) { return maskCards(c, CARDS_JOKER_RANK); }
 
 // 要素数
-inline unsigned countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
-constexpr unsigned countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
+inline unsigned countCards(BitCards c) { return popcnt(c); }
 constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
 
 // 排他性
@@ -269,8 +268,8 @@ inline BitCards pickLow(const BitCards c, int n) { return lowestNBits(c, n); }
 inline BitCards pickHigh(const BitCards c, int n) { return highestNBits(c, n); }
 
 // IntCard型で1つ取り出し
-inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf64(c); }
-inline IntCard pickIntCardHigh(const BitCards c) { return (IntCard)bsr64(c); }
+inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf(c); }
+inline IntCard pickIntCardHigh(const BitCards c) { return (IntCard)bsr(c); }
 
 // 基準cより高い、低い(同じは含まず)もの
 inline BitCards pickHigher(BitCards c) { return allHigherBits(c); }
@@ -444,7 +443,6 @@ union Cards {
     constexpr Cards plain() const { return plain_; }
 
     unsigned count() const { return joker_ + countPlain(); }
-    constexpr unsigned countInCompileTime() const { return joker_ + countFewCards(plain_); }
     unsigned countPlain() const { return countCards(plain_); }
 
     constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
@@ -500,11 +498,11 @@ union Cards {
     // pick, pop
     IntCard lowest() const {
         assert(any());
-        return IntCard(bsf64(c_));
+        return IntCard(bsf(c_));
     }
     IntCard highest() const {
         assert(any());
-        return IntCard(bsr64(c_));
+        return IntCard(bsr(c_));
     }
     IntCard popLowest() {
         assert(any());
@@ -530,9 +528,14 @@ union Cards {
     }
     Cards exceptLowest() const { return popLsb(c_); }
 
-    class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
+    class const_iterator {
         friend Cards;
     public:
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = IntCard;
+        using pointer           = IntCard*;
+        using reference         = IntCard&;
+        using iterator_category = std::input_iterator_tag;
         IntCard operator *() const {
             return IntCard(bsf<BitCards>(c_));
         }
@@ -660,7 +663,7 @@ inline BitCards CardsToER(BitCards c) {
 }
 inline BitCards QRToPQR(CardArray qr) {
     // qr -> pqr 変換
-    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
+    return qr + (qr & PQR_3) + (qr & (qr >> 1));
 }
 inline BitCards CardsToPQR(BitCards c) {
     // ランクごとの枚数を示す位置にビットが立つようにする
