@@ -528,9 +528,14 @@ union Cards {
     }
     Cards exceptLowest() const { return popLsb(c_); }
 
-    class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
+    class const_iterator {
         friend Cards;
     public:
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = IntCard;
+        using pointer           = IntCard*;
+        using reference         = IntCard&;
+        using iterator_category = std::input_iterator_tag;
         IntCard operator *() const {
             return IntCard(bsf<BitCards>(c_));
         }
