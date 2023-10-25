@@ -272,7 +272,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     }
 }
 
-inline uint64_t splitmix64 (uint64_t& x) {
+inline uint64_t splitmix64(uint64_t& x) {
     x += 0x9E3779B97F4A7C15ULL;
     uint64_t t = x;
     t = (t ^ (t >> 30)) * 0xBF58476D1CE4E5B9ULL;
