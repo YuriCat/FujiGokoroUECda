@@ -272,33 +272,38 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     }
 }
 
+inline uint64_t splitmix64(uint64_t& x) {
+    x += 0x9E3779B97F4A7C15ULL;
+    uint64_t t = x;
+    t = (t ^ (t >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    t = (t ^ (t >> 27)) * 0x94D049BB133111EBULL;
+    return t ^ (t >> 31);
+}
+
 class XorShift64 {
 private:
-    uint64_t x, y, z, t;
+    uint64_t x, y;
 public:
     using result_type = uint64_t;
     uint64_t operator ()() {
-        uint64_t tmp = x ^ (x << 11);
-        x = y; y = z; z = t;
-        t = (t ^ (t >> 19)) ^ (tmp ^ (tmp >> 8));
-        return t;
+        uint64_t r = std::rotl(x + y, 17) + x;
+        uint64_t z = y ^ x;
+        x = std::rotl(x, 49) ^ z ^ (z << 21);
+        y = std::rotl(z, 28);
+        return r;
     }
     double random() {
         return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
     }
     void seed(uint64_t s) {
-        // seedが0だとまずい
-        if (!s) x = 0x0123456789ABCDEFULL;
-        else x = (s << 32) ^ s;
-        y = (x << 8) | ((x & 0xff00000000000000ULL) >> 56);
-        z = (y << 8) | ((y & 0xff00000000000000ULL) >> 56);
-        t = (z << 8) | ((z & 0xff00000000000000ULL) >> 56);
+        x = splitmix64(s);
+        y = splitmix64(s);
     }
     static constexpr uint64_t min() { return 0ULL; }
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
-    constexpr XorShift64(): x(), y(), z(), t() {}
-    XorShift64(uint64_t s): x(), y(), z(), t() { seed(s); }
+    constexpr XorShift64(): x(), y() {}
+    XorShift64(uint64_t s): x(), y() { seed(s); }
 };
 
 static double dFactorial(int n) {
