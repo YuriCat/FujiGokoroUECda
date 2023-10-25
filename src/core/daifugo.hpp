@@ -447,9 +447,11 @@ union Cards {
 
     constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
     constexpr bool holds(Cards c) const {
-        return joker_ >= c.joker_ && holdsCards(plain(), c.plain());
+        return joker_ >= c.joker_ && holdsCards(plain_, c.plain_);
     }
-    constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
+    constexpr bool isExclusive(Cards c) const {
+        return joker_ + c.joker_ <= N_JOKERS && isExclusiveCards(plain_, c.plain_);
+    }
 
     Cards masked(Cards c) const {
         return Cards(plain_ & ~c.plain_, std::max(0, joker_ - c.joker_));
