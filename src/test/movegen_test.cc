@@ -13,7 +13,7 @@ static Clock cl;
 static std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
-assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
+assert(c.count() == N_MAX_OWNED_CARDS_PLAY);\
 int numMoves = genLead(buffer, c);\
 cerr << numMoves << " moves were generated for " << c << endl;\
 for (int m = 0; m < numMoves; m++) { cerr << buffer[m] << " "; }\

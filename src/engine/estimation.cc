@@ -128,11 +128,11 @@ bool dist2Rest_64(int numRest,
         uint64_t low = highestNBits(all, N1 + numRest);
         uint64_t set0 = rest0 & ~low;
         if (set0) {
-            int NSet0 = popcnt64(set0);
+            int NSet0 = popcnt(set0);
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
-    assert((int)popcnt64(all) == N0 + N1);
+    assert((int)popcnt(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
@@ -238,10 +238,11 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
         float s = 0;
         for (int p = 0; p < N; p++) {
             int cl = infoClass[p];
+            int realClass = initGame ? HEIMIN : cl;
             if (NDeal[cl] > 0) {
                 assert(p != myNum && cards[i][p].count() > 0);
-                Cards recv = cl == getChangePartnerClass(myClass) && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
-                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, cl);
+                Cards recv = realClass == getChangePartnerClass(myClass) && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
+                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, realClass);
             }
         }
         score[i] = s;

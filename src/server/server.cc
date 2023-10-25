@@ -310,9 +310,9 @@ int main(int argc, char *argv[]) {
         shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
         shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
         XorShift64 tdice;
-        tdice.srand((unsigned int)time(NULL));
+        tdice.seed((unsigned int)time(NULL));
         for (int th = 0; th < N_THREADS; th++) {
-            threadTools[th].dice.srand(tdice() * (th + 111));
+            threadTools[th].dice.seed(tdice() * (th + 111));
         }
     }
     
