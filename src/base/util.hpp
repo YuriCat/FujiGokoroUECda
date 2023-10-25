@@ -187,7 +187,7 @@ template <class dice64_t>
 static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
-    assert((int)popcnt(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
 
     uint64_t res = 0;
 
@@ -253,7 +253,7 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
 template <class dice64_t>
 static void dist2_64(uint64_t *goal0, uint64_t *goal1,
                      uint64_t arg, int N0, int N1, dice64_t& dice) {
-    assert((int)popcnt64(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
     uint64_t tmp = pickNBits64(arg, N0, N1, dice);
     *goal0 |= tmp;
     *goal1 |= arg - tmp;
@@ -268,7 +268,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
         int num[2] = {0};
         for (int i = 0; i < NH; i++) num[0] += argNum[i];
         for (int i = NH; i < N; i++) num[1] += argNum[i];
-        assert(num[0] + num[1] == (int)popcnt64(arg));
+        assert(num[0] + num[1] == popcnt(arg));
         uint64_t half[2] = {0};
         dist64<2>(half, arg, num, dice);
         dist64<NH>(dst, half[0], argNum, dice);

@@ -82,7 +82,7 @@ struct PlayersState : public BitArray32<8, 4> {
 
     int searchL1Player() const {
         // 最後に残ったプレーヤーを探す
-        assert(popcnt32(data() & PMASK) == 1); // 1人だけ残っている
+        assert(popcnt(data() & PMASK) == 1); // 1人だけ残っている
         return bsf(data());
     }
 
