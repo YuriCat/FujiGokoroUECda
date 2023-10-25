@@ -17,7 +17,7 @@ inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
     if (!m.isSeq() && m.qty() <= oc.joker()) return false;
 
     Cards zone = -1;
-    if (b.afterSuitsLocked(m)) zone &= SuitsToCards(m.suits());
+    if (b.locksSuits(m)) zone &= SuitsToCards(m.suits());
 
     if (!m.isSeq()) {
         zone &= ORToGValidZone(b.nextOrder(m), m.rank());
