@@ -114,13 +114,9 @@ template <typename T> constexpr T lsb(T v) { return v & -v; }
 template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
 template <typename T> inline T rsb(T v) { return std::bit_floor(v); }
 
-template <typename T>
-constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全て
-    return ~v & (v - T(1));
-}
-template <typename T> inline T allHigherBits(T a) {
-    return ~(rsb(a) - T(1)) << 1;
-}
+// 最下位/上位ビットより下位/上位のビット全て
+template <typename T> constexpr T allLowerBits(T v) { return ~v & (v - T(1)); }
+template <typename T> inline T allHigherBits(T a) { return ~(rsb(a) - T(1)) << 1; }
 
 template <typename T>
 inline T lowestNBits(T v, size_t n) {
