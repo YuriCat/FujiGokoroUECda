@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <climits>
@@ -40,11 +41,6 @@ assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 
 // 標準ライブラリ使用
 using std::size_t;
-
-template <typename T>
-constexpr T cmax(const T& a, const T& b) { return a < b ? b : a; }
-template <typename T>
-constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
 
 // 出力
 #ifdef DEBUG
@@ -107,77 +103,20 @@ private:
     double t_;
 };
 
-template <typename T>
-constexpr bool holdsBits(T a, T b) {
-    return (~a & b) == T(0);
-}
-template <typename T>
-constexpr bool isExclusive(T a, T b) {
-    return (a & b) == T(0);
-}
+template <typename T> constexpr bool holdsBits(T a, T b) { return !(~a & b); }
+template <typename T> constexpr bool isExclusive(T a, T b) { return !(a & b); }
 
-inline size_t popcnt32(std::uint32_t v) {
-    return __builtin_popcount(v);
-}
-inline size_t popcnt64(std::uint64_t v) {
-    return __builtin_popcountll(v);
-}
+template <typename T> inline int popcnt(T a) { return std::popcount(a); };
+template <typename T> inline int bsf(T v) { return std::countr_zero(v); }
+template <typename T> inline int bsr(T v) { return sizeof(T) * 8 - 1 - std::countl_zero(v); }
 
-template <typename T> inline size_t popcnt(T a);
-template <> inline size_t popcnt<std::uint8_t >(std::uint8_t  v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint16_t>(std::uint16_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint32_t>(std::uint32_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint64_t>(std::uint64_t v) { return popcnt64(v); }
+template <typename T> constexpr T lsb(T v) { return v & -v; }
+template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
+template <typename T> inline T rsb(T v) { return std::bit_floor(v); }
 
-inline size_t bsf32(std::uint32_t v) {
-    return __builtin_ctz(v);
-}
-inline size_t bsf64(std::uint64_t v) {
-    return __builtin_ctzll(v);
-}
-
-inline size_t bsr32(std::uint32_t v) {
-    std::int32_t r;
-    __asm__("bsrl %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-inline size_t bsr64(std::uint64_t v) {
-    std::int64_t r;
-    __asm__("bsrq %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-
-template <typename T> inline size_t bsf(T v);
-template <typename T> inline size_t bsr(T v);
-
-template <> inline size_t bsf<std::uint8_t >(std::uint8_t  v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint16_t>(std::uint16_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint32_t>(std::uint32_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint64_t>(std::uint64_t v) { return bsf64(v); }
-
-template <> inline size_t bsr<std::uint8_t >(std::uint8_t  v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint64_t>(std::uint64_t v) { return bsr64(v); }
-
-template <typename T> inline T lsb(T v) { return v & -v; }
-template <typename T> inline T popLsb(T v) { return v & (v - T(1)); }
-template <typename T> inline T rsb(T v) { return T(1) << bsr(v); }
-
-constexpr size_t popcnt32CE(uint32_t v) {
-    return v ? (1 + popcnt32CE(popLsb(v))) : 0;
-}
-constexpr size_t popcnt64CE(uint64_t v) {
-    return v ? (1 + popcnt64CE(popLsb(v))) : 0;
-}
-
-template <typename T>
-constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全て
-    return ~v & (v - T(1));
-}
-template <typename T> inline T allHigherBits(T a) {
-    return ~((T(1) << bsr<T>(a)) - T(1));
-}
+// 最下位/上位ビットより下位/上位のビット全て
+template <typename T> constexpr T allLowerBits(T v) { return ~v & (v - T(1)); }
+template <typename T> inline T allHigherBits(T a) { return ~(rsb(a) - T(1)) << 1; }
 
 template <typename T>
 inline T lowestNBits(T v, size_t n) {
@@ -244,7 +183,7 @@ template <class dice64_t>
 static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
-    assert((int)popcnt(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
 
     uint64_t res = 0;
 
@@ -310,7 +249,7 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
 template <class dice64_t>
 static void dist2_64(uint64_t *goal0, uint64_t *goal1,
                      uint64_t arg, int N0, int N1, dice64_t& dice) {
-    assert((int)popcnt64(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
     uint64_t tmp = pickNBits64(arg, N0, N1, dice);
     *goal0 |= tmp;
     *goal1 |= arg - tmp;
@@ -325,7 +264,7 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
         int num[2] = {0};
         for (int i = 0; i < NH; i++) num[0] += argNum[i];
         for (int i = NH; i < N; i++) num[1] += argNum[i];
-        assert(num[0] + num[1] == (int)popcnt64(arg));
+        assert(num[0] + num[1] == popcnt(arg));
         uint64_t half[2] = {0};
         dist64<2>(half, arg, num, dice);
         dist64<NH>(dst, half[0], argNum, dice);
