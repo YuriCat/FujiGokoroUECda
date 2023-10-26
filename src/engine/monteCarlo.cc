@@ -139,8 +139,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
         }
 
         proot->feedSimulationResult(action, f, pshared); // 結果をセット(排他制御は関数内で)
-        if (proot->exitFlag) return;
-
         simuTime += clock.restart();
 
         // 終了判定
@@ -149,8 +147,8 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
             if (finishCheck(*proot, simuTime * 1e-6, dice)) {
-                proot->exitFlag = 1;
-                return;
+                proot->exitFlag = true;
+                break;
             }
         }
     }
