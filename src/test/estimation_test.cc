@@ -31,7 +31,7 @@ int cardIndex(IntCard ic) {
 void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pmodel = nullptr) {
     shared.initMatch(-1);
     if (pmodel != nullptr) shared.playerModel = *pmodel;
-    tools.dice.srand(1);
+    tools.dice.seed(1);
     mt19937 dice(0);
 
     long long time = 0;
