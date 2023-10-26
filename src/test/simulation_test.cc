@@ -16,7 +16,7 @@ static Clock cl;
 int testSimulation(const MatchRecord& match, PlayerModel *pmodel = nullptr) {
     // 棋譜を読んでシミュレーションを行う
     if (pmodel != nullptr) shared.playerModel = *pmodel;
-    tools.dice.srand(1);
+    tools.dice.seed(1);
     mt19937 dice(0);
 
     long long matrix[N_PLAYERS][N_PLAYERS] = {0};

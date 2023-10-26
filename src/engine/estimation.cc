@@ -128,11 +128,11 @@ bool dist2Rest_64(int numRest,
         uint64_t low = highestNBits(all, N1 + numRest);
         uint64_t set0 = rest0 & ~low;
         if (set0) {
-            int NSet0 = popcnt64(set0);
+            int NSet0 = popcnt(set0);
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
-    assert((int)popcnt64(all) == N0 + N1);
+    assert((int)popcnt(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
