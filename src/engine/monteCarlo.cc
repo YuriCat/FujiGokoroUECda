@@ -97,7 +97,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
     pf.addAttractedPlayer(myPlayerNum);
     pf.setMoveBuffer(ptools->mbuf);
     if (proot->rivalPlayerNum >= 0) {
-        pf.attractedPlayers.set(proot->rivalPlayerNum);
+        pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
 
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
