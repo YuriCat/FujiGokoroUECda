@@ -353,7 +353,6 @@ void Field::setBeforeGame(const GameRecord& game, int playerNum) {
     // 棋譜を読んでの初期設定
     initGame();
     myPlayerNum = playerNum;
-    setMoveBuffer(nullptr);
     if (game.isInitGame()) setInitGame();
     infoNewClass.fill(-1);
     infoNewClassPlayer.fill(-1);

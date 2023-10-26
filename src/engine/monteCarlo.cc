@@ -95,7 +95,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
     Field pf = *pfield;
     pf.myPlayerNum = -1; // 客観視点に変更
     pf.addAttractedPlayer(myPlayerNum);
-    pf.setMoveBuffer(ptools->mbuf);
     if (proot->rivalPlayerNum >= 0) {
         pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
