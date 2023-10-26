@@ -687,19 +687,19 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     int moveIndex = searchMove(mbuf, numMoves, move);
     if (moveIndex == -1) return 0.1 / double(numMoves + 1);
 
-    array<double, N_MAX_MOVES> score;
-    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy);
+    double score[N_MAX_MOVES];
+    playPolicyScore(score, mbuf, numMoves, field, shared.basePlayPolicy);
     if (shared.playerModel.trained) {
         for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]);
     }
 
     // Mateの手のスコアを設定
-    double maxScore = *max_element(score.begin(), score.begin() + numMoves);
+    double maxScore = *max_element(score, score + numMoves);
     for (int i = 0; i < numMoves; i++) {
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
 
-    SoftmaxSelector<double> selector(score.data(), numMoves, Settings::estimationTemperaturePlay);
+    SoftmaxSelector<double> selector(score, numMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 
