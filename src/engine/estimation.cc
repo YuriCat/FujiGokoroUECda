@@ -589,14 +589,13 @@ void RandomDealer::setWeightInWA() {
     vector<double> probs;
     const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
     if (T == 0) return; // どうしようもない
-    const int NMyDC = myDealtCards.count();
 
     // 相手の献上後の所持カードで判明しているもの
     const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
     // 相手の献上後の所持カードの上界より高い札のみ献上でもらっている可能性がある
-    const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(pickHigh(partnerDealtCards, 1)) : CARDS_ALL;
+    const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(partnerDealtCards) : CARDS_ALL;
 
-    Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
+    Cards tmp = (myDealtCards - pickHigh(myDealtCards, N_CHANGE_CARDS(myClass) - 1)) & partnerDealtMask;
     while (tmp) {
         const IntCard ic = tmp.popLowest();
         // ic が献上によって得られたカードの下界だった場合のパターン数を計算
