@@ -148,7 +148,7 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && threadId == 0
             && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
-            if (finishCheck(*proot, double(simuTime) / pow(10, 6), dice)) {
+            if (finishCheck(*proot, simuTime * 1e-6, dice)) {
                 proot->exitFlag = 1;
                 return;
             }
