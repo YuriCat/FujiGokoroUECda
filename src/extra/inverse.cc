@@ -21,34 +21,9 @@ void updateGame(GradientUpdator *const updator, GradientUpdatorStats *const stat
 
     // 他のプレーヤーにランダムに配布
     array<Cards, N_PLAYERS> randomCards;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        randomCards[p] = p == turn ? record.orgCards[p] : field.usedCards[p];
-    }
-    Cards remained = field.getRemCards() - field.hand[turn].cards;
-
-    // 自分が上位でカード交換した場合には、自分があげたカードは確定
-    int partner = -1;
-    int turnClass = field.classOf(turn);
-    if (!field.isInitGame()) {
-        if (turnClass != HEIMIN) partner = field.classPlayer(getChangePartnerClass(turnClass));
-        if (turnClass < MIDDLE) {
-            Cards sentCards = field.sentCards[turn];
-            randomCards[partner] |= sentCards;
-            remained = maskCards(remained, sentCards);
-        }
-    }
-
-    IntCard candidates[N_CARDS];
-    int num = 0;
-    for (IntCard ic : remained) { candidates[num++] = ic; }
-    for (int p = 0; p < N_PLAYERS; p++) {
-        if (p == turn) continue;
-        for (int i = randomCards[p].count(); i < record.numOrgCards[p]; i++) {
-            int index = (*pdice)() % num;
-            randomCards[p].insert(candidates[index]);
-            candidates[index] = candidates[--num];
-        }
-    }
+    RandomDealer dealer(field, field.turn());
+    dealer.dealWithBias(randomCards.data(), *pdice);
+    for (int p = 0; p < N_PLAYERS; p++) randomCards[p] += field.usedCards[p];
     for (int p = 0; p < N_PLAYERS; p++) assert(randomCards[p].count() == record.numOrgCards[p]);
 
     double score[2] = {0};
