@@ -1,12 +1,29 @@
 #pragma once
 
+#include <fstream>
+
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 #include "data.hpp"
 
 enum DealType {
-    RANDOM, SBJINFO, BIAS, REJECTION,
+    RANDOM, SBJINFO, BIAS, NEW_BIAS, REJECTION,
 };
+
+constexpr int EST_FEATURES =
+      64 * 4 // 階級ごとのカード所持
+    + 64 * 64 * 4 // 階級ごとのカードxカード所持
+    + 64 * 64 // 残りカードx出したカード
+    + 64 * 64; // 交換で渡したカード
+
+extern float estimationTable[EST_FEATURES];
+extern float inverseEstimationScore(const Cards, const Cards, const Cards, int, std::vector<std::pair<int, float>> *const = nullptr);
+
+static void loadEstimationParams(std::string path) {
+    std::fstream file(path, std::ios::in | std::ios::binary);
+    file.read(reinterpret_cast<char*>(estimationTable), EST_FEATURES * 4);
+    if (file.fail()) std::cerr << "failed to load " << path << "!" << std::endl;
+}
 
 class RandomDealer {
     // ランダムに手札配置を作る
@@ -29,6 +46,8 @@ public:
                 dealWithSubjectiveInfo(c, ptools->dice); break;
             case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
                 dealWithBias(c, ptools->dice); break;
+            case DealType::NEW_BIAS:
+                dealWithNewBias(c, ptools->dice); break;
             case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
                 lh = dealWithRejection(c, game, shared, ptools); break;
             default: exit(1); break;
@@ -41,6 +60,7 @@ public:
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
     void dealWithBias(Cards *const dst, Dice& dice) const;
+    void dealWithNewBias(Cards *const dst, Dice& dice) const;
     double dealWithRejection(Cards *const dst, const GameRecord& game,
                              const SharedData& shared, ThreadTools *const ptools);
 
@@ -62,7 +82,7 @@ private:
     std::array<Cards, N> detCards; // 現時点で所持が特定されている、またはすでに使用したカード
 
     int myNum, myClass;
-    int myChangePartner, firstTurnClass;
+    int firstTurnClass;
 
     Cards myCards;
     Cards myDealtCards; // 配布時
@@ -107,6 +127,8 @@ private:
                  const SharedData& shared, ThreadTools *const ptools) const;
     Cards selectInWA(double urand) const;
 
+    double oneChangeLikelihood(int p, const Cards cards, const Cards changeCards,
+                               const SharedData& shared) const;
     double onePlayLikelihood(const Field& field, Move move,
                              const SharedData& shared, ThreadTools *const ptools) const;
     double playLikelihood(const Cards *c, const GameRecord& game,

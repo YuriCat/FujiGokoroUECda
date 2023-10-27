@@ -12,8 +12,8 @@ using namespace std;
 
 static XorShift64 dice((unsigned int)time(NULL));
 
-static ChangePolicy<policy_value_t> changePolicy;
-static PlayPolicy<policy_value_t> playPolicy;
+static ChangePolicy changePolicy;
+static PlayPolicy playPolicy;
 
 int outputParams() {
     // 方策関数中で気になるパラメータを出力
@@ -143,7 +143,7 @@ int testSelector(const MatchRecord& match) {
             const int turnPlayer = field.turn();
             const int numMoves = genMove(play, field.getCards(turnPlayer), field.board);
 
-            playPolicyScore(score, play, numMoves, field, playPolicy, 0);
+            playPolicyScore(score, play, numMoves, field, playPolicy);
 
             int recordIndex = searchMove(play, numMoves, move);
 
@@ -250,9 +250,8 @@ int testSelector(const MatchRecord& match) {
 }
 
 bool PolicyTest(const vector<string>& recordFiles) {
-
-    changePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    playPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+    changePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    playPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     outputParams();
 

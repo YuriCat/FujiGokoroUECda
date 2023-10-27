@@ -307,12 +307,12 @@ int main(int argc, char *argv[]) {
     
     if (rating) {
         // レート計算のためシミュレーションに使用するデータを準備
-        shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
-        shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
+        shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
+        shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
         XorShift64 tdice;
-        tdice.srand((unsigned int)time(NULL));
+        tdice.seed((unsigned int)time(NULL));
         for (int th = 0; th < N_THREADS; th++) {
-            threadTools[th].dice.srand(tdice() * (th + 111));
+            threadTools[th].dice.seed(tdice() * (th + 111));
         }
     }
     
@@ -1395,7 +1395,7 @@ int main(int argc, char *argv[]) {
         game_count++;
         
         //fprintf(logfile,"\n");
-        if (!game_log.plays[game_log.numPlays - 1].move.isPASS()) {
+        if (!game_log.plays[game_log.numPlays - 1].move().isPASS()) {
             game_log.setTerminated();
         }
         match_log.pushGame(game_log);

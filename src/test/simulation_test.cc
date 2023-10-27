@@ -13,9 +13,10 @@ static SharedData shared;
 static ThreadTools tools;
 static Clock cl;
 
-int testSimulation(const MatchRecord& match) {
+int testSimulation(const MatchRecord& match, PlayerModel *pmodel = nullptr) {
     // 棋譜を読んでシミュレーションを行う
-    tools.dice.srand(1);
+    if (pmodel != nullptr) shared.playerModel = *pmodel;
+    tools.dice.seed(1);
     mt19937 dice(0);
 
     long long matrix[N_PLAYERS][N_PLAYERS] = {0};
@@ -31,9 +32,9 @@ int testSimulation(const MatchRecord& match) {
             Field f = field;
             f.attractedPlayers.reset();
             f.addAttractedPlayer(field.turn());
-            f.setMoveBuffer(tools.mbuf);
             // 一致度計測
-            for (int j = 0; j < 8; j++) {
+            int n = max(1.0, 10 / sqrt(match.games.size() / 100.0));
+            for (int j = 0; j < n; j++) {
                 cl.start();
                 Field ff = f;
                 simulation(ff, &shared, &tools);
@@ -61,14 +62,14 @@ int testSimulation(const MatchRecord& match) {
     return 0;
 }
 
-bool SimulationTest(const vector<string>& recordFiles) {
-
-    shared.baseChangePolicy.fin(DIRECTORY_PARAMS_IN + "change_policy_param.dat");
-    shared.basePlayPolicy.fin(DIRECTORY_PARAMS_IN + "play_policy_param.dat");
+bool SimulationTest(const vector<string>& recordFiles, PlayerModel *pmodel) {
+    shared.baseChangePolicy.bin(DIRECTORY_PARAMS_IN + "change_policy.bin");
+    shared.basePlayPolicy.bin(DIRECTORY_PARAMS_IN + "play_policy.bin");
 
     for (string rf : recordFiles) {
         MatchRecord mrecord(rf);
         testSimulation(mrecord);
+        if (pmodel->trained) testSimulation(mrecord, pmodel);
     }
     return 0;
 }

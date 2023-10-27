@@ -3,12 +3,7 @@
 // 線形方策
 
 #include "../core/daifugo.hpp"
-#include "../core/prim2.hpp"
 #include "../base/softmaxClassifier.hpp"
-
-enum Selector {
-    NAIVE, THRESHOLD, POLY_BIASED, EXP_BIASED,
-};
 
 namespace PlayPolicySpace {
     enum {
@@ -67,7 +62,7 @@ namespace PlayPolicySpace {
         2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
         2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
         2 * (16 * 2) * (16) * N_PATTERNS_SUITS_SUITS, // オーダー x 着手ランク x スートロック x 手札ランク x (Suits, Suits)パターン
-        2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターンåå
+        2 * (16 * 3) * (16) * N_PATTERNS_SUIT_SUITS,  // オーダー x 着手ランク x 枚数 x 手札ランク x (Suit, Suits)パターン
     };
 
     static_assert(FEA_ALL == sizeof(feaNumTable) / sizeof(int), "");
@@ -121,60 +116,36 @@ namespace ChangePolicySpace {
     int commentToPolicyParam(std::ostream& out, const policy_value_t param[FEA_NUM_ALL]);
 }
 
-template <typename T> using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1, T>;
-template <typename T> using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy<T >>;
-template <typename T> using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::FEA_NUM_ALL, 2, 1, T>;
-template <typename T> using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy<T>>;
+using PlayPolicy = SoftmaxClassifier<PlayPolicySpace::FEA_NUM_ALL, 1, 1, policy_value_t>;
+using PlayPolicyLearner = SoftmaxClassifyLearner<PlayPolicy>;
+using ChangePolicy = SoftmaxClassifier<ChangePolicySpace::FEA_NUM_ALL, 2, 1, policy_value_t>;
+using ChangePolicyLearner = SoftmaxClassifyLearner<ChangePolicy>;
 
-template <typename T>
-int foutComment(const PlayPolicy<T>& pol, const std::string& fName) {
+inline int foutComment(const PlayPolicy& pol, const std::string& fName) {
     std::ofstream ofs(fName, std::ios::out);
     return PlayPolicySpace::commentToPolicyParam(ofs, pol.param_);
 }
-template <class T>
-int foutComment(const ChangePolicy<T>& pol, const std::string& fName) {
+inline int foutComment(const ChangePolicy& pol, const std::string& fName) {
     std::ofstream ofs(fName, std::ios::out);
     return ChangePolicySpace::commentToPolicyParam(ofs, pol.param_);
 }
 
 extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
-                           const Field& field, const PlayPolicy<policy_value_t>& pol, int mode = 1);
+                           const Field& field, const PlayPolicy& pol, int mode = 0);
 extern int playPolicyScore(double *const dst, MoveInfo *const mbuf, int numMoves,
-                           const Field& field, PlayPolicyLearner<policy_value_t>& pol, int mode = 1);
+                           const Field& field, PlayPolicyLearner& pol, int mode = 1);
 extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
                              const Cards myCards, int numChangeCards,
-                             const ChangePolicy<policy_value_t>& pol, int mode = 1);
+                             const ChangePolicy& pol, int mode = 0);
 extern int changePolicyScore(double *const dst, const Cards *const change, int numChanges,
                              const Cards myCards, int numChangeCards,
-                             ChangePolicyLearner<policy_value_t>& pol, int mode = 1);
+                             ChangePolicyLearner& pol, int mode = 1);
 
-template <int STOCK = 0, class policy_t>
-int playWithPolicy(Move *const mbuf, int numMoves,
-                   const policy_t& pol, double temperature, Dice& dice,
-                   double *const pentropy = nullptr) {
-    double score[N_MAX_MOVES];
-    playPolicyScore(score, mbuf, numMoves, pol, STOCK ? 2 : 0);
-    SoftmaxSelector<double> selector(score, numMoves, temperature);
-    if (pentropy != nullptr) *pentropy = selector.entropy();
-    return selector.select(dice.random());
-}
-
-template <class policy_t>
-int changeWithPolicy(Cards *const cbuf, const int numChanges,
-                     const Cards myCards, const int numChangeCards,
-                     const policy_t& pol, double temperature, Dice& dice) {
-    double score[N_MAX_CHANGES];
-    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
-    SoftmaxSelector<double> selector(score, numChanges, temperature);
-    return selector.select(dice.random());
-}
-
-template <class policy_t>
-int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
-                         const Cards myCards, int numChangeCards,
-                         const policy_t& pol, Dice& dice) {
+inline int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
+                                const Cards myCards, int numChangeCards,
+                                const ChangePolicy& pol, Dice& dice) {
     double score[N_MAX_CHANGES + 1];
-    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol, 0);
+    changePolicyScore(score, cbuf, numChanges, myCards, numChangeCards, pol);
 
     int bestIndex[N_MAX_CHANGES];
     bestIndex[0] = -1;
@@ -195,10 +166,9 @@ int changeWithBestPolicy(const Cards *const cbuf, int numChanges,
     else return bestIndex[dice() % numBestMoves];
 }
 
-template <int STOCK = 0, class policy_t>
-int playWithBestPolicy(MoveInfo *const mbuf, int numMoves, const Field& field, const policy_t& pol, Dice& dice) {
+inline int playWithBestPolicy(MoveInfo *const mbuf, int numMoves, const Field& field, const PlayPolicy& pol, Dice& dice) {
     double score[N_MAX_MOVES + 1];
-    playPolicyScore(score, mbuf, numMoves, field, pol, STOCK ? 2 : 0);
+    playPolicyScore(score, mbuf, numMoves, field, pol);
 
     int bestIndex[N_MAX_MOVES];
     bestIndex[0] = -1;
