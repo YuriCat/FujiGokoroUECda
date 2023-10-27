@@ -88,6 +88,11 @@ void MonteCarloThread(const int threadId, const int numThreads,
     int numWorlds = 0; // 作成した世界の数
     std::array<World, 128> worlds;
 
+    // 保存された世界をロード
+    const int n = proot->numWorlds;
+    for (int i = threadId; i < n; i += numThreads) worlds[numWorlds++] = proot->world[i];
+    int numOrgWorlds = numWorlds;
+
     // 世界生成のためのクラスを初期化
     const auto& record = pshared->record.latestGame();
     RandomDealer estimator(*pfield, myPlayerNum);
@@ -98,11 +103,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
     if (proot->rivalPlayerNum >= 0) {
         pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
-
-    // 保存された世界をロード
-    const int n = proot->numWorlds;
-    for (int i = threadId; i < n; i += numThreads) worlds[numWorlds++] = proot->world[i];
-    int numOrgWorlds = numWorlds;
 
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
     uint64_t estTime = 0ULL; // 局面推定にかかった時間

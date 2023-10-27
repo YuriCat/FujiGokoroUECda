@@ -86,7 +86,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
                     Move move = record.plays[t];
                     if (f.turn() != shared.record.myPlayerNum) {
                         double likelihood = RandomDealer::onePlayLikelihood(f, move, shared, ptools);
-                        if (ptools->dice.random() < likelihood) {
+                        if (ptools->dice.random() >= likelihood) {
                             ok = false; break;
                         }
                     }
