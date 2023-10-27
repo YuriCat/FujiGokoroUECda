@@ -1,5 +1,6 @@
 #include "data.hpp"
 #include "reward.hpp"
+#include "estimation.hpp"
 
 using namespace std;
 
@@ -43,7 +44,8 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
+void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, ThreadTools *const ptools, int limSim) {
+    clearResults();
     candidates = num;
     for (int i = 0; i < candidates; i++) {
         monteCarloAllScore += child[i].monteCarloScore;
@@ -61,6 +63,24 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
         }
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
+
+    if (prevTurnCount >= 0) {
+        int i = 0;
+        int tmpNumWorlds = numWorlds;
+        while (i < tmpNumWorlds) {
+            bool ok = true;
+            for (int t = prevTurnCount; t < field.turnCount(); t++) {
+                double likelihood = RandomDealer::onePlayLikelihood(field, shared.record.latestGame().plays[t], shared, ptools);
+                if (likelihood <= 0 || ptools->dice.random() < likelihood) {
+                    ok = false; break;
+                }
+            }
+            if (ok) i++;
+            else { world[i] = world[--tmpNumWorlds]; }
+        }
+        numWorlds = tmpNumWorlds;
+    }
+    prevTurnCount = field.turnCount();
 }
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {

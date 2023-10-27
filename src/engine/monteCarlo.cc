@@ -99,6 +99,11 @@ void MonteCarloThread(const int threadId, const int numThreads,
         pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
 
+    // 保存された世界をロード
+    const int n = proot->numWorlds;
+    for (int i = threadId; i < n; i += numThreads) worlds[numWorlds++] = proot->world[i];
+    int numOrgWorlds = numWorlds;
+
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
     uint64_t estTime = 0ULL; // 局面推定にかかった時間
 
@@ -152,4 +157,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
             }
         }
     }
+
+    for (int i = numOrgWorlds; i < numWorlds; i++) proot->world[proot->numWorlds++] = worlds[i];
 }

@@ -201,21 +201,28 @@ struct RootInfo {
     // 排他処理
     SpinLock lock_;
 
+    // 保存情報
+    int prevTurnCount;
+    std::atomic<int> numWorlds;
+    World world[256];
+
+
     void lock() { lock_.lock(); }
     void unlock() { lock_.unlock(); }
 
-    void setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim);
-    void setChange(const Cards *const a, int num,
-                   const Field& field, const SharedData& shared, int limSim = -1) {
+    void setCommonInfo(int num, const Field& field,
+                       const SharedData& shared, ThreadTools *const ptools, int limSim);
+    void setChange(const Cards *const a, int num, const Field& field,
+                   const SharedData& shared, ThreadTools *const ptools, int limSim = -1) {
         isChange = true;
         for (int i = 0; i < num; i++) child[i].setChange(a[i]);
-        setCommonInfo(num, field, shared, limSim);
+        setCommonInfo(num, field, shared, ptools, limSim);
     }
-    void setPlay(const MoveInfo *const a, int num,
-                 const Field& field, const SharedData& shared, int limSim = -1) {
+    void setPlay(const MoveInfo *const a, int num, const Field& field,
+                 const SharedData& shared, ThreadTools *const ptools, int limSim = -1) {
         isChange = false;
         for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
-        setCommonInfo(num, field, shared, limSim);
+        setCommonInfo(num, field, shared, ptools, limSim);
     }
 
     void addPolicyScoreToMonteCarloScore();
@@ -254,12 +261,18 @@ struct RootInfo {
 
     std::string toString(int num = -1) const;
 
-    RootInfo() {
+    void clearResults() {
         candidates = -1;
         monteCarloAllScore.set(0, 0);
         allSimulations = 0;
         rivalPlayerNum = -1;
         exitFlag = false;
-        unlock();
     }
+    void clear() {
+        numWorlds = 0;
+        prevTurnCount = -1;
+        clearResults();
+    }
+
+    RootInfo() { clear(); }
 };

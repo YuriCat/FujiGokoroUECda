@@ -27,6 +27,7 @@ class WisteriaEngine {
 private:
     ThreadTools rootTools;
     std::vector<ThreadTools> threadTools;
+    RootInfo root;
 public:
     SharedData shared;
     decltype(shared.record)& record = shared.record;
@@ -57,6 +58,7 @@ public:
         // 公式には未定だが、多くの場合100試合だろうから100試合としておく
         const int gbci = numGamesBeforeClassInit(record.getLatestGameNum());
         shared.gameReward = standardReward(std::min(gbci + 1, N_REWARD_CALCULATED_GAMES)).back();
+        root.clear();
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
@@ -79,7 +81,6 @@ public:
         const auto& game = record.latestGame();
         const int myPlayerNum = record.myPlayerNum;
 
-        RootInfo root;
         Cards changeCards = CARDS_NULL;
         const Cards myCards = game.dealtCards[myPlayerNum];
         if (monitor) std::cerr << "My Cards : " << myCards << std::endl;
@@ -142,7 +143,7 @@ public:
         field.fromRecord(game, myPlayerNum, -1);
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(10000, (int)(pow((double)numChanges, 0.8) * 700));
-        root.setChange(change.data(), numChanges, field, shared, limitSimulations);
+        root.setChange(change.data(), numChanges, field, shared, &rootTools, limitSimulations);
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
@@ -172,9 +173,7 @@ public:
 
     Move play() { // ここがプレー関数
         const auto& game = shared.record.latestGame();
-
         Move playMove = MOVE_NONE;
-        RootInfo root;
 
         // ルート合法手生成バッファ
         std::array<MoveInfo, N_MAX_MOVES> mbuf;
@@ -303,7 +302,7 @@ public:
         // ルートノード設定
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(5000, (int)(pow((double)numMoves, 0.8) * 700));
-        root.setPlay(mbuf.data(), numMoves, field, shared, limitSimulations);
+        root.setPlay(mbuf.data(), numMoves, field, shared, &rootTools, limitSimulations);
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];

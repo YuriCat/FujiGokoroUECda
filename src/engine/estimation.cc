@@ -147,6 +147,28 @@ bool dist2Rest_64(int numRest,
     return true;
 }
 
+World RandomDealer::create(DealType type, const GameRecord& game,
+                           const SharedData& shared, ThreadTools *const ptools) {
+    Cards c[N_PLAYERS];
+    // レベル指定からカード分配
+    switch (type) {
+        case DealType::RANDOM: // 残りカードを完全ランダム分配
+            dealAllRand(c, ptools->dice); break;
+        case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
+            dealWithSubjectiveInfo(c, ptools->dice); break;
+        case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
+            dealWithBias(c, ptools->dice); break;
+        case DealType::NEW_BIAS:
+            dealWithNewBias(c, ptools->dice); break;
+        case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
+            dealWithRejection(c, game, shared, ptools); break;
+        default: exit(1); break;
+    }
+    World world;
+    world.set(turnCount, c);
+    return world;
+}
+
 void RandomDealer::dealAllRand(Cards *const dst, Dice& dice) const {
     // 完全ランダム分配
     // 自分の分だけは実際のものにする
@@ -651,7 +673,7 @@ void RandomDealer::setWeightInWA() {
     candidatesInWA = probs.size();
 }
 
-double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards changeCards, const SharedData& shared) const {
+double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards changeCards, const SharedData& shared) {
     Cards change[N_MAX_CHANGES];
     double score[N_MAX_CHANGES];
     int qty = changeCards.count();
@@ -668,9 +690,10 @@ double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards c
 }
 
 double RandomDealer::onePlayLikelihood(const Field& field, Move move,
-                                       const SharedData& shared, ThreadTools *const ptools) const {
+                                       const SharedData& shared, ThreadTools *const ptools) {
     int turn = field.turn();
     const Board b = field.board;
+    if (!field.getCards(turn).holds(move.cards())) return -1;
 
     MoveInfo *const mbuf = ptools->mbuf;
     int numMoves = genMove(mbuf, field.getCards(turn), b);
@@ -718,10 +741,10 @@ double RandomDealer::playLikelihood(const Cards *c, const GameRecord& game,
     for (Move move : PlayRoller(field, game, orgCards)) {
         int turn = field.turn();
         if (field.turnCount() >= turnCount) break; // 決めたところまで読み終えた(オフラインでの判定用)
-        if (!holdsCards(field.getCards(turn), move.cards())) break; // 終了(エラー)
         // カードが全確定しているプレーヤー(主に自分と、既に上がったプレーヤー)以外を考慮
         if (playFlag.test(turn)) {
             double lh = onePlayLikelihood(field, move, shared, ptools);
+            if (lh < 0) break;
             if (lh < 1) playllh += log(lh);
         }
     }

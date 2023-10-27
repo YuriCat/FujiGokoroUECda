@@ -35,26 +35,7 @@ public:
     }
 
     World create(DealType type, const GameRecord& game,
-                 const SharedData& shared, ThreadTools *const ptools) {
-        Cards c[N_PLAYERS];
-        // レベル指定からカード分配
-        switch (type) {
-            case DealType::RANDOM: // 残りカードを完全ランダム分配
-                dealAllRand(c, ptools->dice); break;
-            case DealType::SBJINFO: // 交換等は考慮するが残りは完全ランダム
-                dealWithSubjectiveInfo(c, ptools->dice); break;
-            case DealType::BIAS: // 逆関数法でバイアスを掛けて配る
-                dealWithBias(c, ptools->dice); break;
-            case DealType::NEW_BIAS:
-                dealWithNewBias(c, ptools->dice); break;
-            case DealType::REJECTION: // 採択棄却法で良さそうな配置のみ返す
-                dealWithRejection(c, game, shared, ptools); break;
-            default: exit(1); break;
-        }
-        World world;
-        world.set(turnCount, c);
-        return world;
-    }
+                 const SharedData& shared, ThreadTools *const ptools);
 
     void dealAllRand(Cards *const dst, Dice& dice) const;
     void dealWithSubjectiveInfo(Cards *const dst, Dice& dice) const;
@@ -63,17 +44,22 @@ public:
     void dealWithRejection(Cards *const dst, const GameRecord& game,
                            const SharedData& shared, ThreadTools *const ptools);
 
+    static double oneChangeLikelihood(int p, const Cards cards, const Cards changeCards,
+                                      const SharedData& shared);
+    static double onePlayLikelihood(const Field& field, Move move,
+                                    const SharedData& shared, ThreadTools *const ptools);
+
 private:
     // 棋譜
     int turnCount;
 
     // 引数は交換ありの場合は階級、交換無しの場合はプレーヤー番号と同じ
-    std::array<int8_t, N> NOwn;  // 持っているカード数
-    std::array<int8_t, N> NDet;  // 特定＋使用カード数
-    std::array<int8_t, N> NDeal; // 配布カード数
-    std::array<int8_t, N> NOrg;  // 初期配布カード数
-    std::array<int8_t, N> infoClassPlayer;
-    std::array<int8_t, N> infoClass;
+    std::array<int, N> NOwn;  // 持っているカード数
+    std::array<int, N> NDet;  // 特定＋使用カード数
+    std::array<int, N> NDeal; // 配布カード数
+    std::array<int, N> NOrg;  // 初期配布カード数
+    std::array<int, N> infoClassPlayer;
+    std::array<int, N> infoClass;
     unsigned NdealCards;
     Cards dealCards; // まだ特定されていないカード
     Cards remCards; // まだ使用されていないカード
@@ -126,10 +112,6 @@ private:
                  const SharedData& shared, ThreadTools *const ptools) const;
     Cards selectInWA(double urand) const;
 
-    double oneChangeLikelihood(int p, const Cards cards, const Cards changeCards,
-                               const SharedData& shared) const;
-    double onePlayLikelihood(const Field& field, Move move,
-                             const SharedData& shared, ThreadTools *const ptools) const;
     double playLikelihood(const Cards *c, const GameRecord& game,
                           const SharedData& shared, ThreadTools *const ptools) const;
 };
