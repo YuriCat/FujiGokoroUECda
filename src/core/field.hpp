@@ -25,7 +25,7 @@ struct CommonStatus {
     std::bitset<16> flag;
 
     void clear() {
-        turnCount = 0;
+        turnCount = -1;
         turn = firstTurn = owner = -1;
         flag.reset();
     }
@@ -283,6 +283,14 @@ struct World {
     uint64_t key;
 
     void set(int turnCount, const Cards *c);
+    void proceed(int p, Move move) {
+        Cards dc = move.cards();
+        if (dc.any()) {
+            cards[p] -= dc;
+            cardKey[p] = subCardKey(cardKey[p], CardsToHashKey(dc));
+            key = cross64<N_PLAYERS>(cardKey);
+        }
+    }
 };
 
 // 状態表現に世界情報を設定

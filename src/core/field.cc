@@ -211,6 +211,7 @@ void Field::prepareAfterChange() {
             break;
         }
     }
+    common.turnCount = 0;
     prepareForPlay();
     assert(exam());
 }

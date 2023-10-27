@@ -67,19 +67,39 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
     if (prevTurnCount >= 0) {
         int i = 0;
         int tmpNumWorlds = numWorlds;
+        const GameRecord& record = shared.record.latestGame();
+        Field base;
+        base.fromRecord(record, shared.record.myPlayerNum, prevTurnCount);
+        base.myPlayerNum = -1;
         while (i < tmpNumWorlds) {
             bool ok = true;
-            for (int t = prevTurnCount; t < field.turnCount(); t++) {
-                double likelihood = RandomDealer::onePlayLikelihood(field, shared.record.latestGame().plays[t], shared, ptools);
-                if (likelihood <= 0 || ptools->dice.random() < likelihood) {
+            for (int p = 0; p < N_PLAYERS; p++) {
+                if (!world[i].cards[p].holds(field.usedCards[p] - base.usedCards[p])) {
                     ok = false; break;
+                }
+            }
+            if (ok) {
+                Field f;
+                copyField(base, &f);
+                setWorld(world[i], &f);
+                for (int t = prevTurnCount; t < min((int)record.plays.size(), field.turnCount()); t++) {
+                    Move move = record.plays[t];
+                    if (f.turn() != shared.record.myPlayerNum) {
+                        double likelihood = RandomDealer::onePlayLikelihood(f, move, shared, ptools);
+                        if (ptools->dice.random() < likelihood) {
+                            ok = false; break;
+                        }
+                    }
+                    world[i].proceed(f.turn(), move);
+                    f.proceed(move);
                 }
             }
             if (ok) i++;
             else { world[i] = world[--tmpNumWorlds]; }
         }
+        cerr << numWorlds << " -> " << tmpNumWorlds << " (" << prevTurnCount << " - " << field.turnCount() << ")" << endl;
         numWorlds = tmpNumWorlds;
-    }
+    } else numWorlds = 0;
     prevTurnCount = field.turnCount();
 }
 
