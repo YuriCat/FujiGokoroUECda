@@ -64,7 +64,7 @@ int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
 }
 
 bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
-    // PPRND判定済みを仮定 TODO: ラスト2人では必勝も別に書くべき?
+    // PQRND判定済みを仮定 TODO: ラスト2人では必勝も別に書くべき?
     assert(myHand.qty > 1);
     if (myHand.seq) return false;
     if (opsHand.qty == 1) return true;
