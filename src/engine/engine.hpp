@@ -184,7 +184,6 @@ public:
         Field field;
         field.fromRecord(game, myPlayerNum);
         if (monitor) std::cerr << field.toString();
-        field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
 
         const Hand& myHand = field.getHand(myPlayerNum);

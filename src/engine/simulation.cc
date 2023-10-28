@@ -19,22 +19,24 @@ namespace Settings {
 MoveInfo simulationMove(Field& field, const SharedData& shared,
                         ThreadTools *const ptools, double progress) {
     int turn = field.turn();
-    int numMoves = genMove(field.mbuf, field.getCards(turn), field.board);
-    if (numMoves == 1) return field.mbuf[0];
+    MoveInfo *const mbuf = ptools->mbuf;
+    int numMoves = genMove(mbuf, field.getCards(turn), field.board);
+    if (numMoves == 1) return mbuf[0];
+
     if (Settings::MateSearchInSimulation) {
         Hand myHand(field.getCards(turn));
         Hand opsHand(field.getOpsCards(turn), true);
         int mateIndice[N_MAX_MOVES];
         int mates = 0;
         for (int i = 0; i < numMoves; i++) {
-            bool mate = checkHandMate(0, field.mbuf + numMoves, field.mbuf[i],
+            bool mate = checkHandMate(0, mbuf + numMoves, mbuf[i],
                                       myHand, opsHand, field.board, field.fieldInfo);
             if (mate) mateIndice[mates++] = i;
         }
         if (mates > 0) {
             // 探索順バイアス回避のために必勝全部の中からランダムに選ぶ
             int mateIndex = mateIndice[mates > 1 ? (ptools->dice() % mates) : 0];
-            MoveInfo move = field.mbuf[mateIndex];
+            MoveInfo move = mbuf[mateIndex];
             move.setMPMate();
             field.fieldInfo.setMPMate();
             return move;
@@ -43,9 +45,9 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
 
     // 行動方策を計算
     double score[N_MAX_MOVES];
-    playPolicyScore(score, ptools->mbuf, numMoves, field, shared.basePlayPolicy);
+    playPolicyScore(score, mbuf, numMoves, field, shared.basePlayPolicy);
     if (turn != field.myPlayerNum && shared.playerModel.trained) {
-        for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, field.mbuf[i]) * progress;
+        for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]) * progress;
     }
 
     // ランダム選択
@@ -53,7 +55,7 @@ MoveInfo simulationMove(Field& field, const SharedData& shared,
                                            Settings::simulationTemperaturePlay,
                                            Settings::simulationAmplifyCoef,
                                            Settings::simulationAmplifyExponent);
-    return field.mbuf[selector.select(ptools->dice.random())];
+    return mbuf[selector.select(ptools->dice.random())];
 }
 
 int simulation(Field& field,
@@ -66,7 +68,7 @@ int simulation(Field& field,
             p[0] = field.turn();
             p[1] = field.ps.searchOpsPlayer(p[0]);
             assert(field.isAlive(p[0]) && field.isAlive(p[1]));
-            int res = judgeLast2(field.mbuf, field.getCards(p[0]), field.getCards(p[1]), field.board, field.fieldInfo);
+            int res = judgeLast2(ptools->mbuf, field.getCards(p[0]), field.getCards(p[1]), field.board, field.fieldInfo);
             if (res == L2_WIN || res == L2_LOSE) {
                 int winner = res == L2_WIN ? 0 : 1;
                 field.setNewClassOf(p[winner],     field.bestClass());

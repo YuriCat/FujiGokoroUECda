@@ -32,7 +32,6 @@ int testSimulation(const MatchRecord& match, PlayerModel *pmodel = nullptr) {
             Field f = field;
             f.attractedPlayers.reset();
             f.addAttractedPlayer(field.turn());
-            f.setMoveBuffer(tools.mbuf);
             // 一致度計測
             int n = max(1.0, 10 / sqrt(match.games.size() / 100.0));
             for (int j = 0; j < n; j++) {
