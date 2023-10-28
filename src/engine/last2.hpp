@@ -52,5 +52,7 @@ public:
     bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
 };
 
+extern bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b);
+
 extern int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
 extern int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);

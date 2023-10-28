@@ -63,6 +63,39 @@ int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
     return int(flipped);
 }
 
+bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
+    // PPRND判定済みを仮定 TODO: ラスト2人では必勝も別に書くべき?
+    assert(myHand.qty > 1);
+    if (myHand.seq) return false;
+    if (opsHand.qty == 1) return true;
+
+    if (!(myHand.pqr & PQR_234) && !(myHand.cards & (CARDS_S3 | CARDS_JOKER))) {
+        if (b.order() == 0) {
+            Cards mine = myHand.cards, ops = opsHand.cards;
+            int myHigh = IntCardToRank(mine.highest());
+            int opsLow = IntCardToRank(ops.lowest());
+            if (myHigh < opsLow) return true;
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.lowest());
+                if (myHigh < opsLow) return true;
+            }
+        } else {
+            Cards mine = myHand.cards, ops = maskJOKER(opsHand.cards);
+            assert(ops.any());
+            int myHigh = IntCardToRank(mine.lowest());
+            int opsLow = IntCardToRank(ops.highest());
+            if (myHigh > opsLow) return true;
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.highest());
+                if (myHigh > opsLow) return true;
+            }
+        }
+    }
+    return false;
+}
+
 int L2Judge::judge(const int depth, MoveInfo *const buf,
                    const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
     // 判定を返す
@@ -76,16 +109,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         //if (judgeHandMate(0, buf, myHand, opsHand, field.b)) return L2_WIN;
 
         // 簡易必敗判定
-        if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.b.order() == 0) {
-            int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
-            int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
-            if (myHR < opsLR) return L2_LOSE;
-            Cards tmp = maskCards(opsHand.cards, RankToCards(opsLR));
-            if (tmp) {
-                opsLR = IntCardToRank(pickIntCardLow(tmp));
-                if (myHR < opsLR) return L2_LOSE;
-            }
-        }
+        if (judgeHandL2L_NF(myHand, opsHand, field.b)) return L2_LOSE;
 
         // 局面登録を検索(NFのみ)
         assert(myHand.exam_key() && opsHand.exam_key());
