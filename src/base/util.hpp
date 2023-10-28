@@ -26,16 +26,16 @@
 #define FASSERT(f, o)
 #define FEQUALS(f0, f1, o)
 #else
-#define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
+#define ASSERT(X, Y)  if (!(X)) { Y; assert(0); }
 // 浮動小数点がまともな値を取っているかどうかのアサーション
-#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ std::cerr << (f) << std::endl; {o}\
+#define FASSERT(f, o) if (!(!std::isinf(f) && !std::isnan(f))) { std::cerr << (f) << std::endl; {o}\
 assert(!std::isinf(f) && !std::isnan(f)); assert(0); };
 // 浮動小数点が「ほぼ」同じ値を取っているかのチェック && FASSERT
-#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ std::cerr << (f0) << std::endl; {o}\
+#define FEQUALS(f0, f1, o) { if (!(!std::isinf(f0) && !std::isnan(f0))) { std::cerr << (f0) << std::endl; {o}\
 assert(!std::isinf(f0) && !std::isnan(f0)); assert(0); };\
-if(!(!std::isinf(f1) && !std::isnan(f1))){ std::cerr << (f1) << std::endl; {o}};\
+if (!(!std::isinf(f1) && !std::isnan(f1))) { std::cerr << (f1) << std::endl; {o}};\
 assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
-if(!(abs((f0) - (f1)) <= 0.00001)){ std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
+if (!(abs((f0) - (f1)) <= 0.00001)) { std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
 assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #endif // NDEBUG
 
@@ -330,7 +330,7 @@ static double sigmoid(double x, double alpha = 1) {
 static double logit(double s, double alpha = 1) {
     return -std::log((1.0 / s) - 1.0) * alpha;
 }
-static double beta(double x, double y){ // ベータ関数
+static double beta(double x, double y) { // ベータ関数
     return tgamma(x) * tgamma(y) / tgamma(x + y);
 }
 static double log_beta(double x, double y) {
