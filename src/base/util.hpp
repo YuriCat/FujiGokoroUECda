@@ -18,6 +18,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 // 条件x、命令等y
@@ -705,8 +706,13 @@ MiniBitArray<T, B, N> invert(const MiniBitArray<T, B, N>& ba) {
     return ret;
 }
 
-template <class T, std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
+template <typename T0, typename T1>
+static std::ostream& operator <<(std::ostream& ost, const std::pair<T0, T1>& a) {
+    ost << "(" << a.first << ", " << a.second << ")";
+    return ost;
+}
+template <typename T, std::size_t N>
+static std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << a[i] << ", ";
     if (a.size() > 0) ost << a[N - 1];
@@ -714,7 +720,7 @@ std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (int)a[i] << ", ";
     if (a.size() > 0) ost << (int)a[N - 1];
@@ -722,15 +728,15 @@ std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (unsigned int)a[i] << ", ";
     if (a.size() > 0) ost << (unsigned int)a[N - 1];
     ost << "}";
     return ost;
 }
-template <class T>
-std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
+template <typename T>
+static std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
     ost << "{";
     for (int i = 0; i < (int)v.size() - 1; i++) ost << v[i] << ", ";
     if (v.size() > 0) ost << v.back();
@@ -746,7 +752,7 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
     ost << "[";
     for (int i = 0; i < N; i++) ost << bool(a.test(i));
     ost << "]";
