@@ -761,13 +761,6 @@ static std::array<T, N> invert(const std::array<T, N>& a, size_t n = N) {
     return r;
 }
 
-template <typename T, size_t N>
-static std::vector<T> a2v(const std::array<T, N>& a) {
-    std::vector<T> v;
-    for (const T& val : a) v.push_back(val);
-    return v;
-}
-
 extern std::string toupper(const std::string& str);
 extern std::string tolower(const std::string& str);
 extern bool isSuffix(const std::string& s, const std::string& suffix);
