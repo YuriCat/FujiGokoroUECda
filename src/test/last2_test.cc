@@ -136,6 +136,8 @@ int testRecordL2(const Record& record) {
     long long judgeTime[2] = {0};
     long long judgeCount[2] = {0};
     long long judgeMatrix[2][2][3] = {0};
+    long long nodes = 0, childs = 0;
+    long long searchIndex = 0, searchCount = 0;
 
     for (int i = 0; i < record.games(); i++) {
         Field field;
@@ -147,11 +149,16 @@ int testRecordL2(const Record& record) {
             bool won = record.game(i).newClassOf(field.turn()) == N_PLAYERS - 2;
 
             cl.start();
-            int judgeResult = judgeLast2(buffer, myHand, opsHand, b, field.fieldInfo);
+            L2Judge judge(65536, buffer);
+            int judgeResult = judge.judge(0, buffer, myHand, opsHand, L2Field(b, field.fieldInfo));
             int judgeIndex = judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0);
             judgeTime[0] += cl.stop();
             judgeCount[0] += 1;
             judgeMatrix[0][won][judgeIndex] += 1;
+            nodes += judge.nodes;
+            childs += judge.childs;
+            searchIndex += judge.searchIndex;
+            searchCount += judge.searchCount;
 
             // 問題が小さいとき完全読み結果をチェック
             if (myHand.qty + opsHand.qty <= 12) {
@@ -180,6 +187,9 @@ int testRecordL2(const Record& record) {
     }
     cerr << "judge time (hand)    = " << judgeTime[0] / judgeCount[0] << endl;
     cerr << "judge time (l2-slow) = " << judgeTime[1] / judgeCount[1] << endl;
+    cerr << "judge nodes   = " << nodes / (double)judgeCount[0] << endl;
+    cerr << "judge childs  = " << childs / (double)judgeCount[0] << endl;
+    cerr << "seach BF(win) = " << searchIndex / (double)searchCount << endl;
     return 0;
 }
 

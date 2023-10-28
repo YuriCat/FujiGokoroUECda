@@ -14,7 +14,16 @@ enum L2Result {
     L2_DRAW = 1, L2_LOSE = 2
 };
 
-struct L2Field;
+// L2局面表現
+struct L2Field {
+    Board b;
+    bool lastAwake;
+    bool flushLead;
+
+    L2Field(): b(), lastAwake(), flushLead() {}
+    L2Field(const Board& b, const FieldAddInfo& info):
+    b(b), lastAwake(info.isLastAwake()), flushLead(info.isFlushLead()) {}
+};
 
 class L2Judge {
     // L2判定

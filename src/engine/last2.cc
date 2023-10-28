@@ -11,22 +11,6 @@ namespace L2 {
     }
 }
 
-// L2局面表現
-struct L2Field {
-    Board b;
-    bool lastAwake;
-    bool flushLead;
-};
-
-// L2局面表現へのチェンジ
-L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
-    L2Field f;
-    f.b = b;
-    f.lastAwake = info.isLastAwake();
-    f.flushLead = info.isFlushLead();
-    return f;
-}
-
 inline L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
     L2Field f;
     f.b = cur.b;
@@ -213,14 +197,12 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
 int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
-    L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
-    return judge.judge(0, buf, myHand, opsHand, field);
+    return judge.judge(0, buf, myHand, opsHand, L2Field(b, fieldInfo));
 }
 
 int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
-    L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
     MoveInfo tmp = move;
-    return judge.check(0, buf, tmp, myHand, opsHand, field);
+    return judge.check(0, buf, tmp, myHand, opsHand, L2Field(b, fieldInfo));
 }
