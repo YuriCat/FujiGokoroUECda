@@ -128,11 +128,11 @@ bool dist2Rest_64(int numRest,
         uint64_t low = highestNBits(all, N1 + numRest);
         uint64_t set0 = rest0 & ~low;
         if (set0) {
-            int NSet0 = popcnt64(set0);
+            int NSet0 = popcnt(set0);
             tmp0 |= set0; all -= set0; N0 -= NSet0;
         }
     }
-    assert((int)popcnt64(all) == N0 + N1);
+    assert((int)popcnt(all) == N0 + N1);
     dist2_64(&tmp0, &tmp1, all, N0, N1, dice);
     // 献上
     uint64_t highNRest = highestNBits(tmp1, numRest);
@@ -238,10 +238,11 @@ void RandomDealer::dealWithNewBias(Cards *const dst, Dice& dice) const {
         float s = 0;
         for (int p = 0; p < N; p++) {
             int cl = infoClass[p];
+            int realClass = initGame ? HEIMIN : cl;
             if (NDeal[cl] > 0) {
                 assert(p != myNum && cards[i][p].count() > 0);
-                Cards recv = cl == getChangePartnerClass(myClass) && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
-                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, cl);
+                Cards recv = realClass == getChangePartnerClass(myClass) && myClass > MIDDLE ? recvCards : Cards(CARDS_NULL);
+                s += inverseEstimationScore(cards[i][p] | usedCards[cl], usedCards[cl], recv, realClass);
             }
         }
         score[i] = s;
@@ -588,14 +589,13 @@ void RandomDealer::setWeightInWA() {
     vector<double> probs;
     const int T = NDeal[getChangePartnerClass(myClass)]; // 交換相手の配布枚数
     if (T == 0) return; // どうしようもない
-    const int NMyDC = myDealtCards.count();
 
     // 相手の献上後の所持カードで判明しているもの
     const Cards partnerDealtCards = maskCards(detCards[getChangePartnerClass(myClass)], myDealtCards);
     // 相手の献上後の所持カードの上界より高い札のみ献上でもらっている可能性がある
-    const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(pickHigh(partnerDealtCards, 1)) : CARDS_ALL;
+    const Cards partnerDealtMask = anyCards(partnerDealtCards) ? pickHigher(partnerDealtCards) : CARDS_ALL;
 
-    Cards tmp = pickLow(myDealtCards, NMyDC - N_CHANGE_CARDS(myClass) + 1) & partnerDealtMask;
+    Cards tmp = (myDealtCards - pickHigh(myDealtCards, N_CHANGE_CARDS(myClass) - 1)) & partnerDealtMask;
     while (tmp) {
         const IntCard ic = tmp.popLowest();
         // ic が献上によって得られたカードの下界だった場合のパターン数を計算
@@ -687,19 +687,19 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
     int moveIndex = searchMove(mbuf, numMoves, move);
     if (moveIndex == -1) return 0.1 / double(numMoves + 1);
 
-    array<double, N_MAX_MOVES> score;
-    playPolicyScore(score.data(), mbuf, numMoves, field, shared.basePlayPolicy);
+    double score[N_MAX_MOVES];
+    playPolicyScore(score, mbuf, numMoves, field, shared.basePlayPolicy);
     if (shared.playerModel.trained) {
         for (int i = 0; i < numMoves; i++) score[i] += shared.playerModel.playBiasScore(field, turn, mbuf[i]);
     }
 
     // Mateの手のスコアを設定
-    double maxScore = *max_element(score.begin(), score.begin() + numMoves);
+    double maxScore = *max_element(score, score + numMoves);
     for (int i = 0; i < numMoves; i++) {
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
 
-    SoftmaxSelector<double> selector(score.data(), numMoves, Settings::estimationTemperaturePlay);
+    SoftmaxSelector<double> selector(score, numMoves, Settings::estimationTemperaturePlay);
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 

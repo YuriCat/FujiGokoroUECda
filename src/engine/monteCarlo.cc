@@ -95,9 +95,8 @@ void MonteCarloThread(const int threadId, const int numThreads,
     Field pf = *pfield;
     pf.myPlayerNum = -1; // 客観視点に変更
     pf.addAttractedPlayer(myPlayerNum);
-    pf.setMoveBuffer(ptools->mbuf);
     if (proot->rivalPlayerNum >= 0) {
-        pf.attractedPlayers.set(proot->rivalPlayerNum);
+        pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
 
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
@@ -121,8 +120,8 @@ void MonteCarloThread(const int threadId, const int numThreads,
             estTime += clock.restart();
             world = numWorlds++;
         } else {
-            // ランダム選択
-            world = dice() % numWorlds;
+            // 順番に選択
+            world = numSimulations[action] % numWorlds;
         }
 
         numSimulations[action]++;
@@ -139,8 +138,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
         }
 
         proot->feedSimulationResult(action, f, pshared); // 結果をセット(排他制御は関数内で)
-        if (proot->exitFlag) return;
-
         simuTime += clock.restart();
 
         // 終了判定
@@ -148,9 +145,10 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && threadId == 0
             && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
-            if (finishCheck(*proot, double(simuTime) / pow(10, 6), dice)) {
-                proot->exitFlag = 1;
-                return;
+            if (proot->exitFlag) break;
+            if (finishCheck(*proot, simuTime * 1e-6, dice)) {
+                proot->exitFlag = true;
+                break;
             }
         }
     }

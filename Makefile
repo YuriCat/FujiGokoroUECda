@@ -1,5 +1,5 @@
 CXX      = g++
-CXXFLAGS = -std=c++11 -march=native -MMD -MP
+CXXFLAGS = -std=c++20 -march=native -MMD -MP
 LDFLAGS  = -pthread
 LIBS     =
 INCLUDE  =
@@ -15,12 +15,10 @@ OBJ_DIRS = $(subst $(SRC_DIR),$(OBJ_DIR), $(SRC_DIRS))
 TARGET   = $(addprefix $(BLD_DIR)/, client server test learner inverse)
 DEPENDS  = $(OBJS:.o=.d)
 
-OPT = -Ofast -DNDEBUG -DMINIMUM
+OPT = -Ofast -flto -DNDEBUG -DMINIMUM
 ifdef mode
 	ifeq ($(mode),teacher)
-		OPT := -Ofast -DNDEBUG -DMINIMUM -DTEACHER
-	else ifeq ($(mode),match)	
-		OPT := -Ofast -DNDEBUG -DMINIMUM -DMATCH
+		OPT := -Ofast -flto -DNDEBUG -DMINIMUM -DTEACHER
 	else ifeq ($(mode),default)
 		OPT := -Ofast -g -ggdb -fno-fast-math
 	else ifeq ($(mode),debug)

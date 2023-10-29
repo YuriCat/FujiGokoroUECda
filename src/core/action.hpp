@@ -30,7 +30,7 @@ inline int genLegal(Move *mv, const Cards c, const Board b) {
 }
 inline std::vector<MoveInfo> genMove(const Field& field) {
     std::vector<MoveInfo> moves(N_MAX_MOVES);
-    int numMoves = genMove(moves.data(), field.hand[field.turn()], field.board);
+    int numMoves = genMove(moves.data(), field.getCards(field.turn()), field.board);
     moves.resize(numMoves);
     return moves;
 }

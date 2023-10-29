@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <climits>
@@ -17,6 +18,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 // 条件x、命令等y
@@ -25,26 +27,21 @@
 #define FASSERT(f, o)
 #define FEQUALS(f0, f1, o)
 #else
-#define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
+#define ASSERT(X, Y)  if (!(X)) { Y; assert(0); }
 // 浮動小数点がまともな値を取っているかどうかのアサーション
-#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ std::cerr << (f) << std::endl; {o}\
+#define FASSERT(f, o) if (!(!std::isinf(f) && !std::isnan(f))) { std::cerr << (f) << std::endl; {o}\
 assert(!std::isinf(f) && !std::isnan(f)); assert(0); };
 // 浮動小数点が「ほぼ」同じ値を取っているかのチェック && FASSERT
-#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ std::cerr << (f0) << std::endl; {o}\
+#define FEQUALS(f0, f1, o) { if (!(!std::isinf(f0) && !std::isnan(f0))) { std::cerr << (f0) << std::endl; {o}\
 assert(!std::isinf(f0) && !std::isnan(f0)); assert(0); };\
-if(!(!std::isinf(f1) && !std::isnan(f1))){ std::cerr << (f1) << std::endl; {o}};\
+if (!(!std::isinf(f1) && !std::isnan(f1))) { std::cerr << (f1) << std::endl; {o}};\
 assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
-if(!(abs((f0) - (f1)) <= 0.00001)){ std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
+if (!(abs((f0) - (f1)) <= 0.00001)) { std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
 assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #endif // NDEBUG
 
 // 標準ライブラリ使用
 using std::size_t;
-
-template <typename T>
-constexpr T cmax(const T& a, const T& b) { return a < b ? b : a; }
-template <typename T>
-constexpr T cmin(const T& a, const T& b) { return a > b ? b : a; }
 
 // 出力
 #ifdef DEBUG
@@ -107,77 +104,20 @@ private:
     double t_;
 };
 
-template <typename T>
-constexpr bool holdsBits(T a, T b) {
-    return (~a & b) == T(0);
-}
-template <typename T>
-constexpr bool isExclusive(T a, T b) {
-    return (a & b) == T(0);
-}
+template <typename T> constexpr bool holdsBits(T a, T b) { return !(~a & b); }
+template <typename T> constexpr bool isExclusiveBits(T a, T b) { return !(a & b); }
 
-inline size_t popcnt32(std::uint32_t v) {
-    return __builtin_popcount(v);
-}
-inline size_t popcnt64(std::uint64_t v) {
-    return __builtin_popcountll(v);
-}
+template <typename T> inline int popcnt(T a) { return std::popcount(a); };
+template <typename T> inline int bsf(T v) { return std::countr_zero(v); }
+template <typename T> inline int bsr(T v) { return sizeof(T) * 8 - 1 - std::countl_zero(v); }
 
-template <typename T> inline size_t popcnt(T a);
-template <> inline size_t popcnt<std::uint8_t >(std::uint8_t  v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint16_t>(std::uint16_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint32_t>(std::uint32_t v) { return popcnt32(v); }
-template <> inline size_t popcnt<std::uint64_t>(std::uint64_t v) { return popcnt64(v); }
+template <typename T> constexpr T lsb(T v) { return v & -v; }
+template <typename T> constexpr T popLsb(T v) { return v & (v - T(1)); }
+template <typename T> inline T rsb(T v) { return std::bit_floor(v); }
 
-inline size_t bsf32(std::uint32_t v) {
-    return __builtin_ctz(v);
-}
-inline size_t bsf64(std::uint64_t v) {
-    return __builtin_ctzll(v);
-}
-
-inline size_t bsr32(std::uint32_t v) {
-    std::int32_t r;
-    __asm__("bsrl %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-inline size_t bsr64(std::uint64_t v) {
-    std::int64_t r;
-    __asm__("bsrq %1, %0;" :"=r"(r) : "r"(v));
-    return r;
-}
-
-template <typename T> inline size_t bsf(T v);
-template <typename T> inline size_t bsr(T v);
-
-template <> inline size_t bsf<std::uint8_t >(std::uint8_t  v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint16_t>(std::uint16_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint32_t>(std::uint32_t v) { return bsf32(v); }
-template <> inline size_t bsf<std::uint64_t>(std::uint64_t v) { return bsf64(v); }
-
-template <> inline size_t bsr<std::uint8_t >(std::uint8_t  v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint16_t>(std::uint16_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint32_t>(std::uint32_t v) { return bsr32(v); }
-template <> inline size_t bsr<std::uint64_t>(std::uint64_t v) { return bsr64(v); }
-
-template <typename T> inline T lsb(T v) { return v & -v; }
-template <typename T> inline T popLsb(T v) { return v & (v - T(1)); }
-template <typename T> inline T rsb(T v) { return T(1) << bsr(v); }
-
-constexpr size_t popcnt32CE(uint32_t v) {
-    return v ? (1 + popcnt32CE(popLsb(v))) : 0;
-}
-constexpr size_t popcnt64CE(uint64_t v) {
-    return v ? (1 + popcnt64CE(popLsb(v))) : 0;
-}
-
-template <typename T>
-constexpr T allLowerBits(T v) { // 最下位ビットより下位のビット全て
-    return ~v & (v - T(1));
-}
-template <typename T> inline T allHigherBits(T a) {
-    return ~((T(1) << bsr<T>(a)) - T(1));
-}
+// 最下位/上位ビットより下位/上位のビット全て
+template <typename T> constexpr T allLowerBits(T v) { return ~v & (v - T(1)); }
+template <typename T> inline T allHigherBits(T a) { return ~(rsb(a) - T(1)) << 1; }
 
 template <typename T>
 inline T lowestNBits(T v, size_t n) {
@@ -244,7 +184,7 @@ template <class dice64_t>
 static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
     // argからランダムにN0ビット抽出する
     // 最初はN0 + N1ビットある必要あり
-    assert((int)popcnt(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
 
     uint64_t res = 0;
 
@@ -310,7 +250,7 @@ static uint64_t pickNBits64(uint64_t arg, int N0, int N1, dice64_t& dice) {
 template <class dice64_t>
 static void dist2_64(uint64_t *goal0, uint64_t *goal1,
                      uint64_t arg, int N0, int N1, dice64_t& dice) {
-    assert((int)popcnt64(arg) == N0 + N1);
+    assert(popcnt(arg) == N0 + N1);
     uint64_t tmp = pickNBits64(arg, N0, N1, dice);
     *goal0 |= tmp;
     *goal1 |= arg - tmp;
@@ -321,11 +261,11 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     if (N <= 1) dst[0] = arg;
     else if (N == 2) dist2_64(dst, dst + 1, arg, argNum[0], argNum[1], dice);
     else {
-        const int NH = N / 2;
+        constexpr int NH = N / 2;
         int num[2] = {0};
         for (int i = 0; i < NH; i++) num[0] += argNum[i];
         for (int i = NH; i < N; i++) num[1] += argNum[i];
-        assert(num[0] + num[1] == (int)popcnt64(arg));
+        assert(num[0] + num[1] == popcnt(arg));
         uint64_t half[2] = {0};
         dist64<2>(half, arg, num, dice);
         dist64<NH>(dst, half[0], argNum, dice);
@@ -333,33 +273,38 @@ static void dist64(uint64_t *const dst, uint64_t arg, const T *argNum, dice64_t&
     }
 }
 
+inline uint64_t splitmix64(uint64_t& x) {
+    x += 0x9E3779B97F4A7C15ULL;
+    uint64_t t = x;
+    t = (t ^ (t >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    t = (t ^ (t >> 27)) * 0x94D049BB133111EBULL;
+    return t ^ (t >> 31);
+}
+
 class XorShift64 {
 private:
-    uint64_t x, y, z, t;
+    uint64_t x, y;
 public:
     using result_type = uint64_t;
     uint64_t operator ()() {
-        uint64_t tmp = x ^ (x << 11);
-        x = y; y = z; z = t;
-        t = (t ^ (t >> 19)) ^ (tmp ^ (tmp >> 8));
-        return t;
+        uint64_t r = std::rotl(x + y, 17) + x;
+        uint64_t z = y ^ x;
+        x = std::rotl(x, 49) ^ z ^ (z << 21);
+        y = std::rotl(z, 28);
+        return r;
     }
     double random() {
         return operator ()() / double(0xFFFFFFFFFFFFFFFFULL);
     }
-    void srand(uint64_t s) {
-        // seedが0だとまずい
-        if (!s) x = 0x0123456789ABCDEFULL;
-        else x = (s << 32) ^ s;
-        y = (x << 8) | ((x & 0xff00000000000000ULL) >> 56);
-        z = (y << 8) | ((y & 0xff00000000000000ULL) >> 56);
-        t = (z << 8) | ((z & 0xff00000000000000ULL) >> 56);
+    void seed(uint64_t s) {
+        x = splitmix64(s);
+        y = splitmix64(s);
     }
     static constexpr uint64_t min() { return 0ULL; }
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
-    constexpr XorShift64(): x(), y(), z(), t() {}
-    XorShift64(uint64_t s): x(), y(), z(), t() { srand(s); }
+    constexpr XorShift64(): x(), y() {}
+    XorShift64(uint64_t s): x(), y() { seed(s); }
 };
 
 static double dFactorial(int n) {
@@ -386,7 +331,7 @@ static double sigmoid(double x, double alpha = 1) {
 static double logit(double s, double alpha = 1) {
     return -std::log((1.0 / s) - 1.0) * alpha;
 }
-static double beta(double x, double y){ // ベータ関数
+static double beta(double x, double y) { // ベータ関数
     return tgamma(x) * tgamma(y) / tgamma(x + y);
 }
 static double log_beta(double x, double y) {
@@ -576,25 +521,16 @@ private:
     }
 };
 
-template <typename T = int>
 class SpinLock {
 public:
     void lock() {
-        while (true) {
-            while (data_);
-            T tmp = 1;
-            if (data_.exchange(tmp, std::memory_order_acquire) == 0) return;
-        }
+        while (locked_.test_and_set(std::memory_order_acquire));
     }
-    bool try_lock() {
-        T tmp = 1;
-        if (data_.exchange(tmp, std::memory_order_acquire) == 0) return true;
-        return false;
+    void unlock() {
+        locked_.clear(std::memory_order_release);
     }
-    void unlock() { data_ = 0; }
-    SpinLock() { unlock(); }
 private:
-    std::atomic<T> data_;
+    std::atomic_flag locked_ = ATOMIC_FLAG_INIT;
 };
 
 template <int L, int ... shape_t>
@@ -770,8 +706,13 @@ MiniBitArray<T, B, N> invert(const MiniBitArray<T, B, N>& ba) {
     return ret;
 }
 
-template <class T, std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
+template <typename T0, typename T1>
+static std::ostream& operator <<(std::ostream& ost, const std::pair<T0, T1>& a) {
+    ost << "(" << a.first << ", " << a.second << ")";
+    return ost;
+}
+template <typename T, std::size_t N>
+static std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << a[i] << ", ";
     if (a.size() > 0) ost << a[N - 1];
@@ -779,7 +720,7 @@ std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (int)a[i] << ", ";
     if (a.size() > 0) ost << (int)a[N - 1];
@@ -787,15 +728,15 @@ std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (unsigned int)a[i] << ", ";
     if (a.size() > 0) ost << (unsigned int)a[N - 1];
     ost << "}";
     return ost;
 }
-template <class T>
-std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
+template <typename T>
+static std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
     ost << "{";
     for (int i = 0; i < (int)v.size() - 1; i++) ost << v[i] << ", ";
     if (v.size() > 0) ost << v.back();
@@ -811,7 +752,7 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
     ost << "[";
     for (int i = 0; i < N; i++) ost << bool(a.test(i));
     ost << "]";
@@ -824,13 +765,6 @@ static std::array<T, N> invert(const std::array<T, N>& a, size_t n = N) {
     for (size_t i = 0; i < n; i++) r[a[i]] = i;
     for (size_t i = n; i < N; i++) r[i] = a[i];
     return r;
-}
-
-template <typename T, size_t N>
-static std::vector<T> a2v(const std::array<T, N>& a) {
-    std::vector<T> v;
-    for (const T& val : a) v.push_back(val);
-    return v;
 }
 
 extern std::string toupper(const std::string& str);
