@@ -725,7 +725,7 @@ inline bool canMakeGroup(BitCards c, int n) {
             if (c & PQR_34) { // 4枚
                 if (n <= 4) return true;
             } else {
-                if (((c & PQR_2) >> 1) & c) { // 3枚
+                if (c & (c >> 1)) { // 3枚
                     if (n == 3) return true;
                 }
             }
