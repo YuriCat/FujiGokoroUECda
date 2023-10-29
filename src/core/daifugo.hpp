@@ -632,7 +632,7 @@ inline BitCards CardsToFR(BitCards c) {
 }
 inline BitCards CardsTo3R(BitCards c) {
     BitCards qr = CardsToQR(c);
-    return (qr >> 1) & qr & PQR_1;
+    return (qr >> 1) & qr;
 }
 inline BitCards CardsTo2R(BitCards c) {
     BitCards qr = CardsToQR(c);
