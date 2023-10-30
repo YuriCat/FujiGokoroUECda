@@ -885,8 +885,7 @@ struct Move {
             }
             return c | RankSuitsToCards(r, s);
         } else {
-            Cards c = RankSuitsToCards(r, s);
-            c = extractRanks(c, qty());
+            Cards c = (((1ULL << (qty() << 2)) - 1ULL) << (r << 2)) & SuitsToCards(s);
             if (containsJOKER()) {
                 c -= RankSuitsToCards(jokerRank(), s);
                 c |= CARDS_JOKER;
