@@ -631,19 +631,22 @@ inline BitCards CardsToFR(BitCards c) {
     return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsTo3R(BitCards c) {
-    BitCards ab_cd = c & (c >> 1);
-    BitCards axb_cxd = c ^ (c >> 1);
-    return ((ab_cd & (axb_cxd >> 2)) | ((ab_cd >> 2) & axb_cxd)) & PQR_1;
+    BitCards a = c & (c >> 1);
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
 inline BitCards CardsTo2R(BitCards c) {
     BitCards qr = CardsToQR(c);
     return (qr >> 1) & ~qr & PQR_1;
 }
 inline BitCards CardsTo1R(BitCards c) {
-    return CardsTo3R(~c);
+    BitCards a = ~(c | (c >> 1));
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
 inline BitCards CardsTo0R(BitCards c) {
-    return CardsToFR(~c);
+    BitCards a = ~(c | (c >> 1));
+    return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsToNR(BitCards c, int q) {
     BitCards nr;
