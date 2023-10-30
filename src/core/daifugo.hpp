@@ -662,7 +662,7 @@ inline BitCards CardsToER(BitCards c) {
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
-inline BitCards QRToPQR(CardArray qr) {
+constexpr BitCards QRToPQR(BitCards qr) {
     // qr -> pqr 変換
     return qr + (qr & PQR_3) + (qr & (qr >> 1));
 }
