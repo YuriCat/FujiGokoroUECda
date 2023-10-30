@@ -628,6 +628,24 @@ inline CardArray CardsToQR(BitCards c) {
 }
 
 // ランク中に丁度 n ビットあれば PQR_1 の位置にビットが立つ
+constexpr BitCards QRToFR(BitCards qr) { return (qr >> 2) & PQR_1; }
+constexpr BitCards QRTo3R(BitCards qr) { return (qr >> 1) & qr; }
+constexpr BitCards QRTo2R(BitCards qr) { return (qr >> 1) & ~qr & PQR_1; }
+constexpr BitCards QRTo1R(BitCards qr) { return ~(qr >> 1) & qr & PQR_1; }
+constexpr BitCards QRTo0R(BitCards qr) { return ~(qr | (qr >> 1) | (qr >> 2)) & PQR_1; }
+inline BitCards QRToNR(BitCards qr, int q) {
+    BitCards nr;
+    switch (q) {
+        case 0: nr = QRTo0R(qr); break;
+        case 1: nr = QRTo1R(qr); break;
+        case 2: nr = QRTo2R(qr); break;
+        case 3: nr = QRTo3R(qr); break;
+        case 4: nr = QRToFR(qr); break;
+        default: assert(0); nr = CARDS_NULL; break;
+    }
+    return nr;
+}
+
 inline BitCards CardsToFR(BitCards c) {
     BitCards a = c & (c >> 1);
     return a & (a >> 2) & PQR_1;
@@ -637,10 +655,7 @@ inline BitCards CardsTo3R(BitCards c) {
     BitCards b = c ^ (c >> 1);
     return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
-inline BitCards CardsTo2R(BitCards c) {
-    BitCards qr = CardsToQR(c);
-    return (qr >> 1) & ~qr & PQR_1;
-}
+inline BitCards CardsTo2R(BitCards c) { return QRTo2R(CardsToQR(c)); }
 inline BitCards CardsTo1R(BitCards c) {
     BitCards a = ~(c | (c >> 1));
     BitCards b = c ^ (c >> 1);
@@ -662,6 +677,7 @@ inline BitCards CardsToNR(BitCards c, int q) {
     }
     return nr;
 }
+
 inline BitCards CardsToER(BitCards c) {
     // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
     BitCards a = c | (c >> 1);

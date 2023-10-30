@@ -313,25 +313,33 @@ int testENR(const std::vector<Cards>& sample) {
 
 int testNR(const std::vector<Cards>& sample) {
     // NR(ランクにN枚存在)のテスト N = 0 ~ 4
-    uint64_t time[10] = {0};
-    for (Cards c : sample) {
-        for (int n = 0; n <= 4; n++) {
+    uint64_t time[15] = {0};
+    for (int n = 0; n <= 4; n++) {
+        for (Cards c : sample) {
             cl.start();
             CardArray test = CardsToNR(c, n);
-            time[n * 2] += cl.restart();
+            time[n * 3] += cl.restart();
+            CardArray testqr = QRToNR(CardsToQR(c), n);
+            time[n * 3 + 1] += cl.restart();
             CardArray ans = CardsToNR_slow(c, n);
-            time[n * 2 + 1] += cl.stop();
+            time[n * 3 + 2] += cl.stop();
 
             if (test != ans) {
                 cerr << "inconsistent Cards -> " << n << "R conversion!" << endl;
                 cerr << c << " : " << test << " <-> " << ans << endl;
                 return -1;
             }
+            if (testqr != ans) {
+                cerr << "inconsistent Cards -> " << n << "R (through QR) conversion!" << endl;
+                cerr << c << " : " << testqr << " <-> " << ans << endl;
+                return -1;
+            }
         }
     }
     for (int n = 0; n <= 4; n++) {
-        cerr << "c -> " << n << "r test : " << time[n * 2] << " clock" << endl;
-        cerr << "c -> " << n << "r ans  : " << time[n * 2 + 1] << " clock" << endl;
+        cerr << "c -> " << n << "r test : " << time[n * 3] << " clock" << endl;
+        cerr << "c -> " << n << "r qtest: " << time[n * 3 + 1] << " clock" << endl;
+        cerr << "c -> " << n << "r ans  : " << time[n * 3 + 2] << " clock" << endl;
     }
     return 0;
 }
