@@ -72,7 +72,7 @@ constexpr int suitsIdx[18] = {
     -1, 0, 1, 0, 2, 1, 3, 0, 3, 2, 4, 1, 5, 2, 3, 0, 0, 5
 };
 
-inline int SuitToSuitNum(unsigned int suit) { return bsf32(suit); }
+inline int SuitToSuitNum(unsigned int suit) { return bsf(suit); }
 
 // 単スート番号からスート集合への変換
 constexpr unsigned SuitNumToSuits(int sn0) { return 1U << sn0; }
@@ -244,18 +244,17 @@ constexpr BitCards maskCards(BitCards c0, BitCards c1) { return c0 & ~c1; }
 constexpr BitCards maskJOKER(BitCards c) { return maskCards(c, CARDS_JOKER_RANK); }
 
 // 要素数
-inline unsigned countCards(BitCards c) { return popcnt64(c); } // 基本のカウント処理
-constexpr unsigned countFewCards(BitCards c) { return popcnt64CE(c); } // 要素が比較的少ない時の速度優先
+inline unsigned countCards(BitCards c) { return popcnt(c); }
 constexpr BitCards any2Cards(BitCards c) { return c & (c - 1ULL); }
 
 // 排他性
-constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return !(c0 & c1); }
+constexpr bool isExclusiveCards(BitCards c0, BitCards c1) { return isExclusiveBits(c0, c1); }
 
 // 包含関係
 constexpr BitCards containsJOKER(BitCards c) { return c & CARDS_JOKER_RANK; }
 constexpr BitCards containsS3(BitCards c) { return c & CARDS_S3; }
 constexpr BitCards containsD3(BitCards c) { return c & CARDS_D3; }
-constexpr bool holdsCards(BitCards c0, BitCards c1) { return !(~c0 & c1); }
+constexpr bool holdsCards(BitCards c0, BitCards c1) { return holdsBits(c0, c1); }
 
 // 空判定
 constexpr BitCards anyCards(BitCards c) { return c; }
@@ -269,8 +268,8 @@ inline BitCards pickLow(const BitCards c, int n) { return lowestNBits(c, n); }
 inline BitCards pickHigh(const BitCards c, int n) { return highestNBits(c, n); }
 
 // IntCard型で1つ取り出し
-inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf64(c); }
-inline IntCard pickIntCardHigh(const BitCards c) { return (IntCard)bsr64(c); }
+inline IntCard pickIntCardLow(const BitCards c) { return (IntCard)bsf(c); }
+inline IntCard pickIntCardHigh(const BitCards c) { return (IntCard)bsr(c); }
 
 // 基準cより高い、低い(同じは含まず)もの
 inline BitCards pickHigher(BitCards c) { return allHigherBits(c); }
@@ -286,6 +285,7 @@ constexpr BitCards polymRanks(BitCards c) {
 }
 template <> constexpr BitCards polymRanks<0>(BitCards c) { return -1; }
 inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
+    assert(n > 0);
     while (--n) c = polymRanks<2>(c);
     return c;
 }
@@ -301,6 +301,7 @@ inline BitCards extractRanks(BitCards c) {
 }
 template <> constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
 inline BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
+    assert(n > 0);
     while (--n) c = extractRanks<2>(c);
     return c;
 }
@@ -444,14 +445,14 @@ union Cards {
     constexpr Cards plain() const { return plain_; }
 
     unsigned count() const { return joker_ + countPlain(); }
-    constexpr unsigned countInCompileTime() const { return joker_ + countFewCards(plain_); }
     unsigned countPlain() const { return countCards(plain_); }
 
-    constexpr bool holdsPlain(BitCards c) const { return holdsCards(c_, c); }
     constexpr bool holds(Cards c) const {
-        return joker_ >= c.joker_ && holdsCards(plain(), c.plain());
+        return joker_ >= c.joker_ && holdsCards(plain_, c.plain_);
     }
-    constexpr bool isExclusive(BitCards c) const { return isExclusiveCards(c_, c); }
+    constexpr bool isExclusive(Cards c) const {
+        return joker_ + c.joker_ <= N_JOKERS && isExclusiveCards(plain_, c.plain_);
+    }
 
     Cards masked(Cards c) const {
         return Cards(plain_ & ~c.plain_, std::max(0, joker_ - c.joker_));
@@ -500,11 +501,11 @@ union Cards {
     // pick, pop
     IntCard lowest() const {
         assert(any());
-        return IntCard(bsf64(c_));
+        return IntCard(bsf(c_));
     }
     IntCard highest() const {
         assert(any());
-        return IntCard(bsr64(c_));
+        return IntCard(bsr(c_));
     }
     IntCard popLowest() {
         assert(any());
@@ -530,9 +531,14 @@ union Cards {
     }
     Cards exceptLowest() const { return popLsb(c_); }
 
-    class const_iterator : public std::iterator<std::input_iterator_tag, IntCard> {
+    class const_iterator {
         friend Cards;
     public:
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = IntCard;
+        using pointer           = IntCard*;
+        using reference         = IntCard&;
+        using iterator_category = std::input_iterator_tag;
         IntCard operator *() const {
             return IntCard(bsf<BitCards>(c_));
         }
@@ -622,24 +628,42 @@ inline CardArray CardsToQR(BitCards c) {
 }
 
 // ランク中に丁度 n ビットあれば PQR_1 の位置にビットが立つ
+constexpr BitCards QRToFR(BitCards qr) { return (qr >> 2) & PQR_1; }
+constexpr BitCards QRTo3R(BitCards qr) { return (qr >> 1) & qr; }
+constexpr BitCards QRTo2R(BitCards qr) { return (qr >> 1) & ~qr & PQR_1; }
+constexpr BitCards QRTo1R(BitCards qr) { return ~(qr >> 1) & qr & PQR_1; }
+constexpr BitCards QRTo0R(BitCards qr) { return ~(qr | (qr >> 1) | (qr >> 2)) & PQR_1; }
+inline BitCards QRToNR(BitCards qr, int q) {
+    BitCards nr;
+    switch (q) {
+        case 0: nr = QRTo0R(qr); break;
+        case 1: nr = QRTo1R(qr); break;
+        case 2: nr = QRTo2R(qr); break;
+        case 3: nr = QRTo3R(qr); break;
+        case 4: nr = QRToFR(qr); break;
+        default: assert(0); nr = CARDS_NULL; break;
+    }
+    return nr;
+}
+
 inline BitCards CardsToFR(BitCards c) {
     BitCards a = c & (c >> 1);
     return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsTo3R(BitCards c) {
-    BitCards ab_cd = c & (c >> 1);
-    BitCards axb_cxd = c ^ (c >> 1);
-    return ((ab_cd & (axb_cxd >> 2)) | ((ab_cd >> 2) & axb_cxd)) & PQR_1;
+    BitCards a = c & (c >> 1);
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
-inline BitCards CardsTo2R(BitCards c) {
-    BitCards qr = CardsToQR(c);
-    return (qr >> 1) & ~qr & PQR_1;
-}
+inline BitCards CardsTo2R(BitCards c) { return QRTo2R(CardsToQR(c)); }
 inline BitCards CardsTo1R(BitCards c) {
-    return CardsTo3R(~c);
+    BitCards a = ~(c | (c >> 1));
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
 inline BitCards CardsTo0R(BitCards c) {
-    return CardsToFR(~c);
+    BitCards a = ~(c | (c >> 1));
+    return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsToNR(BitCards c, int q) {
     BitCards nr;
@@ -653,14 +677,15 @@ inline BitCards CardsToNR(BitCards c, int q) {
     }
     return nr;
 }
+
 inline BitCards CardsToER(BitCards c) {
     // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
-inline BitCards QRToPQR(CardArray qr) {
+constexpr BitCards QRToPQR(BitCards qr) {
     // qr -> pqr 変換
-    return qr + (qr & PQR_3) + (qr & (qr >> 1) & PQR_1);
+    return qr + (qr & PQR_3) + (qr & (qr >> 1));
 }
 inline BitCards CardsToPQR(BitCards c) {
     // ランクごとの枚数を示す位置にビットが立つようにする
@@ -721,7 +746,7 @@ inline bool canMakeGroup(BitCards c, int n) {
             if (c & PQR_34) { // 4枚
                 if (n <= 4) return true;
             } else {
-                if (((c & PQR_2) >> 1) & c) { // 3枚
+                if (c & (c >> 1)) { // 3枚
                     if (n == 3) return true;
                 }
             }
@@ -1176,8 +1201,7 @@ static std::ostream& operator <<(std::ostream& out, const FieldAddInfo& i) { // 
     return out;
 }
 
-inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
-                       FieldAddInfo *const pnext) {
+inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo, FieldAddInfo *const pnext) {
     pnext->init();
     pnext->setMinNumCardsAwake(fieldInfo.minNumCards());
     pnext->setMaxNumCardsAwake(fieldInfo.maxNumCards());
@@ -1185,8 +1209,7 @@ inline void flushFieldAddInfo(const FieldAddInfo& fieldInfo,
     pnext->setMaxNumCards(fieldInfo.maxNumCards());
     pnext->setFlushLead();
 }
-inline void procUnrivaled(const FieldAddInfo& fieldInfo,
-                   FieldAddInfo *const pnext) {
+inline void procUnrivaled(const FieldAddInfo& fieldInfo, FieldAddInfo *const pnext) {
     *pnext = fieldInfo;
     pnext->procTmpInfo();
     pnext->setUnrivaled();

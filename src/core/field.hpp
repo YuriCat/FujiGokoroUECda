@@ -68,7 +68,7 @@ struct PlayersState : public BitArray32<8, 4> {
     uint32_t searchOpsPlayer(int p) const {
         // p以外でaliveなプレーヤーを1人挙げる
         assert(numAlive() >= 1);
-        return bsf32(data() & ~(BMASK << p));
+        return bsf(data() & ~(BMASK << p));
     }
 
     constexpr data_t numAlive() const { return (*this)[1]; }
@@ -82,8 +82,8 @@ struct PlayersState : public BitArray32<8, 4> {
 
     int searchL1Player() const {
         // 最後に残ったプレーヤーを探す
-        assert(popcnt32(data() & PMASK) == 1); // 1人だけ残っている
-        return bsf32(data());
+        assert(popcnt(data() & PMASK) == 1); // 1人だけ残っている
+        return bsf(data());
     }
 
     void flush() {
@@ -107,7 +107,6 @@ struct Field {
     int phase = PHASE_UNINIT;
 
     // シミュレーション用
-    MoveInfo *mbuf = nullptr;
     std::bitset<32> attractedPlayers; // 結果を知りたいプレイヤー集合
     FieldAddInfo fieldInfo;
 
@@ -139,7 +138,6 @@ struct Field {
         return false;
     }
 
-    void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }
