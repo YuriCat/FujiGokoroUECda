@@ -281,9 +281,9 @@ int testENR(const std::vector<Cards>& sample) {
     uint64_t time[6] = {0};
     for (Cards c : sample) {
         cl.start();
-        BitArray64<4> test1 = CardsToER(c);
+        CardArray test1 = CardsToER(c);
         time[0] += cl.restart();
-        BitArray64<4> ans1 = CardsToENR_slow(c, 1);
+        CardArray ans1 = CardsToENR_slow(c, 1);
         time[1] += cl.stop();
 
         if (test1 != ans1) {
@@ -293,9 +293,9 @@ int testENR(const std::vector<Cards>& sample) {
         }
 
         /*cl.start();
-        BitArray64<4> test3 = convCards_3R(c);
+        CardArray test3 = convCards_3R(c);
         time[6] += cl.restart();
-        BitArray64<4> ans3 = convCards_NR_slow(c, 3);
+        CardArray ans3 = convCards_NR_slow(c, 3);
         time[7] += cl.stop();
 
         if (test0 != ans0) {
@@ -304,7 +304,7 @@ int testENR(const std::vector<Cards>& sample) {
             return -1;
         }*/
     }
-    for (int n = 1; n < 4; ++n) {
+    for (int n = 1; n < 4; n++) {
         cerr << "c -> e" << n << "r test : " << time[(n - 1) * 2] << " clock" << endl;
         cerr << "c -> e" << n << "r ans  : " << time[(n - 1) * 2 + 1] << " clock" << endl;
     }
@@ -315,11 +315,11 @@ int testNR(const std::vector<Cards>& sample) {
     // NR(ランクにN枚存在)のテスト N = 0 ~ 4
     uint64_t time[10] = {0};
     for (Cards c : sample) {
-        for (int n = 0; n <= 4; ++n) {
+        for (int n = 0; n <= 4; n++) {
             cl.start();
-            BitArray64<4> test = CardsToNR(c, n);
+            CardArray test = CardsToNR(c, n);
             time[n * 2] += cl.restart();
-            BitArray64<4> ans = CardsToNR_slow(c, n);
+            CardArray ans = CardsToNR_slow(c, n);
             time[n * 2 + 1] += cl.stop();
 
             if (test != ans) {
@@ -329,7 +329,7 @@ int testNR(const std::vector<Cards>& sample) {
             }
         }
     }
-    for (int n = 0; n <= 4; ++n) {
+    for (int n = 0; n <= 4; n++) {
         cerr << "c -> " << n << "r test : " << time[n * 2] << " clock" << endl;
         cerr << "c -> " << n << "r ans  : " << time[n * 2 + 1] << " clock" << endl;
     }
@@ -372,7 +372,7 @@ bool CardsTest() {
     std::vector<Cards> sample;
     XorShift64 dice((unsigned int)time(NULL));
 
-    for (int i = 0; i < 50000; ++i) {
+    for (int i = 0; i < 50000; i++) {
         int n = dice() % N_MAX_OWNED_CARDS_CHANGE;
         sample.push_back(pickNBits64(CARDS_ALL, n, N_CARDS - n, dice));
     }
