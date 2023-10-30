@@ -655,7 +655,7 @@ inline BitCards CardsTo3R(BitCards c) {
     BitCards b = c ^ (c >> 1);
     return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
-inline BitCards CardsTo2R(BitCards c) { return QRTo2R(CardsToQR(c)); }
+inline BitCards CardsTo2R(BitCards c) {return QRTo2R(CardsToQR(c)); }
 inline BitCards CardsTo1R(BitCards c) {
     BitCards a = ~(c | (c >> 1));
     BitCards b = c ^ (c >> 1);
@@ -678,11 +678,34 @@ inline BitCards CardsToNR(BitCards c, int q) {
     return nr;
 }
 
+// ランク中にnビット以上あればPQR_1の位置にビットが立つ
 inline BitCards CardsToER(BitCards c) {
-    // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
+inline BitCards CardsToE2R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return (a | (a >> 2) | (b & (b >> 2))) & PQR_1;
+}
+inline BitCards CardsToE3R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
+}
+inline BitCards CardsToENR(BitCards c, int q) {
+    BitCards enr;
+    switch (q) {
+        case 0: enr = -1; break;
+        case 1: enr = CardsToER(c); break;
+        case 2: enr = CardsToE2R(c); break;
+        case 3: enr = CardsToE3R(c); break;
+        case 4: enr = CardsToFR(c); break;
+        default: assert(0); enr = CARDS_NULL; break;
+    }
+    return enr;
+}
+
 constexpr BitCards QRToPQR(BitCards qr) {
     // qr -> pqr 変換
     return qr + (qr & PQR_3) + (qr & (qr >> 1));
