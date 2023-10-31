@@ -1,4 +1,6 @@
 #include "../base/util.hpp"
+#include "../core/action.hpp"
+#include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
 
