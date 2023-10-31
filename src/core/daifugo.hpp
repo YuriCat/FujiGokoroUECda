@@ -655,7 +655,7 @@ inline BitCards CardsTo3R(BitCards c) {
     BitCards b = c ^ (c >> 1);
     return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
-inline BitCards CardsTo2R(BitCards c) {return QRTo2R(CardsToQR(c)); }
+inline BitCards CardsTo2R(BitCards c) { return QRTo2R(CardsToQR(c)); }
 inline BitCards CardsTo1R(BitCards c) {
     BitCards a = ~(c | (c >> 1));
     BitCards b = c ^ (c >> 1);
