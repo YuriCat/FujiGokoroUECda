@@ -104,10 +104,9 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
         }
     } else { // 階段
         if (!oh.seq) return true;
-        int qty = b.qty();
-        Cards zone = ORQToSCValidZone(b.order(), b.rank(), qty);
+        Cards zone = ORQToSCValidZone(b.order(), b.rank(), b.qty());
         if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
-        return !canMakeSeq(oh.cards & zone, oh.jk, qty);
+        return !canMakeSeq(oh.cards & zone, oh.jk, b.qty());
     }
     return false;
 }
