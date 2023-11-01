@@ -22,7 +22,7 @@ inline L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
     return f;
 }
 
-int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
+bool procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
     Board b = cur.b;
     bool lastAwake = cur.lastAwake;
     bool flushLead = cur.flushLead;
@@ -62,7 +62,7 @@ int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
     pnext->b = b;
     pnext->lastAwake = lastAwake;
     pnext->flushLead = flushLead;
-    return int(flipped);
+    return flipped;
 }
 
 bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
@@ -202,17 +202,17 @@ int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
     }
 
     L2Field nextField;
-    int nextPlayer = procL2Field(field, &nextField, tmp);
+    bool flipped = procL2Field(field, &nextField, tmp);
     if (!tmp.isPASS()) {
         Hand nextHand;
         makeMoveAll(myHand, &nextHand, tmp);
-        if (nextPlayer == 0) {
+        if (!flipped) {
             return judge(depth + 1, buf, nextHand, opsHand, nextField, true);
         } else {
             return L2_WIN + L2_LOSE - judge(depth + 1, buf, opsHand, nextHand, nextField);
         }
     } else { // PASS
-        if (nextPlayer == 0) {
+        if (!flipped) {
             return judge(depth + 1, buf, myHand, opsHand, nextField, true);
         } else {
             return L2_WIN + L2_LOSE - judge(depth + 1, buf, opsHand, myHand, nextField);
