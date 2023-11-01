@@ -288,8 +288,9 @@ int genFollowSeq(Move *const mv, const Cards c, const Board b) {
 // フォローグループ生成
 
 inline BitCards genNRankInGenFollowGroup(BitCards c, BitCards valid, int q) {
-    BitCards vc = c & valid;
-    return CardsToNR(vc, q);
+    BitCards vqr = CardsToQR(c) & valid;
+    if (q == 4) return vqr & PQR_3;
+    return QRToNR(vqr, q);
 }
 
 int genFollowSingle(Move *const mv0, const Cards myCards, const Board b) {
@@ -418,16 +419,16 @@ int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
             }
         }
     } else { // スートしばりあり
-        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
+        const Cards vc = c | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
-        Cards c4 = CardsToFR(vc);
+        Cards c4 = genNRankInGenFollowGroup(vc, valid, 4);
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
             GEN(2, b.suits());
         }
         if (containsJOKER(c)) {
             // 3ビット立っている部分からジョーカーを利用して生成
-            Cards c3 = CardsTo3R(vc);
+            Cards c3 = genNRankInGenFollowGroup(vc, valid, 3);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
                 unsigned suit = c[r] & b.suits();
@@ -496,9 +497,9 @@ int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
         }
     } else { // スートしばりあり
         // virtual cardを加えて4枚ある箇所から生成
-        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
+        const Cards vc = c | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
-        Cards c4 = CardsToFR(vc);
+        Cards c4 = genNRankInGenFollowGroup(vc, valid, 4);
         // ジョーカーあり スートロックあり
         // virtual cardを加えて4枚ある箇所からプレーンで生成
         for (IntCard ic : c4) {
@@ -507,7 +508,7 @@ int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
         }
         if (containsJOKER(c)) {
             // 3枚だけの箇所をジョーカー込みで生成
-            Cards c3 = CardsTo3R(vc);
+            Cards c3 = genNRankInGenFollowGroup(vc, valid, 3);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
                 GEN_J(3, b.suits(), SUITS_ALL & ~vc[r]);

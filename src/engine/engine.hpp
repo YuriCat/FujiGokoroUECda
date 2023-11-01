@@ -7,6 +7,7 @@
 #include "../settings.h"
 #include "data.hpp"
 #include "reward.hpp"
+#include "../core/action.hpp"
 #include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
@@ -184,7 +185,6 @@ public:
         Field field;
         field.fromRecord(game, myPlayerNum);
         if (monitor) std::cerr << field.toString();
-        field.setMoveBuffer(mbuf.data());
         assert(field.turn() == myPlayerNum);
 
         const Hand& myHand = field.getHand(myPlayerNum);
