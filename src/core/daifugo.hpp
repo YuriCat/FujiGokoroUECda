@@ -881,10 +881,10 @@ struct Move {
     bool isPASS() const { return t == 0; }
     bool isGroup() const { return t == 1; }
     bool isSeq() const { return t == 2; }
-    bool isSingle() const { return isGroup() && qty() == 1; }
+    bool isSingle() const { return qty() == 1; }
     bool containsJOKER() const { return jks || jkr; }
     bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
-    bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
+    bool isS3() const { return isSingle() && rank() == RANK_3 && suits() == SUITS_S; }
 
     // 情報を得る
     unsigned suits()      const { return s; }
