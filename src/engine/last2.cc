@@ -1,4 +1,6 @@
 #include "../base/util.hpp"
+#include "../core/action.hpp"
+#include "../core/dominance.hpp"
 #include "mate.hpp"
 #include "last2.hpp"
 
@@ -9,22 +11,6 @@ namespace L2 {
     void init() {
         book.clear();
     }
-}
-
-// L2局面表現
-struct L2Field {
-    Board b;
-    bool lastAwake;
-    bool flushLead;
-};
-
-// L2局面表現へのチェンジ
-L2Field convL2Field(const Board& b, const FieldAddInfo& info) {
-    L2Field f;
-    f.b = b;
-    f.lastAwake = info.isLastAwake();
-    f.flushLead = info.isFlushLead();
-    return f;
 }
 
 inline L2Field procAndFlushL2Field(const L2Field& cur, const Move m) {
@@ -79,6 +65,39 @@ int procL2Field(const L2Field& cur, L2Field *const pnext, const MoveInfo m) {
     return int(flipped);
 }
 
+bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b) {
+    // PQRND判定済みを仮定 TODO: ラスト2人では必勝も別に書くべき?
+    assert(myHand.qty > 1);
+    if (myHand.seq) return false;
+    if (opsHand.qty == 1) return true;
+
+    if (!(myHand.pqr & PQR_234) && !(myHand.cards & (CARDS_S3 | CARDS_JOKER))) {
+        if (b.order() == 0) {
+            Cards mine = myHand.cards, ops = opsHand.cards;
+            int myHigh = IntCardToRank(mine.highest());
+            int opsLow = IntCardToRank(ops.lowest());
+            if (myHigh < opsLow) return true;
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.lowest());
+                if (myHigh < opsLow) return true;
+            }
+        } else {
+            Cards mine = myHand.cards, ops = maskJOKER(opsHand.cards);
+            assert(ops.any());
+            int myHigh = IntCardToRank(mine.lowest());
+            int opsLow = IntCardToRank(ops.highest());
+            if (myHigh > opsLow) return true;
+            Cards tmp = maskCards(ops, RankToCards(opsLow));
+            if (tmp) {
+                int opsLow = IntCardToRank(tmp.highest());
+                if (myHigh > opsLow) return true;
+            }
+        }
+    }
+    return false;
+}
+
 int L2Judge::judge(const int depth, MoveInfo *const buf,
                    const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
     // 判定を返す
@@ -92,16 +111,7 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
         //if (judgeHandMate(0, buf, myHand, opsHand, field.b)) return L2_WIN;
 
         // 簡易必敗判定
-        if (!myHand.seq && !(myHand.pqr & PQR_234) && !myHand.jk && !containsS3(myHand.cards) && field.b.order() == 0) {
-            int myHR = IntCardToRank(pickIntCardHigh(myHand.cards));
-            int opsLR = IntCardToRank(pickIntCardLow(opsHand.cards));
-            if (myHR < opsLR) return L2_LOSE;
-            Cards tmp = maskCards(opsHand.cards, RankToCards(opsLR));
-            if (tmp) {
-                opsLR = IntCardToRank(pickIntCardLow(tmp));
-                if (myHR < opsLR) return L2_LOSE;
-            }
-        }
+        if (judgeHandL2L_NF(myHand, opsHand, field.b)) return L2_LOSE;
 
         // 局面登録を検索(NFのみ)
         assert(myHand.exam_key() && opsHand.exam_key());
@@ -215,8 +225,7 @@ int judgeLast2(MoveInfo *const buf, const Cards myCards, const Cards opsCards, c
     Hand opsHand(opsCards, true, CardsToHashKey(opsCards));
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
-    L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
-    return judge.judge(0, buf, myHand, opsHand, field);
+    return judge.judge(0, buf, myHand, opsHand, L2Field(b, fieldInfo));
 }
 
 int checkLast2(MoveInfo *const buf, const MoveInfo move, const Cards myCards, const Cards opsCards, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
@@ -224,7 +233,6 @@ int checkLast2(MoveInfo *const buf, const MoveInfo move, const Cards myCards, co
     Hand opsHand(opsCards, true, CardsToHashKey(opsCards));
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
-    L2Field field = convL2Field(b, fieldInfo); // L2型へのチェンジ
     MoveInfo tmp = move;
-    return judge.check(0, buf, tmp, myHand, opsHand, field);
+    return judge.check(0, buf, tmp, myHand, opsHand, L2Field(b, fieldInfo));
 }

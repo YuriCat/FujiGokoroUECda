@@ -285,6 +285,7 @@ constexpr BitCards polymRanks(BitCards c) {
 }
 template <> constexpr BitCards polymRanks<0>(BitCards c) { return -1; }
 inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
+    assert(n > 0);
     while (--n) c = polymRanks<2>(c);
     return c;
 }
@@ -300,6 +301,7 @@ inline BitCards extractRanks(BitCards c) {
 }
 template <> constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
 inline BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
+    assert(n > 0);
     while (--n) c = extractRanks<2>(c);
     return c;
 }
@@ -626,24 +628,42 @@ inline CardArray CardsToQR(BitCards c) {
 }
 
 // ランク中に丁度 n ビットあれば PQR_1 の位置にビットが立つ
+constexpr BitCards QRToFR(BitCards qr) { return (qr >> 2) & PQR_1; }
+constexpr BitCards QRTo3R(BitCards qr) { return (qr >> 1) & qr; }
+constexpr BitCards QRTo2R(BitCards qr) { return (qr >> 1) & ~qr & PQR_1; }
+constexpr BitCards QRTo1R(BitCards qr) { return ~(qr >> 1) & qr & PQR_1; }
+constexpr BitCards QRTo0R(BitCards qr) { return ~(qr | (qr >> 1) | (qr >> 2)) & PQR_1; }
+inline BitCards QRToNR(BitCards qr, int q) {
+    BitCards nr;
+    switch (q) {
+        case 0: nr = QRTo0R(qr); break;
+        case 1: nr = QRTo1R(qr); break;
+        case 2: nr = QRTo2R(qr); break;
+        case 3: nr = QRTo3R(qr); break;
+        case 4: nr = QRToFR(qr); break;
+        default: assert(0); nr = CARDS_NULL; break;
+    }
+    return nr;
+}
+
 inline BitCards CardsToFR(BitCards c) {
     BitCards a = c & (c >> 1);
     return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsTo3R(BitCards c) {
-    BitCards ab_cd = c & (c >> 1);
-    BitCards axb_cxd = c ^ (c >> 1);
-    return ((ab_cd & (axb_cxd >> 2)) | ((ab_cd >> 2) & axb_cxd)) & PQR_1;
+    BitCards a = c & (c >> 1);
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
-inline BitCards CardsTo2R(BitCards c) {
-    BitCards qr = CardsToQR(c);
-    return (qr >> 1) & ~qr & PQR_1;
-}
+inline BitCards CardsTo2R(BitCards c) { return QRTo2R(CardsToQR(c)); }
 inline BitCards CardsTo1R(BitCards c) {
-    return CardsTo3R(~c);
+    BitCards a = ~(c | (c >> 1));
+    BitCards b = c ^ (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
 }
 inline BitCards CardsTo0R(BitCards c) {
-    return CardsToFR(~c);
+    BitCards a = ~(c | (c >> 1));
+    return a & (a >> 2) & PQR_1;
 }
 inline BitCards CardsToNR(BitCards c, int q) {
     BitCards nr;
@@ -657,12 +677,36 @@ inline BitCards CardsToNR(BitCards c, int q) {
     }
     return nr;
 }
+
+// ランク中にnビット以上あればPQR_1の位置にビットが立つ
 inline BitCards CardsToER(BitCards c) {
-    // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
-inline BitCards QRToPQR(CardArray qr) {
+inline BitCards CardsToE2R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return (a | (a >> 2) | (b & (b >> 2))) & PQR_1;
+}
+inline BitCards CardsToE3R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
+}
+inline BitCards CardsToENR(BitCards c, int q) {
+    BitCards enr;
+    switch (q) {
+        case 0: enr = -1; break;
+        case 1: enr = CardsToER(c); break;
+        case 2: enr = CardsToE2R(c); break;
+        case 3: enr = CardsToE3R(c); break;
+        case 4: enr = CardsToFR(c); break;
+        default: assert(0); enr = CARDS_NULL; break;
+    }
+    return enr;
+}
+
+constexpr BitCards QRToPQR(BitCards qr) {
     // qr -> pqr 変換
     return qr + (qr & PQR_3) + (qr & (qr >> 1));
 }
@@ -725,7 +769,7 @@ inline bool canMakeGroup(BitCards c, int n) {
             if (c & PQR_34) { // 4枚
                 if (n <= 4) return true;
             } else {
-                if (((c & PQR_2) >> 1) & c) { // 3枚
+                if (c & (c >> 1)) { // 3枚
                     if (n == 3) return true;
                 }
             }
