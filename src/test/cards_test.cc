@@ -279,32 +279,22 @@ int testPQR(const std::vector<Cards>& sample) {
 int testENR(const std::vector<Cards>& sample) {
     // ENR(ランクにN枚以上存在)のテスト N = 1 ~ 3
     uint64_t time[6] = {0};
-    for (Cards c : sample) {
-        cl.start();
-        BitArray64<4> test1 = CardsToER(c);
-        time[0] += cl.restart();
-        BitArray64<4> ans1 = CardsToENR_slow(c, 1);
-        time[1] += cl.stop();
+    for (int n = 1; n < 4; n++) {
+        for (Cards c : sample) {
+            cl.start();
+            CardArray test = CardsToENR(c, n);
+            time[(n - 1) * 2] += cl.restart();
+            CardArray ans = CardsToENR_slow(c, n);
+            time[(n - 1) * 2 + 1] += cl.stop();
 
-        if (test1 != ans1) {
-            cerr << "inconsistent Cards -> E1R conversion!" << endl;
-            cerr << c << " : " << test1 << " <-> " << ans1 << endl;
-            return -1;
+            if (test != ans) {
+                cerr << "inconsistent Cards -> E" << n << "R conversion!" << endl;
+                cerr << c << " : " << test << " <-> " << ans << endl;
+                return -1;
+            }
         }
-
-        /*cl.start();
-        BitArray64<4> test3 = convCards_3R(c);
-        time[6] += cl.restart();
-        BitArray64<4> ans3 = convCards_NR_slow(c, 3);
-        time[7] += cl.stop();
-
-        if (test0 != ans0) {
-            cerr << "inconsistent Cards -> E3R conversion!" << endl;
-            cerr << c << " : " << test3 << " <-> " << ans3 << endl;
-            return -1;
-        }*/
     }
-    for (int n = 1; n < 4; ++n) {
+    for (int n = 1; n < 4; n++) {
         cerr << "c -> e" << n << "r test : " << time[(n - 1) * 2] << " clock" << endl;
         cerr << "c -> e" << n << "r ans  : " << time[(n - 1) * 2 + 1] << " clock" << endl;
     }
@@ -313,25 +303,33 @@ int testENR(const std::vector<Cards>& sample) {
 
 int testNR(const std::vector<Cards>& sample) {
     // NR(ランクにN枚存在)のテスト N = 0 ~ 4
-    uint64_t time[10] = {0};
-    for (Cards c : sample) {
-        for (int n = 0; n <= 4; ++n) {
+    uint64_t time[15] = {0};
+    for (int n = 0; n <= 4; n++) {
+        for (Cards c : sample) {
             cl.start();
-            BitArray64<4> test = CardsToNR(c, n);
-            time[n * 2] += cl.restart();
-            BitArray64<4> ans = CardsToNR_slow(c, n);
-            time[n * 2 + 1] += cl.stop();
+            CardArray test = CardsToNR(c, n);
+            time[n * 3] += cl.restart();
+            CardArray testqr = QRToNR(CardsToQR(c), n);
+            time[n * 3 + 1] += cl.restart();
+            CardArray ans = CardsToNR_slow(c, n);
+            time[n * 3 + 2] += cl.stop();
 
             if (test != ans) {
                 cerr << "inconsistent Cards -> " << n << "R conversion!" << endl;
                 cerr << c << " : " << test << " <-> " << ans << endl;
                 return -1;
             }
+            if (testqr != ans) {
+                cerr << "inconsistent Cards -> " << n << "R (through QR) conversion!" << endl;
+                cerr << c << " : " << testqr << " <-> " << ans << endl;
+                return -1;
+            }
         }
     }
-    for (int n = 0; n <= 4; ++n) {
-        cerr << "c -> " << n << "r test : " << time[n * 2] << " clock" << endl;
-        cerr << "c -> " << n << "r ans  : " << time[n * 2 + 1] << " clock" << endl;
+    for (int n = 0; n <= 4; n++) {
+        cerr << "c -> " << n << "r test : " << time[n * 3] << " clock" << endl;
+        cerr << "c -> " << n << "r qtest: " << time[n * 3 + 1] << " clock" << endl;
+        cerr << "c -> " << n << "r ans  : " << time[n * 3 + 2] << " clock" << endl;
     }
     return 0;
 }
@@ -372,7 +370,7 @@ bool CardsTest() {
     std::vector<Cards> sample;
     XorShift64 dice((unsigned int)time(NULL));
 
-    for (int i = 0; i < 50000; ++i) {
+    for (int i = 0; i < 50000; i++) {
         int n = dice() % N_MAX_OWNED_CARDS_CHANGE;
         sample.push_back(pickNBits64(CARDS_ALL, n, N_CARDS - n, dice));
     }
