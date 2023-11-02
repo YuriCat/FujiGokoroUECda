@@ -29,10 +29,9 @@ inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
 }
 
 // 引数として場を取った場合
-// パスの時は場を更新してから判定しても仕方ないので注意
+// 場を更新してから判定しても支配役の判定ができないので注意
 inline bool dominatesCards(const Board b, const Cards oc) {
     if (b.isNull()) return false;
-    if (b.domInevitably()) return true;
 
     if (b.isSingleJOKER()) return !containsS3(oc);
     if (!b.isSeq() && b.qty() <= oc.joker()) return false;
@@ -89,7 +88,6 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
     assert(oh.exam_nd());
 
     if (b.isNull()) return false;
-    if (b.domInevitably()) return true;
 
     if (b.isSingleJOKER()) return !containsS3(oh.cards);
     if (!b.isSeq() && b.qty() <= oh.jk) return false;
