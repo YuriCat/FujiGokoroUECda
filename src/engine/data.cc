@@ -97,7 +97,7 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
             if (ok) i++;
             else { world[i] = world[--tmpNumWorlds]; }
         }
-        cerr << numWorlds << " -> " << tmpNumWorlds << " (" << prevTurnCount << " - " << field.turnCount() << ")" << endl;
+        //cerr << numWorlds << " -> " << tmpNumWorlds << " (" << prevTurnCount << " - " << field.turnCount() << ")" << endl;
         numWorlds = tmpNumWorlds;
     } else numWorlds = 0;
     prevTurnCount = field.turnCount();
