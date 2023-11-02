@@ -18,6 +18,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 // 条件x、命令等y
@@ -26,16 +27,16 @@
 #define FASSERT(f, o)
 #define FEQUALS(f0, f1, o)
 #else
-#define ASSERT(X, Y)  if(!(X)){ Y; assert(0); }
+#define ASSERT(X, Y)  if (!(X)) { Y; assert(0); }
 // 浮動小数点がまともな値を取っているかどうかのアサーション
-#define FASSERT(f, o) if(!(!std::isinf(f) && !std::isnan(f))){ std::cerr << (f) << std::endl; {o}\
+#define FASSERT(f, o) if (!(!std::isinf(f) && !std::isnan(f))) { std::cerr << (f) << std::endl; {o}\
 assert(!std::isinf(f) && !std::isnan(f)); assert(0); };
 // 浮動小数点が「ほぼ」同じ値を取っているかのチェック && FASSERT
-#define FEQUALS(f0, f1, o) { if(!(!std::isinf(f0) && !std::isnan(f0))){ std::cerr << (f0) << std::endl; {o}\
+#define FEQUALS(f0, f1, o) { if (!(!std::isinf(f0) && !std::isnan(f0))) { std::cerr << (f0) << std::endl; {o}\
 assert(!std::isinf(f0) && !std::isnan(f0)); assert(0); };\
-if(!(!std::isinf(f1) && !std::isnan(f1))){ std::cerr << (f1) << std::endl; {o}};\
+if (!(!std::isinf(f1) && !std::isnan(f1))) { std::cerr << (f1) << std::endl; {o}};\
 assert(!std::isinf(f1) && !std::isnan(f1)); assert(0); };\
-if(!(abs((f0) - (f1)) <= 0.00001)){ std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
+if (!(abs((f0) - (f1)) <= 0.00001)) { std::cerr << (f0) << " <-> " << (f1) << std::endl; {o}\
 assert(abs((f0) - (f1)) <= 0.00001); assert(0); }
 #endif // NDEBUG
 
@@ -330,7 +331,7 @@ static double sigmoid(double x, double alpha = 1) {
 static double logit(double s, double alpha = 1) {
     return -std::log((1.0 / s) - 1.0) * alpha;
 }
-static double beta(double x, double y){ // ベータ関数
+static double beta(double x, double y) { // ベータ関数
     return tgamma(x) * tgamma(y) / tgamma(x + y);
 }
 static double log_beta(double x, double y) {
@@ -705,8 +706,13 @@ MiniBitArray<T, B, N> invert(const MiniBitArray<T, B, N>& ba) {
     return ret;
 }
 
-template <class T, std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
+template <typename T0, typename T1>
+static std::ostream& operator <<(std::ostream& ost, const std::pair<T0, T1>& a) {
+    ost << "(" << a.first << ", " << a.second << ")";
+    return ost;
+}
+template <typename T, std::size_t N>
+static std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << a[i] << ", ";
     if (a.size() > 0) ost << a[N - 1];
@@ -714,7 +720,7 @@ std::ostream& operator <<(std::ostream& ost, const std::array<T, N>& a) {
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (int)a[i] << ", ";
     if (a.size() > 0) ost << (int)a[N - 1];
@@ -722,15 +728,15 @@ std::ostream& operator <<(std::ostream& ost, const std::array<std::int8_t, N>& a
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::array<std::uint8_t, N>& a) {
     ost << "{";
     for (int i = 0; i < (int)N - 1; i++) ost << (unsigned int)a[i] << ", ";
     if (a.size() > 0) ost << (unsigned int)a[N - 1];
     ost << "}";
     return ost;
 }
-template <class T>
-std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
+template <typename T>
+static std::ostream& operator <<(std::ostream& ost, const std::vector<T>& v) {
     ost << "{";
     for (int i = 0; i < (int)v.size() - 1; i++) ost << v[i] << ", ";
     if (v.size() > 0) ost << v.back();
@@ -746,7 +752,7 @@ static std::ostream& operator <<(std::ostream& ost, const MiniBitArray<T, B, N>&
     return ost;
 }
 template <std::size_t N>
-std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
+static std::ostream& operator <<(std::ostream& ost, const std::bitset<N>& a) {
     ost << "[";
     for (int i = 0; i < N; i++) ost << bool(a.test(i));
     ost << "]";
@@ -759,13 +765,6 @@ static std::array<T, N> invert(const std::array<T, N>& a, size_t n = N) {
     for (size_t i = 0; i < n; i++) r[a[i]] = i;
     for (size_t i = n; i < N; i++) r[i] = a[i];
     return r;
-}
-
-template <typename T, size_t N>
-static std::vector<T> a2v(const std::array<T, N>& a) {
-    std::vector<T> v;
-    for (const T& val : a) v.push_back(val);
-    return v;
 }
 
 extern std::string toupper(const std::string& str);

@@ -5,6 +5,7 @@
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
+#include "../core/dominance.hpp"
 #include "../engine/mate.hpp"
 #include "test.h"
 
