@@ -993,8 +993,6 @@ struct Board : public Move {
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
 
-    void resetDom() { Move::invalid = 0; }
-
     // 場 x 提出役 の効果
     bool domConditionally(Move m) const;
 
