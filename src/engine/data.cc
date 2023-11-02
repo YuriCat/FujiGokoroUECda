@@ -44,7 +44,7 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, ThreadTools *const ptools, int limSim) {
+void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     clearResults();
     candidates = num;
     for (int i = 0; i < candidates; i++) {
@@ -63,7 +63,9 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
         }
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
+}
 
+void RootInfo::updateWorlds(const Field& field, const SharedData& shared, ThreadTools *const ptools) {
     if (prevTurnCount >= 0) {
         int i = 0;
         int tmpNumWorlds = numWorlds;

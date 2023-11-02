@@ -63,6 +63,10 @@ public:
         L2::init();
     }
     void startMonteCarlo(RootInfo& root, const Field& field, int numThreads) {
+        // モンテカルロ用の準備
+        root.updateWorlds(field, shared, &rootTools);
+        if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
+
         // 1スレッドの場合は関数で、そうでなければスレッドで開く
         if (numThreads > 1) {
             // スレッド数に合わせたThreadToolsを準備
@@ -144,7 +148,7 @@ public:
         field.fromRecord(game, myPlayerNum, -1);
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(10000, (int)(pow((double)numChanges, 0.8) * 700));
-        root.setChange(change.data(), numChanges, field, shared, &rootTools, limitSimulations);
+        root.setChange(change.data(), numChanges, field, shared, limitSimulations);
 
         // 方策関数による評価
         double score[N_MAX_CHANGES];
@@ -153,7 +157,6 @@ public:
 
         // モンテカルロ法による評価
         if (!Settings::policyMode && changeCards == CARDS_NULL) {
-            if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
             startMonteCarlo(root, field, Settings::numChangeThreads);
         }
         root.sort();
@@ -303,7 +306,7 @@ public:
         // ルートノード設定
         int limitSimulations = Settings::fixedSimulationCount > 0 ? Settings::fixedSimulationCount
                                : std::min(5000, (int)(pow((double)numMoves, 0.8) * 700));
-        root.setPlay(mbuf.data(), numMoves, field, shared, &rootTools, limitSimulations);
+        root.setPlay(mbuf.data(), numMoves, field, shared, limitSimulations);
 
         // 方策関数による評価(必勝のときも行う, 除外された着手も考慮に入れる)
         double score[N_MAX_MOVES];
@@ -313,7 +316,6 @@ public:
         // モンテカルロ法による評価(結果確定のとき以外)
         if (!Settings::policyMode
             && !fieldInfo.isMate() && !fieldInfo.isGiveUp()) {
-            if (Settings::addPolicyOnRoot) root.addPolicyScoreToMonteCarloScore();
             startMonteCarlo(root, field, Settings::numPlayThreads);
         }
         // 着手決定のための情報が揃ったので着手を決定する

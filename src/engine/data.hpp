@@ -211,21 +211,23 @@ struct RootInfo {
     void unlock() { lock_.unlock(); }
 
     void setCommonInfo(int num, const Field& field,
-                       const SharedData& shared, ThreadTools *const ptools, int limSim);
+                       const SharedData& shared, int limSim);
     void setChange(const Cards *const a, int num, const Field& field,
-                   const SharedData& shared, ThreadTools *const ptools, int limSim = -1) {
+                   const SharedData& shared, int limSim = -1) {
         isChange = true;
         for (int i = 0; i < num; i++) child[i].setChange(a[i]);
-        setCommonInfo(num, field, shared, ptools, limSim);
+        setCommonInfo(num, field, shared, limSim);
     }
     void setPlay(const MoveInfo *const a, int num, const Field& field,
-                 const SharedData& shared, ThreadTools *const ptools, int limSim = -1) {
+                 const SharedData& shared, int limSim = -1) {
         isChange = false;
         for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
-        setCommonInfo(num, field, shared, ptools, limSim);
+        setCommonInfo(num, field, shared, limSim);
     }
 
+    void updateWorlds(const Field& field, const SharedData& shared, ThreadTools *const ptools);
     void addPolicyScoreToMonteCarloScore();
+
     void feedPolicyScore(const double *const score, int num);
 
     void feedSimulationResult(int triedIndex, const Field& field, SharedData *const pshared);
