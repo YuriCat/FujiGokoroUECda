@@ -678,11 +678,34 @@ inline BitCards CardsToNR(BitCards c, int q) {
     return nr;
 }
 
+// ランク中にnビット以上あればPQR_1の位置にビットが立つ
 inline BitCards CardsToER(BitCards c) {
-    // ランク中に1ビットでもあればPQR_1の位置にビットが立つ
     BitCards a = c | (c >> 1);
     return (a | (a >> 2)) & PQR_1;
 }
+inline BitCards CardsToE2R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return (a | (a >> 2) | (b & (b >> 2))) & PQR_1;
+}
+inline BitCards CardsToE3R(BitCards c) {
+    BitCards a = c & (c >> 1);
+    BitCards b = c | (c >> 1);
+    return ((a & (b >> 2)) | ((a >> 2) & b)) & PQR_1;
+}
+inline BitCards CardsToENR(BitCards c, int q) {
+    BitCards enr;
+    switch (q) {
+        case 0: enr = -1; break;
+        case 1: enr = CardsToER(c); break;
+        case 2: enr = CardsToE2R(c); break;
+        case 3: enr = CardsToE3R(c); break;
+        case 4: enr = CardsToFR(c); break;
+        default: assert(0); enr = CARDS_NULL; break;
+    }
+    return enr;
+}
+
 constexpr BitCards QRToPQR(BitCards qr) {
     // qr -> pqr 変換
     return qr + (qr & PQR_3) + (qr & (qr >> 1));
@@ -858,10 +881,10 @@ struct Move {
     bool isPASS() const { return t == 0; }
     bool isGroup() const { return t == 1; }
     bool isSeq() const { return t == 2; }
-    bool isSingle() const { return isGroup() && qty() == 1; }
+    bool isSingle() const { return qty() == 1; }
     bool containsJOKER() const { return jks || jkr; }
     bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
-    bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
+    bool isS3() const { return isSingle() && rank() == RANK_3 && suits() == SUITS_S; }
 
     // 情報を得る
     unsigned suits()      const { return s; }
@@ -969,8 +992,6 @@ struct Board : public Move {
 
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
-
-    void resetDom() { Move::invalid = 0; }
 
     // 場 x 提出役 の効果
     bool domConditionally(Move m) const;
