@@ -107,7 +107,6 @@ struct Field {
     int phase = PHASE_UNINIT;
 
     // シミュレーション用
-    MoveInfo *mbuf = nullptr;
     std::bitset<32> attractedPlayers; // 結果を知りたいプレイヤー集合
     FieldAddInfo fieldInfo;
 
@@ -139,7 +138,6 @@ struct Field {
         return false;
     }
 
-    void setMoveBuffer(MoveInfo *pm) { mbuf = pm; }
     void addAttractedPlayer(int p) { attractedPlayers.set(p); }
 
     bool isNull() const { return board.isNull(); }

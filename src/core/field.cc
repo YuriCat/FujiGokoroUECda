@@ -410,7 +410,6 @@ void copyField(const Field& arg, Field *const dst) {
     dst->phase = arg.phase;
 
     // playout info
-    dst->mbuf = arg.mbuf;
     dst->attractedPlayers = arg.attractedPlayers;
 
     // game info
