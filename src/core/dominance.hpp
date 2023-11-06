@@ -66,7 +66,7 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
         if (m.qty() > 4) {
             if (N_JOKERS <= 1) return true;
             if (m.qty() > 4 + oh.jk) return true;
-            return CardsToFR(ORToGValidZone(b.nextOrder(m), m.rank()));
+            return CardsToFR(oh.cards & ORToGValidZone(b.nextOrder(m), m.rank()));
         }
         int nextOrder = b.nextOrder(m);
         if (!(m.charaPQR() & oh.nd[nextOrder])) return true; // 無支配型と交差なし
@@ -100,7 +100,7 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
         if (b.qty() > 4) {
             if (N_JOKERS <= 1) return true;
             if (b.qty() > 4 + oh.jk) return true;
-            return CardsToFR(ORToGValidZone(b.order(), b.rank()));
+            return CardsToFR(oh.cards & ORToGValidZone(b.order(), b.rank()));
         }
         if (!(b.charaPQR() & oh.nd[b.order()])) return true; // 無支配型と交差なし
         if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
