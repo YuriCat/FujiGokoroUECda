@@ -555,14 +555,9 @@ int genAllSingle(Move *const mv0, Cards c) {
 int genLead(Move *const mv0, const Cards c) {
     bool jk = containsJOKER(c) ? true : false;
     Move *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
-    Cards x;
-    if (jk) {
-        x = maskJOKER(c);
-    } else {
-        x = BitCards(CardsToQR(c)) & PQR_234;
-    }
-    while (x) {
-        int r = IntCardToRank(pickIntCardLow(x));
+    Cards x = jk ? CardsToER(c) : CardsToE2R(c);
+    for (IntCard ic : x) {
+        int r = IntCardToRank(ic);
         switch (c[r]) {
             case 0: assert(0); break;
             case 1: {
@@ -722,7 +717,6 @@ int genLead(Move *const mv0, const Cards c) {
             } break;
             default: assert(0); break;
         }
-        x = maskCards(x, RankToCards(r));
     }
     mv += genAllSeq(mv, c); // 階段を生成
     return mv - mv0;
