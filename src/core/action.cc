@@ -170,11 +170,11 @@ int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
     return mv - mv0;
 }
 
-int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
+int genFollowSeqWithJoker(Move *const mv0, const Cards x, const Board b) {
     unsigned r = b.rank();
     unsigned qty = b.qty();
     assert(qty >= 3);
-    Cards c = plain;
+    Cards c = x.plain();
     Cards rCards; // 合法カードゾーン
     Cards validSeqZone; // 合法階段ゾーン
     if (b.order() == 0) { // 通常
