@@ -553,7 +553,7 @@ int genAllSingle(Move *const mv0, Cards c) {
 }
 
 int genLead(Move *const mv0, const Cards c) {
-    bool jk = containsJOKER(c) ? true : false;
+    bool jk = containsJOKER(c);
     Move *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
     Cards x = jk ? CardsToER(c) : CardsToE2R(c);
     for (IntCard ic : x) {
