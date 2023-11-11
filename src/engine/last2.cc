@@ -156,56 +156,56 @@ int L2Judge::judge(const int depth, MoveInfo *const buf,
     return L2_DRAW;
 }
 
-bool L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp,
+bool L2Judge::checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& m,
                            const Hand& myHand, const Hand& opsHand, const L2Field& field) {
-    if (!tmp.isPASS()) {
+    if (!m.isPASS()) {
         if (field.lastAwake
-            || dominatesCards(tmp, opsHand.cards, field.b)) { // 他支配チェック
-            if (myHand.qty - tmp.qty() <= 1) return true; // 支配して残り1枚なら勝ち
+            || dominatesCards(m, opsHand.cards, field.b)) { // 他支配チェック
+            if (myHand.qty - m.qty() <= 1) return true; // 支配して残り1枚なら勝ち
 
             Hand nextHand;
-            makeMove1stHalf(myHand, &nextHand, tmp);
+            makeMove1stHalf(myHand, &nextHand, m);
             if (judgeMate_Easy_NF(nextHand)) return true;
-            L2Field nextField = procAndFlushL2Field(field, tmp);
+            L2Field nextField = procAndFlushL2Field(field, m);
             if (judgeHandPW_NF(nextHand, opsHand, nextField.b)) return true;
-            //nextHand.key = subCardKey(myHand.key, CardsToHashKey(tmp.cards()));
-            tmp.setDomOthers();
+            //nextHand.key = subCardKey(myHand.key, CardsToHashKey(m.cards()));
+            m.setDomOthers();
         }
     } else {
         if (field.flushLead && field.lastAwake) {
             if (myHand.qty <= 1) return true; // 支配して残り1枚なら勝ち
             if (judgeMate_Easy_NF(myHand)) return true;
-            L2Field nextField = procAndFlushL2Field(field, tmp);
+            L2Field nextField = procAndFlushL2Field(field, m);
             if (judgeHandPW_NF(myHand, opsHand, nextField.b)) return true;
-            tmp.setDomOthers();
+            m.setDomOthers();
         }
     }
     return false;
 }
 
-int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& tmp,
+int L2Judge::check(const int depth, MoveInfo *const buf, MoveInfo& m,
                    const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy) {
     if (!checkedEasy) {
-        if (tmp.qty() >= myHand.qty) return L2_WIN;
-        if (checkDomMate(depth, buf, tmp, myHand, opsHand, field)) return L2_WIN;
+        if (m.qty() >= myHand.qty) return L2_WIN;
+        if (checkDomMate(depth, buf, m, myHand, opsHand, field)) return L2_WIN;
     }
 
-    if (!field.lastAwake && !tmp.dominatesOthers() && tmp.qty() == opsHand.qty) {
-        if (!dominatesHand(tmp, opsHand, field.b)) return L2_LOSE;
+    if (!field.lastAwake && !m.dominatesOthers() && m.qty() == opsHand.qty) {
+        if (!dominatesHand(m, opsHand, field.b)) return L2_LOSE;
     }
 
     childs++;
 
     // 支配性判定
-    if (!tmp.isPASS() && (field.lastAwake || tmp.dominatesOthers())) {
-        if (dominatesCards(tmp, myHand.cards, field.b)) tmp.setDomMe();
+    if (!m.isPASS() && (field.lastAwake || m.dominatesOthers())) {
+        if (dominatesCards(m, myHand.cards, field.b)) m.setDomMe();
     }
 
     L2Field nextField;
-    bool flipped = procL2Field(field, &nextField, tmp);
-    if (!tmp.isPASS()) {
+    bool flipped = procL2Field(field, &nextField, m);
+    if (!m.isPASS()) {
         Hand nextHand;
-        makeMoveAll(myHand, &nextHand, tmp);
+        makeMoveAll(myHand, &nextHand, m);
         if (!flipped) {
             return judge(depth + 1, buf, nextHand, opsHand, nextField, true);
         } else {
@@ -229,6 +229,6 @@ int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, con
 int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit, bool stats) {
     assert(myHand.any() && myHand.examAll() && opsHand.any() && opsHand.examAll());
     L2Judge judge(node_limit, buf);
-    MoveInfo tmp = move;
-    return judge.check(0, buf, tmp, myHand, opsHand, L2Field(b, fieldInfo));
+    MoveInfo m = move;
+    return judge.check(0, buf, m, myHand, opsHand, L2Field(b, fieldInfo));
 }
