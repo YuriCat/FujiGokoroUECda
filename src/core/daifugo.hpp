@@ -285,6 +285,7 @@ constexpr BitCards polymRanks(BitCards c) {
 }
 template <> constexpr BitCards polymRanks<0>(BitCards c) { return -1; }
 inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
+    assert(!containsJOKER(c));
     assert(n > 0);
     while (--n) c = polymRanks<2>(c);
     return c;
@@ -301,12 +302,14 @@ inline BitCards extractRanks(BitCards c) {
 }
 template <> constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
 inline BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
+    assert(!containsJOKER(c));
     assert(n > 0);
     while (--n) c = extractRanks<2>(c);
     return c;
 }
 
 inline BitCards polymRanksWithJOKER(BitCards c, int qty) {
+    assert(!containsJOKER(c));
     BitCards r;
     switch (qty) {
         case 0: r = CARDS_NULL; break;
