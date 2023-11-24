@@ -9,8 +9,7 @@ using namespace std;
 // http://qiita.com/ozwk/items/6d62a0717bdc8eac8184
 
 namespace Settings {
-    const double estimationTemperatureChange = 1.0;
-    const double estimationTemperaturePlay = 1.1;
+    const double estimationTemperature = 1.0;
     const int maxRejection = 800; // 採択棄却法時の棄却回数限度
     constexpr int BUCKET_MAX = 32;
 }
@@ -284,7 +283,7 @@ void RandomDealer::dealWithRejection(Cards *const dst, const GameRecord& game,
                 }
             }
         }
-        SoftmaxSelector<double> selector(lhs, buckets, 0.3);
+        SoftmaxSelector<double> selector(lhs, buckets, 0.33);
         bestDeal = selector.select(ptools->dice.random());
     }
     for (int p = 0; p < N; p++) dst[p] = deal[bestDeal][p];
@@ -465,7 +464,7 @@ Cards RandomDealer::change(const int p, const Cards cards, const int qty,
     if (shared.playerModel.trained) {
         for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
     }
-    SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperatureChange);
+    SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperature);
     int index = selector.select(ptools->dice.random());
     return change[index];
 }
@@ -660,7 +659,7 @@ double RandomDealer::oneChangeLikelihood(int p, const Cards cards, const Cards c
     if (shared.playerModel.trained) {
         for (int i = 0; i < numChanges; i++) score[i] += shared.playerModel.changeBiasScore(p, cards, change[i]);
     }
-    SoftmaxSelector<double> selector(score, numChanges, 1.1);
+    SoftmaxSelector<double> selector(score, numChanges, Settings::estimationTemperature);
     int index = find(change, change + numChanges, changeCards) - change;
     assert(0 <= index && index < numChanges);
     double prob = selector.prob(index);
@@ -699,7 +698,7 @@ double RandomDealer::onePlayLikelihood(const Field& field, Move move,
         if (mbuf[i].isMate()) score[i] = maxScore + 4;
     }
 
-    SoftmaxSelector<double> selector(score, numMoves, Settings::estimationTemperaturePlay);
+    SoftmaxSelector<double> selector(score, numMoves, Settings::estimationTemperature);
     return max(selector.prob(moveIndex), 1 / 256.0);
 }
 
