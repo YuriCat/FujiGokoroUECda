@@ -82,7 +82,7 @@ vector<int64_t> divide(int64_t st, int64_t ed, int n) {
 }
 int learn(vector<string> logFileNames, string outDirName, int mode) {
 
-    XorShift64 dice((uint32_t)time(NULL));
+    Dice dice((uint32_t)time(NULL));
     mt19937 mt((uint32_t)time(NULL));
 
     if (outDirName == "") outDirName = DIRECTORY_PARAMS_OUT;

@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static XorShift64 dice((unsigned int)time(NULL));
+static Dice dice((unsigned int)time(NULL));
 
 static ChangePolicy changePolicy;
 static PlayPolicy playPolicy;

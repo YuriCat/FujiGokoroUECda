@@ -281,7 +281,7 @@ inline uint64_t splitmix64(uint64_t& x) {
     return t ^ (t >> 31);
 }
 
-class XorShift64 {
+class Dice {
 private:
     uint64_t x, y;
 public:
@@ -303,8 +303,8 @@ public:
     static constexpr uint64_t min() { return 0ULL; }
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
-    constexpr XorShift64(): x(), y() {}
-    XorShift64(uint64_t s): x(), y() { seed(s); }
+    constexpr Dice(): x(), y() {}
+    Dice(uint64_t s): x(), y() { seed(s); }
 };
 
 static double dFactorial(int n) {
