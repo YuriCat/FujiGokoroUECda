@@ -29,10 +29,9 @@ inline bool dominatesCards(const Move m, const Cards oc, const Board b) {
 }
 
 // 引数として場を取った場合
-// パスの時は場を更新してから判定しても仕方ないので注意
+// 場を更新してから判定しても支配役の判定ができないので注意
 inline bool dominatesCards(const Board b, const Cards oc) {
     if (b.isNull()) return false;
-    if (b.domInevitably()) return true;
 
     if (b.isSingleJOKER()) return !containsS3(oc);
     if (!b.isSeq() && b.qty() <= oc.joker()) return false;
@@ -64,7 +63,11 @@ inline bool dominatesHand(const Move m, const Hand& oh, const Board b) {
     if (!m.isSeq() && m.qty() <= oh.jk) return false;
 
     if (!m.isSeq()) {
-        if (m.qty() > 4 + oh.jk) return true;
+        if (m.qty() > 4) {
+            if (N_JOKERS <= 1) return true;
+            if (m.qty() > 4 + oh.jk) return true;
+            return CardsToFR(oh.cards & ORToGValidZone(b.nextOrder(m), m.rank()));
+        }
         int nextOrder = b.nextOrder(m);
         if (!(m.charaPQR() & oh.nd[nextOrder])) return true; // 無支配型と交差なし
         if (b.locksSuits(m)) { // スートロックの場合はまだ支配可能性あり
@@ -89,13 +92,16 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
     assert(oh.exam_nd());
 
     if (b.isNull()) return false;
-    if (b.domInevitably()) return true;
 
     if (b.isSingleJOKER()) return !containsS3(oh.cards);
     if (!b.isSeq() && b.qty() <= oh.jk) return false;
 
     if (!b.isSeq()) { // グループ
-        if (b.qty() > 4 + oh.jk) return true;
+        if (b.qty() > 4) {
+            if (N_JOKERS <= 1) return true;
+            if (b.qty() > 4 + oh.jk) return true;
+            return CardsToFR(oh.cards & ORToGValidZone(b.order(), b.rank()));
+        }
         if (!(b.charaPQR() & oh.nd[b.order()])) return true; // 無支配型と交差なし
         if (b.suitsLocked()) { // スートロックの場合はまだ支配可能性あり
             Cards zone = ORToGValidZone(b.order(), b.rank());
@@ -104,10 +110,9 @@ inline bool dominatesHand(const Board b, const Hand& oh) {
         }
     } else { // 階段
         if (!oh.seq) return true;
-        int qty = b.qty();
-        Cards zone = ORQToSCValidZone(b.order(), b.rank(), qty);
+        Cards zone = ORQToSCValidZone(b.order(), b.rank(), b.qty());
         if (b.suitsLocked()) zone &= SuitsToCards(b.suits());
-        return !canMakeSeq(oh.cards & zone, oh.jk, qty);
+        return !canMakeSeq(oh.cards & zone, oh.jk, b.qty());
     }
     return false;
 }

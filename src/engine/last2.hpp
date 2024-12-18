@@ -48,8 +48,8 @@ public:
     NODE_LIMIT(nl), mbuf(mb) { init(); }
 
     int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
-    int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
-    bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+    int check(const int depth, MoveInfo *const buf, MoveInfo& m, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
+    bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& m, const Hand& myHand, const Hand& opsHand, const L2Field& field);
 };
 
 extern bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b);

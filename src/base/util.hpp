@@ -139,32 +139,25 @@ inline T highestNBits(T v, int n) {
     return ans;
 }
 
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
-constexpr T fill_bits_impl(T a, int n) {
-    return n <= 0 ? a :
-      (W <= 0 ? T(0) :
-      (W >= MAX_SIZE ? a :
-      ((fill_bits_impl<T, W, MAX_SIZE>(a, n - 1) << W) | a)));
+template <typename T, int W>
+constexpr T fillBitsImpl(T a, int n) {
+    return n <= 0 ? T(0) : (fillBitsImpl<T, W>(a, n - 1) << W) | a;
 }
-
-template <typename T, int W, int MAX_SIZE = sizeof(T) * 8>
-constexpr T fill_bits(T a) {
-    return W <= 0 ? T(0) :
-      (W >= MAX_SIZE ? a :
-      (((fill_bits_impl<T, W, MAX_SIZE>(a, (MAX_SIZE - 1) / W)) << W) | a));
+template <typename T, int W, int N = -1>
+constexpr T fillBits(T a) {
+    return fillBitsImpl<T, W>(a, N < 0 ? sizeof(T) * 8 / W : N);
 }
 
 constexpr uint64_t cross64(uint64_t a, uint64_t b) {
     return (a & 0x5555555555555555) | (b & 0xAAAAAAAAAAAAAAAA);
 }
-template <size_t N, size_t M>
-constexpr uint64_t cross64Impl(uint64_t *a) {
-    return M == 0 ? 0
-           : (fill_bits<uint64_t, N>(1ULL << (N - M)) & *a) | cross64Impl<N, (M > 0 ? (M - 1) : 0)>(a + 1);
+template <int N>
+constexpr uint64_t cross64Impl(const uint64_t *a, int n) {
+    return n <= 0 ? 0ULL : (fillBits<uint64_t, N>(1ULL << (N - n)) & *a) | cross64Impl<N>(a + 1, n - 1);
 }
-template <size_t N>
-constexpr uint64_t cross64(uint64_t *a) {
-    return cross64Impl<N, N>(a);
+template <int N>
+constexpr uint64_t cross64(const uint64_t *a) {
+    return cross64Impl<N>(a, N);
 }
 
 template <class dice64_t>
@@ -281,7 +274,7 @@ inline uint64_t splitmix64(uint64_t& x) {
     return t ^ (t >> 31);
 }
 
-class XorShift64 {
+class Dice {
 private:
     uint64_t x, y;
 public:
@@ -303,8 +296,8 @@ public:
     static constexpr uint64_t min() { return 0ULL; }
     static constexpr uint64_t max() { return 0xFFFFFFFFFFFFFFFFULL; }
 
-    constexpr XorShift64(): x(), y() {}
-    XorShift64(uint64_t s): x(), y() { seed(s); }
+    constexpr Dice(): x(), y() {}
+    Dice(uint64_t s): x(), y() { seed(s); }
 };
 
 static double dFactorial(int n) {
@@ -434,7 +427,7 @@ class MiniBitArray {
 public:
     using data_type = T;
     void clear() { data_ = T(0); }
-    void fill(T v) { data_ = fill_bits<T, N>(v); }
+    void fill(T v) { data_ = fillBits<T, B, N>(v); }
     void set(size_t p) {
         assert(0 <= p && p < N);
         data_ |= mask(p);

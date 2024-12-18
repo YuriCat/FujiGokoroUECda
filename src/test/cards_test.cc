@@ -368,7 +368,7 @@ bool CardsTest() {
     cerr << "sizeof(Cards) = " << sizeof(Cards) << endl;
 
     std::vector<Cards> sample;
-    XorShift64 dice((unsigned int)time(NULL));
+    Dice dice((unsigned int)time(NULL));
 
     for (int i = 0; i < 50000; i++) {
         int n = dice() % N_MAX_OWNED_CARDS_CHANGE;

@@ -285,6 +285,7 @@ constexpr BitCards polymRanks(BitCards c) {
 }
 template <> constexpr BitCards polymRanks<0>(BitCards c) { return -1; }
 inline BitCards polymRanks(BitCards c, int n) { // 重合数が変数の場合
+    assert(!containsJOKER(c));
     assert(n > 0);
     while (--n) c = polymRanks<2>(c);
     return c;
@@ -301,12 +302,14 @@ inline BitCards extractRanks(BitCards c) {
 }
 template <> constexpr BitCards extractRanks<0>(BitCards c) { return CARDS_NULL; }
 inline BitCards extractRanks(BitCards c, int n) { // 展開数が変数の場合
+    assert(!containsJOKER(c));
     assert(n > 0);
     while (--n) c = extractRanks<2>(c);
     return c;
 }
 
 inline BitCards polymRanksWithJOKER(BitCards c, int qty) {
+    assert(!containsJOKER(c));
     BitCards r;
     switch (qty) {
         case 0: r = CARDS_NULL; break;
@@ -881,10 +884,10 @@ struct Move {
     bool isPASS() const { return t == 0; }
     bool isGroup() const { return t == 1; }
     bool isSeq() const { return t == 2; }
-    bool isSingle() const { return isGroup() && qty() == 1; }
+    bool isSingle() const { return qty() == 1; }
     bool containsJOKER() const { return jks || jkr; }
     bool isSingleJOKER() const { return isSingle() && jks == SUITS_ALL; }
-    bool isS3() const { return !isSeq() && rank() == RANK_3 && suits() == SUITS_S; }
+    bool isS3() const { return isSingle() && rank() == RANK_3 && suits() == SUITS_S; }
 
     // 情報を得る
     unsigned suits()      const { return s; }
@@ -992,8 +995,6 @@ struct Board : public Move {
 
     void flipTmpOrder() { Move::o ^= 1; }
     void flipPrmOrder() { Move::po ^= 1; }
-
-    void resetDom() { Move::invalid = 0; }
 
     // 場 x 提出役 の効果
     bool domConditionally(Move m) const;
