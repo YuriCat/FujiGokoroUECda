@@ -40,8 +40,7 @@ struct GradientUpdator {
         weight_decay_ = weight_decay;
     }
 
-    template <typename T>
-    void update(T *value, double *prob, int numActions, int index, const std::vector<std::pair<int, float>> *features, double scale = 1) {
+    void update_stats(int numActions, const std::vector<std::pair<int, float>> *features) {
         // 統計情報を更新
         for (int i = 0; i < numActions; i++) {
             for (auto f : features[i]) {
@@ -60,6 +59,11 @@ struct GradientUpdator {
             }
             totalCount *= 1 - stats_decay;
         }
+    }
+
+    template <typename T>
+    void update(T *value, double *prob, int numActions, int index, const std::vector<std::pair<int, float>> *features, double scale = 1) {
+        update_stats(numActions, features);
 
         // 選ばれた手の確率を上げ、全体の手の確率を下げる
         double ent = 0;
@@ -68,9 +72,9 @@ struct GradientUpdator {
             for (auto f : features[i]) {
                 double diff = i == index ? (1 - prob[i]) : -prob[i];
                 double v = value[f.first];
-                v += lr_ * scale * diff / (1e-3 + var(f.first)) * f.second;
+                v += lr_ * scale * diff * f.second / (1e-3 + var(f.first));
                 if (ent_reg != 0) v += lr_ * scale * ent_reg * prob[i] * (-log2(prob[i]) - ent);
-                if (weight_decay_ != 0) v *= pow(1 - weight_decay_, 1 / (1e-3 + freq(i)));
+                if (weight_decay_ != 0) v *= pow(1 - weight_decay_, 1 / (1e-3 + freq(f.first)));
                 value[f.first] = v;
             }
         }
