@@ -15,7 +15,7 @@ static Clock cl;
 
 void testModeling(const MatchRecord& match, PlayerModel& model) {
     shared.initMatch(-1);
-    tools.dice.srand(1);
+    tools.dice.seed(1);
     long long time = 0;
 
     for (int i = 0; i < match.games.size(); i++) {

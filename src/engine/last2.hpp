@@ -14,7 +14,16 @@ enum L2Result {
     L2_DRAW = 1, L2_LOSE = 2
 };
 
-struct L2Field;
+// L2局面表現
+struct L2Field {
+    Board b;
+    bool lastAwake;
+    bool flushLead;
+
+    L2Field(): b(), lastAwake(), flushLead() {}
+    L2Field(const Board& b, const FieldAddInfo& info):
+    b(b), lastAwake(info.isLastAwake()), flushLead(info.isFlushLead()) {}
+};
 
 class L2Judge {
     // L2判定
@@ -39,9 +48,11 @@ public:
     NODE_LIMIT(nl), mbuf(mb) { init(); }
 
     int judge(const int depth, MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
-    int check(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
-    bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& tmp, const Hand& myHand, const Hand& opsHand, const L2Field& field);
+    int check(const int depth, MoveInfo *const buf, MoveInfo& m, const Hand& myHand, const Hand& opsHand, const L2Field& field, bool checkedEasy = false);
+    bool checkDomMate(const int depth, MoveInfo *const buf, MoveInfo& m, const Hand& myHand, const Hand& opsHand, const L2Field& field);
 };
 
-int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
-int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
+extern bool judgeHandL2L_NF(const Hand& myHand, const Hand& opsHand, const Board b);
+
+extern int judgeLast2(MoveInfo *const buf, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);
+extern int checkLast2(MoveInfo *const buf, const MoveInfo move, const Hand& myHand, const Hand& opsHand, const Board b, const FieldAddInfo fieldInfo, int node_limit = 65536, bool stats = true);

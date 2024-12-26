@@ -170,11 +170,11 @@ int genFollowPlainSeq(Move *const mv0, Cards c, Board b) {
     return mv - mv0;
 }
 
-int genFollowSeqWithJoker(Move *const mv0, const Cards plain, const Board b) {
+int genFollowSeqWithJoker(Move *const mv0, const Cards x, const Board b) {
     unsigned r = b.rank();
     unsigned qty = b.qty();
     assert(qty >= 3);
-    Cards c = plain;
+    Cards c = x.plain();
     Cards rCards; // 合法カードゾーン
     Cards validSeqZone; // 合法階段ゾーン
     if (b.order() == 0) { // 通常
@@ -288,8 +288,9 @@ int genFollowSeq(Move *const mv, const Cards c, const Board b) {
 // フォローグループ生成
 
 inline BitCards genNRankInGenFollowGroup(BitCards c, BitCards valid, int q) {
-    BitCards vc = c & valid;
-    return CardsToNR(vc, q);
+    BitCards vqr = CardsToQR(c) & valid;
+    if (q == 4) return vqr & PQR_3;
+    return QRToNR(vqr, q);
 }
 
 int genFollowSingle(Move *const mv0, const Cards myCards, const Board b) {
@@ -418,16 +419,16 @@ int genFollowDouble(Move *const mv0, const Cards c, const Board b) {
             }
         }
     } else { // スートしばりあり
-        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
+        const Cards vc = c | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
-        Cards c4 = CardsToFR(vc);
+        Cards c4 = genNRankInGenFollowGroup(vc, valid, 4);
         for (IntCard ic : c4) {
             int r = IntCardToRank(ic);
             GEN(2, b.suits());
         }
         if (containsJOKER(c)) {
             // 3ビット立っている部分からジョーカーを利用して生成
-            Cards c3 = CardsTo3R(vc);
+            Cards c3 = genNRankInGenFollowGroup(vc, valid, 3);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
                 unsigned suit = c[r] & b.suits();
@@ -496,9 +497,9 @@ int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
         }
     } else { // スートしばりあり
         // virtual cardを加えて4枚ある箇所から生成
-        const Cards vc = (c & valid) | SuitsToCards(SUITS_ALL - b.suits());
+        const Cards vc = c | SuitsToCards(SUITS_ALL - b.suits());
         // ランクごとに4ビット全て立っているか判定
-        Cards c4 = CardsToFR(vc);
+        Cards c4 = genNRankInGenFollowGroup(vc, valid, 4);
         // ジョーカーあり スートロックあり
         // virtual cardを加えて4枚ある箇所からプレーンで生成
         for (IntCard ic : c4) {
@@ -507,7 +508,7 @@ int genFollowTriple(Move *const mv0, const Cards c, const Board b) {
         }
         if (containsJOKER(c)) {
             // 3枚だけの箇所をジョーカー込みで生成
-            Cards c3 = CardsTo3R(vc);
+            Cards c3 = genNRankInGenFollowGroup(vc, valid, 3);
             for (IntCard ic : c3) {
                 int r = IntCardToRank(ic);
                 GEN_J(3, b.suits(), SUITS_ALL & ~vc[r]);
@@ -552,16 +553,11 @@ int genAllSingle(Move *const mv0, Cards c) {
 }
 
 int genLead(Move *const mv0, const Cards c) {
-    bool jk = containsJOKER(c) ? true : false;
+    bool jk = containsJOKER(c);
     Move *mv = mv0 + genAllSingle(mv0, c); // シングルはここで生成
-    Cards x;
-    if (jk) {
-        x = maskJOKER(c);
-    } else {
-        x = BitCards(CardsToQR(c)) & PQR_234;
-    }
-    while (x) {
-        int r = IntCardToRank(pickIntCardLow(x));
+    Cards x = jk ? CardsToER(c) : CardsToE2R(c);
+    for (IntCard ic : x) {
+        int r = IntCardToRank(ic);
         switch (c[r]) {
             case 0: assert(0); break;
             case 1: {
@@ -721,7 +717,6 @@ int genLead(Move *const mv0, const Cards c) {
             } break;
             default: assert(0); break;
         }
-        x = maskCards(x, RankToCards(r));
     }
     mv += genAllSeq(mv, c); // 階段を生成
     return mv - mv0;

@@ -38,12 +38,9 @@ void simulationThreadForRating(RateCalculationData *const pdst,
                                ThreadTools *const ptools) {
     while (pdst->trials++ < simulations) {
         Field f = *pfield;
-        f.setMoveBuffer(ptools->mbuf);
-
         startAllSimulation(f, pshared, ptools);
 
         pdst->lock.lock();
-
         for (int p = 0; p < N_PLAYERS; p++) {
             pdst->results[p][f.newClassOf(p)] += 1;
         }

@@ -5,6 +5,7 @@
 #include "../core/action.hpp"
 #include "../core/field.hpp"
 #include "../core/record.hpp"
+#include "../core/dominance.hpp"
 #include "../engine/mate.hpp"
 #include "test.h"
 
@@ -418,7 +419,7 @@ int analyzeMateDistribution(const Record& record) {
                 field.fieldInfo.maxNumCardsAwake(), field.fieldInfo.maxNumCards(),
                 field.fieldInfo.minNumCardsAwake(), field.fieldInfo.minNumCards()
             );
-            if (pw) mateMovesDistribution[bsr32(mateMoves.size())] += 1;
+            if (pw) mateMovesDistribution[bsr(mateMoves.size())] += 1;
         }
     }
 

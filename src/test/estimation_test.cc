@@ -19,7 +19,7 @@ static Clock cl;
 uint64_t worldKey(const Field& f) {
     uint64_t key = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
-        key |= fill_bits<uint64_t, N_PLAYERS>(1ULL << p) & f.hand[p].key;
+        key |= fillBits<uint64_t, N_PLAYERS>(1ULL << p) & f.hand[p].key;
     }
     return key;
 }
@@ -31,7 +31,7 @@ int cardIndex(IntCard ic) {
 void testEstimationRate(const MatchRecord& match, DealType type, PlayerModel *pmodel = nullptr) {
     shared.initMatch(-1);
     if (pmodel != nullptr) shared.playerModel = *pmodel;
-    tools.dice.srand(1);
+    tools.dice.seed(1);
     mt19937 dice(0);
 
     long long time = 0;

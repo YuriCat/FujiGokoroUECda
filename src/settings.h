@@ -46,8 +46,6 @@ struct ConfigReader {
 };
 extern ConfigReader configReader;
 
-#define Dice XorShift64
-
 /**************************以下は直接変更しない**************************/
 
 // 教師用ビルドでは1スレッドでルートでの方策の利用はなし
