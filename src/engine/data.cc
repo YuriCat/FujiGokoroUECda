@@ -43,32 +43,6 @@ void SharedData::closeMatch() {
     base_t::closeMatch();
 }
 
-void RootAction::clear() {
-    move = MOVE_NONE;
-    changeCards = CARDS_NULL;
-    simulations = 0;
-    turnSum = 0;
-    for (int p = 0; p < N_PLAYERS; p++) {
-        for (int cl = 0; cl < N_CLASSES; cl++) {
-            classDistribution[p][cl] = 0;
-        }
-    }
-    monteCarloScore.set(1, 1);
-    naiveScore.set(0, 0);
-    myScore.set(1, 1);
-    rivalScore.set(1, 1);
-    policyScore = 0;
-    policyProb = -1; // 方策計算に含めないものがあれば自動的に-1になるようにしておく
-}
-
-string RootAction::toString() const {
-    ostringstream oss;
-    oss << "size = " << size();
-    oss << " mean = " << mean();
-    oss << " var = " << var();
-    return oss.str();
-}
-
 void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shared, int limSim) {
     candidates = num;
     for (int i = 0; i < candidates; i++) {
@@ -87,18 +61,6 @@ void RootInfo::setCommonInfo(int num, const Field& field, const SharedData& shar
         }
     }
     limitSimulations = limSim < 0 ? 100000 : limSim;
-}
-void RootInfo::setChange(const Cards *const a, int num,
-                         const Field& field, const SharedData& shared, int limSim) {
-    isChange = true;
-    for (int i = 0; i < num; i++) child[i].setChange(a[i]);
-    setCommonInfo(num, field, shared, limSim);
-}
-void RootInfo::setPlay(const MoveInfo *const a, int num,
-                       const Field& field, const SharedData& shared, int limSim) {
-    isChange = false;
-    for (int i = 0; i < num; i++) child[i].setPlay(a[i]);
-    setCommonInfo(num, field, shared, limSim);
 }
 
 void RootInfo::addPolicyScoreToMonteCarloScore() {

@@ -166,9 +166,14 @@ struct Record {
 // ここから棋譜から局面を正方向に読む実装
 
 template <class actionRecord_t>
-class RecordIteratorBase : public std::iterator<std::input_iterator_tag, actionRecord_t> {
+class RecordIteratorBase {
     friend Field;
 public:
+    using difference_type   = std::ptrdiff_t;
+    using value_type        = actionRecord_t;
+    using pointer           = actionRecord_t*;
+    using reference         = actionRecord_t&;
+    using iterator_category = std::input_iterator_tag;
     bool operator !=(const RecordIteratorBase<actionRecord_t>& itr) const {
         return field != itr.field || game != itr.game || ply != itr.ply;
     }

@@ -11,6 +11,7 @@ struct GradientUpdator {
     double lr_decay;
     double weight_decay;
     double stats_decay;
+    double ent_reg;
 
     struct ParameterStats { double count, sum, sum2; };
     std::vector<ParameterStats> s;
@@ -26,11 +27,12 @@ struct GradientUpdator {
     double var(int i) const { return s[i].sum2 / totalCount - (s[i].sum / totalCount) * (s[i].sum / totalCount); }
     double freq(int i) const { return s[i].count / totalCount; }
 
-    void init(double _lr = 3e-5, double _lr_decay = 1e-6, double _weight_decay = 3e-6, double _stats_decay = 0) {
+    void init(double _lr = 3e-5, double _lr_decay = 1e-6, double _weight_decay = 3e-6, double _stats_decay = 0, double _ent_reg = 0) {
         lr = _lr;
         lr_decay = _lr_decay;
         weight_decay = _weight_decay;
         stats_decay = _stats_decay;
+        ent_reg = _ent_reg;
 
         totalCount = 1;
         for (auto& stat : s) stat = {1, 0, 1};
@@ -38,8 +40,7 @@ struct GradientUpdator {
         weight_decay_ = weight_decay;
     }
 
-    template <typename T>
-    void update(T *value, double *prob, int numActions, int index, const std::vector<std::pair<int, float>> *features, double scale = 1) {
+    void update_stats(int numActions, const std::vector<std::pair<int, float>> *features) {
         // 統計情報を更新
         for (int i = 0; i < numActions; i++) {
             for (auto f : features[i]) {
@@ -58,13 +59,23 @@ struct GradientUpdator {
             }
             totalCount *= 1 - stats_decay;
         }
+    }
+
+    template <typename T>
+    void update(T *value, double *prob, int numActions, int index, const std::vector<std::pair<int, float>> *features, double scale = 1) {
+        update_stats(numActions, features);
 
         // 選ばれた手の確率を上げ、全体の手の確率を下げる
+        double ent = 0;
+        if (ent_reg != 0) for (int i = 0; i < numActions; i++) ent += -prob[i] * log2(prob[i]);
         for (int i = 0; i < numActions; i++) {
             for (auto f : features[i]) {
                 double diff = i == index ? (1 - prob[i]) : -prob[i];
-                value[f.first] += lr_ * scale * diff / (1e-3 + var(f.first)) * f.second;
-                if (weight_decay_ != 0) value[f.first] *= pow(1 - weight_decay_, 1 / (1e-3 + freq(i)));
+                double v = value[f.first];
+                v += lr_ * scale * diff * f.second / (1e-3 + var(f.first));
+                if (ent_reg != 0) v += lr_ * scale * ent_reg * prob[i] * (-log2(prob[i]) - ent);
+                if (weight_decay_ != 0) v *= pow(1 - weight_decay_, 1 / (1e-3 + freq(f.first)));
+                value[f.first] = v;
             }
         }
         lr_ *= 1 - lr_decay;

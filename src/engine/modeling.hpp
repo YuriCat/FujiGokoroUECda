@@ -57,9 +57,16 @@ union PlayerModelStats {
         double updatedCrossEntropy[N_PLAYERS];
         double baseAccuracy[N_PLAYERS];
         double updatedAccuracy[N_PLAYERS];
+        double baseSoftAccuracy[N_PLAYERS];
+        double updatedSoftAccuracy[N_PLAYERS];
         double KLDivergence[N_PLAYERS];
     };
-    std::array<double, 8 * N_PLAYERS> v_; // 加算を簡単にするために
+    std::array<double, 10 * N_PLAYERS> v_; // 加算を簡単にするために
+
+    PlayerModelStats& operator +=(const PlayerModelStats& stats) {
+        for (int k = 0; k < (int)v_.size(); k++) v_[k] += stats.v_[k];
+        return *this;
+    }
 };
 
 struct SharedData;

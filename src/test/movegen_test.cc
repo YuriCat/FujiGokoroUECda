@@ -13,7 +13,7 @@ static Clock cl;
 static std::mt19937 mt;
 
 #define GENERATION_CASE(c, label) {\
-assert(c.countInCompileTime() == N_MAX_OWNED_CARDS_PLAY);\
+assert(c.count() == N_MAX_OWNED_CARDS_PLAY);\
 int numMoves = genLead(buffer, c);\
 cerr << numMoves << " moves were generated for " << c << endl;\
 for (int m = 0; m < numMoves; m++) { cerr << buffer[m] << " "; }\
@@ -77,6 +77,7 @@ int testRecordMoves(const Record& record) {
     // 棋譜中の局面においてテスト
     uint64_t genTime[2] = {0};
     uint64_t genCount[2] = {0};
+    uint64_t genGeneratedCount[2] = {0};
     uint64_t genHolded[2] = {0};
 
     // プリミティブ型での着手生成
@@ -92,6 +93,7 @@ int testRecordMoves(const Record& record) {
             int numMoves = genMove(buffer, cards, b);
             genTime[0] += cl.stop();
             genCount[0] += 1;
+            genGeneratedCount[0] += numMoves;
 
             // 重大な問題がないかチェック
             if (testMoveValidity(buffer, numMoves, field)) {
@@ -110,6 +112,7 @@ int testRecordMoves(const Record& record) {
         }
     }
 
+    cerr << "generation count = " << genGeneratedCount[0] / (double)genCount[0] << endl;
     cerr << "generation rate = " << genHolded[0] / (double)genCount[0] << endl;
     cerr << "generation time = " << genTime[0] / (double)genCount[0] << endl;
 
