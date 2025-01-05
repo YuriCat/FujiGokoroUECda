@@ -161,9 +161,11 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 
 void PlayerModel::update(const MatchRecord& record, int gameNum, int playerNum,
                          const SharedData& shared, MoveInfo *const buf) {
-    for (int i = 0; i < 10; i++) {
-        int g = gameNum - i;
-        if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, i == 0);
+    updateGame(record.games[gameNum], playerNum, shared, buf, true);
+    const int N = 30;
+    for (int i = 0; i < N; i++) {
+        int g = gameNum - (N - 1) + i;
+        if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, false);
     }
     trained = true;
     games += 1;
