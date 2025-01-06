@@ -77,7 +77,7 @@ int simulation(Field& field,
         // 手を選んで進める
         MoveInfo move = simulationMove(field, *pshared, ptools, progress);
         if (field.procFast(move) < 0) break;
-        progress *= 0.95;
+        for (int i = 0; i < move.qty(); i++) progress *= 0.95;
     }
     return 0;
 }
