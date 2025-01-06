@@ -6,21 +6,42 @@
 
 using namespace std;
 
+void PlayerModel::init() {
+    memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
+    updator.init(3e-4, 0, 1e-4, 1e-5);
+    stats_.clear();
+    tmpStats = {0};
+    changeStats_.clear();
+    tmpChangeStats = {0};
+    games = 0;
+    trained = false;
+}
+
 #define F(index) { if (v != nullptr) v->push_back(make_pair(index, 1.0f)); score += table[index]; }
 
 double PlayerModel::playBiasScore(const Field& field, int player, Move move,
                                   vector<pair<int, float>> *v) const {
     const double *table = bias[player];
     double score = 0;
+    const Cards cards = field.getCards(field.turn());
+    const Board b = field.board;
     if (move.isPASS()) F(0);
-    if (move.isSingle()) F(1);
-    if (move.isGroup()) F(2);
-    if (move.isSeq()) F(3);
-    if (move.containsJOKER()) F(4);
-    if (move.isRev()) F(5);
-    if (move.domInevitably()) F(6);
-    if (field.board.domConditionally(move)) F(7);
-    if (field.board.locksSuits(move)) F(8);
+    if (b.isNull()) {
+        if (move.isSingle()) F(1);
+        if (move.isGroup() && move.qty() > 1) F(2);
+        if (move.isSeq()) F(3);
+        if (IntCardToRank(b.order() == 0 ? cards.lowest() : cards.plain().highest()) == move.rank()) F(12);
+    } else {
+        if (!b.suitsLocked() && b.locksSuits(move)) F(8);
+        if (field.fieldInfo.isSelfFollow() && !move.isPASS()) F(10);
+    }
+    if (move.containsJOKER()) {
+        F(4);
+        if (move.isSingleJOKER()) F(11);
+    }
+    if (b.domConditionally(move)) F(7);
+    if (!b.domConditionally(move) && (move.cards() & CARDS_S3)) F(9);
+
     return score;
 }
 

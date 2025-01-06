@@ -4,7 +4,7 @@
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 
-const int PLAY_BIAS_FEATURES = 4 + 5;
+const int PLAY_BIAS_FEATURES = 13;
 const int BIAS_FEATURES = PLAY_BIAS_FEATURES + 6;
 
 struct ProbDiffUpdator {
@@ -86,16 +86,7 @@ struct PlayerModel {
 
     PlayerModel(): updator(BIAS_FEATURES) { init(); }
 
-    void init() {
-        memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
-        updator.init(1e-3, 0, 1e-4, 1e-5);
-        stats_.clear();
-        tmpStats = {0};
-        changeStats_.clear();
-        tmpChangeStats = {0};
-        games = 0;
-        trained = false;
-    }
+    void init();
     double playBiasScore(const Field& field, int player, Move move, std::vector<std::pair<int, float>> *v = nullptr) const;
     double changeBiasScore(int player, const Cards cards, const Cards changeCards, std::vector<std::pair<int, float>> *v = nullptr) const;
     void update(const MatchRecord& record, int gameNum, int playerNum, const SharedData& shared, MoveInfo *const buf);
