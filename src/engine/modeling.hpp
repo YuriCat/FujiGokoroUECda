@@ -4,7 +4,7 @@
 #include "../core/field.hpp"
 #include "../core/record.hpp"
 
-const int PLAY_BIAS_FEATURES = 13;
+const int PLAY_BIAS_FEATURES = 14;
 const int BIAS_FEATURES = PLAY_BIAS_FEATURES + 6;
 
 struct ProbDiffUpdator {

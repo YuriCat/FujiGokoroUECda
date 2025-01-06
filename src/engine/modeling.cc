@@ -8,7 +8,7 @@ using namespace std;
 
 void PlayerModel::init() {
     memset(bias, 0, sizeof(double) * N_PLAYERS * BIAS_FEATURES);
-    updator.init(3e-4, 0, 1e-4, 1e-5);
+    updator.init(3e-4, 0, 3e-5, 1e-5);
     stats_.clear();
     tmpStats = {0};
     changeStats_.clear();
@@ -30,6 +30,7 @@ double PlayerModel::playBiasScore(const Field& field, int player, Move move,
         if (move.isSingle()) F(1);
         if (move.isGroup() && move.qty() > 1) F(2);
         if (move.isSeq()) F(3);
+        if (move.isRev()) F(13);
         if (IntCardToRank(b.order() == 0 ? cards.lowest() : cards.plain().highest()) == move.rank()) F(12);
     } else {
         if (!b.suitsLocked() && b.locksSuits(move)) F(8);
@@ -183,10 +184,13 @@ void PlayerModel::updateGame(const GameRecord& record, int playerNum,
 void PlayerModel::update(const MatchRecord& record, int gameNum, int playerNum,
                          const SharedData& shared, MoveInfo *const buf) {
     updateGame(record.games[gameNum], playerNum, shared, buf, true);
-    const int N = 30;
-    for (int i = 0; i < N; i++) {
-        int g = gameNum - (N - 1) + i;
-        if (g >= 0) updateGame(record.games[g], playerNum, shared, buf, false);
+    const double coef = 1.3;
+    int prev = -1;
+    for (double i = pow(coef, 35); i > 1; i /= coef) {
+        int g = gameNum - int(i) + 1;
+        if (g < 0 || g == prev) continue;
+        prev = g;
+        updateGame(record.games[g], playerNum, shared, buf, false);
     }
     trained = true;
     games += 1;
