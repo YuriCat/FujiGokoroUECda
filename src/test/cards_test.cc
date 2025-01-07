@@ -366,6 +366,13 @@ bool CardsTest() {
     cerr << "sizeof(IntCard) = " << sizeof(IntCard) << endl;
     cerr << "sizeof(BitCards) = " << sizeof(BitCards) << endl;
     cerr << "sizeof(Cards) = " << sizeof(Cards) << endl;
+    cerr << "sizeof(Move) = " << sizeof(Move) << endl;
+    cerr << "sizeof(MoveInfo) = " << sizeof(MoveInfo) << endl;
+    cerr << "sizeof(Board) = " << sizeof(Board) << endl;
+    cerr << "sizeof(FieldAddInfo) = " << sizeof(FieldAddInfo) << endl;
+    cerr << "sizeof(Hand) = " << sizeof(Hand) << endl;
+    cerr << "sizeof(Field) = " << sizeof(Field) << endl;
+    cerr << endl;
 
     std::vector<Cards> sample;
     Dice dice((unsigned int)time(NULL));
