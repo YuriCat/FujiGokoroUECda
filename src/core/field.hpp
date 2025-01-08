@@ -193,7 +193,7 @@ struct Field {
     Cards getOpsCards(int p) const { return opsHand[p].cards; }
     unsigned numCardsOf(int p) const { return hand[p].qty; }
     Cards getRemCards() const { return remCards; }
-    Cards getNumRemCards() const { return remQty; }
+    unsigned getNumRemCards() const { return remQty; }
     const Hand& getHand(int p) const { return hand[p]; }
     const Hand& getOpsHand(int p) const { return opsHand[p]; }
 
