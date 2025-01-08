@@ -67,25 +67,20 @@ static double clock_sec() {
     return tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
 
-static uint64_t cputime() {
-    unsigned int ax, dx;
-    asm volatile("rdtsc\nmovl %%eax,%0\nmovl %%edx,%1":"=g"(ax),"=g"(dx): :"eax","edx");
-    return ((unsigned long long)(dx) << 32) + (unsigned long long)(ax);
-}
-
 class Clock {
-private:
-    uint64_t c_start;
 public:
-    void start() { c_start = cputime(); }
-    uint64_t stop() const { return cputime() - c_start; }
-    uint64_t restart() { // 結果を返し、0から再スタート
-        uint64_t tmp = cputime();
-        uint64_t diff = tmp - c_start;
-        c_start = tmp;
+    void start() { c_ = clock(); }
+    clock_t stop() const { return clock() - c_; }
+    clock_t restart() { // 結果を返し、0から再スタート
+        clock_t tmp = clock();
+        clock_t diff = tmp - c_;
+        c_ = tmp;
         return diff;
     }
-    constexpr Clock(): c_start() {}
+    Clock() {}
+    Clock(int m) { start(); }
+private:
+    clock_t c_;
 };
 
 class ClockMicS { // microsec単位
