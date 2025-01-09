@@ -74,7 +74,7 @@ struct GradientUpdator {
                 double v = value[f.first];
                 v += lr_ * scale * diff * f.second / (1e-3 + var(f.first));
                 if (ent_reg != 0) v += lr_ * scale * ent_reg * prob[i] * (-log2(prob[i]) - ent);
-                if (weight_decay_ != 0) v *= pow(1 - weight_decay_, 1 / (1e-3 + freq(f.first)));
+                if (weight_decay_ != 0) v *= pow(1 - weight_decay_ * scale, 1 / (1e-3 + freq(f.first)));
                 value[f.first] = v;
             }
         }
