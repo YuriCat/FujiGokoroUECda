@@ -39,7 +39,8 @@ make -j4
 
 過去に大会出場したバージョンは
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2023/download.html
+https://flute.u-shizuoka-ken.ac.jp/gat/
+https://flute.u-shizuoka-ken.ac.jp/daihinmin/2023/download.html
 
 からダウンロードできます。
 
@@ -47,7 +48,7 @@ http://www.tnlab.inf.uec.ac.jp/daihinmin/2023/download.html
 
 ## ルール等 公式のドキュメント
 
-http://www.tnlab.inf.uec.ac.jp/daihinmin/2023/document.html
+https://flute.u-shizuoka-ken.ac.jp/daihinmin/2023/document.html
 
 ## 大会での利用について
 
