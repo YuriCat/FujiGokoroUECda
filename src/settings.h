@@ -10,7 +10,7 @@
 // プロフィール
 const std::string MY_NAME = "lilovyy";
 const std::string MY_POL_NAME = "maLilovyy";
-const std::string MY_VERSION = "20231013";
+const std::string MY_VERSION = "20250424";
 
 // 戦略設定
 
@@ -36,6 +36,7 @@ namespace Settings {
     extern int fixedSimulationCount;
     extern bool maximizePosition;
     extern int thinkingLevel;
+    extern bool opponentModeling;
 }
 
 extern std::string DIRECTORY_PARAMS_IN;

@@ -1,4 +1,3 @@
-#include <string>
 #include <iostream>
 #include <fstream>
 #include <thread>
@@ -13,6 +12,7 @@ namespace Settings {
     int fixedSimulationCount = -1;
     bool maximizePosition = false;
     int thinkingLevel = THINKING_LEVEL;
+    bool opponentModeling = true;
 }
 
 string DIRECTORY_PARAMS_IN = "";

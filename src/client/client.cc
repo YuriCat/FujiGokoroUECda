@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) { // for UECda
         } else if (arg == "-lev") { // thinking level
             int level = atoi(argv[c + 1]);
             Settings::thinkingLevel = level;
+        } else if (arg == "-nomodel") { // no modeling
+            Settings::opponentModeling = false;
         }
     }
 

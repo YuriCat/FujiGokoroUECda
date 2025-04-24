@@ -389,8 +389,9 @@ public:
     }
     void closeGame() {
         // プレーヤーモデル更新
-        const auto& record = shared.record;
-        shared.playerModel.update(record, record.games.size() - 1, record.myPlayerNum, shared, rootTools.mbuf);
+        if (Settings::opponentModeling) {
+            shared.playerModel.update(shared.record, record.games.size() - 1, record.myPlayerNum, shared, rootTools.mbuf);
+        }
         shared.closeGame();
     }
     void closeMatch() {
