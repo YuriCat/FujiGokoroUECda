@@ -13,27 +13,26 @@ inline int selectBanditAction(const RootInfo& root, Dice& dice) {
         // 2つの時は同数(分布サイズ単位)に割り振る
         if (a[0].size() == a[1].size()) return dice() % 2;
         else return a[0].size() < a[1].size() ? 0 : 1;
-    } else {
-        // UCB-root アルゴリズム
-        int index = 0;
-        double bestScore = -DBL_MAX;
-        double sqAllSize = sqrt(root.monteCarloAllScore.size());
-        for (int i = 0; i < actions; i++) {
-            double score;
-            if (a[i].simulations < 4) {
-                // 最低プレイアウト数をこなしていないものは、大きな値にする
-                // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
-                score = (double)((1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6)));
-            } else {
-                score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                index = i;
-            }
-        }
-        return index;
     }
+    // UCB-root アルゴリズム
+    int index = 0;
+    double bestScore = -DBL_MAX;
+    double sqAllSize = sqrt(root.monteCarloAllScore.size());
+    for (int i = 0; i < actions; i++) {
+        double score;
+        if (a[i].simulations < 4) {
+            // 最低プレイアウト数をこなしていないものは、大きな値にする
+            // ただし最低回数のもののうちどれかがランダムに選ばれるようにする
+            score = (1U << 16) - (a[i].simulations << 8) + (dice() % (1U << 6));
+        } else {
+            score = a[i].mean() + 0.7 * sqrt(sqAllSize / a[i].size()); // ucbr値
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            index = i;
+        }
+    }
+    return index;
 }
 
 inline bool finishCheck(const RootInfo& root, double simuTime, double valuePerSec, Dice& dice) {
