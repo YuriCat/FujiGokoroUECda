@@ -62,11 +62,13 @@ struct Hand {
     void set1stHalf(Cards c) { set1stHalf(c, c.count()); }
     void set(Cards c) { set(c, c.count()); }
     void setAll(Cards c) { setAll(c, c.count(), CardsToHashKey(c)); }
-    void init() {
-        cards = seq = CARDS_NULL;
+    void clear() {
+        cards = CARDS_NULL;
+        qty = jk = 0;
+        seq = CARDS_NULL;
         qr = 0ULL;
         pqr = sc = CARDS_NULL;
-        qty = jk = 0;
+        nd[0] = nd[1] = CARDS_NULL;
         key = 0ULL;
     }
     void makeMove(Move m);
@@ -279,7 +281,7 @@ inline std::ostream& operator <<(std::ostream& out, const Hand& hand) { // 出�
 
 template <bool HALF = false>
 inline void makeMove(const Hand& arg, Hand *const dst, Move m, Cards dc, uint32_t dq) {
-    // 普通、パスやカードが0枚になるときはこの関数には入らない。
+    // 普通、パスやカードが0枚になるときはこの関数には入らない
 
     // 更新するものは最初にチェック
     if (HALF) assert(arg.exam1stHalf());

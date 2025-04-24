@@ -10,7 +10,7 @@
 // プロフィール
 const std::string MY_NAME = "lilovyy";
 const std::string MY_POL_NAME = "maLilovyy";
-const std::string MY_VERSION = "20230927";
+const std::string MY_VERSION = "20231013";
 
 // 戦略設定
 
@@ -46,8 +46,6 @@ struct ConfigReader {
     ConfigReader(std::string cfile);
 };
 extern ConfigReader configReader;
-
-#define Dice XorShift64
 
 /**************************以下は直接変更しない**************************/
 

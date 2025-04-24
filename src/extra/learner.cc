@@ -29,24 +29,24 @@ namespace LearningSettings {
 
 class LearningSpace {
 private:
-    ChangePolicyLearner<policy_value_t> changeLearner_;
-    PlayPolicyLearner<policy_value_t> playLearner_;
+    ChangePolicyLearner changeLearner_;
+    PlayPolicyLearner playLearner_;
 
 public:
     // 相手プレーヤー別に呼び出しを分ける想定もあるので引数を取れるようにはしておく
-    ChangePolicyLearner<policy_value_t>& changeLearner(int p = 0) { return changeLearner_; }
-    PlayPolicyLearner<policy_value_t>& playLearner(int p = 0) { return playLearner_; }
+    ChangePolicyLearner& changeLearner(int p = 0) { return changeLearner_; }
+    PlayPolicyLearner& playLearner(int p = 0) { return playLearner_; }
 
-    LearningSpace(ChangePolicy<policy_value_t> *const pcp,
-                  PlayPolicy<policy_value_t> *const ppp) {
+    LearningSpace(ChangePolicy *const pcp,
+                  PlayPolicy *const ppp) {
         changeLearner_.setClassifier(pcp);
         playLearner_.setClassifier(ppp);
     }
 };
 
 // 重いのでグローバルに置く
-ChangePolicy<policy_value_t> changePolicy;
-PlayPolicy<policy_value_t> playPolicy;
+ChangePolicy changePolicy;
+PlayPolicy playPolicy;
 vector<ThreadTools> threadTools;
 vector<LearningSpace> ls;
 
@@ -82,7 +82,7 @@ vector<int64_t> divide(int64_t st, int64_t ed, int n) {
 }
 int learn(vector<string> logFileNames, string outDirName, int mode) {
 
-    XorShift64 dice((uint32_t)time(NULL));
+    Dice dice((uint32_t)time(NULL));
     mt19937 mt((uint32_t)time(NULL));
 
     if (outDirName == "") outDirName = DIRECTORY_PARAMS_OUT;

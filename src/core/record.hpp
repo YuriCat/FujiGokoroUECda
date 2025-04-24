@@ -5,10 +5,12 @@
 #include "field.hpp"
 
 struct PlayRecord { // 1つの着手の記録
-    Move move; unsigned time;
+    uint32_t move_;
+    uint32_t time;
 
-    operator Move() const { return move; }
-    void set(Move m, unsigned t) { move = m; time = t; }
+    operator Move() const { return move(); }
+    Move move() const { return Move::fromInt(move_); }
+    void set(Move m, unsigned t) { move_ = m.toInt(); time = t; }
     std::string toString() const;
 };
 
@@ -37,7 +39,7 @@ struct GameRecord {
 
     void setTerminated() { flags_.set(0); }
     void setInitGame() { flags_.set(1); }
-    void resetInitGame() { flags_.reset(0); }
+    void resetInitGame() { flags_.reset(1); }
 
     bool isTerminated() const { return flags_.test(0); }
     bool isInitGame() const { return flags_.test(1); }
@@ -91,7 +93,7 @@ struct MatchRecord {
         return pos;
     }
     void initGame() {
-        games.emplace_back(GameRecord());
+        games.emplace_back();
         auto& g = latestGame();
         g.init(myPlayerNum);
         for (int p = 0; p < N_PLAYERS; p++) {
@@ -105,7 +107,7 @@ struct MatchRecord {
         }
     }
     void pushGame(const GameRecord& game) {
-        games.emplace_back(game);
+        games.push_back(game);
     }
     void init(int playerNum = -1) {
         myPlayerNum = playerNum;
@@ -164,9 +166,14 @@ struct Record {
 // ここから棋譜から局面を正方向に読む実装
 
 template <class actionRecord_t>
-class RecordIteratorBase : public std::iterator<std::input_iterator_tag, actionRecord_t> {
+class RecordIteratorBase {
     friend Field;
 public:
+    using difference_type   = std::ptrdiff_t;
+    using value_type        = actionRecord_t;
+    using pointer           = actionRecord_t*;
+    using reference         = actionRecord_t&;
+    using iterator_category = std::input_iterator_tag;
     bool operator !=(const RecordIteratorBase<actionRecord_t>& itr) const {
         return field != itr.field || game != itr.game || ply != itr.ply;
     }

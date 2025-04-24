@@ -80,7 +80,7 @@ void Field::procHand(int tp, Move m) {
         if (p == tp) {
             if (know(p)) {
                 assert(hand[p].holds(dc));
-                if (dq >= hand[p].qty) hand[p].setAll(CARDS_NULL, 0, 0);
+                if (dq >= hand[p].qty) hand[p].clear();
                 else hand[p].makeMoveAll(m, dc, dq, dkey);
             }
             else hand[p].qty -= dq;
@@ -133,11 +133,11 @@ void Field::prepareForPlay() {
     fieldInfo.init();
 
     // 相手手札枚数情報
-    int minNum = INT_MAX, maxNum = 0;
-    int minNumAwake = INT_MAX, maxNumAwake = 0;
+    unsigned minNum = 15, maxNum = 0;
+    unsigned minNumAwake = 15, maxNumAwake = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (p == tp) continue;
-        int num = numCardsOf(p);
+        unsigned num = numCardsOf(p);
         if (isAlive(p)) {
             minNum = min(minNum, num);
             maxNum = max(maxNum, num);
@@ -147,10 +147,10 @@ void Field::prepareForPlay() {
             }
         }
     }
-    fieldInfo.setMinNCardsAwake(minNumAwake);
-    fieldInfo.setMinNCards(minNum);
-    fieldInfo.setMaxNCardsAwake(maxNumAwake);
-    fieldInfo.setMaxNCards(maxNum);
+    fieldInfo.setMinNumCardsAwake(minNumAwake);
+    fieldInfo.setMinNumCards(minNum);
+    fieldInfo.setMaxNumCardsAwake(maxNumAwake);
+    fieldInfo.setMaxNumCards(maxNum);
 
     // 場の特徴
     if (isNull()) {
@@ -196,7 +196,7 @@ void Field::initGame() {
     recvCards.fill(CARDS_NULL);
 
     remCards = CARDS_ALL;
-    remQty = countCards(CARDS_ALL);
+    remQty = N_CARDS;
     remKey = HASH_CARDS_ALL;
 }
 
@@ -240,9 +240,7 @@ bool Field::exam() const {
 
     // 手札
     Cards sum = CARDS_NULL;
-    int NSum = 0;
-    Cards r = remCards;
-    int NR = remQty;
+    int sumQty = 0;
     for (int p = 0; p < N_PLAYERS; p++) {
         if (isAlive(p)) {
             // 上がっていないのに手札が無い場合
@@ -260,21 +258,21 @@ bool Field::exam() const {
 
             Cards c = hand[p].cards;
             // 排他性
-            if (!isExclusiveCards(sum, c)) {
+            if (!sum.isExclusive(c)) {
                 cerr << sum << endl;
                 cerr << hand[p] << endl;
                 cerr << "hand[" << p << "]excl" << endl;
                 return false;
             }
-            // 包括性
-            if (!holdsCards(r, c)) {
+            // 包含関係
+            if (!remCards.holds(c)) {
                 cerr << remCards << endl;
                 cerr << hand[p] << endl;
                 cerr << "hand[" << p << "]hol" << endl;
                 return false;
             }
             sum += c;
-            NSum += hand[p].qty;
+            sumQty += hand[p].qty;
         } else {
             // 上がっているのに手札がある場合があるかどうか(qtyは0にしている)
             if (hand[p].qty > 0) {
@@ -283,15 +281,15 @@ bool Field::exam() const {
         }
     }
     if (!isSubjective()) {
-        if (sum != r) {
+        if (sum != remCards) {
             for (int p = 0; p < N_PLAYERS; p++) {
                 cerr << hand[p].cards << endl;
             }
             cerr << "sum cards - rem cards" << endl;
             return false;
         }
-        if (NR != NSum) {
-            cerr << "nsum cards - nrem cards" << endl;
+        if (sumQty != remQty) {
+            cerr << "num sum cards - num rem cards" << endl;
             return false;
         }
     }
@@ -320,6 +318,7 @@ string Field::toDebugString() const {
     oss << "seat = " << infoSeat << endl;
     oss << "board = " << board << endl;
     oss << "state = " << ps << endl;
+    oss << "info = " << fieldInfo << endl;
     oss << "hand = " << endl;
     for (int p = 0; p < N_PLAYERS; p++) {
         oss << p << (isAwake(p) ? " " : "*") << ": " << hand[p] << endl;
@@ -336,51 +335,55 @@ int Field::procImpl(const MoveInfo m) {
         if (numPlayersAwake() == 1) {
             flush();
         } else {
-             ps.setAsleep(tp);
+            ps.setAsleep(tp);
             rotateTurnPlayer(tp);
         }
     } else {
         bool agari = m.qty() >= hand[tp].qty;
-        if (agari || (FAST && m.isMate())) { // 即上がりまたはMATE宣言のとき
-            if (FAST) {
-                if (isOnlyValue(attractedPlayers, tp)) {
-                    // 結果が欲しいプレーヤーがすべて上がったので終了
-                    setNewClassOf(tp, bestClass());
-                    return -1;
-                } else if (numPlayersAlive() == 2) {
-                    // ゲーム終了
-                    setNewClassOf(tp, bestClass());
-                    setNewClassOf(ps.searchOpsPlayer(tp), bestClass() + 1);
-                    return -1;
-                }
+        // 速度重視での即上がりまたはMATE処理
+        if (FAST && (agari || m.isMate())) {
+            if (numPlayersAlive() == 2) { // ゲーム終了
+                setNewClassOf(tp, bestClass());
+                setNewClassOf(ps.searchOpsPlayer(tp), bestClass() + 1);
+                return -1;
             }
-            // 通常の上がり処理
-            if (agari) { // 即上がり
+            attractedPlayers.reset(tp);
+            // 結果が欲しいプレーヤーがすべて上がったので終了
+            if (attractedPlayers.count() == 0) {
+                setNewClassOf(tp, bestClass());
+                return -1;
+            }
+            // ゲーム継続
+            if (agari) {
                 setNewClassOf(tp, bestClass());
                 ps.setDead(tp);
-                if (!FAST && numPlayersAlive() == 1) {
-                    setNewClassOf(ps.searchL1Player(), bestClass());
-                    return -1;
-                }
-                attractedPlayers.reset(tp);
             }
         }
         procHand(tp, m);
         board.proc(m);
         setOwner(tp);
+        // 通常の上がり処理
+        if (!FAST && agari) {
+            setNewClassOf(tp, bestClass());
+            ps.setDead(tp);
+            if (numPlayersAlive() == 1) {
+                setNewClassOf(ps.searchL1Player(), bestClass());
+                // 最後のプレーヤーはあえてsetDeadしない
+                return -1;
+            }
+            attractedPlayers.reset(tp);
+        }
         if (board.isNull()) { // 流れた
             flushState();
         } else {
-            if (FAST && m.isDO()) { // 他人を支配
-                if (FAST && m.isDM()) { // 自分も支配したので流れる
+            if (FAST && m.dominatesOthers()) { // 他人を支配
+                if (FAST && m.dominatesMe()) { // 自分も支配したので流れる
                     flush();
                     if (!isAwake(tp)) rotateTurnPlayer(tp);
                 } else { // 他人だけ支配
-                    if (isAwake(tp)) {
-                        // 自分以外全員をasleepにして自分の手番
+                    if (isAwake(tp)) { // 自分以外全員をasleepにして自分の手番
                         ps.setAllAsleepExcept(tp);
-                    } else {
-                        // 流れる
+                    } else { // 流れる
                         flush();
                     }
                 }
@@ -407,7 +410,6 @@ void copyField(const Field& arg, Field *const dst) {
     dst->phase = arg.phase;
 
     // playout info
-    dst->mbuf = arg.mbuf;
     dst->attractedPlayers = arg.attractedPlayers;
 
     // game info

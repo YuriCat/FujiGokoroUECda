@@ -278,9 +278,9 @@ inline int numGamesBeforeSeatInitGame(int gn) {
 
 template <int N = N_PLAYERS>
 constexpr unsigned int getNextSeat(unsigned int s) {
-    return (s + 1) % (unsigned int)cmax(N, 1);
+    return (s + 1) % (unsigned int)std::max(N, 1);
 }
 template <int N = N_PLAYERS>
 constexpr unsigned int getPreviousSeat(unsigned int s) {
-    return (s + N - 1) % (unsigned int)cmax(N, 1);
+    return (s + N - 1) % (unsigned int)std::max(N, 1);
 }

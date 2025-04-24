@@ -4,6 +4,7 @@
 #include "../core/action.hpp"
 #include "../core/record.hpp"
 #include "../core/field.hpp"
+#include "../engine/mate.hpp"
 #include "../engine/last2.hpp"
 #include "test.h"
 
@@ -12,6 +13,55 @@ using namespace std;
 static MoveInfo buffer[8192];
 static Clock cl;
 static std::mt19937 mt;
+
+bool checkLast2Slow(MoveInfo *const, MoveInfo, Cards, Cards, Board, bool, bool);
+
+bool judgeLast2Slow(MoveInfo *const buf,
+                    const Cards myCards, const Cards opsCards, Board b,
+                    bool lastAwake, bool flushLead) {
+    int numMoves = genMove(buf, myCards, b);
+    for (int i = 0; i < numMoves; i++) if (buf[i].qty() >= myCards.count()) return true;
+    for (int i = numMoves - 1; i >= 0; i--) { // 逆順の方が速い
+        if (checkLast2Slow(buf + numMoves, buf[i], myCards, opsCards, b, lastAwake, flushLead)) return true;
+    }
+    return false;
+}
+
+bool checkLast2Slow(MoveInfo *const buf, MoveInfo move,
+                    Cards myCards, Cards opsCards, Board b,
+                    bool lastAwake, bool flushLead) {
+    myCards -= move.cards();
+    if (!myCards.any()) return true;
+    bool flipped = false;
+    if (move.isPASS()) {
+        if (lastAwake) {
+            b.flush();
+            if (!flushLead) flipped = true;
+            lastAwake = false;
+            flushLead = true;
+        } else {
+            flipped = true;
+            lastAwake = true;
+            flushLead = !flushLead;
+        }
+    } else {
+        b.proc(move);
+        if (b.isNull()) { // 流れた
+            lastAwake = false;
+            flushLead = true;
+        } else {
+            if (lastAwake) {
+                lastAwake = flushLead = true;
+            } else {
+                flipped = true;
+                lastAwake = flushLead = false;
+            }
+        }
+    }
+    if (flipped) swap(myCards, opsCards);
+    bool res = judgeLast2Slow(buf, myCards, opsCards, b, lastAwake, flushLead);
+    return flipped ? !res : res;
+}
 
 int outputL2JudgeResult() {
     // 気になるケースやコーナーケース、代表的なケースでの支配性判定の結果を出力する
@@ -46,33 +96,31 @@ int outputL2JudgeResult() {
     Cards myCards = "s3 s4 h7 h9 dt hq sk";
     Cards oppCards = "h4 c7 d7 s7 h8 c9 st";
     {
-        Hand myHand, oppHand;
+        Hand myHand, opsHand;
         myHand.setAll(myCards);
-        oppHand.setAll(oppCards);
+        opsHand.setAll(oppCards);
         Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
-        L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
-        cerr << myHand << oppHand << " -> " << judgeResult << endl;
+        int judgeResult = judgeLast2(buffer, myHand, opsHand, b, fieldInfo, 300000);
+        cerr << myHand << opsHand << " -> " << judgeResult << endl;
 
         genMove(buffer, myCards, b);
     }
 
     {
-        Hand myHand, oppHand;
+        Hand myHand, opsHand;
         myHand.setAll(oppCards);
-        oppHand.setAll(myCards);
+        opsHand.setAll(myCards);
         Board b = OrderToNullBoard(0);
         FieldAddInfo fieldInfo;
         fieldInfo.init();
         fieldInfo.setFlushLead();
 
-        L2Judge judge(300000, buffer);
-        int judgeResult = judge.start_judge(myHand, oppHand, b, fieldInfo);
-        cerr << myHand << oppHand << " -> " << judgeResult << endl;
+        int judgeResult = judgeLast2(buffer, myHand, opsHand, b, fieldInfo, 300000);
+        cerr << myHand << opsHand << " -> " << judgeResult << endl;
     }
 
     return 0;
@@ -81,55 +129,111 @@ int outputL2JudgeResult() {
 int testRecordL2(const Record& record) {
     // 棋譜中の局面においてL2判定の結果をテスト
     // 間違っていた場合に失敗とはせず、正解不正解の確率行列を確認するに留める
-    // 正解を調べるのがきついこともあるのでとりあえず棋譜の結果を正解とする
+    // 棋譜の結果とナイーブな探索の結果と比較する
 
     L2::init();
 
     // judge(高速判定)
-    uint64_t judgeTime[2] = {0};
-    uint64_t judgeCount = 0;
-    uint64_t judgeMatrix[2][3] = {0};
+    long long judgeTime[2] = {0};
+    long long judgeCount[2] = {0};
+    long long judgeMatrix[2][2][3] = {0};
+    long long nodes = 0, childs = 0;
+    long long searchIndex = 0, searchCount = 0;
 
     for (int i = 0; i < record.games(); i++) {
         Field field;
-        int judgeResult = -1;
-        int l2TurnPlayer = -1;
         for (Move move : PlayRoller(field, record.game(i))) {
             if (field.numPlayersAlive() != 2) continue;
-            const int turnPlayer = field.turn();
-            const int oppPlayer = field.ps.searchOpsPlayer(turnPlayer);
-            const Hand& myHand = field.getHand(turnPlayer);
-            const Hand& oppHand = field.getHand(oppPlayer);
-            Board b = field.board;
+            const Hand& myHand = field.hand[field.turn()];
+            const Hand& opsHand = field.hand[field.ps.searchOpsPlayer(field.turn())];
+            const Board b = field.board;
+            bool won = record.game(i).newClassOf(field.turn()) == N_PLAYERS - 2;
 
             cl.start();
             L2Judge judge(65536, buffer);
-            judgeResult = judge.start_judge(myHand, oppHand, b, field.fieldInfo);
+            int judgeResult = judge.judge(0, buffer, myHand, opsHand, L2Field(b, field.fieldInfo));
+            int judgeIndex = judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0);
             judgeTime[0] += cl.stop();
-            judgeCount += 1;
+            judgeCount[0] += 1;
+            judgeMatrix[0][won][judgeIndex] += 1;
+            nodes += judge.nodes;
+            childs += judge.childs;
+            searchIndex += judge.searchIndex;
+            searchCount += judge.searchCount;
 
-            l2TurnPlayer = turnPlayer;
+            // 問題が小さいとき完全読み結果をチェック
+            if (myHand.qty + opsHand.qty <= 12) {
+                cl.start();
+                bool l2mate = judgeLast2Slow(
+                    buffer, myHand.cards, opsHand.cards, b,
+                    field.fieldInfo.isLastAwake(), field.fieldInfo.isFlushLead()
+                );
+                judgeTime[1] += cl.stop();
+                judgeCount[1] += 1;
+                judgeMatrix[1][l2mate][judgeIndex] += 1;
+            }
             break;
-        }
-
-        if (judgeResult != L2_NONE && l2TurnPlayer >= 0) {
-            int turnResult = field.newClassOf(l2TurnPlayer);
-            judgeMatrix[turnResult == N_PLAYERS - 2][judgeResult == L2_WIN ? 2 : (judgeResult == L2_DRAW ? 1 : 0)] += 1;
-            /*if (turnResult == N_PLAYERS - 1 && judgeResult == L2_WIN) {
-                cerr << "bad result" << endl;
-                getchar();
-            }*/
         }
     }
 
     cerr << "judge result (hand) = " << endl;
+    for (int d = 0; d < 2; d++) {
+        cerr << (d == 0 ? "real" : "search") << endl;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                cerr << judgeMatrix[d][i][j] << " ";
+            }
+            cerr << endl;
+        }
+    }
+    cerr << "judge time (hand)    = " << judgeTime[0] / judgeCount[0] << endl;
+    cerr << "judge time (l2-slow) = " << judgeTime[1] / judgeCount[1] << endl;
+    cerr << "judge nodes   = " << nodes / (double)judgeCount[0] << endl;
+    cerr << "judge childs  = " << childs / (double)judgeCount[0] << endl;
+    cerr << "seach BF(win) = " << searchIndex / (double)searchCount << endl;
+
+    // ラスト2人探索に利用するパーツのチェック
+    long long l2lTime[2] = {0};
+    long long l2lCount = 0;
+    long long l2lMatrix[2][3] = {0};
+
+    for (int i = 0; i < record.games(); i++) {
+        Field field;
+        for (Move move : PlayRoller(field, record.game(i))) {
+            if (field.numPlayersAlive() != 2) continue;
+            const Hand& myHand = field.hand[field.turn()];
+            const Hand& opsHand = field.hand[field.ps.searchOpsPlayer(field.turn())];
+            const Board b = field.board;
+
+            if (b.isNull() && !judgeHandPW_NF(myHand, opsHand, b)) {
+                cl.start();
+                bool giveup = judgeHandL2L_NF(myHand, opsHand, b);
+                l2lTime[0] += cl.stop();
+                l2lCount += 1;
+                if (giveup) {
+                    cl.start();
+                    bool l2mate = judgeLast2Slow(
+                        buffer, myHand.cards, opsHand.cards, b,
+                        field.fieldInfo.isLastAwake(), field.fieldInfo.isFlushLead()
+                    );
+                    l2lTime[1] += cl.stop();
+                    l2lMatrix[!l2mate][giveup] += 1;
+                    //if (!l2mate != giveup) {std::cerr << myHand << opsHand << std::endl; getchar();}
+                }
+            }
+        }
+    }
+
+    cerr << "l2l judge result (hand) = " << endl;
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 3; j++) {
-            cerr << judgeMatrix[i][j] << " ";
+        for (int j = 0; j < 2; j++) {
+            cerr << l2lMatrix[i][j] << " ";
         }
         cerr << endl;
     }
-    cerr << "judge time (hand)    = " << judgeTime[0] / (double)judgeCount << endl;
+    cerr << "l2l time (hand)    = " << l2lTime[0] / double(l2lCount) << endl;
+    cerr << "l2l time (l2-slow) = " << l2lTime[1] / double(l2lCount) << endl;
+
     return 0;
 }
 

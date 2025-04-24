@@ -5,7 +5,7 @@
 
 using namespace std;
 
-int selectBanditAction(const RootInfo& root, Dice& dice) {
+inline int selectBanditAction(const RootInfo& root, Dice& dice) {
     // バンディット手法により次に試す行動を選ぶ
     int actions = root.candidates;
     const auto& a = root.child;
@@ -36,7 +36,7 @@ int selectBanditAction(const RootInfo& root, Dice& dice) {
     }
 }
 
-bool finishCheck(const RootInfo& root, double simuTime, double valuePerSec, Dice& dice) {
+inline bool finishCheck(const RootInfo& root, double simuTime, double valuePerSec, Dice& dice) {
     // Regretによる打ち切り判定
 
     const int candidates = root.candidates; // 候補数
@@ -89,22 +89,20 @@ void MonteCarloThread(const int threadId, const int numThreads,
     Field pf = *pfield;
     pf.myPlayerNum = -1; // 客観視点に変更
     pf.addAttractedPlayer(myPlayerNum);
-    pf.setMoveBuffer(ptools->mbuf);
     if (proot->rivalPlayerNum >= 0) {
-        pf.attractedPlayers.set(proot->rivalPlayerNum);
+        pf.addAttractedPlayer(proot->rivalPlayerNum);
     }
 
     uint64_t simuTime = 0ULL; // プレイアウトと雑多な処理にかかった時間
     uint64_t estTime = 0ULL; // 局面推定にかかった時間
 
     // 時間の価値(1秒あたり),3191は以前のPCのクロック周波数(/microsec)なので意味は無い
-    const double valuePerSec = 5e-4 * 3191 / (Settings::thinkingLevel * Settings::thinkingLevel);
+    const double valuePerSec = 5e-4 * 3191 / pow(Settings::thinkingLevel, 2);
 
     // 諸々の準備が終わったので時間計測開始
     ClockMicS clock(0);
 
     while (!proot->exitFlag) { // 最大で最高回数までプレイアウトを繰り返す
-
         int world = 0;
         int action = selectBanditAction(*proot, dice);
 
@@ -118,8 +116,8 @@ void MonteCarloThread(const int threadId, const int numThreads,
             estTime += clock.restart();
             world = numWorlds++;
         } else {
-            // ランダム選択
-            world = dice() % numWorlds;
+            // 順番に選択
+            world = numSimulations[action] % numWorlds;
         }
 
         numSimulations[action]++;
@@ -136,8 +134,6 @@ void MonteCarloThread(const int threadId, const int numThreads,
         }
 
         proot->feedSimulationResult(action, f, pshared); // 結果をセット(排他制御は関数内で)
-        if (proot->exitFlag) return;
-
         simuTime += clock.restart();
 
         // 終了判定
@@ -145,9 +141,10 @@ void MonteCarloThread(const int threadId, const int numThreads,
             && threadId == 0
             && numSimulationsSum % max(4, 32 / numThreads) == 0
             && proot->allSimulations > proot->candidates * 4) {
+            if (proot->exitFlag) break;
             if (finishCheck(*proot, simuTime * 1e-6, valuePerSec, dice)) {
-                proot->exitFlag = 1;
-                return;
+                proot->exitFlag = true;
+                break;
             }
         }
     }
