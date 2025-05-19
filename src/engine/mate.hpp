@@ -426,7 +426,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
             if (myUpper) {
                 if (b.locksSuits(m)) {
                     for (IntCard ic : Cards(myUpper)) {
-                        assert(myHand.qty > m.qty() + 1); // 完全勝利でないので
+                        assert(myHand.qty > m.qty()); // 完全勝利でないので
                         if (bnpwSingle(depth, mbuf, m, ic, myHand, opsHand, b, fieldInfo)) {
                             //std::cerr << "already lock " << b << myHand.cards << opsHand.cards << m << "->" << ic; getchar();
                             return true;
@@ -450,7 +450,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
                     bool anyLock = all2[0] | all2[1] | all2[2] | all2[3];
                     if (!anyLock) {
                         for (IntCard ic : Cards(myUpper)) {
-                            assert(myHand.qty > m.qty() + 1); // 完全勝利でないので
+                            assert(myHand.qty > m.qty()); // 完全勝利でないので
                             if (bnpwSingle(depth, mbuf, m, ic, myHand, opsHand, b, fieldInfo)) {
                                 //std::cerr << "no lock " << b << myHand.cards << opsHand.cards << m << "->" << fm; getchar();
                                 return true;
@@ -463,7 +463,7 @@ inline bool checkHandBNPW(const int depth, MoveInfo *const mbuf, const MoveInfo 
                                 bool found = false;
                                 BitCards tmpUpper = myUpper & SuitsToCards(1U << sn);
                                 for (IntCard ic : Cards(tmpUpper)) {
-                                    assert(myHand.qty > m.qty() + 1); // 完全勝利でないので
+                                    assert(myHand.qty > m.qty()); // 完全勝利でないので
                                     if (bnpwSingle(depth, mbuf, m, ic, myHand, opsHand, b, fieldInfo)) {
                                         found = true;
                                         break;
